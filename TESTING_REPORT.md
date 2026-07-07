@@ -64,6 +64,47 @@ After finishing a module, add a section using the template below. Mark the done-
 
 ---
 
+### P1 — Auth & Identity — PASS
+- **Date:** 2026-07-07
+- **Tests added:**
+  - `tests/Feature/Auth/OtpHappyPathTest.php` (3 tests)
+  - `tests/Feature/Auth/OtpFailureTest.php` (3 tests)
+  - `tests/Feature/Auth/OtpRateLimitTest.php` (1 test)
+  - `tests/Feature/Auth/BookingCodeLinkTest.php` (3 tests)
+  - `tests/Feature/Auth/StaffLoginTest.php` (5 tests)
+  - `tests/Feature/Auth/PhoneNormalizationTest.php` (1 test)
+  - `tests/Feature/GuardsResolveTest.php` — rewritten (3 tests, probe routes removed)
+  - `tests/Feature/ExceptionEnvelopeTest.php` — updated (probe route replaced with non-existent-route 404)
+- **Result:** `php artisan test` → **36 passed, 0 failed** | 109 assertions
+- **Mandatory checks:**
+  - [x] happy-path endpoint tests — OTP phone+email channels, returning guest match, staff login+me+logout
+  - [x] auth/permission-failure tests — wrong credentials 401, inactive 403, unauthenticated 401, wrong-guard 401
+  - [x] validation-failure tests — booking_code second-factor missing 422, identity_required coverage
+  - [x] unit tests for non-trivial Actions — OTP failure cases (expired/invalid/locked) test action logic via HTTP
+  - [ ] (P4 only) deterministic last-room concurrency test — N/A
+  - [ ] (P4 only) pricing-snapshot immutability test — N/A
+- **Coverage notes:**
+  - OTP hashed (bcrypt), single-use (consumed_at), 5-min TTL enforced, 5-attempt lock verified
+  - Rate-limit 1/min per identifier verified (second request within 60s → 429)
+  - Booking-code: code alone rejected (422); code+last_name issues OTP; wrong second factor → generic 404
+  - Staff login: returns `permissions` array + `type` in resource (done-condition met)
+  - Phone E.164: local SY format `0912345678` → stored as `+963912345678`, `phone_country='SY'`
+  - Returning guest matched by phone — no duplicate row created
+  - Token invalidation: logout deletes token; subsequent `/auth/me` → 401
+- **Known gaps / follow-ups:**
+  - OtpRateLimitTest covers 1/min cap; 5/hr hourly cap not tested (would require 6 sequential requests with clock manipulation — deferred).
+  - Real OTP delivery (SMS/WhatsApp/email) not tested — OtpDispatcher is an in-memory seam; real provider wired in P9.
+  - `booking_link` verify path (linking reservation.guest_id) not directly asserted in L4 — the link action + verify action both exist and are used; full E2E of that path is testable in P4 when reservations are fully built.
+- **Done-condition (P1-DONE):** **MET**
+  - [x] All auth flows pass (staff login/logout/me, guest OTP 3 paths, booking-code link)
+  - [x] OTP hashed + single-use + TTL enforced
+  - [x] Rate-limit → `too_many_requests` (429)
+  - [x] Both guards issue working tokens
+  - [x] Guest phone stored E.164; `phone_country` set correctly
+  - [x] `php artisan test` all green (36/36)
+
+---
+
 ## Global exit checks (fill at P12)
 - [ ] `migrate:fresh --seed` green from empty DB
 - [ ] full `php artisan test` green

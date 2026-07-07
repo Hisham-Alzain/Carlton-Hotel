@@ -21,6 +21,38 @@ After each module, add a section with the template below, then STOP and wait for
 
 ---
 
+### P1 — Auth & Identity
+- **Date:** 2026-07-07
+- **Built:**
+  - A1–A3: migrations — guests table expansion (full §3.4 fields), otp_codes, reservations stub (P1 only, P4 expands)
+  - B1: Guest model expanded — LogsActivity, full fillable, markPhoneVerified/Email, scopeByPhone/Email
+  - B2: OtpCode model — constants, scopeActive/forIdentifier, isExpired/Consumed/Locked helpers
+  - B3–B4: GuestFactory (phoneVerified/emailOnly/phoneOnly states) + OtpCodeFactory (expired/consumed/locked/emailChannel states)
+  - C1–C3: OtpExpiredException (422), OtpInvalidException (422), OtpLockedException (429)
+  - D: lang/en + lang/ar — errors.otp_*, auth.*, validation.phone_invalid added to both files
+  - E: NormalizesPhone support trait + StaffLoginRequest, RequestOtpRequest (channel↔identifier coherence), VerifyOtpRequest, LinkBookingCodeRequest (booking_code regex + second-factor guard)
+  - F: OtpDispatcher (in-memory seam; TODO P9 real provider), RequestOtpAction (RateLimiter 1/min+5/hr, bcrypt, invalidates prior active codes), VerifyOtpAction (expire/lock/consume/create-or-match guest, booking_link branch links reservation.guest_id), LinkBookingCodeAction (second factor in WHERE, masks contact)
+  - G: AuthGuestService + AuthStaffService (login/logout/me, credentials/inactive exceptions)
+  - H: UserResource (uuid, permissions array, roles) + GuestResource (uuid, phone_verified bool, email_verified bool)
+  - I: StaffAuthController (login/logout/me) + GuestAuthController (requestOtp/verifyOtp/linkBookingCode)
+  - J: routes/api.php — auth prefix group with staff + guest subgroups; probe routes REMOVED
+  - K: GuardsResolveTest + ExceptionEnvelopeTest migrated off probe routes; probes deleted
+  - L: 6 test files — OtpHappyPathTest, OtpFailureTest, OtpRateLimitTest, BookingCodeLinkTest, StaffLoginTest, PhoneNormalizationTest
+- **Deviations from PLAN.md:**
+  - `prepareForValidation` null-merge skipped when libphonenumber can't parse — original value left in place instead. Prevents spurious `identity_required` on already-E.164 inputs in tests. Correct security behavior: lookup fails naturally for bogus numbers.
+  - `AuthStaffService::logout` null-guards `currentAccessToken()` before `delete()` — defensive, no behavior change.
+  - `StaffLoginTest::test_logout_invalidates_token` calls `auth()->forgetGuards()` between logout and re-check — necessary because Sanctum caches resolved user in-memory within a single test request cycle.
+- **Decisions taken:** Reservation model created as P1 stub (maps to the reservations_stub migration). `OtpDispatcher` uses static in-memory array for test code capture — injectable/mockable. No real SMS/WhatsApp provider yet (seam clearly marked TODO P9).
+- **Seams left for later:**
+  - `OtpDispatcher::send()` — TODO(P9): wire real SMS/WhatsApp/email provider
+  - `app/Models/Reservation.php` — P1 stub; P4 expands to full reservation model
+  - Firebase config published but not used
+- **New error_codes introduced:** `otp_expired`, `otp_invalid`, `otp_locked`, `credentials_invalid`, `account_inactive`, `identity_required`, `booking_link_failed`
+- **Stop-and-report summary:** P1 complete. Full auth layer built — staff email+password login (token + permissions), guest passwordless OTP (3 entry paths), OTP infrastructure (bcrypt hash, 5-min TTL, single-use, 5-attempt lock, 1/min·5/hr rate limit), booking-code link with second-factor enforcement, two resources (UserResource with permissions array, GuestResource), probe routes removed. 36 tests, 109 assertions — all green. P0 tests still pass.
+- **Status:** awaiting go-ahead
+
+---
+
 ## Escalation log (planning consultations)
 Record here whenever coding escalated a decision to Opus 4.8, or a hard decision went to Fable.
 

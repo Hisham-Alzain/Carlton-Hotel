@@ -1,6 +1,7 @@
 <?php
 
-use App\Exceptions\NotFoundException;
+use App\Http\Controllers\Auth\GuestAuthController;
+use App\Http\Controllers\Auth\StaffAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -14,23 +15,18 @@ Route::get('/health', function (Request $request) {
     ]);
 });
 
-// P0 test probes — remove before P1 ships
-Route::get('/probe/domain-exception', function () {
-    throw new NotFoundException('probe');
+// Staff auth
+Route::prefix('auth')->group(function () {
+    Route::post('/login', [StaffAuthController::class, 'login']);
+    Route::middleware('auth:users')->group(function () {
+        Route::post('/logout', [StaffAuthController::class, 'logout']);
+        Route::get('/me', [StaffAuthController::class, 'me']);
+    });
+
+    // Guest auth
+    Route::prefix('guest')->group(function () {
+        Route::post('/request-otp',      [GuestAuthController::class, 'requestOtp'])->middleware('throttle:10,1');
+        Route::post('/verify-otp',       [GuestAuthController::class, 'verifyOtp']);
+        Route::post('/link-booking-code',[GuestAuthController::class, 'linkBookingCode']);
+    });
 });
-
-Route::get('/probe/staff', function (Request $request) {
-    return response()->json([
-        'success'    => true,
-        'data'       => ['guard' => 'users'],
-        'request_id' => $request->attributes->get('request_id', ''),
-    ]);
-})->middleware('auth:users');
-
-Route::get('/probe/guest', function (Request $request) {
-    return response()->json([
-        'success'    => true,
-        'data'       => ['guard' => 'guests'],
-        'request_id' => $request->attributes->get('request_id', ''),
-    ]);
-})->middleware('auth:guests');

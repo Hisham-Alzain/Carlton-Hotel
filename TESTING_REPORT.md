@@ -105,6 +105,54 @@ After finishing a module, add a section using the template below. Mark the done-
 
 ---
 
+### P2 — Staff RBAC Management — PASS
+- **Date:** 2026-07-07
+- **Tests added:**
+  - `tests/Feature/Staff/StaffCreateTest.php` (2 tests)
+  - `tests/Feature/Staff/PermissionOverrideTest.php` (1 test)
+  - `tests/Feature/Staff/EscalationBlockedTest.php` (2 tests)
+  - `tests/Feature/Staff/SuperAdminProtectedTest.php` (4 tests)
+  - `tests/Feature/Staff/DeactivatedCannotAuthTest.php` (2 tests)
+  - `tests/Feature/Staff/PermissionsGroupedTest.php` (1 test)
+  - `tests/Feature/Staff/RolePresetsTest.php` (1 test)
+  - `tests/Feature/Staff/StaffAuthorizationTest.php` (1 test)
+- **Result:** `php artisan test` → **50 passed, 0 failed** | 154 assertions
+- **Mandatory checks:**
+  - [x] happy-path endpoint tests — create from preset 201, show/update/deactivate 200, permissions grouped 200, roles 200
+  - [x] auth/permission-failure tests — no staff.manage → 403 on all 8 endpoints; unauthenticated → 401
+  - [x] validation-failure tests — missing second factor in assign permissions, invalid role name
+  - [x] unit tests for non-trivial Actions — EscalationBlockedTest exercises AssignPermissionsAction guard rails via HTTP
+  - [ ] (P4 only) deterministic last-room concurrency test — N/A
+  - [ ] (P4 only) pricing-snapshot immutability test — N/A
+- **Coverage notes:**
+  - Create from preset → 201; `effective_permissions` contains reception preset's permissions
+  - Per-account override: grant adds direct permission to effective set; revoke removes it from direct_permissions
+  - Escalation guard rail 1: actor lacking `pricing.edit` cannot grant it → 403 `error_code:forbidden`
+  - Escalation guard rail 1 (cms.edit): second case confirms the guard is permission-specific, not blanket
+  - Super-admin immutability: non-super-admin blocked from update/assignPermissions/deactivate on super_admin target → 403
+  - super_admin actor bypasses all gates (Gate::before) → 200 on update
+  - Deactivation: login attempt after deactivation → 403 `account_inactive`; existing token after deactivation → 401 (token deleted in transaction)
+  - GET /permissions: 8 groups, `service_requests` module correct with 3 permissions (first-dot split verified)
+  - GET /roles: 5 presets, reception preset has reservations.view + folios.settle
+  - Staff without staff.manage: 403 on all 8 endpoints (loop assertion)
+- **Known gaps / follow-ups:**
+  - super_admin can manage all: only `PUT /staff/{uuid}` tested; assignPermissions and deactivate by super_admin not separately tested.
+  - Negative-permission model (denying role-inherited permissions) not supported — deferred. Documented in PermissionAssignmentService.
+  - Naive Reviewer caught and fixed: PermissionController + RoleController DB-in-controller (convention violation), double-hash in DeactivatedCannotAuthTest, dead variable in EscalationBlockedTest.
+- **Done-condition (P2-DONE):** **MET**
+  - [x] Create from preset → 201; effective_permissions contains preset's permissions
+  - [x] Per-account override changes effective_permissions (grant + revoke tested)
+  - [x] Escalation attempt (grant permission not held) → 403 `error_code:forbidden`
+  - [x] Non-super-admin cannot edit/deactivate/assign-to super_admin → 403
+  - [x] super_admin actor can manage all (update tested) → 200
+  - [x] Deactivated account cannot login → 403; existing token rejected → 401
+  - [x] GET /permissions → 8 groups; service_requests group has 3 permissions
+  - [x] GET /roles → 5 presets with correct permission bundles
+  - [x] Staff without staff.manage → 403 on all /staff/* endpoints
+  - [x] `php artisan test` all green (50/50)
+
+---
+
 ## Global exit checks (fill at P12)
 - [ ] `migrate:fresh --seed` green from empty DB
 - [ ] full `php artisan test` green

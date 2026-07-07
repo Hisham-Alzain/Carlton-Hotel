@@ -1,7 +1,15 @@
 <?php
 
 return [
-    'messages'   => ['success' => 'تمت العملية بنجاح.', 'created' => 'تم الإنشاء بنجاح.', 'deleted' => 'تم الحذف بنجاح.'],
+    'messages'   => [
+        'success'             => 'تمت العملية بنجاح.',
+        'created'             => 'تم الإنشاء بنجاح.',
+        'deleted'             => 'تم الحذف بنجاح.',
+        'staff_created'       => 'تم إنشاء حساب الموظف.',
+        'staff_updated'       => 'تم تحديث حساب الموظف.',
+        'staff_deactivated'   => 'تم إلغاء تفعيل حساب الموظف.',
+        'permissions_updated' => 'تم تحديث الصلاحيات.',
+    ],
     'errors'     => [
         'server_error'           => 'حدث خطأ ما.',
         'not_found'              => 'المورد غير موجود.',
@@ -17,6 +25,10 @@ return [
         'account_inactive'       => 'تم تعطيل هذا الحساب.',
         'identity_required'      => 'يرجى تقديم رقم هاتف أو بريد إلكتروني.',
         'booking_link_failed'    => 'تعذر التحقق من تفاصيل الحجز.',
+        'escalation_blocked'     => 'لا يمكنك منح صلاحية لا تملكها.',
+        'superadmin_immutable'   => 'لا يمكن تعديل حسابات المشرف الأعلى.',
+        'cannot_self_deactivate' => 'لا يمكنك إلغاء تفعيل حسابك الخاص.',
+        'unknown_permission'     => 'واحدة أو أكثر من الصلاحيات غير صالحة.',
     ],
     'auth'       => [
         'otp_sent'       => 'تم إرسال رمز التحقق.',
@@ -27,11 +39,16 @@ return [
     ],
     'health'     => ['ok' => 'الخدمة تعمل بشكل سليم.'],
     'validation' => [
-        'required'      => 'حقل :attribute مطلوب.',
-        'string'        => 'يجب أن يكون :attribute نصاً.',
-        'email'         => 'يجب أن يكون :attribute بريداً إلكترونياً صالحاً.',
-        'max'           => 'يجب ألا يتجاوز :attribute :max حرفاً.',
-        'phone_invalid' => 'رقم الهاتف غير صالح.',
-        'in'            => 'القيمة المحددة لـ :attribute غير صالحة.',
+        'required'             => 'حقل :attribute مطلوب.',
+        'string'               => 'يجب أن يكون :attribute نصاً.',
+        'email'                => 'يجب أن يكون :attribute بريداً إلكترونياً صالحاً.',
+        'max'                  => 'يجب ألا يتجاوز :attribute :max حرفاً.',
+        'phone_invalid'        => 'رقم الهاتف غير صالح.',
+        'in'                   => 'القيمة المحددة لـ :attribute غير صالحة.',
+        'min'                  => 'يجب أن يكون :attribute على الأقل :min أحرف.',
+        'unique'               => 'قيمة :attribute مستخدمة بالفعل.',
+        'exists'               => 'قيمة :attribute المحددة غير صالحة.',
+        'grant_revoke_conflict'=> 'لا يمكن منح صلاحية وسحبها في آن واحد.',
+        'distinct'             => 'يحتوي حقل :attribute على قيمة مكررة.',
     ],
 ];

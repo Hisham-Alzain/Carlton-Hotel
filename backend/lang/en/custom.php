@@ -1,7 +1,15 @@
 <?php
 
 return [
-    'messages'   => ['success' => 'Success.', 'created' => 'Created successfully.', 'deleted' => 'Deleted successfully.'],
+    'messages'   => [
+        'success'             => 'Success.',
+        'created'             => 'Created successfully.',
+        'deleted'             => 'Deleted successfully.',
+        'staff_created'       => 'Staff account created.',
+        'staff_updated'       => 'Staff account updated.',
+        'staff_deactivated'   => 'Staff account deactivated.',
+        'permissions_updated' => 'Permissions updated.',
+    ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',
         'not_found'              => 'Resource not found.',
@@ -17,6 +25,10 @@ return [
         'account_inactive'       => 'This account has been deactivated.',
         'identity_required'      => 'Please provide a phone number or email address.',
         'booking_link_failed'    => 'The booking details could not be verified.',
+        'escalation_blocked'     => 'You cannot grant a permission you do not hold.',
+        'superadmin_immutable'   => 'Super admin accounts cannot be modified.',
+        'cannot_self_deactivate' => 'You cannot deactivate your own account.',
+        'unknown_permission'     => 'One or more permissions are invalid.',
     ],
     'auth'       => [
         'otp_sent'       => 'A verification code has been sent.',
@@ -27,11 +39,16 @@ return [
     ],
     'health'     => ['ok' => 'Service healthy.'],
     'validation' => [
-        'required'      => 'The :attribute field is required.',
-        'string'        => 'The :attribute must be a string.',
-        'email'         => 'The :attribute must be a valid email address.',
-        'max'           => 'The :attribute may not be greater than :max characters.',
-        'phone_invalid' => 'The phone number is not valid.',
-        'in'            => 'The selected :attribute is invalid.',
+        'required'             => 'The :attribute field is required.',
+        'string'               => 'The :attribute must be a string.',
+        'email'                => 'The :attribute must be a valid email address.',
+        'max'                  => 'The :attribute may not be greater than :max characters.',
+        'phone_invalid'        => 'The phone number is not valid.',
+        'in'                   => 'The selected :attribute is invalid.',
+        'min'                  => 'The :attribute must be at least :min characters.',
+        'unique'               => 'The :attribute has already been taken.',
+        'exists'               => 'The selected :attribute is invalid.',
+        'grant_revoke_conflict'=> 'A permission cannot be both granted and revoked.',
+        'distinct'             => 'The :attribute field has a duplicate value.',
     ],
 ];

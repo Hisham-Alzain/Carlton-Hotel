@@ -53,6 +53,34 @@ After each module, add a section with the template below, then STOP and wait for
 
 ---
 
+### P2 — Staff RBAC Management
+- **Date:** 2026-07-07
+- **Built:**
+  - T0: UUID column + migration added to `users` table; `HasUuid` trait added to `User` model (provides `getRouteKeyName()→'uuid'`)
+  - T1: `StaffPolicy` — viewAny/view/create/update/assignPermissions/deactivate; registered via `Gate::policy` in AppServiceProvider; super-admin bypass handled globally by Gate::before
+  - T2: `StaffService` — extends BaseService; `createFromPreset`, `update` (name+email only), `deactivate` (revokes tokens in same transaction), `rolePresets`
+  - T3: `PermissionAssignmentService` — `apply` (grant/revoke in transaction), `heldBy`, `groupedPermissions` (first-dot grouping into 8 modules)
+  - T4: `CreateStaffAction` — thin orchestrator delegating to StaffService
+  - T5: `AssignPermissionsAction` — guard rail 1 (escalation check on grant array), guard rail 2 (defensive super_admin re-check)
+  - T6: `CreateStaffRequest`, `AssignPermissionsRequest` (grant∩revoke=∅ + at least one present), `UpdateStaffRequest` (name+email only, unique→ignore self)
+  - T7: `StaffResource` (effective/direct/role permissions split), `PermissionResource` (module group shape), `RolePresetResource`
+  - T8: `StaffController` (index/show/store/update/assignPermissions/deactivate), `PermissionController` (delegates to PermissionAssignmentService), `RoleController` (delegates to StaffService)
+  - T9: 8 routes under `auth:users` middleware (`/staff`, `/staff/{user}`, `/staff/{user}/permissions`, `/staff/{user}/deactivate`, `/permissions`, `/roles`)
+  - T10: lang/en + lang/ar — errors.escalation_blocked/superadmin_immutable/cannot_self_deactivate/unknown_permission; messages.staff_created/updated/deactivated/permissions_updated; validation.min/unique/exists/grant_revoke_conflict/distinct
+  - T13: 8 test files — StaffCreateTest, PermissionOverrideTest, EscalationBlockedTest, SuperAdminProtectedTest, DeactivatedCannotAuthTest, PermissionsGroupedTest, RolePresetsTest, StaffAuthorizationTest
+- **Deviations from PLAN.md:**
+  - None in scope. `PermissionController` and `RoleController` delegate to service methods (`groupedPermissions` + `rolePresets`) rather than querying DB directly — convention fix applied after Naive Reviewer flagged the violation.
+  - `BaseController` required `AuthorizesRequests` trait for `$this->authorize()` — added.
+  - Negative-permission model: revoke only removes direct grants; revoking role-inherited permissions is not supported (spatie has no native deny). Documented in `PermissionAssignmentService`. Deferred per spec.
+- **Decisions taken:** `PermissionAssignmentService::groupedPermissions()` and `StaffService::rolePresets()` use `get()` not `paginate()` — both are bounded reference lists (16 and 5 rows respectively); documented with comments. Double-hash bug in test caught and fixed by Naive Reviewer (bcrypt() + hashed cast = double hash).
+- **Seams left for later:** True negative-permission model (deny role-inherited perms) — deferred. Welcome email on staff creation (CreateStaffAction placeholder comment).
+- **New error_codes introduced:** `forbidden` (covers escalation_blocked, superadmin_immutable, cannot_self_deactivate — all map to ForbiddenException)
+- **Naive Reviewer:** PASS WITH WARNINGS → 4 issues fixed (PermissionController/RoleController DB-in-controller, double-hash test bug, dead variable in test)
+- **Stop-and-report summary:** P2 complete. Staff RBAC management surface built — create from preset, per-account permission override, escalation guard (rail 1 + rail 2), super-admin immutability, deactivation with token revocation, grouped permissions + role preset reference endpoints. 50 tests, 154 assertions — all green. P0+P1 tests still pass.
+- **Status:** awaiting go-ahead
+
+---
+
 ## Escalation log (planning consultations)
 Record here whenever coding escalated a decision to Opus 4.8, or a hard decision went to Fable.
 

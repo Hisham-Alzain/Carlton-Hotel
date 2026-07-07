@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Policies\StaffPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::before(fn ($user) => $user instanceof \App\Models\User && $user->isSuperAdmin() ? true : null);
+        Gate::before(fn ($user) => $user instanceof User && $user->isSuperAdmin() ? true : null);
+        Gate::policy(User::class, StaffPolicy::class);
     }
 }

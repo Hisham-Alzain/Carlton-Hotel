@@ -18,6 +18,10 @@ abstract class BaseRequest extends FormRequest
             'string'   => __('custom.validation.string',   ['attribute' => ':attribute']),
             'email'    => __('custom.validation.email',    ['attribute' => ':attribute']),
             'max'      => __('custom.validation.max',      ['attribute' => ':attribute', 'max' => ':max']),
+            'min'      => __('custom.validation.min',      ['attribute' => ':attribute', 'min' => ':min']),
+            'unique'   => __('custom.validation.unique',   ['attribute' => ':attribute']),
+            'exists'   => __('custom.validation.exists',   ['attribute' => ':attribute']),
+            'distinct' => __('custom.validation.distinct', ['attribute' => ':attribute']),
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Base;
 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\App;
 
 abstract class BaseController extends Controller
 {
+    use AuthorizesRequests;
     protected function success(
         mixed $data = null,
         string $messageKey = 'custom.messages.success',

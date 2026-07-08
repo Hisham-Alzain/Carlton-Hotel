@@ -106,6 +106,18 @@ After each module, add a section with the template below, then STOP and wait for
 
 ---
 
+### P2.5 — v3 re-sync verification (2026-07-08)
+- Re-read ARCHITECTURE.md v3 and PLAN.md revision 3 in full.
+- Verified all P2.5 done-condition items against the v3 wording — all satisfied, no code changes needed.
+- API docs restructured to match the three-surface model in ARCHITECTURE §3.6:
+  - Deleted `backend/docs/API_GUIDE_WEB_DASHBOARD.md` (wrong split).
+  - Created `backend/docs/API_GUIDE_WEBSITE.md` — anonymous-only; health now; P3/P4/P6/P11 content noted; OTP framed as transaction verification not login.
+  - Created `backend/docs/API_GUIDE_DASHBOARD.md` — staff auth + staff RBAC management (P0–P2 backfill).
+  - Updated `backend/docs/API_GUIDE_MOBILE.md` — corrected verify-otp request body (phone/email not identifier); added missing purpose field to request-otp; added access tiers table.
+- Note: `backend-developer-guide.md` does not exist in the repo (confirmed by search). Proceeding on established conventions from ARCHITECTURE.md and base layer.
+
+---
+
 ## Escalation log (planning consultations)
 Record here whenever coding escalated a decision to Opus 4.8, or a hard decision went to Fable.
 

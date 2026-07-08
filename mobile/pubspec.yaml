@@ -1,0 +1,71 @@
+name: carlton
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  cached_network_image: ^3.4.1
+  device_info_plus: ^13.2.0
+  dio: ^5.10.0
+  dropdown_button2: ^3.1.0
+  file_picker: ^3.0.4
+  firebase_core: ^4.11.0
+  firebase_messaging: ^16.4.1
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_cache_manager: ^3.4.1
+  flutter_local_notifications: ^22.0.1
+  flutter_svg: ^2.3.0
+  geocoding: ^5.0.0
+  geolocator: ^14.0.3
+  get: ^4.7.3
+  get_storage: ^2.1.1
+  internet_connection_checker: ^3.0.1
+  intl: ^0.20.2
+  package_info_plus: ^10.2.0
+  path_provider: ^2.1.6
+  permission_handler: ^12.0.3
+  pinput: ^6.0.2
+  pretty_dio_logger: ^1.4.0
+  shimmer: ^3.0.0
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+    - assets/
+    - assets/icons/
+    - assets/fonts/
+
+  # fonts:
+  #   - family: Montserrat
+  #     fonts:
+  #       - asset: assets/fonts/Montserrat/Montserrat-Thin.ttf
+  #         weight: 100
+  #       - asset: assets/fonts/Montserrat/Montserrat-ExtraLight.ttf
+  #         weight: 200
+  #       - asset: assets/fonts/Montserrat/Montserrat-Light.ttf
+  #         weight: 300
+  #       - asset: assets/fonts/Montserrat/Montserrat-Regular.ttf
+  #         weight: 400
+  #       - asset: assets/fonts/Montserrat/Montserrat-Medium.ttf
+  #         weight: 500
+  #       - asset: assets/fonts/Montserrat/Montserrat-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/Montserrat/Montserrat-Bold.ttf
+  #         weight: 700
+  #       - asset: assets/fonts/Montserrat/Montserrat-ExtraBold.ttf
+  #         weight: 800
+  #       - asset: assets/fonts/Montserrat/Montserrat-Black.ttf
+  #         weight: 900
+
+  uses-material-design: true

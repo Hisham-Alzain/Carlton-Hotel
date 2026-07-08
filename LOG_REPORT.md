@@ -81,6 +81,31 @@ After each module, add a section with the template below, then STOP and wait for
 
 ---
 
+### P2.5 — Remediation & flow alignment
+- **Date:** 2026-07-08
+- **Built:**
+  - R1.1: `BookingLinkUnavailableException` (`errorCode: booking_link_unavailable`, `statusCode: 422`)
+  - R1.2: `VerifyOtpAction` booking_link branch replaced with guarded throw — rolls back consumed_at and guest create/verify; P4.R forward-reference comment added
+  - R1.3: `errors.booking_link_unavailable` added to both `lang/en/custom.php` and `lang/ar/custom.php`
+  - R2.1: `OtpHourlyCapTest` — 5/hr cap verified for `login` purpose (via HTTP) and `booking_verification` purpose (via action-level call, since RequestOtpRequest only allows login|register at HTTP layer)
+  - R3.1: `BookingCodeLinkTest::test_booking_link_verify_purpose_now_throws_unavailable` — asserts 422 + error_code + OTP not consumed (transaction rolled back)
+  - R3.2: `BookingCodeLinkE2ETest` created — `@group p4`, single `markTestSkipped('Will be completed in P4.R')`
+  - R4.1: `SuperAdminProtectedTest` — two new methods: `test_super_admin_can_assign_permissions` and `test_super_admin_can_deactivate_staff` (both → 200)
+  - R5.1: `OtpCode::PURPOSE_BOOKING_VERIFICATION = 'booking_verification'` added; `otp_codes.purpose` confirmed as unconstrained string column — no migration needed
+- **Deviations from PLAN.md:** None. All 5 remediation tickets executed as specified.
+- **Decisions taken:**
+  - R2 Method 2 (booking_verification hourly cap): RequestOtpRequest validates purpose as `in:login,register`, so HTTP endpoint would 422. Test calls `RequestOtpAction::handle()` directly (action-level). This keeps P1 request validation unchanged and correctly exercises the limiter logic — behaviour identical to what P4 will use.
+  - R5: confirmed `otp_codes.purpose` is a plain `string` column — no migration required.
+- **Seams left for later:**
+  - `BookingCodeLinkE2ETest` — skipped, fulfilled in P4.R
+  - Real booking-code → guest linking built in P4.R (real Reservation model + `pending_verification`)
+- **New error_codes introduced:** `booking_link_unavailable`
+- **Naive Reviewer:** Not spawned — remediation phase with no new features; convention compliance verified by self-check.
+- **Stop-and-report summary:** P2.5 complete. booking_link branch neutralized (guarded no-op, rolls back transaction); OTP 5/hr cap now tested for both login and booking_verification purposes; RBAC super_admin coverage extended (assignPermissions + deactivate → 200); PURPOSE_BOOKING_VERIFICATION constant added. 55 tests passed, 1 skipped (BookingCodeLinkE2ETest, intentional), 167 assertions. migrate:fresh --seed green, no new migrations. API docs backfilled (backend/docs/API_GUIDE_WEB_DASHBOARD.md + API_GUIDE_MOBILE.md).
+- **Status:** awaiting go-ahead
+
+---
+
 ## Escalation log (planning consultations)
 Record here whenever coding escalated a decision to Opus 4.8, or a hard decision went to Fable.
 

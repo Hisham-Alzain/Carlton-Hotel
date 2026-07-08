@@ -64,4 +64,28 @@ class SuperAdminProtectedTest extends TestCase
              ->putJson("/api/staff/{$target->uuid}", ['name' => 'Updated'])
              ->assertStatus(200);
     }
+
+    public function test_super_admin_can_assign_permissions(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $token = $superAdmin->createToken('t')->plainTextToken;
+        $target = User::factory()->create(['type' => 'staff']);
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $this->withToken($token)
+             ->postJson("/api/staff/{$target->uuid}/permissions", ['grant' => ['cms.view']])
+             ->assertStatus(200);
+    }
+
+    public function test_super_admin_can_deactivate_staff(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $token = $superAdmin->createToken('t')->plainTextToken;
+        $target = User::factory()->create(['type' => 'staff']);
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $this->withToken($token)
+             ->patchJson("/api/staff/{$target->uuid}/deactivate")
+             ->assertStatus(200);
+    }
 }

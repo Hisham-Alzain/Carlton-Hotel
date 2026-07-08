@@ -1,6 +1,7 @@
 <?php
 namespace App\Actions\Auth;
 
+use App\Exceptions\BookingLinkUnavailableException;
 use App\Exceptions\OtpExpiredException;
 use App\Exceptions\OtpInvalidException;
 use App\Exceptions\OtpLockedException;
@@ -59,14 +60,14 @@ class VerifyOtpAction
                 $guest->markEmailVerified();
             }
 
-            // Handle booking_link purpose: link reservation
+            // P2.5.R1: booking_link is a guarded no-op until P4.R.
+            // Real booking-code -> guest linking is built in P4.R, where the real
+            // Reservation model + `pending_verification` state exist. Do NOT write
+            // guest_id against the P1 stub reservation (untested; semantics change under P4).
+            // Throwing inside the transaction intentionally rolls back consumed_at and
+            // guest create/verify for this attempt — guest must retry after P4 ships.
             if ($purpose === OtpCode::PURPOSE_BOOKING_LINK) {
-                \App\Models\Reservation::where('phone', $identifier)
-                    ->orWhere(function ($q) use ($guest) {
-                        $q->where('guest_id', null)->where('phone', $guest->phone);
-                    })
-                    ->whereNull('guest_id')
-                    ->update(['guest_id' => $guest->id]);
+                throw new BookingLinkUnavailableException(__('custom.errors.booking_link_unavailable'));
             }
 
             return $guest;

@@ -153,6 +153,41 @@ After finishing a module, add a section using the template below. Mark the done-
 
 ---
 
+### P2.5 — Remediation & flow alignment — PASS
+- **Date:** 2026-07-08
+- **Tests added:**
+  - `tests/Feature/Auth/OtpHourlyCapTest.php` (2 tests)
+  - `tests/Feature/Auth/BookingCodeLinkTest.php` — +1 method (`test_booking_link_verify_purpose_now_throws_unavailable`)
+  - `tests/Feature/Auth/BookingCodeLinkE2ETest.php` (1 test — skipped `@group p4`)
+  - `tests/Feature/Staff/SuperAdminProtectedTest.php` — +2 methods (`test_super_admin_can_assign_permissions`, `test_super_admin_can_deactivate_staff`)
+- **Result:** `php artisan test` → **55 passed, 0 failed, 1 skipped** | 167 assertions | ~3.7s
+- **Mandatory checks:**
+  - [x] happy-path endpoint tests — N/A (remediation phase; no new endpoints)
+  - [x] auth/permission-failure tests — booking_link branch now 422 booking_link_unavailable verified
+  - [x] validation-failure tests — N/A
+  - [x] unit tests for non-trivial Actions — OTP hourly cap exercised at action level for booking_verification purpose
+  - [ ] (P4 only) deterministic last-room concurrency test — N/A
+  - [ ] (P4 only) pricing-snapshot immutability test — N/A
+- **Coverage notes:**
+  - OTP 5/hr cap: 5 requests pass (minute gate cleared between each), 6th blocked by hour gate → 429 too_many_requests (login purpose, via HTTP)
+  - OTP 5/hr cap for booking_verification: tested at action level (HTTP layer intentionally rejects this purpose — P1 validation unchanged)
+  - booking_link branch: 422 booking_link_unavailable returned; OTP not consumed (transaction rolled back confirmed by assertNull(consumed_at))
+  - super_admin assignPermissions → 200; super_admin deactivate → 200 (R4 coverage only — no code change)
+  - PURPOSE_BOOKING_VERIFICATION constant added; otp_codes.purpose column is unconstrained string (confirmed, no migration)
+  - BookingCodeLinkE2ETest: 1 test, 1 skipped — intentional P4.R placeholder
+- **Known gaps / follow-ups:**
+  - BookingCodeLinkE2ETest skipped — fulfilled in P4.R when real Reservation model + pending_verification exist
+- **Done-condition (P2.5-DONE):** **MET**
+  - [x] booking_link branch is a guarded no-op with booking_link_unavailable; no silent writes to stub
+  - [x] OTP 5/hr cap tested and green (login + booking_verification purpose)
+  - [x] RBAC super_admin assignPermissions and deactivate assertions green
+  - [x] otp_codes.purpose ready for booking_verification (constant added, no migration)
+  - [x] Full php artisan test green (55/55 + 1 skipped); P0/P1/P2 suites still pass unchanged
+  - [x] LOG_REPORT.md records all tickets; R4 noted as coverage only
+  - [x] API docs backfilled: backend/docs/API_GUIDE_WEB_DASHBOARD.md + API_GUIDE_MOBILE.md
+
+---
+
 ## Global exit checks (fill at P12)
 - [ ] `migrate:fresh --seed` green from empty DB
 - [ ] full `php artisan test` green

@@ -1,5 +1,20 @@
 <?php
 
+use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
+use App\Http\Controllers\Admin\EventSpaceController as AdminEventSpaceController;
+use App\Http\Controllers\Admin\FacilityController as AdminFacilityController;
+use App\Http\Controllers\Admin\MediaController;
+use App\Http\Controllers\Admin\PageController as AdminPageController;
+use App\Http\Controllers\Admin\PromotionController as AdminPromotionController;
+use App\Http\Controllers\Admin\RoomController as AdminRoomController;
+use App\Http\Controllers\Admin\RoomTypeController as AdminRoomTypeController;
+use App\Http\Controllers\Api\DiningVenueController as ApiDiningVenueController;
+use App\Http\Controllers\Api\EventSpaceController as ApiEventSpaceController;
+use App\Http\Controllers\Api\FacilityController as ApiFacilityController;
+use App\Http\Controllers\Api\PageController as ApiPageController;
+use App\Http\Controllers\Api\PromotionController as ApiPromotionController;
+use App\Http\Controllers\Api\RoomController as ApiRoomController;
+use App\Http\Controllers\Api\RoomTypeController as ApiRoomTypeController;
 use App\Http\Controllers\Auth\GuestAuthController;
 use App\Http\Controllers\Auth\StaffAuthController;
 use App\Http\Controllers\Staff\PermissionController;
@@ -33,6 +48,93 @@ Route::prefix('auth')->group(function () {
         Route::post('/link-booking-code',[GuestAuthController::class, 'linkBookingCode']);
     });
 });
+
+// ──────────────────────────────────────────────────────────────────────
+// P3 — CMS: Public read endpoints (no auth, is_active only)
+// ──────────────────────────────────────────────────────────────────────
+Route::prefix('public')->group(function () {
+    Route::get('/room-types',             [ApiRoomTypeController::class,   'index']);
+    Route::get('/room-types/{roomType}',  [ApiRoomTypeController::class,   'show']);
+    Route::get('/rooms',                  [ApiRoomController::class,       'index']);
+    Route::get('/rooms/{room}',           [ApiRoomController::class,       'show']);
+    Route::get('/facilities',             [ApiFacilityController::class,   'index']);
+    Route::get('/facilities/{facility}',  [ApiFacilityController::class,   'show']);
+    Route::get('/dining-venues',              [ApiDiningVenueController::class, 'index']);
+    Route::get('/dining-venues/{diningVenue}',[ApiDiningVenueController::class, 'show']);
+    Route::get('/event-spaces',               [ApiEventSpaceController::class,  'index']);
+    Route::get('/event-spaces/{eventSpace}',  [ApiEventSpaceController::class,  'show']);
+    Route::get('/pages/{slug}',           [ApiPageController::class,       'show']);
+    Route::get('/promotions',             [ApiPromotionController::class,  'index']);
+    Route::get('/promotions/{promotion}', [ApiPromotionController::class,  'show']);
+});
+
+// ──────────────────────────────────────────────────────────────────────
+// P3 — CMS: Admin CRUD (cms.edit permission)
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware(['auth:users', 'permission:cms.edit'])->prefix('cms')->group(function () {
+    // Room types
+    Route::get   ('/room-types',                                  [AdminRoomTypeController::class, 'index']);
+    Route::post  ('/room-types',                                  [AdminRoomTypeController::class, 'store']);
+    Route::get   ('/room-types/{roomType}',                       [AdminRoomTypeController::class, 'show']);
+    Route::put   ('/room-types/{roomType}',                       [AdminRoomTypeController::class, 'update']);
+    Route::delete('/room-types/{roomType}',                       [AdminRoomTypeController::class, 'destroy']);
+    Route::post  ('/room-types/{roomType}/images',                [MediaController::class, 'storeRoomType']);
+    Route::delete('/room-types/{roomType}/images/{media}',        [MediaController::class, 'destroyRoomType']);
+
+    // Rooms
+    Route::get   ('/rooms',                                       [AdminRoomController::class, 'index']);
+    Route::post  ('/rooms',                                       [AdminRoomController::class, 'store']);
+    Route::get   ('/rooms/{room}',                                [AdminRoomController::class, 'show']);
+    Route::put   ('/rooms/{room}',                                [AdminRoomController::class, 'update']);
+    Route::delete('/rooms/{room}',                                [AdminRoomController::class, 'destroy']);
+    Route::post  ('/rooms/{room}/images',                         [MediaController::class, 'storeRoom']);
+    Route::delete('/rooms/{room}/images/{media}',                 [MediaController::class, 'destroyRoom']);
+
+    // Facilities
+    Route::get   ('/facilities',                                  [AdminFacilityController::class, 'index']);
+    Route::post  ('/facilities',                                  [AdminFacilityController::class, 'store']);
+    Route::get   ('/facilities/{facility}',                       [AdminFacilityController::class, 'show']);
+    Route::put   ('/facilities/{facility}',                       [AdminFacilityController::class, 'update']);
+    Route::delete('/facilities/{facility}',                       [AdminFacilityController::class, 'destroy']);
+    Route::post  ('/facilities/{facility}/images',                [MediaController::class, 'storeFacility']);
+    Route::delete('/facilities/{facility}/images/{media}',        [MediaController::class, 'destroyFacility']);
+
+    // Dining venues
+    Route::get   ('/dining-venues',                               [AdminDiningVenueController::class, 'index']);
+    Route::post  ('/dining-venues',                               [AdminDiningVenueController::class, 'store']);
+    Route::get   ('/dining-venues/{diningVenue}',                 [AdminDiningVenueController::class, 'show']);
+    Route::put   ('/dining-venues/{diningVenue}',                 [AdminDiningVenueController::class, 'update']);
+    Route::delete('/dining-venues/{diningVenue}',                 [AdminDiningVenueController::class, 'destroy']);
+    Route::post  ('/dining-venues/{diningVenue}/images',          [MediaController::class, 'storeDiningVenue']);
+    Route::delete('/dining-venues/{diningVenue}/images/{media}',  [MediaController::class, 'destroyDiningVenue']);
+
+    // Event spaces
+    Route::get   ('/event-spaces',                                [AdminEventSpaceController::class, 'index']);
+    Route::post  ('/event-spaces',                                [AdminEventSpaceController::class, 'store']);
+    Route::get   ('/event-spaces/{eventSpace}',                   [AdminEventSpaceController::class, 'show']);
+    Route::put   ('/event-spaces/{eventSpace}',                   [AdminEventSpaceController::class, 'update']);
+    Route::delete('/event-spaces/{eventSpace}',                   [AdminEventSpaceController::class, 'destroy']);
+    Route::post  ('/event-spaces/{eventSpace}/images',            [MediaController::class, 'storeEventSpace']);
+    Route::delete('/event-spaces/{eventSpace}/images/{media}',    [MediaController::class, 'destroyEventSpace']);
+
+    // Pages
+    Route::get   ('/pages',                                       [AdminPageController::class, 'index']);
+    Route::post  ('/pages',                                       [AdminPageController::class, 'store']);
+    Route::get   ('/pages/{page}',                                [AdminPageController::class, 'show']);
+    Route::put   ('/pages/{page}',                                [AdminPageController::class, 'update']);
+    Route::delete('/pages/{page}',                                [AdminPageController::class, 'destroy']);
+
+    // Promotions
+    Route::get   ('/promotions',                                  [AdminPromotionController::class, 'index']);
+    Route::post  ('/promotions',                                  [AdminPromotionController::class, 'store']);
+    Route::get   ('/promotions/{promotion}',                      [AdminPromotionController::class, 'show']);
+    Route::put   ('/promotions/{promotion}',                      [AdminPromotionController::class, 'update']);
+    Route::delete('/promotions/{promotion}',                      [AdminPromotionController::class, 'destroy']);
+    Route::post  ('/promotions/{promotion}/images',               [MediaController::class, 'storePromotion']);
+    Route::delete('/promotions/{promotion}/images/{media}',       [MediaController::class, 'destroyPromotion']);
+});
+
+// ──────────────────────────────────────────────────────────────────────
 
 Route::middleware('auth:users')->group(function () {
     // Staff management

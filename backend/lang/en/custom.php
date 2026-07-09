@@ -9,6 +9,8 @@ return [
         'staff_updated'       => 'Staff account updated.',
         'staff_deactivated'   => 'Staff account deactivated.',
         'permissions_updated' => 'Permissions updated.',
+        'image_uploaded'      => 'Image uploaded successfully.',
+        'image_deleted'       => 'Image deleted successfully.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',

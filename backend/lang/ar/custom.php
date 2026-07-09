@@ -9,6 +9,8 @@ return [
         'staff_updated'       => 'تم تحديث حساب الموظف.',
         'staff_deactivated'   => 'تم إلغاء تفعيل حساب الموظف.',
         'permissions_updated' => 'تم تحديث الصلاحيات.',
+        'image_uploaded'      => 'تم رفع الصورة بنجاح.',
+        'image_deleted'       => 'تم حذف الصورة بنجاح.',
     ],
     'errors'     => [
         'server_error'           => 'حدث خطأ ما.',

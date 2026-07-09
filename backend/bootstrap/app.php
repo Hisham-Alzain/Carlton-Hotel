@@ -24,6 +24,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->appendToGroup('api', \App\Http\Middleware\AttachRequestId::class);
+        $middleware->appendToGroup('api', \App\Http\Middleware\SetLocale::class);
+        $middleware->alias([
+            'permission'          => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role'                => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'role_or_permission'  => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Throwable $e, Request $request): ?JsonResponse {
@@ -60,7 +66,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     'request_id' => $requestId,
                 ], 401);
             }
-            if ($e instanceof AuthorizationException || $e instanceof AccessDeniedHttpException) {
+            if ($e instanceof AuthorizationException || $e instanceof AccessDeniedHttpException || $e instanceof \Spatie\Permission\Exceptions\UnauthorizedException) {
                 return response()->json([
                     'success'    => false,
                     'message'    => __('custom.errors.forbidden'),

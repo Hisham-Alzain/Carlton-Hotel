@@ -27,6 +27,22 @@ abstract class BaseController extends Controller
         ], $code);
     }
 
+    protected function paginatedSuccess(
+        LengthAwarePaginator $paginator,
+        string $resourceClass,
+        Request $request
+    ): JsonResponse {
+        return $this->success([
+            'items' => $resourceClass::collection($paginator->getCollection()),
+            'meta'  => [
+                'current_page' => $paginator->currentPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+                'last_page'    => $paginator->lastPage(),
+            ],
+        ], 'custom.messages.success', 200, $request);
+    }
+
     protected function respondFromService(
         array $result,
         string $messageKey = 'custom.messages.success',

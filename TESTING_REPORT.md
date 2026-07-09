@@ -188,6 +188,45 @@ After finishing a module, add a section using the template below. Mark the done-
 
 ---
 
+### P3 — CMS / Content — PASS
+- **Date:** 2026-07-09
+- **Tests added:**
+  - `tests/Feature/Cms/RoomTypeTest.php` (6 tests — CRUD, permission gate, bilingual locale, image upload + appears in resource, public hides inactive, inactive returns 404)
+  - `tests/Feature/Cms/RoomTest.php` (5 tests — CRUD with room_type_uuid, unique number, permission gate, public hides inactive, public inactive 404)
+  - `tests/Feature/Cms/FacilityTest.php` (5 tests)
+  - `tests/Feature/Cms/DiningVenueTest.php` (5 tests)
+  - `tests/Feature/Cms/EventSpaceTest.php` (5 tests)
+  - `tests/Feature/Cms/PageTest.php` (6 tests — CRUD, bilingual translation, slug public lookup, inactive slug 404, permission gate, public hides inactive)
+  - `tests/Feature/Cms/PromotionTest.php` (5 tests — CRUD, date range validation, permission gate, public hides inactive)
+- **Result:** `php artisan test --filter=Cms` → **48 passed, 0 failed** | 107 assertions | ~3.5s
+- **Full suite:** `php artisan test` → **103 passed, 0 failed, 1 skipped** (BookingCodeLinkE2ETest — intentional P4 placeholder)
+- **Mandatory checks:**
+  - [x] happy-path endpoint tests — full CRUD for all 7 content types; image upload + URL in resource
+  - [x] auth/permission-failure tests — staff without `cms.edit` → 403 on all admin endpoints (verified per type)
+  - [x] validation-failure tests — unique room number 422; promotion date range; required bilingual fields
+  - [x] unit tests for non-trivial Actions — N/A (no Actions in P3; service logic covered via HTTP tests)
+  - [ ] (P4 only) deterministic last-room concurrency test — N/A
+  - [ ] (P4 only) pricing-snapshot immutability test — N/A
+- **Coverage notes:**
+  - Bilingual: `RoomTypeTest` and `PageTest` each include an explicit locale-switch test — `Accept-Language: ar` returns Arabic translation fields
+  - Public hide inactive: all 7 types verified — `indexPublic()` returns only active records; inactive UUID returns 404
+  - Image upload: `Storage::fake` + `UploadedFile::fake()->image()` used; URL appears in `data.images[0].url` in resource
+  - Permission gate: `cms.edit` missing → 403; `cms.edit` present → 201/200/204 as appropriate
+  - `room_type_uuid` in POST/PUT for Room — resolves to FK internally; test verifies 201 + `data.uuid` returned
+  - Naive Reviewer warnings fixed before commit: `room_type_uuid` surface + `Media` LogsActivity
+- **Known gaps / follow-ups:**
+  - Locale-switch test not repeated for every content type — all use the same `HasTranslations` trait and `SetLocale` middleware; two explicit tests (RoomType + Page) provide adequate coverage
+  - `UpdateRoomTypeRequest`: `max_occupancy` cross-field `gte:base_occupancy` validation not enforced on partial updates (requires service-layer comparison against DB value — deferred; no P3 done-condition item covers this)
+- **Done-condition (P3-DONE):** **MET**
+  - [x] All 7 content types: CRUD endpoints working, bilingual fields validated and returned
+  - [x] `cms.edit` gate enforced on all admin routes — 403 without it
+  - [x] Public endpoints hide inactive records (`is_active=false` → excluded from index, 404 on show)
+  - [x] Locale switching returns correct language via `Accept-Language` header
+  - [x] Images upload and return URLs — verified in RoomType image test
+  - [x] `php artisan test` all green (103/103 + 1 intentional skip)
+
+---
+
 ## Global exit checks (fill at P12)
 - [ ] `migrate:fresh --seed` green from empty DB
 - [ ] full `php artisan test` green

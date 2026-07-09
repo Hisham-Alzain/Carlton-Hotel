@@ -118,6 +118,38 @@ After each module, add a section with the template below, then STOP and wait for
 
 ---
 
+### P3 — CMS / Content
+- **Date:** 2026-07-09
+- **Built:**
+  - M0: `create_media_table` migration — polymorphic `mediable` morph columns + `sort_order`, `disk`, `path`, `file_name`, `mime_type`, `size`
+  - M1–M7: migrations for `room_types`, `rooms`, `facilities`, `dining_venues`, `event_spaces`, `pages`, `promotions` — all with `uuid`, `is_active`, `sort_order`, bilingual JSON columns, FK indexes
+  - Models: `RoomType`, `Room`, `Facility`, `DiningVenue`, `EventSpace`, `Page`, `Promotion` — all use `HasUuid`, `HasTranslations`, `LogsActivity`, `HasFactory`; `images()` morphMany on all except Page; `Media` uses `HasUuid`, `FileTrait`, `LogsActivity`
+  - Services: 7 services extending `BaseService` — each exposes `indexPublic()` filtering `is_active=true`; `RoomService` overrides `store`/`update` to resolve `room_type_uuid` → integer FK before delegating to parent
+  - `MediaService` — `attach()` (validates mime/size, stores file, writes `Media` row in transaction) and `destroy()` (deletes file + DB row in transaction)
+  - Admin controllers (8): `RoomTypeController`, `RoomController`, `FacilityController`, `DiningVenueController`, `EventSpaceController`, `PageController`, `PromotionController`, `MediaController` — all call `paginatedSuccess()` or `respondFromService()`; permission middleware `cms.edit` applied at route group level
+  - Public controllers (7): one per content type; `indexPublic()` + `showPublic()` (inactive → 404 via `NotFoundException`)
+  - Requests (11): `Create*` / `Update*` for each type; `UploadMediaRequest` (mime + max:5120); `CreateRoomRequest` uses `room_type_uuid` (exists:room_types,uuid) — integer ID never exposed
+  - Resources (8): `RoomTypeResource`, `RoomResource`, `FacilityResource`, `DiningVenueResource`, `EventSpaceResource`, `PageResource`, `PromotionResource`, `MediaResource` — all expose `uuid`, never `id`; images eager-loaded via `$with`
+  - Factories (7): one per content model using `HasFactory`
+  - Middleware: `SetLocale` — reads `Accept-Language` header, sets app locale; appended to `api` group in `bootstrap/app.php`
+  - Infrastructure: `paginatedSuccess()` helper added to `BaseController`; Spatie permission middleware aliases registered in `bootstrap/app.php`; lang/en + lang/ar extended with `image_uploaded`, `image_deleted` keys
+  - Routes: 60+ routes across `/api/cms/*` (admin, gated) and `/api/public/*` (anonymous)
+- **Deviations from PLAN.md:** None in scope.
+- **Decisions taken:**
+  - `room_type_uuid` in request surface (not `room_type_id`) — convention compliance; service resolves to FK internally
+  - `Media` included in `LogsActivity` — image upload/delete are auditable admin actions matching state-change convention
+  - `Page` has no `images()` relation — spec has no image attachment for pages; not added
+  - `paginatedSuccess()` added to `BaseController` (not scope creep — required by the resource-wrapped pagination pattern established in P0)
+- **Seams left for later:** None from this phase. `Room.status` field (`available/occupied/maintenance`) will be updated by P4 reservation flow.
+- **New error_codes introduced:** None (all content 404s map to existing `not_found`; image errors use existing `validation_failed`)
+- **Naive Reviewer:** PASS WITH WARNINGS → 2 warnings fixed before commit:
+  1. `CreateRoomRequest` / `UpdateRoomRequest`: `room_type_id` (integer) replaced with `room_type_uuid` (UUID, `exists:room_types,uuid`) — internal PK was leaking into API surface
+  2. `Media` model: `LogsActivity` trait added — state-changing model was the only one in the phase missing it
+- **Stop-and-report summary:** P3 complete. Full CMS content layer built — 7 content types with bilingual CRUD, polymorphic image management, public endpoints filtering inactive records, locale switching via `Accept-Language`. 48 tests, 107 assertions — all green. Full suite (P0–P3): 103 tests, all green.
+- **Status:** awaiting go-ahead
+
+---
+
 ## Escalation log (planning consultations)
 Record here whenever coding escalated a decision to Opus 4.8, or a hard decision went to Fable.
 

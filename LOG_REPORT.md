@@ -186,3 +186,55 @@ Record here whenever coding escalated a decision to Opus 4.8, or a hard decision
 - **New error_codes introduced:** `not_found`, `unauthorized`, `forbidden`, `validation_failed`, `too_many_requests`, `external_service_error`, `server_error`
 - **Stop-and-report summary:** P0 complete. Laravel 12 app scaffolded with full base layer — exception hierarchy, envelope handler, request_id middleware, BaseService/Filter/Resource/Controller/Request, 4 traits, two Sanctum guards, RBAC seeder (16 permissions + 5 role presets), SQLite local DB, en+ar lang files, health + probe routes. 21 tests, 58 assertions — all green. No invented scope.
 - **Status:** awaiting go-ahead
+
+---
+
+## P4 — BMS Booking Management System
+
+**Date:** 2026-07-10
+**Commit:** 25d69b8
+
+### Built
+- **Migrations (5):** `rate_plans`, `pricing_rules`, `promo_codes`, `reservations` (full schema replacing P1 stub — runs after promo_codes so FK is valid), `reservation_rooms`
+- **Exceptions (5):** `NoAvailabilityException` (409), `RoomAlreadyAssignedException` (409), `InvalidPromoException` (422), `ReservationStateException` (422), `HoldExpiredException` (422)
+- **Contracts/Adapters:** `ChannelAdapterInterface`, `DirectAdapter` — channel-blind seam for future OTA integration
+- **Models (5):** `RatePlan`, `PricingRule`, `PromoCode`, `ReservationRoom`, `Reservation` (full replacement of P1 stub). `Guest` and `Room` extended with P4 relations.
+- **Actions (7):** `CheckAvailabilityAction` (uses `whereDate()` to avoid H:i:s suffix collision on adjacent dates), `QuoteReservationAction`, `CreateReservationAction` (`lockForUpdate` inside `DB::transaction`), `ConfirmReservationAction`, `CancelReservationAction`, `AssignRoomAction`, `ReleaseExpiredHoldsAction`
+- **Services (3):** `AvailabilityService`, `PricingService`, `ReservationService` (two entry paths: authenticated one-step; public two-step OTP flow)
+- **Requests (6):** CheckAvailability, Quote, StoreReservation, StoreGuestReservation, VerifyGuestBooking, AssignRoom
+- **Resources (2):** `ReservationRoomResource`, `ReservationResource`
+- **Controllers (3):** `Api/ReservationController` (one-step + two-step public), `Api/AvailabilityController` (check + quote), `Admin/ReservationController` (index/show/confirm/cancel/assign-room)
+- **Console:** `ReleaseExpiredHolds` command scheduled `everyFiveMinutes` in `console.php`
+- **Factories (5):** Reservation (states: pendingVerification, confirmed, cancelled, expiredHold), ReservationRoom, RatePlan, PricingRule, PromoCode (states: expired, exhausted)
+- **Tests (5 suites):** AvailabilityTest, PricingTest, ConcurrencyTest, GuestBookingTest, ReservationTest
+- **P4.R:** `VerifyOtpAction` booking_link branch now operational — links reservation to guest with identifier second-factor re-check at OTP redemption. `BookingCodeLinkE2ETest` un-skipped and green.
+
+### Deviations / Decisions
+1. **Migration ordering:** P1 stub reservation table exists at `2026_07_08`. Recreated at `2026_07_10_100003` (drops + rebuilds) so FK to `promo_codes` is valid. `down()` restores the P1 stub schema.
+2. **`whereDate()` in availability query:** Eloquent's `'date'` cast stores via `fromDateTime()` using the model's `$dateFormat = 'Y-m-d H:i:s'`, so `check_out` is written as `'2027-01-03 00:00:00'`. SQLite string comparison `'2027-01-03 00:00:00' > '2027-01-03'` evaluates TRUE, making adjacent bookings falsely collide. Fixed by using `whereDate()` which strips the time component.
+3. **`reservation_rooms.price_usd` stores pre-promo subtotal:** Changed from `total_usd` to `subtotal_usd` per Naive Reviewer — promo discount lives only at `reservations.total_usd` to avoid double-applied discount and to support future per-room display.
+4. **`assign-room` under `reservations.create` permission:** Naive Reviewer flagged that assigning a room also transitions status to `checked_in` (state mutation), so it must not live under the read-only `reservations.view` guard.
+5. **`VerifyOtpAction` booking_link second-factor re-check:** Naive Reviewer flagged that `verifyOtp` + `purpose=booking_link` + guessed booking code could link any unlinked reservation. Added `WHERE phone=$identifier OR guest.phone/email=$identifier` to the linking query.
+6. **`verifyGuestBooking` identity guard:** Added check in `Api/ReservationController` that the OTP identifier matches the reservation's linked guest contact, blocking session-swap attacks.
+7. **Booking code regex `{6}` → `{8}`:** `LinkBookingCodeRequest` had `{6}` but `CreateReservationAction` generates 8-char codes. Fixed to `{8}`; updated all test booking codes to 8 valid Crockford chars.
+8. **`verifyGuestBooking` in `DB::transaction`:** Wrapped status update + token issuance in a single transaction so a crash between the two doesn't leave the reservation activated with no token.
+
+### Naive Reviewer Result: PASS (after remediation)
+Original result: **FAIL** (4 critical, 5 warnings). All critical issues fixed before commit.
+
+**Critical fixed:**
+- `reservation_rooms.price_usd` was storing total_usd (post-promo) — changed to subtotal_usd
+- `assign-room` route under read permission `reservations.view` — moved to `reservations.create`
+- `VerifyOtpAction` booking_link lacked second-factor at OTP redemption — fixed
+- `verifyGuestBooking` allowed any OTP identifier to activate any pending_verification reservation — identity guard added
+
+**Warnings fixed:**
+- `verifyGuestBooking` update not in `DB::transaction` — wrapped
+- Missing `messages.otp_sent` lang key in en/ar — added
+- Booking code regex `{6}` vs actual 8-char generated codes — regex updated to `{8}`
+
+### Stop-and-Report
+- **Tests:** 133 passed, 0 failed, 0 skipped
+- **Assertions:** 371
+- **Suites:** P1 Auth (24), P2 RBAC (14), P2.5 remediation (7), P3 CMS (48), P4 BMS (34 new: Availability 6, Pricing 5, Concurrency 4, GuestBooking 5, Reservation 6, BookingCodeLinkE2E 3)
+- All migrations run clean with `migrate:fresh --seed`

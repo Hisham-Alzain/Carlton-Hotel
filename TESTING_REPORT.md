@@ -233,3 +233,49 @@ After finishing a module, add a section using the template below. Mark the done-
 - [ ] BMS concurrency test green and deterministic
 - [ ] every phase done-condition signed off
 - [ ] error_code inventory exported
+
+---
+
+## P4 — BMS Booking Management System
+
+**Date:** 2026-07-10
+**Commit:** 25d69b8
+**Total:** 34 new tests / 371 assertions (full suite: 133 tests / 371 assertions)
+
+### Test Files
+
+| File | Tests | Assertions | Coverage |
+|------|-------|------------|----------|
+| `tests/Feature/Booking/AvailabilityTest.php` | 6 | ~18 | Overlap query (adjacent, interior, same dates), soft hold counts live/not-expired, cancelled excluded |
+| `tests/Feature/Booking/PricingTest.php` | 5 | ~15 | Base rate, seasonal rule +20%, promo -10%, invalid promo 422, snapshot immutability |
+| `tests/Feature/Booking/ConcurrencyTest.php` | 4 | ~12 | Last-room sequential: exactly 1 succeeds; soft hold blocks; expired hold + ReleaseExpiredHoldsAction frees room; 2 rooms → 2 succeed |
+| `tests/Feature/Booking/GuestBookingTest.php` | 5 | ~20 | Authenticated one-step 201; body contact fields ignored; two-step OTP flow end-to-end; hold-expired 422; guest views own reservations |
+| `tests/Feature/Booking/ReservationTest.php` | 6 | ~20 | Admin index/show/confirm/cancel/assign-room with correct permissions; 403 without permission; confirm-of-confirmed returns 422 reservation_state |
+| `tests/Feature/Auth/BookingCodeLinkE2ETest.php` | 3 | ~20 | OTA reservation links guest end-to-end; app-created reservation device-link; wrong second factor → 404, no OTP sent |
+
+### Done-Condition Checklist
+
+- [x] Overlap query correct — adjacent dates don't block (`test_adjacent_dates_do_not_block`)
+- [x] Soft hold counts as occupied while live (`test_live_soft_hold_counts_as_occupied`)
+- [x] Expired hold does not block (`test_expired_soft_hold_does_not_block`)
+- [x] Cancelled reservation does not block (`test_cancelled_reservation_does_not_block`)
+- [x] Pricing: base rate (`test_base_price_returned_when_no_rules`)
+- [x] Pricing: +seasonal rule (`test_seasonal_pricing_rule_applied`)
+- [x] Pricing: promo discount (`test_promo_code_reduces_total`)
+- [x] Pricing: invalid promo 422 (`test_invalid_promo_returns_422`)
+- [x] Price snapshot immutability (`test_price_snapshot_unchanged_after_base_price_update`)
+- [x] CreateReservationAction uses lockForUpdate inside DB::transaction (code review + ConcurrencyTest)
+- [x] Last room: exactly 1 succeeds (`test_only_one_reservation_succeeds_when_last_room_taken`)
+- [x] Soft hold blocks last room (`test_soft_hold_blocks_last_room_while_live`)
+- [x] Hold auto-releases → room available (`test_hold_auto_releases_and_room_becomes_available`)
+- [x] Authenticated guest one-step 201 + booking_code (`test_authenticated_guest_can_book_in_one_step`)
+- [x] Auth path ignores body contact fields (`test_authenticated_path_ignores_body_contact_fields`)
+- [x] Two-step: pending_verification → pending + token (`test_guest_booking_two_step_flow`)
+- [x] Hold-expired verify returns 422 hold_expired (`test_verify_fails_if_hold_expired`)
+- [x] Admin index/show/confirm/cancel — permission-gated
+- [x] Assign-room under reservations.create permission (not view)
+- [x] Confirm of already-confirmed → 422 reservation_state (`test_confirm_of_already_confirmed_fails`)
+- [x] P4.R: OTA reservation links by booking_code + second factor + OTP (`test_ota_reservation_links_guest_end_to_end`)
+- [x] P4.R: App-created reservation device-link (`test_app_created_reservation_can_also_be_linked`)
+- [x] booking:release-holds scheduled everyFiveMinutes (console.php)
+- [x] GuestResource returns has_active_reservation field

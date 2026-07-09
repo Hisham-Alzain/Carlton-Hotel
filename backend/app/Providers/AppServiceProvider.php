@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Adapters\DirectAdapter;
+use App\Contracts\ChannelAdapterInterface;
 use App\Models\User;
 use App\Policies\StaffPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -14,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(ChannelAdapterInterface::class, DirectAdapter::class);
     }
 
     /**

@@ -12,7 +12,7 @@ class LinkBookingCodeAction
     public function handle(string $bookingCode, ?string $lastName, ?string $phone): array
     {
         // Second factor MUST be in the WHERE — code alone is never sufficient (anti-enumeration)
-        $query = Reservation::where('booking_code', $bookingCode);
+        $query = Reservation::with('guest')->where('booking_code', $bookingCode);
 
         if ($lastName && $phone) {
             $query->where(function ($q) use ($lastName, $phone) {
@@ -31,9 +31,12 @@ class LinkBookingCodeAction
             throw new NotFoundException(__('custom.errors.booking_link_failed'));
         }
 
-        // Issue OTP to the reservation's contact
-        $identifier = $reservation->phone ?? throw new NotFoundException(__('custom.errors.booking_link_failed'));
-        $channel    = OtpCode::CHANNEL_SMS;
+        // Issue OTP to the reservation's contact — prefer direct fields, fall back to guest
+        $identifier = $reservation->phone
+            ?? $reservation->guest?->email
+            ?? $reservation->guest?->phone
+            ?? throw new NotFoundException(__('custom.errors.booking_link_failed'));
+        $channel = str_starts_with($identifier, '+') ? OtpCode::CHANNEL_SMS : OtpCode::CHANNEL_EMAIL;
 
         $this->requestOtp->handle($identifier, $channel, OtpCode::PURPOSE_BOOKING_LINK);
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
+use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
 use App\Http\Controllers\Admin\EventSpaceController as AdminEventSpaceController;
 use App\Http\Controllers\Admin\FacilityController as AdminFacilityController;
 use App\Http\Controllers\Admin\MediaController;
@@ -8,7 +9,9 @@ use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\PromotionController as AdminPromotionController;
 use App\Http\Controllers\Admin\RoomController as AdminRoomController;
 use App\Http\Controllers\Admin\RoomTypeController as AdminRoomTypeController;
+use App\Http\Controllers\Api\AvailabilityController;
 use App\Http\Controllers\Api\DiningVenueController as ApiDiningVenueController;
+use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\EventSpaceController as ApiEventSpaceController;
 use App\Http\Controllers\Api\FacilityController as ApiFacilityController;
 use App\Http\Controllers\Api\PageController as ApiPageController;
@@ -66,6 +69,10 @@ Route::prefix('public')->group(function () {
     Route::get('/pages/{slug}',           [ApiPageController::class,       'show']);
     Route::get('/promotions',             [ApiPromotionController::class,  'index']);
     Route::get('/promotions/{promotion}', [ApiPromotionController::class,  'show']);
+
+    // P4 — Availability & pricing (public)
+    Route::get('/availability', [AvailabilityController::class, 'check']);
+    Route::get('/quote',        [AvailabilityController::class, 'quote']);
 });
 
 // ──────────────────────────────────────────────────────────────────────
@@ -132,9 +139,42 @@ Route::middleware(['auth:users', 'permission:cms.edit'])->prefix('cms')->group(f
     Route::delete('/promotions/{promotion}',                      [AdminPromotionController::class, 'destroy']);
     Route::post  ('/promotions/{promotion}/images',               [MediaController::class, 'storePromotion']);
     Route::delete('/promotions/{promotion}/images/{media}',       [MediaController::class, 'destroyPromotion']);
+
 });
 
 // ──────────────────────────────────────────────────────────────────────
+// P4 — Booking: Guest-facing reservation endpoints
+// ──────────────────────────────────────────────────────────────────────
+
+// Public (no auth) — two-step guest booking
+Route::post('/reservations/guest',        [ReservationController::class, 'storeAsGuest']);
+Route::post('/reservations/guest/verify', [ReservationController::class, 'verifyGuestBooking']);
+
+// Authenticated guest — one-step booking + self-service
+Route::middleware('auth:guests')->prefix('reservations')->group(function () {
+    Route::post  ('/',               [ReservationController::class, 'store']);
+    Route::get   ('/',               [ReservationController::class, 'index']);
+    Route::get   ('/{reservation}',  [ReservationController::class, 'show']);
+    Route::delete('/{reservation}',  [ReservationController::class, 'cancel']);
+});
+
+// ──────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────
+// P4 — Reservations: Admin management (per-action permissions)
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware('auth:users')->prefix('cms/reservations')->group(function () {
+    Route::middleware('permission:reservations.view')->group(function () {
+        Route::get   ('/',              [AdminReservationController::class, 'index']);
+        Route::get   ('/{reservation}', [AdminReservationController::class, 'show']);
+    });
+    Route::middleware('permission:reservations.create')->group(function () {
+        Route::post  ('/{reservation}/confirm',     [AdminReservationController::class, 'confirm']);
+        Route::post  ('/{reservation}/assign-room', [AdminReservationController::class, 'assignRoom']);
+    });
+    Route::middleware('permission:reservations.cancel')->group(function () {
+        Route::delete('/{reservation}',             [AdminReservationController::class, 'cancel']);
+    });
+});
 
 Route::middleware('auth:users')->group(function () {
     // Staff management

@@ -17,7 +17,18 @@ class GuestResource extends BaseResource
             'phone_verified' => (bool) $this->phone_verified_at,
             'email'          => $this->email,
             'email_verified' => (bool) $this->email_verified_at,
-            'preferred_locale' => $this->preferred_locale,
+            'preferred_locale'        => $this->preferred_locale,
+            'has_active_reservation'  => $this->whenLoaded('activeReservations', fn () => $this->activeReservations->isNotEmpty(), false),
+            'active_reservation'      => $this->when(
+                $this->relationLoaded('activeReservations') && $this->activeReservations->isNotEmpty(),
+                fn () => [
+                    'uuid'         => $this->activeReservations->first()->uuid,
+                    'booking_code' => $this->activeReservations->first()->booking_code,
+                    'status'       => $this->activeReservations->first()->status,
+                    'check_in'     => $this->activeReservations->first()->check_in,
+                    'check_out'    => $this->activeReservations->first()->check_out,
+                ]
+            ),
         ];
     }
 }

@@ -23,7 +23,7 @@ class LinkBookingCodeRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'booking_code' => ['required', 'string', 'regex:/^CARL-[0-9A-HJ-NP-TV-Z]{6}$/'],
+            'booking_code' => ['required', 'string', 'regex:/^CARL-[0-9A-HJ-NP-TV-Z]{8}$/'],
             'last_name'    => 'nullable|string',
             'phone'        => 'nullable|string',
         ];

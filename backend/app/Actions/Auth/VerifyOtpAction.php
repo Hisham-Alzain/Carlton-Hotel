@@ -1,12 +1,12 @@
 <?php
 namespace App\Actions\Auth;
 
-use App\Exceptions\BookingLinkUnavailableException;
 use App\Exceptions\OtpExpiredException;
 use App\Exceptions\OtpInvalidException;
 use App\Exceptions\OtpLockedException;
 use App\Models\Guest;
 use App\Models\OtpCode;
+use App\Models\Reservation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -14,7 +14,7 @@ class VerifyOtpAction
 {
     private const MAX_ATTEMPTS = 5;
 
-    public function handle(string $identifier, string $code, string $purpose): array
+    public function handle(string $identifier, string $code, string $purpose, ?string $bookingCode = null): array
     {
         $otp = OtpCode::forIdentifier($identifier, $purpose)
             ->orderByDesc('id')
@@ -39,7 +39,7 @@ class VerifyOtpAction
         // Code is valid — consume + resolve guest
         $isPhone = str_starts_with($identifier, '+');
 
-        $guest = DB::transaction(function () use ($otp, $identifier, $purpose, $isPhone) {
+        $guest = DB::transaction(function () use ($otp, $identifier, $purpose, $isPhone, $bookingCode) {
             $otp->update(['consumed_at' => now()]);
 
             $guest = $isPhone
@@ -60,14 +60,15 @@ class VerifyOtpAction
                 $guest->markEmailVerified();
             }
 
-            // P2.5.R1: booking_link is a guarded no-op until P4.R.
-            // Real booking-code -> guest linking is built in P4.R, where the real
-            // Reservation model + `pending_verification` state exist. Do NOT write
-            // guest_id against the P1 stub reservation (untested; semantics change under P4).
-            // Throwing inside the transaction intentionally rolls back consumed_at and
-            // guest create/verify for this attempt — guest must retry after P4 ships.
-            if ($purpose === OtpCode::PURPOSE_BOOKING_LINK) {
-                throw new BookingLinkUnavailableException(__('custom.errors.booking_link_unavailable'));
+            if ($bookingCode && $purpose === OtpCode::PURPOSE_BOOKING_LINK) {
+                // Second factor re-checked at redemption: identifier must match reservation's contact
+                Reservation::where('booking_code', $bookingCode)
+                    ->whereNull('guest_id')
+                    ->where(function ($q) use ($identifier) {
+                        $q->where('phone', $identifier)
+                          ->orWhereHas('guest', fn ($q) => $q->where('phone', $identifier)->orWhere('email', $identifier));
+                    })
+                    ->update(['guest_id' => $guest->id]);
             }
 
             return $guest;

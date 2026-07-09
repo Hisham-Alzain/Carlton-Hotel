@@ -31,6 +31,7 @@ class GuestAuthController extends BaseController
             $identifier,
             $request->validated('code'),
             $request->validated('purpose'),
+            $request->validated('booking_code'),
         );
         return $this->success([
             'guest' => new GuestResource($result['data']['guest']),

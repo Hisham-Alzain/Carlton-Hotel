@@ -18,9 +18,9 @@ class AuthGuestService
         return $this->requestOtp->handle($identifier, $channel, $purpose);
     }
 
-    public function verifyOtp(string $identifier, string $code, string $purpose): array
+    public function verifyOtp(string $identifier, string $code, string $purpose, ?string $bookingCode = null): array
     {
-        return $this->verifyOtp->handle($identifier, $code, $purpose);
+        return $this->verifyOtp->handle($identifier, $code, $purpose, $bookingCode);
     }
 
     public function linkBookingCode(string $code, ?string $lastName, ?string $phone): array

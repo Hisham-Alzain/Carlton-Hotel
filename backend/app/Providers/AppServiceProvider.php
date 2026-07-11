@@ -5,7 +5,10 @@ namespace App\Providers;
 use App\Adapters\DirectAdapter;
 use App\Contracts\ChannelAdapterInterface;
 use App\Contracts\PaymentGatewayInterface;
+use App\Events\InquirySubmitted;
+use App\Listeners\NotifyDepartmentOnInquiry;
 use App\Payments\ManualDriver;
+use Illuminate\Support\Facades\Event;
 use App\Models\User;
 use App\Policies\StaffPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -27,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(InquirySubmitted::class, NotifyDepartmentOnInquiry::class);
         Gate::before(fn ($user) => $user instanceof User && $user->isSuperAdmin() ? true : null);
         Gate::policy(User::class, StaffPolicy::class);
     }

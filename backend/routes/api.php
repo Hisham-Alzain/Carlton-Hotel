@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
+use App\Http\Controllers\Admin\EventInquiryController as AdminEventInquiryController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Api\EventInquiryController as ApiEventInquiryController;
 use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
 use App\Http\Controllers\Admin\EventSpaceController as AdminEventSpaceController;
 use App\Http\Controllers\Admin\FacilityController as AdminFacilityController;
@@ -147,6 +149,24 @@ Route::middleware(['auth:users', 'permission:cms.edit'])->prefix('cms')->group(f
 // P4 — Booking: Guest-facing reservation endpoints
 // ──────────────────────────────────────────────────────────────────────
 
+// ──────────────────────────────────────────────────────────────────────
+// P6 — Events / RFP: Public submit (no auth)
+// ──────────────────────────────────────────────────────────────────────
+Route::post('/event-inquiries', [ApiEventInquiryController::class, 'submit']);
+
+// P6 — Events / RFP: Admin triage
+Route::middleware('auth:users')->prefix('cms/event-inquiries')->group(function () {
+    Route::middleware('permission:tickets.view')->group(function () {
+        Route::get('/',          [AdminEventInquiryController::class, 'index']);
+        Route::get('/{inquiry}', [AdminEventInquiryController::class, 'show']);
+    });
+    Route::middleware('permission:tickets.assign')->group(function () {
+        Route::patch('/{inquiry}/status', [AdminEventInquiryController::class, 'updateStatus']);
+        Route::patch('/{inquiry}/assign', [AdminEventInquiryController::class, 'assign']);
+    });
+});
+
+// ──────────────────────────────────────────────────────────────────────
 // Public (no auth) — two-step guest booking
 Route::post('/reservations/guest',        [ReservationController::class, 'storeAsGuest']);
 Route::post('/reservations/guest/verify', [ReservationController::class, 'verifyGuestBooking']);

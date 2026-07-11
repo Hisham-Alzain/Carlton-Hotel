@@ -17,6 +17,9 @@ return [
         'reservation_cancelled'  => 'تم إلغاء الحجز.',
         'room_assigned'          => 'تم تعيين الغرفة بنجاح.',
         'payment_settled'        => 'تم تسجيل الدفعة بنجاح.',
+        'inquiry_submitted'      => 'تم إرسال طلبك. سيتواصل معك فريقنا قريباً.',
+        'inquiry_updated'        => 'تم تحديث الطلب.',
+        'inquiry_assigned'       => 'تم تعيين الطلب بنجاح.',
     ],
     'errors'     => [
         'server_error'           => 'حدث خطأ ما.',
@@ -44,6 +47,7 @@ return [
         'reservation_state'        => 'هذا الإجراء غير مسموح به في الحالة الحالية للحجز.',
         'hold_expired'             => 'انتهت صلاحية الحجز المؤقت. يرجى البدء من جديد.',
         'payment_failed'           => 'تعذّر معالجة الدفع.',
+        'inquiry_state'            => 'هذا الانتقال في الحالة غير مسموح به.',
     ],
     'auth'       => [
         'otp_sent'       => 'تم إرسال رمز التحقق.',

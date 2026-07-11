@@ -17,6 +17,9 @@ return [
         'reservation_cancelled'  => 'Reservation cancelled.',
         'room_assigned'          => 'Room assigned successfully.',
         'payment_settled'        => 'Payment recorded successfully.',
+        'inquiry_submitted'      => 'Your inquiry has been submitted. Our team will be in touch shortly.',
+        'inquiry_updated'        => 'Inquiry updated.',
+        'inquiry_assigned'       => 'Inquiry assigned successfully.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',
@@ -44,6 +47,7 @@ return [
         'reservation_state'        => 'This action is not allowed in the current reservation state.',
         'hold_expired'             => 'The booking hold has expired. Please start a new reservation.',
         'payment_failed'           => 'Payment could not be processed.',
+        'inquiry_state'            => 'This status transition is not allowed.',
     ],
     'auth'       => [
         'otp_sent'       => 'A verification code has been sent.',

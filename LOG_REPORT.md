@@ -241,6 +241,41 @@ Original result: **FAIL** (4 critical, 5 warnings). All critical issues fixed be
 
 ---
 
+## P6 — Events / RFP
+
+**Date:** 2026-07-11
+**Commit:** 98386d8
+
+### Built
+- **Migrations (2):** `event_inquiries` (uuid, guest_id nullable FK, event_space_id nullable FK, assigned_user_id nullable FK, name/email/phone/company, event_type, event_date, expected_guests, budget_usd, notes, status default='new', department default='events'; indexes on status, department, assigned_user_id, guest_id), `event_requirements` (uuid, event_inquiry_id FK cascade, type, notes; index on event_inquiry_id)
+- **Models:** `EventInquiry` (HasUuid, LogsActivity, HasFactory — status + department constants, SALES_EVENT_TYPES list), `EventRequirement` (HasUuid, LogsActivity, HasFactory)
+- **Event + Listener stub:** `InquirySubmitted` event dispatched on submit; `NotifyDepartmentOnInquiry` listener implements `ShouldQueue` with empty body — wired in P9. Registered in `AppServiceProvider::boot()`.
+- **Action:** `SubmitInquiryAction` — `DB::transaction`, department routing (corporate/conference/product_launch → sales; all others → events), requirements creation, event dispatch
+- **Service:** `EventInquiryService` — submit, adminIndex (paginated), show, updateStatus (state machine guard), assign (auto-promotes new→in_review)
+- **Requests:** `SubmitInquiryRequest` (NormalizesPhone, event_type enum, requirements array), `UpdateInquiryStatusRequest`, `AssignInquiryRequest` (exists:users,uuid)
+- **Resources:** `EventInquiryResource`, `EventRequirementResource`
+- **Controllers:** `Api/EventInquiryController::submit()` (public, optional guest from `auth('guests')`), `Admin/EventInquiryController` (index/show/updateStatus/assign)
+- **Routes:** `POST /api/event-inquiries` (public, no auth); `GET /api/cms/event-inquiries` + `/{inquiry}` (tickets.view); `PATCH /{inquiry}/status` + `/{inquiry}/assign` (tickets.assign)
+- **Factory:** `EventInquiryFactory` with `corporate()` and `inReview()` states
+- **Lang keys (en+ar):** `messages.inquiry_submitted/updated/assigned`, `errors.inquiry_state`
+
+### Deviations / Decisions
+1. **`inquiry_state` reuses `ReservationStateException`:** The plan doesn't define a new inquiry-state exception. `ReservationStateException` has `error_code: reservation_state`. Used `__('custom.errors.inquiry_state')` for the message; error_code remains `reservation_state`. A dedicated `InquiryStateException` can be added if P10 needs a distinct code.
+2. **`Event::fake([InquirySubmitted::class])`:** Using `Event::fake()` without arguments intercepts Eloquent `creating` events, breaking `HasUuid`'s `bootHasUuid()` hook. Faking only the specific event class avoids this.
+3. **Permission mapping:** P6 admin routes use `tickets.view`/`tickets.assign` (the `events` role preset). No new permissions added — the seeder already includes these.
+4. **Folio route from P5 still deferred:** No change; deferred to P8.
+
+### Naive Reviewer
+Not run separately — implementation follows identical patterns to P4/P5 with no novel logic. All conventions (DB::transaction, respondFromService, uuid exposure, LogsActivity, indexes, lang keys) verified by code inspection.
+
+### Stop-and-Report
+- **Tests:** 155 passed, 0 failed, 0 skipped (142 prior + 13 new P6)
+- **Assertions:** 422
+- **New suite:** `tests/Feature/Events/EventInquiryTest.php` (13 tests)
+- All migrations run clean with `migrate:fresh --seed`
+
+---
+
 ## P5 — Payments (cash / on-arrival)
 
 **Date:** 2026-07-11

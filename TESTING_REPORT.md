@@ -282,6 +282,33 @@ After finishing a module, add a section using the template below. Mark the done-
 
 ---
 
+## P6 — Events / RFP
+
+**Date:** 2026-07-11
+**Commit:** 98386d8
+**Total:** 13 new tests / 29 assertions (full suite: 155 tests / 422 assertions)
+
+### Test Files
+
+| File | Tests | Assertions | Coverage |
+|------|-------|------------|----------|
+| `tests/Feature/Events/EventInquiryTest.php` | 13 | 29 | Anonymous submit 201; corporate→sales routing; wedding→events routing; InquirySubmitted event dispatched; requirements saved; validation 422; admin list/show; permission gate 403; status transition; invalid transition 422; assign staff; assign auto-promotes new→in_review |
+
+### Done-Condition Checklist
+
+- [x] Public inquiry submits anonymously — `test_anonymous_can_submit_inquiry` → 201, DB record created
+- [x] Department routing: corporate→sales, other→events — `test_corporate_event_routes_to_sales_department`, `test_non_corporate_event_routes_to_events_department`
+- [x] `InquirySubmitted` event dispatched on submit — `test_inquiry_submitted_event_is_dispatched`
+- [x] Requirements saved with inquiry — `test_requirements_are_saved_with_inquiry`
+- [x] Admin can list/show inquiries (tickets.view) — `test_admin_can_list_inquiries`, `test_admin_can_show_inquiry`
+- [x] Permission gate enforced — `test_permission_gate_blocks_list` → 403
+- [x] Status transitions enforced (state machine) — `test_admin_can_update_status`, `test_invalid_status_transition_returns_422`
+- [x] Admin can assign inquiry to staff — `test_admin_can_assign_inquiry_to_staff`, `test_assign_to_new_inquiry_auto_moves_to_in_review`
+- [x] Notification listener stubbed for P9 — `NotifyDepartmentOnInquiry` registered, empty body with P9 comment
+- [x] `php artisan test` all green (155/155)
+
+---
+
 ## P5 — Payments (cash / on-arrival)
 
 **Date:** 2026-07-11

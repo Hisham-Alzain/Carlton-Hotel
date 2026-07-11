@@ -16,6 +16,7 @@ return [
         'reservation_confirmed'  => 'Reservation confirmed.',
         'reservation_cancelled'  => 'Reservation cancelled.',
         'room_assigned'          => 'Room assigned successfully.',
+        'payment_settled'        => 'Payment recorded successfully.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',
@@ -42,6 +43,7 @@ return [
         'invalid_promo'            => 'The promo code is invalid or has expired.',
         'reservation_state'        => 'This action is not allowed in the current reservation state.',
         'hold_expired'             => 'The booking hold has expired. Please start a new reservation.',
+        'payment_failed'           => 'Payment could not be processed.',
     ],
     'auth'       => [
         'otp_sent'       => 'A verification code has been sent.',

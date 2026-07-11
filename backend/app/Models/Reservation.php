@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Reservation extends Model
 {
@@ -42,6 +43,7 @@ class Reservation extends Model
     public function guest(): BelongsTo   { return $this->belongsTo(Guest::class); }
     public function promoCode(): BelongsTo { return $this->belongsTo(PromoCode::class); }
     public function rooms(): HasMany     { return $this->hasMany(ReservationRoom::class); }
+    public function payments(): MorphMany { return $this->morphMany(Payment::class, 'payable'); }
 
     public function isHoldExpired(): bool
     {

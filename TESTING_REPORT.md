@@ -279,3 +279,26 @@ After finishing a module, add a section using the template below. Mark the done-
 - [x] P4.R: App-created reservation device-link (`test_app_created_reservation_can_also_be_linked`)
 - [x] booking:release-holds scheduled everyFiveMinutes (console.php)
 - [x] GuestResource returns has_active_reservation field
+
+---
+
+## P5 — Payments (cash / on-arrival)
+
+**Date:** 2026-07-11
+**Total:** 9 new tests / 22 assertions (full suite: 142 tests / 393 assertions)
+
+### Test Files
+
+| File | Tests | Assertions | Coverage |
+|------|-------|------------|----------|
+| `tests/Feature/Payment/PaymentTest.php` | 9 | 22 | Cash settle creates payment + records actor; pending→confirmed transition; on_arrival path; confirmed not downgraded; permission gate 403; ManualDriver resolves; invalid method 422; zero amount 422; unauthenticated 401 |
+
+### Done-Condition Checklist
+
+- [x] Reception can settle cash/on-arrival — `test_cash_settlement_creates_payment_and_records_actor`, `test_on_arrival_path_records_payment`
+- [x] Actor (recorded_by) is audited in the payment record — `assertDatabaseHas('payments', ['recorded_by' => $user->id])`
+- [x] Payment gateway interface in place with only ManualDriver — `test_interface_resolves_manual_driver` asserts `instanceof ManualDriver` + `status=completed`
+- [x] Permission gate `folios.settle` enforced — `test_permission_gate_blocks_unpermitted_user` → 403
+- [x] pending reservation transitions to confirmed on payment — `test_cash_settlement_transitions_pending_reservation_to_confirmed`
+- [x] en + ar lang keys present: `payment_settled`, `payment_failed` — both present in both lang files
+- [x] `php artisan test` all green (142/142)

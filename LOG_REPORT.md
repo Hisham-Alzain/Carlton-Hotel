@@ -238,3 +238,40 @@ Original result: **FAIL** (4 critical, 5 warnings). All critical issues fixed be
 - **Assertions:** 371
 - **Suites:** P1 Auth (24), P2 RBAC (14), P2.5 remediation (7), P3 CMS (48), P4 BMS (34 new: Availability 6, Pricing 5, Concurrency 4, GuestBooking 5, Reservation 6, BookingCodeLinkE2E 3)
 - All migrations run clean with `migrate:fresh --seed`
+
+---
+
+## P5 — Payments (cash / on-arrival)
+
+**Date:** 2026-07-11
+
+### Built
+- **Migrations (2):** `payments` (uuid, payable morph, method, amount_usd, recorded_by FK, note, status; indexes on recorded_by + morphs index auto-created), `refunds` (uuid, payment_id FK, amount_usd, reason, recorded_by FK, status; indexes on payment_id + recorded_by)
+- **Contracts/Drivers:** `PaymentGatewayInterface::charge(method, amount, context)` + `ManualDriver` (always returns `['reference'=>null, 'status'=>'completed']`). Bound in `AppServiceProvider`. Slot reserved for Stripe/Paymera in future phases.
+- **Exception:** `PaymentFailedException` (422, `error_code: payment_failed`) — triggered if gateway returns non-completed status
+- **Action:** `RecordCashPaymentAction` — `DB::transaction` wrapping gateway charge + Payment create + optional Reservation pending→confirmed transition
+- **Service:** `PaymentService::settleReservation()` — thin wrapper calling action, eager-loads `recorder` for Resource
+- **Request:** `SettleReservationRequest` — validates `method` (in:cash,on_arrival), `amount_usd` (numeric, min:0.01), `note` (nullable, max:1000)
+- **Resource:** `PaymentResource` — exposes uuid, method, amount_usd, status, note, recorder uuid (whenLoaded), created_at
+- **Controller:** `Admin/PaymentController::settleReservation()` — calls service, wraps in Resource, returns via `respondFromService` with `custom.messages.payment_settled`
+- **Factory:** `PaymentFactory` (payable→Reservation, random method, random amount, recorded_by User)
+- **Route:** `POST /api/cms/reservations/{reservation}/settle` under `auth:users` + `permission:folios.settle`
+- **Lang keys added (en+ar):** `messages.payment_settled`, `errors.payment_failed`
+- **Model relations:** `Reservation::payments()` (morphMany), `Payment::payable()` (morphTo), `Payment::recorder()` (belongsTo User), `Payment::refunds()` (hasMany), `Refund::payment()` + `Refund::recorder()`
+
+### Deviations / Decisions
+1. **`POST /folios/{uuid}/settle` deferred to P8:** The plan lists this route under P5, but the `Folio` model does not exist until P8. The polymorphic action (`RecordCashPaymentAction` accepts any `Model`) is already folio-ready; the route just needs to be added when the model exists.
+2. **No guard on reservation status for settle:** The spec says "pending→confirmed on payment" but does not restrict settlement to specific states. A cancelled/checked-out reservation can receive a payment record; this is intentional to support manual corrections and future refund flows. A status precondition could be added in P8 when the full folio lifecycle is clear.
+3. **`PaymentFailedException` throw path untested:** `ManualDriver` always returns `completed` by design, making the failure branch unreachable in the test suite. This is the correct behavior for P5 — real gateways that can fail are P8+. Documented as a known gap.
+
+### Naive Reviewer Result: PASS WITH WARNINGS
+- **Critical flagged:** `PaymentFailedException extends DomainException` — reviewer queried whether `App\Exceptions\DomainException` exists. Confirmed it does (created P0; all other exceptions extend it identically). False positive.
+- **Warning fixed:** `$this->created_at->toIso8601String()` → `$this->created_at?->toIso8601String()` (null-safe)
+- **Warning noted (won't block):** PaymentFailedException throw path has no test coverage — by design (ManualDriver never fails); documented above.
+- **Warning noted (won't block):** No reservation-status precondition guard — intentional per decision #2 above.
+
+### Stop-and-Report
+- **Tests:** 142 passed, 0 failed, 0 skipped (133 prior + 9 new P5)
+- **Assertions:** 393
+- **New suite:** `tests/Feature/Payment/PaymentTest.php` (9 tests)
+- All migrations run clean with `migrate:fresh --seed`

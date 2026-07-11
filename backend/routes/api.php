@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
 use App\Http\Controllers\Admin\EventSpaceController as AdminEventSpaceController;
 use App\Http\Controllers\Admin\FacilityController as AdminFacilityController;
@@ -173,6 +174,9 @@ Route::middleware('auth:users')->prefix('cms/reservations')->group(function () {
     });
     Route::middleware('permission:reservations.cancel')->group(function () {
         Route::delete('/{reservation}',             [AdminReservationController::class, 'cancel']);
+    });
+    Route::middleware('permission:folios.settle')->group(function () {
+        Route::post('/{reservation}/settle', [PaymentController::class, 'settleReservation']);
     });
 });
 

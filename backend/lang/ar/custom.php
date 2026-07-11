@@ -16,6 +16,7 @@ return [
         'reservation_confirmed'  => 'تم تأكيد الحجز.',
         'reservation_cancelled'  => 'تم إلغاء الحجز.',
         'room_assigned'          => 'تم تعيين الغرفة بنجاح.',
+        'payment_settled'        => 'تم تسجيل الدفعة بنجاح.',
     ],
     'errors'     => [
         'server_error'           => 'حدث خطأ ما.',
@@ -42,6 +43,7 @@ return [
         'invalid_promo'            => 'رمز الخصم غير صالح أو منتهي الصلاحية.',
         'reservation_state'        => 'هذا الإجراء غير مسموح به في الحالة الحالية للحجز.',
         'hold_expired'             => 'انتهت صلاحية الحجز المؤقت. يرجى البدء من جديد.',
+        'payment_failed'           => 'تعذّر معالجة الدفع.',
     ],
     'auth'       => [
         'otp_sent'       => 'تم إرسال رمز التحقق.',

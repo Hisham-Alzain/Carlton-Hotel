@@ -3,7 +3,7 @@
 namespace App\Services\Events;
 
 use App\Actions\Events\SubmitInquiryAction;
-use App\Exceptions\ReservationStateException;
+use App\Exceptions\InquiryStateException;
 use App\Models\EventInquiry;
 use App\Models\User;
 
@@ -39,7 +39,7 @@ class EventInquiryService
         ];
 
         if (!in_array($status, $allowed[$inquiry->status] ?? [])) {
-            throw new ReservationStateException(__('custom.errors.inquiry_state'));
+            throw new InquiryStateException(__('custom.errors.inquiry_state'));
         }
 
         $inquiry->update(['status' => $status]);

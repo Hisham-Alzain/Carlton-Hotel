@@ -147,7 +147,8 @@ class EventInquiryTest extends TestCase
 
         $this->actingAs($user, 'users')
              ->patchJson("/api/cms/event-inquiries/{$inquiry->uuid}/status", ['status' => 'confirmed'])
-             ->assertStatus(422);
+             ->assertStatus(422)
+             ->assertJson(['error_code' => 'inquiry_state']);
     }
 
     // ── Assignment ─────────────────────────────────────────────────────────────

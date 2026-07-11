@@ -309,6 +309,29 @@ After finishing a module, add a section using the template below. Mark the done-
 
 ---
 
+## P6.5 — Remediation (P0–P6 gaps)
+
+**Date:** 2026-07-11
+**Total:** 8 new tests / 22 assertions (full suite: 163 tests / 441 assertions)
+
+### Test Files
+
+| File | Tests | Assertions | Coverage |
+|------|-------|------------|----------|
+| `tests/Feature/Auth/GuestMeTest.php` | 7 | 14 | No reservation → both flags false; confirmed → has_booking true/is_checked_in false; checked-in → both true; alias equals has_booking; pending status doesn't unlock; past-checkout confirmed doesn't unlock; unauthenticated 401 |
+| `tests/Feature/Payment/PaymentTest.php` (+1) | 1 | 3 | Failed gateway response → 422 payment_failed, no payment row, reservation status unchanged |
+| `tests/Feature/Events/EventInquiryTest.php` (assertion updated) | 0 new | +1 | Invalid status transition now asserts `error_code: inquiry_state` (was: status-only) |
+
+### Done-Condition Checklist
+
+- [x] `GET /api/auth/guest/me` returns `has_booking` + `is_checked_in`; documented in `API_GUIDE_MOBILE.md` — `test_me_with_confirmed_reservation_unlocks_pre_arrival_only`, `test_me_with_checked_in_reservation_unlocks_both_tiers`
+- [x] Event-inquiry state errors use `error_code: inquiry_state` — `test_invalid_status_transition_returns_422` asserts `error_code`
+- [x] P5 payment-failure branch tested (container rebind, no skip needed) — `test_failed_gateway_response_throws_payment_failed_exception`
+- [x] Full `php artisan test` green (163/163); P0–P6 suites otherwise unchanged
+- [x] `has_booking`/`is_checked_in` respect the "current/upcoming window" date qualifier — `test_confirmed_reservation_with_past_checkout_does_not_unlock_pre_arrival` (added after Naive Review)
+
+---
+
 ## P5 — Payments (cash / on-arrival)
 
 **Date:** 2026-07-11

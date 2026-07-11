@@ -40,6 +40,11 @@ class ReservationFactory extends Factory
         return $this->state(fn () => ['status' => Reservation::STATUS_CONFIRMED]);
     }
 
+    public function checkedIn(): static
+    {
+        return $this->state(fn () => ['status' => Reservation::STATUS_CHECKED_IN]);
+    }
+
     public function cancelled(): static
     {
         return $this->state(fn () => ['status' => Reservation::STATUS_CANCELLED]);

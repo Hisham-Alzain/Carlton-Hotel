@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Resources\GuestResource;
 use App\Services\Auth\AuthGuestService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class GuestAuthController extends BaseController
 {
@@ -47,5 +48,11 @@ class GuestAuthController extends BaseController
             $request->validated('phone'),
         );
         return $this->success($result['data'], 'custom.auth.otp_sent', 200, $request);
+    }
+
+    public function me(Request $request): JsonResponse
+    {
+        $result = $this->service->me($request->user('guests'));
+        return $this->success(new GuestResource($result['data']), 'custom.messages.success', 200, $request);
     }
 }

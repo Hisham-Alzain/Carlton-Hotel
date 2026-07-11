@@ -76,9 +76,13 @@ Always log `request_id` — include it in bug reports and support tickets.
 |---|---|---|
 | **Public** | No token | Content, availability, price quote, chatbot, event inquiry, public booking endpoints |
 | **Authenticated guest** | Guest token (`Authorization: Bearer`) | Profile, my-reservations, cancel, booking (authenticated path), chat, tickets |
-| **Active-reservation guest** | Guest token + confirmed/checked-in stay covering today | Tier-3: in-room services, pre-arrival, room-service orders, folio, express checkout |
+| **Pre-arrival guest** | Guest token + confirmed reservation covering the current/upcoming window | Tier-3a: document upload, e-check-in, service pre-bookings (spa/table/cabana/transfer) |
+| **In-stay guest** | Guest token + reservation is `checked_in` | Tier-3b: in-room services, room-service orders, folio, express checkout, in-room chat |
 
-`GET /auth/me` (guest) returns `has_active_reservation: bool` so the app knows which mode to render. The server enforces the gate — hiding UI is convenience only.
+`GET /api/auth/guest/me` returns two entitlement booleans so the app knows which mode to render — the server enforces the gate server-side; hiding UI client-side is convenience only:
+- `has_booking: bool` — unlocks the pre-arrival tier.
+- `is_checked_in: bool` — unlocks the in-stay tier. A checked-in guest also has `has_booking: true` (same reservation).
+- `has_active_reservation: bool` — **deprecated alias, equal to `has_booking`.** Kept for one release since existing app code reads it; new code should read `has_booking` / `is_checked_in` directly.
 
 ---
 
@@ -268,14 +272,16 @@ Rooms, facilities, dining, event spaces, promotions, CMS pages. Bilingual (`Acce
 - `POST /reservations` — **app-only, tier-2.** Identity from token; one step; ignores body contact fields.
 - `POST /reservations/guest` + `/reservations/guest/verify` — public two-step flow (app keeps the returned token; website discards it).
 - My reservations: `GET /reservations`, `GET /reservations/{uuid}`, cancel (tier-2)
-- `GET /auth/me` (guest) gains `has_active_reservation: bool` + active reservation summary
 - Full booking-code → guest linking (P4.R — un-skips the pre-P4 `booking_link_unavailable` error)
+- **P6.5:** `GET /api/auth/guest/me` added — returns `has_booking` + `is_checked_in` (see Access tiers above) + active reservation summary
 
 ---
 
-## Coming in P7 — In-stay services (tier-3, requires `has_active_reservation`)
+## Coming in P7 — In-stay & pre-arrival services (tier-3a/3b, two-flag gate)
 
-Service requests, room-service ordering, pre-arrival documents & check-in approval, service pre-bookings (spa, restaurant, pool cabana, transfer). All rejected with `no_active_reservation` if no live stay.
+Service requests, room-service ordering, pre-arrival documents & check-in approval, service pre-bookings (spa, restaurant, pool cabana, transfer).
+- Pre-arrival endpoints gated by `has_booking` — rejected with `no_active_reservation` if not booked.
+- In-room endpoints gated by `is_checked_in` — rejected with `no_active_reservation` if booked but not yet checked in.
 
 ---
 

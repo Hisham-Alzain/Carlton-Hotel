@@ -4,6 +4,7 @@ namespace App\Services\Auth;
 use App\Actions\Auth\LinkBookingCodeAction;
 use App\Actions\Auth\RequestOtpAction;
 use App\Actions\Auth\VerifyOtpAction;
+use App\Models\Guest;
 
 class AuthGuestService
 {
@@ -26,5 +27,11 @@ class AuthGuestService
     public function linkBookingCode(string $code, ?string $lastName, ?string $phone): array
     {
         return $this->linkBookingCode->handle($code, $lastName, $phone);
+    }
+
+    public function me(Guest $guest): array
+    {
+        $guest->load('activeReservations');
+        return ['data' => $guest, 'code' => 200];
     }
 }

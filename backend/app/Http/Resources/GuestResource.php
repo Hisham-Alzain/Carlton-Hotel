@@ -2,11 +2,21 @@
 namespace App\Http\Resources;
 
 use App\Base\BaseResource;
+use App\Models\Reservation;
 
 class GuestResource extends BaseResource
 {
     public function toArray($request): array
     {
+        $loaded  = $this->relationLoaded('activeReservations');
+        $today   = now()->startOfDay();
+        $booked  = $loaded
+            ? $this->activeReservations
+                ->whereIn('status', [Reservation::STATUS_CONFIRMED, Reservation::STATUS_CHECKED_IN])
+                ->filter(fn ($r) => $r->check_out->gte($today))
+            : collect();
+        $current = $booked->sortByDesc('check_in')->first();
+
         return [
             'uuid'           => $this->uuid,
             'name'           => $this->name,
@@ -18,17 +28,18 @@ class GuestResource extends BaseResource
             'email'          => $this->email,
             'email_verified' => (bool) $this->email_verified_at,
             'preferred_locale'        => $this->preferred_locale,
-            'has_active_reservation'  => $this->whenLoaded('activeReservations', fn () => $this->activeReservations->isNotEmpty(), false),
-            'active_reservation'      => $this->when(
-                $this->relationLoaded('activeReservations') && $this->activeReservations->isNotEmpty(),
-                fn () => [
-                    'uuid'         => $this->activeReservations->first()->uuid,
-                    'booking_code' => $this->activeReservations->first()->booking_code,
-                    'status'       => $this->activeReservations->first()->status,
-                    'check_in'     => $this->activeReservations->first()->check_in,
-                    'check_out'    => $this->activeReservations->first()->check_out,
-                ]
-            ),
+            // Two-flag entitlement (ARCHITECTURE §3.7): has_booking unlocks pre-arrival tier, is_checked_in unlocks in-room tier.
+            'has_booking'             => $booked->isNotEmpty(),
+            'is_checked_in'           => $booked->contains(fn ($r) => $r->status === Reservation::STATUS_CHECKED_IN),
+            // Deprecated alias, kept for one release — API_GUIDE_MOBILE.md documents the app reading this field. Equals has_booking.
+            'has_active_reservation'  => $booked->isNotEmpty(),
+            'active_reservation'      => $current ? [
+                'uuid'         => $current->uuid,
+                'booking_code' => $current->booking_code,
+                'status'       => $current->status,
+                'check_in'     => $current->check_in,
+                'check_out'    => $current->check_out,
+            ] : null,
         ];
     }
 }

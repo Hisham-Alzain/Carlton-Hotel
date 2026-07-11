@@ -131,6 +131,30 @@ class PaymentTest extends TestCase
         $this->assertNull($result['reference']);
     }
 
+    public function test_failed_gateway_response_throws_payment_failed_exception(): void
+    {
+        $this->app->bind(PaymentGatewayInterface::class, fn () => new class implements PaymentGatewayInterface {
+            public function charge(string $method, float $amount, array $context = []): array
+            {
+                return ['reference' => null, 'status' => 'failed'];
+            }
+        });
+
+        $user        = $this->makeReception();
+        $reservation = $this->makeReservation('pending');
+
+        $this->actingAs($user, 'users')
+             ->postJson("/api/cms/reservations/{$reservation->uuid}/settle", [
+                 'method'     => 'cash',
+                 'amount_usd' => 100.00,
+             ])
+             ->assertStatus(422)
+             ->assertJson(['success' => false, 'error_code' => 'payment_failed']);
+
+        $this->assertDatabaseMissing('payments', ['payable_id' => $reservation->id]);
+        $this->assertEquals('pending', $reservation->fresh()->status);
+    }
+
     public function test_validation_rejects_invalid_method(): void
     {
         $user        = $this->makeReception();

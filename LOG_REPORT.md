@@ -241,6 +241,38 @@ Original result: **FAIL** (4 critical, 5 warnings). All critical issues fixed be
 
 ---
 
+## P6.5 — Remediation (P0–P6 gaps)
+
+**Date:** 2026-07-11
+**Tickets:** `backend/tickets/P6.5_TICKETS.md` (R1, R2, R3 — first ticket file written; no prior phase had one)
+
+### Built
+- **R1 — Two-flag entitlement:**
+  - **Inspection finding:** `GET /auth/me` for guests **did not exist** in the codebase — only staff had it. `has_active_reservation` was only embedded in `GuestResource` returned from `verify-otp`, and that action never eager-loaded `activeReservations`, so the flag always resolved `false` in practice. Built the endpoint for real rather than "adding a flag to an existing one."
+  - New route `GET /api/auth/guest/me` (`auth:guests` guard) — distinct path from staff's `/api/auth/me`, no collision.
+  - `AuthGuestService::me()` eager-loads `activeReservations`; `GuestAuthController::me()` wraps in `GuestResource`.
+  - `GuestResource` now computes `has_booking` (status confirmed/checked_in AND `check_out >= today`), `is_checked_in` (status checked_in, same date filter), and `has_active_reservation` (deprecated alias, equals `has_booking`) — all from the already-loaded `activeReservations` collection, zero new queries.
+  - `active_reservation` summary now reflects the current booked/checked-in reservation (previously: any non-cancelled/non-checked_out reservation).
+  - Added `ReservationFactory::checkedIn()` state (was missing).
+  - `API_GUIDE_MOBILE.md` updated: real route, both flags + deprecated alias, tier table split into pre-arrival/in-stay, P7 roadmap note updated to two-flag gate.
+- **R2 — Inquiry error_code:** `InquiryStateException` (422, `error_code: inquiry_state`) added; `EventInquiryService::updateStatus()` now throws it instead of `ReservationStateException`. Lang key `custom.errors.inquiry_state` already existed from P6 — no lang change needed.
+- **R3 — Payment failure branch tested:** New test in `PaymentTest.php` rebinds `PaymentGatewayInterface` to an anonymous failing stub via `$this->app->bind()` before the HTTP call — worked cleanly, no `@group gateway` skip needed. Asserts 422, `error_code: payment_failed`, no `payments` row, reservation status unchanged.
+
+### Deviations / Decisions
+1. **`has_active_reservation` alias: kept, not renamed.** `API_GUIDE_MOBILE.md` documented the app reading this field (tier table + two other references) before this phase, so per the ticket's own instruction it was kept as a deprecated alias equal to `has_booking` rather than renamed outright.
+2. **Naive Reviewer warning fixed before commit:** initial `has_booking`/`is_checked_in` computation used only reservation `status`, not the "covering current/upcoming window" date qualifier from R1's own spec — a stale confirmed/checked-in reservation past its `check_out` would have kept unlocking tiers indefinitely. Fixed by filtering the loaded collection on `check_out >= today` (in-memory comparison on Carbon-cast attributes, no new DB query — Resource convention preserved). Added `test_confirmed_reservation_with_past_checkout_does_not_unlock_pre_arrival`.
+3. **R2 required no lang change** — confirmed `custom.errors.inquiry_state` already existed in both `en` and `ar` from P6, when the message text was first introduced (only the error_code was generic at the time).
+
+### Naive Reviewer Result: PASS WITH WARNINGS (fixed before commit)
+One warning: date-window not enforced (see deviation #2 above) — fixed. No critical findings. Confirmed clean: convention violations, security issues, scope creep, all three tickets' done-conditions.
+
+### Stop-and-Report
+- **Tests:** 163 passed, 0 failed, 0 skipped (155 prior + 7 GuestMeTest + 1 PaymentTest R3; EventInquiryTest test count unchanged, assertion strengthened)
+- **Assertions:** 441
+- All migrations run clean with `migrate:fresh --seed`; P0–P6 suites otherwise unchanged
+
+---
+
 ## P6 — Events / RFP
 
 **Date:** 2026-07-11

@@ -273,6 +273,46 @@ One warning: date-window not enforced (see deviation #2 above) — fixed. No cri
 
 ---
 
+## P7 — Service Layer (In-room / Venue + Pre-Arrival)
+
+**Date:** 2026-07-12
+**Tickets:** `backend/tickets/P7_TICKETS.md`
+
+### Built
+- **Entitlement gate (built first, per PLAN.md):** `App\Support\GuestEntitlement` — single source of truth for the has-booking/is-checked-in computation used by middleware and actions (fresh query, since middleware can't rely on a pre-loaded relation the way `GuestResource` must); also resolves the guest's current reservation server-side (`currentReservation()`) so no guest-facing route ever trusts a client-supplied `reservation_id`. `EnsureHasBooking`/`EnsureIsCheckedIn` middleware (aliases `has_booking`/`is_checked_in`, registered in `bootstrap/app.php`), both throwing `NoActiveReservationException` (`error_code: no_active_reservation`, 403).
+- **10 migrations:** `spa_services`, `restaurant_tables` (FK to existing `dining_venues`), `pool_cabanas`, `transfers` (the 4 concrete bookables), `service_bookings` (polymorphic, morph-mapped), `service_requests` (queue-shaped, type→department routing), `menu_categories`, `menu_items`, `guest_documents`, `check_in_approvals` (unique per reservation).
+- **Morph map:** `Relation::morphMap()` registered in `AppServiceProvider::boot()` for the 4 bookable types (`spa_service`, `restaurant_table`, `pool_cabana`, `transfer`).
+- **10 models**, all `HasUuid` + `LogsActivity`; the 4 catalog types + menu category/item also `HasTranslations` on `name`.
+- **4 Actions:** `CreateServiceBookingAction`, `PlaceServiceRequestAction` (type→department map, mirrors P6's `SubmitInquiryAction`), `SubmitDocumentsAction` (uses `FileTrait`, upserts a `pending` `CheckInApproval` on first submission), `ApproveCheckInAction`.
+- **4 Services:** `ServiceBookingService`, `ServiceRequestService`, `PreArrivalService`, plus 6 catalog `BaseService` subclasses (spa/table/cabana/transfer/menu-category/menu-item).
+- **Guest-facing routes:** `POST /service-bookings` + `POST /pre-arrival/documents` (`has_booking`); `POST /service-requests` + `GET /service-requests` (`is_checked_in`).
+- **Admin routes:** catalog CRUD for all 6 types (`cms.edit`); `GET /cms/check-in-approvals` + `PATCH /cms/check-in-approvals/{reservation}/approve` (`reservations.create`, same tier as P4's `assign-room`).
+- **Firestore mirror stub:** `ServiceRequestPlaced` event + `MirrorServiceRequestToFirestore` listener (empty body, P9 forward-reference) — same pattern as P6's `NotifyDepartmentOnInquiry`.
+- **10 factories**, **7 new test files** (`EntitlementGateTest`, `ServiceBookingTest`, `ServiceRequestTest`, `PreArrivalTest`, `MenuCatalogTest`, `BookableCatalogTest`).
+
+### Deviations / Decisions (recorded in `P7_TICKETS.md` before coding, reproduced here)
+1. **Catalog/menu CRUD gated `cms.edit`, check-in approvals gated `reservations.create`** — PLAN.md doesn't name specific permissions for either; reused existing permissions matching the closest precedent (content CRUD → `cms.edit`; reservation-state mutation → `reservations.create`, same as P4's `assign-room`) rather than inventing new ones.
+2. **No guest-facing "browse menu" endpoint.** PLAN.md's Routes bullet lists only "place request, pre-book, upload docs" for guests, and the done-condition only requires admin menu CRUD — building a guest read endpoint would be unspec'd scope.
+3. **No admin index/assign/status-update routes for `service_bookings`/`service_requests`.** Re-reading PLAN.md's Actions list: P7 lists only 4 actions (none of them assign/status-update); `RouteRequestAction`/`AssignRequestAction`/`UpdateRequestStatusAction` belong to **P10** (`OperationsQueueService` — the unified read+assign layer over both tables). Building admin queue routes here would duplicate P10's actual scope.
+4. **No concurrency lock on `service_bookings`.** Unlike BMS room inventory, the done-condition only requires "polymorphic bookings resolve" — no slot-capacity race condition guarantee was asked for.
+5. **One `Store*Request` class reused for both create and update** per catalog type (6 types), instead of separate Create/Update classes — halves the request-file count; catalogs don't need partial-update semantics.
+
+### Naive Reviewer Result: PASS WITH WARNINGS (two fixed, one deferred)
+- **Fixed — dead eager-load:** `CreateServiceBookingAction` loaded the `bookable` relation but `ServiceBookingResource` never surfaced it — the guest got back `bookable_type` with no identifying detail of what they'd booked. Added a `bookable: {uuid, label}` field (label resolves via `getTranslation('name', ...)` for translatable catalogs, falls back to `table_number` for `RestaurantTable`).
+- **Fixed — admin approves "blind":** `Admin/CheckInApprovalController` had no visibility into the guest's uploaded documents when approving/rejecting. Added `Reservation::documents()` relation, eager-loaded `reservation.documents` in `PreArrivalService::adminIndex()`/`approve()`, and exposed a `documents` array on `CheckInApprovalResource`.
+- **Deferred (recorded, not fixed):** Guest identity documents (`guest_documents`) are stored on the `public` disk (same as CMS media) via `FileTrait`'s default. The storage path is guest+reservation-UUID-scoped (not enumerable), but the disk itself is unauthenticated/web-servable — anyone who obtains a leaked path (logs, referrer) can fetch a passport/ID scan with no auth check. Fixing this properly needs a private disk + signed/authenticated download route, which is a new subsystem beyond P7's stated slice ("guest_documents (FileTrait)" — no private-disk requirement in PLAN.md). Flagged here for a future hardening phase (P12) or an explicit follow-up ticket.
+
+### Bug found and fixed during testing (pre-existing, unrelated to P7's own logic)
+`User` model had no explicit `$guard_name`. Spatie's guard auto-detection guesses from `config('auth.guards')` matching by provider model — `web` and `users` both use the `users` provider (User model), so the guess is ambiguous. Every prior test happened to avoid the ambiguity (never mixed `actingAs($guest, 'guests')` with granting a permission to a `User` in the same test). P7's `PreArrivalTest` is the first to legitimately do both (guest uploads documents, then a staff user approves) — this surfaced `$user->givePermissionTo(...)` resolving to guard `web` instead of `users`, throwing `PermissionDoesNotExist` (uncaught by the global handler, so it errored rather than 403'd). Fixed by declaring `protected $guard_name = 'users';` on `User` — makes explicit what was previously guessed correctly by luck; verified no regression (194/194 green, including all pre-existing `auth:users` permission tests).
+
+### Stop-and-Report
+- **Tests:** 194 passed, 0 failed, 0 skipped (163 prior + 31 new P7)
+- **Assertions:** 509
+- **New suites:** `EntitlementGateTest` (4), `ServiceBookingTest` (6), `ServiceRequestTest` (5), `PreArrivalTest` (6), `MenuCatalogTest` (4), `BookableCatalogTest` (6)
+- `migrate:fresh --seed` verified clean from empty DB with all 10 new migrations
+
+---
+
 ## P6 — Events / RFP
 
 **Date:** 2026-07-11

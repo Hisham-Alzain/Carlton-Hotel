@@ -20,6 +20,11 @@ return [
         'inquiry_submitted'      => 'Your inquiry has been submitted. Our team will be in touch shortly.',
         'inquiry_updated'        => 'Inquiry updated.',
         'inquiry_assigned'       => 'Inquiry assigned successfully.',
+        'service_booking_created' => 'Booking created successfully.',
+        'service_request_placed'  => 'Your request has been placed.',
+        'document_uploaded'       => 'Document uploaded successfully.',
+        'check_in_approved'       => 'Check-in approved.',
+        'check_in_rejected'       => 'Check-in rejected.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',
@@ -48,6 +53,7 @@ return [
         'hold_expired'             => 'The booking hold has expired. Please start a new reservation.',
         'payment_failed'           => 'Payment could not be processed.',
         'inquiry_state'            => 'This status transition is not allowed.',
+        'no_active_reservation'    => 'This action requires an active reservation.',
     ],
     'auth'       => [
         'otp_sent'       => 'A verification code has been sent.',

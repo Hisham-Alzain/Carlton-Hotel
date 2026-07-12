@@ -29,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission'          => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role'                => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'role_or_permission'  => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'has_booking'         => \App\Http\Middleware\EnsureHasBooking::class,
+            'is_checked_in'       => \App\Http\Middleware\EnsureIsCheckedIn::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -332,6 +332,34 @@ After finishing a module, add a section using the template below. Mark the done-
 
 ---
 
+## P7 — Service Layer (In-room / Venue + Pre-Arrival)
+
+**Date:** 2026-07-12
+**Total:** 31 new tests / 68 assertions (full suite: 194 tests / 509 assertions)
+
+### Test Files
+
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/Feature/Service/EntitlementGateTest.php` | 4 | No booking → 403 `no_active_reservation` on pre-arrival AND in-room; booked-not-checked-in → pre-arrival allowed, in-room rejected; checked-in → both allowed; unauthenticated → 401 |
+| `tests/Feature/Service/ServiceBookingTest.php` | 6 | Polymorphic booking across all 4 bookable types (spa/table/cabana/transfer); unknown bookable uuid → 404; invalid bookable_type → 422 |
+| `tests/Feature/Service/ServiceRequestTest.php` | 5 | room_service→kitchen, housekeeping→housekeeping, unmapped type→concierge department routing; guest lists own requests; validation |
+| `tests/Feature/Service/PreArrivalTest.php` | 6 | Document upload creates pending `check_in_approvals`; multiple documents in one request; admin approve/reject; approve-without-documents → 404; permission gate |
+| `tests/Feature/Service/MenuCatalogTest.php` | 4 | Admin creates category + item under category; update+delete; permission gate |
+| `tests/Feature/Service/BookableCatalogTest.php` | 6 | Admin CRUD smoke test for all 4 concrete bookable types + index pagination + unauthenticated 401 |
+
+### Done-Condition Checklist
+
+- [x] Both service shapes (`service_bookings`, `service_requests`) work — `ServiceBookingTest`, `ServiceRequestTest`
+- [x] Polymorphic bookings resolve across all 4 types — `test_books_spa_service`, `test_books_restaurant_table`, `test_books_pool_cabana`, `test_books_transfer`
+- [x] Pre-arrival flow complete (documents + approval) — `PreArrivalTest` (6 tests covering the full upload→approve/reject cycle)
+- [x] Two-flag gate enforced server-side (`has_booking` pre-arrival, `is_checked_in` in-room) — `EntitlementGateTest` covers all 3 states × both tiers
+- [x] Firestore mirror seam marked for P9 — `MirrorServiceRequestToFirestore` listener stubbed
+- [x] `php artisan test` all green (194/194); P0–P6.5 suites unchanged
+- [x] `migrate:fresh --seed` verified clean from empty DB (10 new migrations)
+
+---
+
 ## P5 — Payments (cash / on-arrival)
 
 **Date:** 2026-07-11

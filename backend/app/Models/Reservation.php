@@ -44,6 +44,7 @@ class Reservation extends Model
     public function promoCode(): BelongsTo { return $this->belongsTo(PromoCode::class); }
     public function rooms(): HasMany     { return $this->hasMany(ReservationRoom::class); }
     public function payments(): MorphMany { return $this->morphMany(Payment::class, 'payable'); }
+    public function documents(): HasMany  { return $this->hasMany(GuestDocument::class); }
 
     public function isHoldExpired(): bool
     {

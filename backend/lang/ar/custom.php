@@ -20,6 +20,11 @@ return [
         'inquiry_submitted'      => 'تم إرسال طلبك. سيتواصل معك فريقنا قريباً.',
         'inquiry_updated'        => 'تم تحديث الطلب.',
         'inquiry_assigned'       => 'تم تعيين الطلب بنجاح.',
+        'service_booking_created' => 'تم إنشاء الحجز بنجاح.',
+        'service_request_placed'  => 'تم إرسال طلبك.',
+        'document_uploaded'       => 'تم رفع المستند بنجاح.',
+        'check_in_approved'       => 'تمت الموافقة على تسجيل الوصول.',
+        'check_in_rejected'       => 'تم رفض تسجيل الوصول.',
     ],
     'errors'     => [
         'server_error'           => 'حدث خطأ ما.',
@@ -48,6 +53,7 @@ return [
         'hold_expired'             => 'انتهت صلاحية الحجز المؤقت. يرجى البدء من جديد.',
         'payment_failed'           => 'تعذّر معالجة الدفع.',
         'inquiry_state'            => 'هذا الانتقال في الحالة غير مسموح به.',
+        'no_active_reservation'    => 'يتطلب هذا الإجراء حجزاً نشطاً.',
     ],
     'auth'       => [
         'otp_sent'       => 'تم إرسال رمز التحقق.',

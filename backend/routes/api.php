@@ -1,9 +1,19 @@
 <?php
 
+use App\Http\Controllers\Admin\CheckInApprovalController;
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
 use App\Http\Controllers\Admin\EventInquiryController as AdminEventInquiryController;
+use App\Http\Controllers\Admin\MenuCategoryController;
+use App\Http\Controllers\Admin\MenuItemController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\PoolCabanaController;
+use App\Http\Controllers\Admin\RestaurantTableController;
+use App\Http\Controllers\Admin\SpaServiceController;
+use App\Http\Controllers\Admin\TransferController;
 use App\Http\Controllers\Api\EventInquiryController as ApiEventInquiryController;
+use App\Http\Controllers\Api\PreArrivalController;
+use App\Http\Controllers\Api\ServiceBookingController;
+use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
 use App\Http\Controllers\Admin\EventSpaceController as AdminEventSpaceController;
 use App\Http\Controllers\Admin\FacilityController as AdminFacilityController;
@@ -215,4 +225,37 @@ Route::middleware('auth:users')->group(function () {
     // Reference lists
     Route::get('/permissions', [PermissionController::class, 'index']);
     Route::get('/roles',       [RoleController::class, 'index']);
+});
+
+// ──────────────────────────────────────────────────────────────────────
+// P7 — Service layer: guest-side (tier-3, two-flag gate)
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware(['auth:guests', 'has_booking'])->group(function () {
+    Route::post('/service-bookings',     [ServiceBookingController::class, 'store']);
+    Route::post('/pre-arrival/documents',[PreArrivalController::class, 'submitDocuments']);
+});
+
+Route::middleware(['auth:guests', 'is_checked_in'])->prefix('service-requests')->group(function () {
+    Route::post('/', [ServiceRequestController::class, 'store']);
+    Route::get ('/', [ServiceRequestController::class, 'index']);
+});
+
+// ──────────────────────────────────────────────────────────────────────
+// P7 — Service layer: admin catalog CRUD (cms.edit) — no admin queue/assign
+// routes here; the read+assign layer over service_requests/service_bookings
+// belongs to P10 (OperationsQueueService), not P7.
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware(['auth:users', 'permission:cms.edit'])->prefix('cms')->group(function () {
+    Route::apiResource('spa-services', SpaServiceController::class)->parameters(['spa-services' => 'spaService']);
+    Route::apiResource('restaurant-tables', RestaurantTableController::class)->parameters(['restaurant-tables' => 'restaurantTable']);
+    Route::apiResource('pool-cabanas', PoolCabanaController::class)->parameters(['pool-cabanas' => 'poolCabana']);
+    Route::apiResource('transfers', TransferController::class);
+    Route::apiResource('menu-categories', MenuCategoryController::class)->parameters(['menu-categories' => 'menuCategory']);
+    Route::apiResource('menu-items', MenuItemController::class)->parameters(['menu-items' => 'menuItem']);
+});
+
+// P7 — Pre-arrival check-in approvals (reservations.create — same tier as assign-room)
+Route::middleware(['auth:users', 'permission:reservations.create'])->prefix('cms/check-in-approvals')->group(function () {
+    Route::get  ('/',                        [CheckInApprovalController::class, 'index']);
+    Route::patch('/{reservation}/approve',   [CheckInApprovalController::class, 'approve']);
 });

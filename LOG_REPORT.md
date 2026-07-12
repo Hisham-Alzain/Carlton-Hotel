@@ -313,6 +313,37 @@ One warning: date-window not enforced (see deviation #2 above) — fixed. No cri
 
 ---
 
+## P8 — Folios & Express Checkout
+
+**Date:** 2026-07-12
+**Tickets:** `backend/tickets/P8_TICKETS.md`
+
+### Built
+- **2 migrations:** `folios` (uuid, reservation_id unique FK — one folio per reservation, status, subtotal/total_usd, approved_by_guest_at, settled_at), `folio_items` (uuid, folio_id FK, description, amount_usd, source_type/source_id).
+- **Models:** `Folio` (payments() morphMany reusing P5's `Payment` polymorph unchanged), `FolioItem`.
+- **Actions:** `GenerateFolioAction` (idempotent — `firstOrCreate` on the unique reservation FK, delete-and-recreate items each call so the folio reflects current charges, not accumulated history), `SettleFolioAction` (reuses P5's `RecordCashPaymentAction` unchanged against `Folio` as payable), `ApproveFolioAction` (guest-side express checkout — generates the folio, stamps `approved_by_guest_at`, transitions reservation to `checked_out`), `RequestTransportAction` (thin wrapper over P7's `PlaceServiceRequestAction`, `type=transport`).
+- **Service:** `FolioService`.
+- **Guest routes** (`is_checked_in`, same tier as P7 in-room services): `GET /folio`, `POST /folio/approve`, `POST /transport-requests`.
+- **Admin routes:** `POST /cms/folios/{reservation}/generate` (`folios.view`), `POST /cms/folios/{folio}/settle` (`folios.settle`) — **first phase to consume these permissions, seeded since P0.**
+
+### Deviations / Decisions (recorded in `P8_TICKETS.md` before coding)
+1. **What counts as a folio charge, given what P7 actually built:** room charge (`reservation.total_usd`) always; `service_bookings` (confirmed/completed) whose bookable has `price_usd` (spa/pool_cabana/transfer) — one line each; `restaurant_table` bookings carry no charge (the table itself is free, P7 never built priced food ordering); `service_requests` carry no price data in the P7 schema at all, so they're excluded entirely — a real modeling gap for a future phase (priced room-service orders), not something P8 invented a fix for.
+2. **Guest "approve" ≠ admin "settle".** Cash/on-arrival payment needs a staff `User` recorder for audit (P5's `RecordCashPaymentAction` signature, reused unchanged) — a guest can't self-settle a cash payment. So express checkout is: guest reviews + approves (finalizes checkout logistics, reservation → `checked_out`), independently of whether staff has settled the actual payment yet (matches real front-desk flow — payment may happen before or after checkout).
+
+### Naive Reviewer Result: PASS WITH WARNINGS (all four fixed before commit)
+1. **Fixed — TOCTOU double-settle race:** `SettleFolioAction`'s "already settled" guard checked `$folio->status` *before* opening the transaction, with no row lock — two concurrent settle requests could both pass the guard and double-charge. Fixed by moving the check inside `DB::transaction` after `Folio::lockForUpdate()`.
+2. **Fixed — hardcoded locale:** `GenerateFolioAction` hardcoded `'en'` when resolving a booked service's translated name, unlike `ServiceBookingResource`'s pattern of using the request's locale. Fixed to `app()->getLocale()` (the `SetLocale` middleware already sets this from `Accept-Language`).
+3. **Fixed — `FolioItem` missing `LogsActivity`:** the sole `HasUuid` money-bearing model without it (26/27 others pair the two). Added.
+4. **Fixed — settled-folio regeneration drift:** `GenerateFolioAction` unconditionally deleted and recreated items even for an already-`settled` folio — a new priced booking confirmed after settlement would silently change the total while `status` still showed `settled`, drifting from the amount actually captured on the `Payment`. Fixed by short-circuiting regeneration once `status === settled`; the folio becomes a closed record. Added `test_settled_folio_does_not_drift_on_regeneration`.
+
+### Stop-and-Report
+- **Tests:** 205 passed, 0 failed, 0 skipped (194 prior + 11 new P8)
+- **Assertions:** 539
+- **New suite:** `tests/Feature/Folio/FolioTest.php` (11 tests)
+- `migrate:fresh --seed` verified clean from empty DB
+
+---
+
 ## P6 — Events / RFP
 
 **Date:** 2026-07-11

@@ -25,6 +25,10 @@ return [
         'document_uploaded'       => 'Document uploaded successfully.',
         'check_in_approved'       => 'Check-in approved.',
         'check_in_rejected'       => 'Check-in rejected.',
+        'folio_room_charge'       => 'Room charge',
+        'folio_generated'         => 'Folio generated.',
+        'folio_settled'           => 'Folio settled.',
+        'folio_approved'          => 'Checkout approved.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',

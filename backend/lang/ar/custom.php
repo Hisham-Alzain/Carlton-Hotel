@@ -25,6 +25,10 @@ return [
         'document_uploaded'       => 'تم رفع المستند بنجاح.',
         'check_in_approved'       => 'تمت الموافقة على تسجيل الوصول.',
         'check_in_rejected'       => 'تم رفض تسجيل الوصول.',
+        'folio_room_charge'       => 'رسوم الغرفة',
+        'folio_generated'         => 'تم إنشاء الفاتورة.',
+        'folio_settled'           => 'تم تسوية الفاتورة.',
+        'folio_approved'          => 'تمت الموافقة على تسجيل المغادرة.',
     ],
     'errors'     => [
         'server_error'           => 'حدث خطأ ما.',

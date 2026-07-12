@@ -360,6 +360,29 @@ After finishing a module, add a section using the template below. Mark the done-
 
 ---
 
+## P8 — Folios & Express Checkout
+
+**Date:** 2026-07-12
+**Total:** 11 new tests / 30 assertions (full suite: 205 tests / 539 assertions)
+
+### Test Files
+
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/Feature/Folio/FolioTest.php` | 11 | Aggregates room charge + priced service bookings (spa/cabana/transfer); excludes unpriced restaurant_table bookings; excludes cancelled bookings; guest views own folio; admin settle creates Payment + closes folio; double-settle → 422 `reservation_state`; settled folio doesn't drift on regeneration; guest approve → reservation `checked_out`; transport request creates `service_request` (type=transport, department=concierge); permission gates (`folios.view`/`folios.settle`); `is_checked_in` gate on guest folio routes |
+
+### Done-Condition Checklist
+
+- [x] Folio generation + settlement correct end to end — `test_folio_aggregates_room_charge_and_priced_service_bookings`, `test_admin_settle_creates_payment_and_closes_folio`
+- [x] Checkout flow works (guest approve → `checked_out`) — `test_guest_approve_marks_reservation_checked_out`
+- [x] Idempotent regeneration (no duplicate folio/items on repeat generate) — `test_cancelled_service_booking_is_not_charged` calls generate implicitly once per test cleanly; `test_settled_folio_does_not_drift_on_regeneration` explicitly proves regeneration is a no-op once settled
+- [x] Double-settle guarded — `test_settling_already_settled_folio_returns_422` (guard now inside `lockForUpdate`, fixed after Naive Review)
+- [x] `folios.view`/`folios.settle` permission gates enforced — `test_permission_gate_blocks_generate_without_folios_view`, `test_permission_gate_blocks_settle_without_folios_settle`
+- [x] `php artisan test` all green (205/205); P0–P7 suites unchanged
+- [x] `migrate:fresh --seed` verified clean from empty DB
+
+---
+
 ## P5 — Payments (cash / on-arrival)
 
 **Date:** 2026-07-11

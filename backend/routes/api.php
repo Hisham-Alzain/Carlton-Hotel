@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CheckInApprovalController;
+use App\Http\Controllers\Admin\FolioController as AdminFolioController;
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
 use App\Http\Controllers\Admin\EventInquiryController as AdminEventInquiryController;
 use App\Http\Controllers\Admin\MenuCategoryController;
@@ -11,9 +12,11 @@ use App\Http\Controllers\Admin\RestaurantTableController;
 use App\Http\Controllers\Admin\SpaServiceController;
 use App\Http\Controllers\Admin\TransferController;
 use App\Http\Controllers\Api\EventInquiryController as ApiEventInquiryController;
+use App\Http\Controllers\Api\FolioController as ApiFolioController;
 use App\Http\Controllers\Api\PreArrivalController;
 use App\Http\Controllers\Api\ServiceBookingController;
 use App\Http\Controllers\Api\ServiceRequestController;
+use App\Http\Controllers\Api\TransportRequestController;
 use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
 use App\Http\Controllers\Admin\EventSpaceController as AdminEventSpaceController;
 use App\Http\Controllers\Admin\FacilityController as AdminFacilityController;
@@ -258,4 +261,23 @@ Route::middleware(['auth:users', 'permission:cms.edit'])->prefix('cms')->group(f
 Route::middleware(['auth:users', 'permission:reservations.create'])->prefix('cms/check-in-approvals')->group(function () {
     Route::get  ('/',                        [CheckInApprovalController::class, 'index']);
     Route::patch('/{reservation}/approve',   [CheckInApprovalController::class, 'approve']);
+});
+
+// ──────────────────────────────────────────────────────────────────────
+// P8 — Folios & Express Checkout: guest-side (is_checked_in — same tier as in-room services)
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware(['auth:guests', 'is_checked_in'])->group(function () {
+    Route::get ('/folio',                  [ApiFolioController::class, 'show']);
+    Route::post('/folio/approve',          [ApiFolioController::class, 'approve']);
+    Route::post('/transport-requests',     [TransportRequestController::class, 'store']);
+});
+
+// P8 — Folios: admin generate/settle (folios.view / folios.settle — seeded since P0, first consumed here)
+Route::middleware('auth:users')->prefix('cms/folios')->group(function () {
+    Route::middleware('permission:folios.view')->group(function () {
+        Route::post('/{reservation}/generate', [AdminFolioController::class, 'generate']);
+    });
+    Route::middleware('permission:folios.settle')->group(function () {
+        Route::post('/{folio}/settle', [AdminFolioController::class, 'settle']);
+    });
 });

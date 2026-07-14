@@ -1,0 +1,24 @@
+flutter_native_splash:
+  # Native (pre-Flutter-engine) splash — shown instantly at cold start, before
+  # Dart runs. The package only supports a flat background color (no gradient),
+  # so we use the midpoint of the Figma splash gradient
+  # (AppColors.splashGradientCenter #1E5C64 → splashGradientEdge #0A2E33) to
+  # avoid a color jump before SplashView renders the real radial gradient.
+  #
+  # After changing anything here, regenerate with:
+  #   dart run flutter_native_splash:create
+  # To restore Flutter's default splash:
+  #   dart run flutter_native_splash:remove
+
+  web: false
+
+  # All platforms except Android 12+:
+  color: "#14454C"
+  image: assets/images/splashscreen.png
+
+  # Android 12+ handles splash screens differently and must be configured here.
+  # The image is clipped to a centered circle (1152x1152 px canvas, keep the
+  # important content within a 768 px diameter circle).
+  android_12:
+    color: "#14454C"
+    image: assets/images/splashscreen.png

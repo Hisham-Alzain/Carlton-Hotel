@@ -7,8 +7,11 @@ class CustomOutlinedButton extends StatelessWidget {
   final String? labelText;
   final TextStyle? labelStyle;
   final Color? borderColor;
+  final double borderWidth;
   final Color? backgroundColor;
   final Color? foregroundColor;
+
+  final double? elevation;
   final void Function()? onPressed;
 
   const CustomOutlinedButton({
@@ -18,8 +21,10 @@ class CustomOutlinedButton extends StatelessWidget {
     this.labelText,
     this.labelStyle,
     this.borderColor,
+    this.borderWidth = 1.5,
     this.backgroundColor,
     this.foregroundColor,
+    this.elevation,
     this.onPressed,
     super.key,
   });
@@ -39,13 +44,20 @@ class CustomOutlinedButton extends StatelessWidget {
             fixedSize: WidgetStatePropertyAll(Size(width, height)),
             minimumSize: WidgetStatePropertyAll(Size(width, height)),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
-              return backgroundColor;
-            }),
-            foregroundColor: WidgetStatePropertyAll(foregroundColor),
-            side: WidgetStatePropertyAll(
-              BorderSide(color: borderColor!, width: 1.5),
-            ),
+            backgroundColor: backgroundColor != null
+                ? WidgetStatePropertyAll(backgroundColor)
+                : null,
+            foregroundColor: foregroundColor != null
+                ? WidgetStatePropertyAll(foregroundColor)
+                : null,
+            side: borderColor != null
+                ? WidgetStatePropertyAll(
+                    BorderSide(color: borderColor!, width: borderWidth),
+                  )
+                : null,
+            elevation: elevation != null
+                ? WidgetStatePropertyAll(elevation)
+                : null,
           ),
           child: child,
         ),

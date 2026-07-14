@@ -1,0 +1,18 @@
+<svg width="32" height="26" viewBox="0 0 32 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+<g id="homepage">
+
+<g id="HamburgerBtn">
+<g id="Icon" clip-path="url(#clip0_0_1)">
+<path id="Vector" d="M4 5.00195H27.9922" stroke="#121212" stroke-width="1.79941" stroke-linecap="round"/>
+<path id="Vector_2" d="M4 12.9994H27.9922" stroke="#121212" stroke-width="1.79941" stroke-linecap="round"/>
+<path id="Vector_3" d="M4 20.9968H27.9922" stroke="#121212" stroke-width="1.79941" stroke-linecap="round"/>
+</g>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_1">
+<rect width="23.9922" height="17.9988" fill="white" transform="translate(4 4)"/>
+</clipPath>
+</defs>
+</svg>

@@ -1,9 +1,10 @@
 import 'dart:developer';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:carlton/services/cache/cache_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:carlton/services/api/api_service.dart';
+import 'package:carlton/services/cache/cache_manager.dart';
 import 'package:shimmer/shimmer.dart';
 
 class CustomImage extends StatelessWidget {
@@ -24,12 +25,45 @@ class CustomImage extends StatelessWidget {
     super.key,
   });
 
-  String get url => 'https://api.cartxpress.net/api/file/$path';
+  String get url =>
+      path.startsWith('http') ? path : '${ApiService.storageBaseUrl}$path';
+
+  /// Bundled asset paths render locally; anything else is fetched over the
+  /// network (absolute http URLs or storage-relative API paths).
+  bool get _isAsset => path.startsWith('assets/');
 
   @override
   Widget build(BuildContext context) {
+    if (_isAsset) return _buildAsset(context);
     if (path.endsWith('.svg')) return _buildSvg();
     return _buildRaster(context);
+  }
+
+  Widget _buildAsset(BuildContext context) {
+    if (path.endsWith('.svg')) {
+      return SvgPicture.asset(
+        path,
+        height: height,
+        width: width,
+        fit: fit ?? BoxFit.cover,
+        colorFilter: iconColor != null
+            ? ColorFilter.mode(iconColor!, BlendMode.srcIn)
+            : null,
+      );
+    }
+    // Decode-size hint: the bundled Figma exports are up to 4x resolution
+    // (2MB+ heroes) — without a cacheWidth they decode at native pixel size.
+    // Cap at the displayed width (or the screen width for full-bleed images)
+    // times the device pixel ratio: identical on screen, a fraction of the RAM.
+    final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0;
+    final targetWidth = width ?? MediaQuery.maybeSizeOf(context)?.width;
+    return Image.asset(
+      path,
+      height: height,
+      width: width,
+      fit: fit,
+      cacheWidth: targetWidth != null ? (targetWidth * dpr).round() : null,
+    );
   }
 
   Widget _buildSvg() {
@@ -43,11 +77,10 @@ class CustomImage extends StatelessWidget {
           : null,
       placeholderBuilder: (_) => _shimmer(),
     );
-    // Note: wrap in a retry widget if SVG load failures are common
   }
 
   Widget _buildRaster(BuildContext context) {
-    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0;
     return CachedNetworkImage(
       imageUrl: url,
       cacheManager: MyCacheManager(),
@@ -73,7 +106,7 @@ class CustomImage extends StatelessWidget {
         width: width,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
         ),
       ),
     );

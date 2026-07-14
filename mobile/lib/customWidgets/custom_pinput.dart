@@ -8,12 +8,23 @@ class CustomPinput extends StatelessWidget {
   final String? Function(String?)? validator;
   final void Function(String)? onComplete;
 
+  final Color? fillColor;
+  final Color? textColor;
+  final double? boxSize;
+  final bool hasError;
+  final Color? errorBorderColor;
+
   const CustomPinput({
     super.key,
     required this.controller,
     required this.length,
     required this.validator,
     required this.onComplete,
+    this.fillColor,
+    this.textColor,
+    this.boxSize,
+    this.hasError = false,
+    this.errorBorderColor,
   });
 
   @override
@@ -23,34 +34,32 @@ class CustomPinput extends StatelessWidget {
       color: Colors.red,
       fontSize: 10,
     );
+    final size = boxSize ?? 65;
     final PinTheme defaultPinTheme = PinTheme(
-      width: 65,
-      height: 65,
-      textStyle: textStyle.bodySmall,
+      width: size,
+      height: size,
+      textStyle: (textStyle.bodySmall ?? const TextStyle()).copyWith(
+        color: textColor,
+      ),
       decoration: BoxDecoration(
-        // color: AppColors.grey9,
+        color: fillColor,
         borderRadius: BorderRadius.circular(15),
-        // border: Border.all(color: AppColors.grey14),
       ),
     );
     return Pinput(
       controller: controller,
       length: length,
       defaultPinTheme: defaultPinTheme,
-      // focusedPinTheme: defaultPinTheme.copyDecorationWith(
-      //   border: Border.all(color: AppColors.primaryColor, width: 2),
-      // ),
-      // submittedPinTheme: defaultPinTheme.copyDecorationWith(
-      //   color: AppColors.containerBackgroundColor,
-      //   border: Border.all(color: AppColors.primaryColor, width: 2),
-      // ),
+      errorPinTheme: defaultPinTheme.copyDecorationWith(
+        border: Border.all(color: errorBorderColor ?? Colors.red, width: 1.4),
+      ),
+      forceErrorState: hasError,
       showCursor: true,
       validator: validator,
       errorTextStyle: errorStyle,
       onCompleted: onComplete,
       closeKeyboardWhenCompleted: true,
       keyboardType: TextInputType.number,
-      //TODO: smsRetriever: ,
     );
   }
 }

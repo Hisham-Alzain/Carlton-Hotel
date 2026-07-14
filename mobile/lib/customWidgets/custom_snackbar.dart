@@ -1,4 +1,5 @@
 import 'package:carlton/enums/enums.dart';
+import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -35,7 +36,7 @@ final _kConfig = {
   ),
   SnackbarType.info: _SnackbarConfig(
     bgColor: Colors.white,
-    accentColor: Colors.blueGrey, // TODO: replace with brand color
+    accentColor: AppColors.primary,
     icon: Icons.info_outline,
   ),
 };

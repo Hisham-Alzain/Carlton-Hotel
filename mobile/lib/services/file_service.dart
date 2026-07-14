@@ -2,13 +2,14 @@
 // import 'package:carlton/customWidgets/custom_dialogs.dart';
 // import 'package:carlton/l10n/app_translations.dart';
 // import 'package:carlton/models/picked_file.dart';
-// import 'package:carlton/services/permission_service.dart.dart';
+// import 'package:carlton/services/permission_service.dart';
 // import 'package:file_picker/file_picker.dart';
 // import 'package:flutter/foundation.dart';
 // import 'package:get/get.dart';
 // import 'package:path_provider/path_provider.dart';
 
-//TODO: needs updating here and in file service
+// NOTE: entire service disabled pending the file_picker v12 API migration —
+// re-enable and update the picker calls when file upload/download ships.
 
 // class FileService extends GetxService {
 //   late final PermissionService permissionService;

@@ -13,7 +13,6 @@ class RowTextComponent extends StatelessWidget {
   final MainAxisAlignment? mainAxisAlignment;
   final double? spacing;
 
-  /// 👇 add this
   final bool expandText;
 
   const RowTextComponent({
@@ -34,7 +33,7 @@ class RowTextComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      spacing: 10,
+      spacing: spacing ?? 10,
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: mainAxisAlignment ?? MainAxisAlignment.start,
       children: [
@@ -43,11 +42,11 @@ class RowTextComponent extends StatelessWidget {
         else if (path != null)
           SvgPicture.asset(
             path!,
-            colorFilter:
-                iconColor != null
-                    ? ColorFilter.mode(iconColor!, BlendMode.srcIn)
-                    : null,
-            width: 20,
+            colorFilter: iconColor != null
+                ? ColorFilter.mode(iconColor!, BlendMode.srcIn)
+                : null,
+            width: iconSize ?? 20,
+            height: iconSize,
           ),
 
         if (title != null) ...[Text(title!, style: titleStyle)],
@@ -72,7 +71,6 @@ class InvertedRowTextComponent extends StatelessWidget {
   final MainAxisAlignment? mainAxisAlignment;
   final double? spacing;
 
-  /// 👇 add this
   final bool expandText;
 
   const InvertedRowTextComponent({
@@ -107,10 +105,9 @@ class InvertedRowTextComponent extends StatelessWidget {
         else if (path != null)
           SvgPicture.asset(
             path!,
-            colorFilter:
-                iconColor != null
-                    ? ColorFilter.mode(iconColor!, BlendMode.srcIn)
-                    : null,
+            colorFilter: iconColor != null
+                ? ColorFilter.mode(iconColor!, BlendMode.srcIn)
+                : null,
             width: 20,
           ),
       ],

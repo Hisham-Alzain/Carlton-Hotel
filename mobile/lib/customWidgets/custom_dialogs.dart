@@ -2,6 +2,7 @@ import 'package:carlton/customWidgets/custom_elevated_button.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
 import 'package:carlton/enums/enums.dart';
 import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/theme/app_colors.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -14,7 +15,7 @@ final _kDefaultColors = {
   AppDialogType.success: Colors.green.shade900,
   AppDialogType.error: Colors.red.shade900,
   AppDialogType.warning: Colors.yellow.shade900,
-  AppDialogType.info: Colors.blueGrey, // replace with your brand color
+  AppDialogType.info: AppColors.primary,
   AppDialogType.confirmation: Colors.red.shade900,
   AppDialogType.destructive: Colors.red.shade900,
 };

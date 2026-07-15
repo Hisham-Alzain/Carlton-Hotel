@@ -413,3 +413,46 @@ Not run separately — implementation follows identical patterns to P4/P5 with n
 - **Assertions:** 393
 - **New suite:** `tests/Feature/Payment/PaymentTest.php` (9 tests)
 - All migrations run clean with `migrate:fresh --seed`
+
+---
+
+## P9 — Notifications, Chat & Real-time (Firebase)
+
+**Date:** 2026-07-15
+**Tickets:** `backend/tickets/P9_TICKETS.md`
+
+### Built
+- **Firebase wiring (first real use since P0):** `FirebaseServiceInterface` (`sendPush`, `mirrorToFirestore`) + `FirebaseService` (real `kreait/laravel-firebase` SDK — Messaging multicast + Firestore `set(..., merge: true)`). Bound conditionally in `AppServiceProvider`: real service only when `firebase.projects.app.credentials` is configured, else `NullFirebaseService` (safe no-op) — this dev/CI environment has no live credentials, so the real driver is integration code only, same class of gap as P5's untested `ManualDriver` failure branch.
+- **4 migrations:** `device_tokens` (guest-only — the only push-capable client is the app, per §3.6), `guest_notifications` (guest- or department-addressed; **not** named `notifications` — see deviation below), `conversations`, `messages` (`sender` polymorphic via `$table->morphs()`, morph-mapped `guest`/`staff`).
+- **`MirrorsToFirestore` trait** (PLAN's own phrase: "used by `service_requests`, tickets (P10), `messages`") wrapping `FirebaseServiceInterface::mirrorToFirestore()`.
+- **4 models** (`DeviceToken`, `GuestNotification`, `Conversation`, `Message`), all `HasUuid`+`LogsActivity`+`HasFactory`. `Guest` gets `deviceTokens()`, `guestNotifications()`, `conversations()` relations.
+- **Events/Listeners:** `GuestConnected` → `SendWelcomeNotification` (fires on a guest's first-ever device-token registration); `RoomAssigned` → `SendRoomReadyNotification` (new hook added to P4's `AssignRoomAction`, purely additive). Real bodies given to the two P6/P7 stub listeners: `NotifyDepartmentOnInquiry` (writes a department-addressed `GuestNotification`) and `MirrorServiceRequestToFirestore` (mirrors to the `ops_queue` Firestore collection via the trait).
+- **Actions:** `RegisterDeviceTokenAction` (upsert-by-token; fires `GuestConnected` only when this is the token owner's very first device), `SendMessageAction` (`handleFromGuest` / `handleFromStaff`; writes MySQL + mirrors to the `chats` Firestore collection).
+- **Services:** `NotificationService` (`pushToGuest`, `notifyDepartment`), `DeviceTokenService`, `ChatService` (guest + staff send/history, ownership-checked).
+- **Routes:** guest (`auth:guests`, tier-2 — no `has_booking`/`is_checked_in` gate): `POST /device-tokens`, `GET/POST /conversations`, `GET /conversations/{uuid}/messages`. Staff (`auth:users`): `GET /cms/conversations` + `/{uuid}/messages` (`tickets.view`), `POST /cms/conversations/{uuid}/messages` (`tickets.respond` — seeded since P0, unused until now).
+- **Docs:** `API_GUIDE_MOBILE.md` and `API_GUIDE_DASHBOARD.md` updated with the new endpoints, replacing their "Coming in P9" placeholders.
+- **13 new test files** across `tests/Feature/Notification/` and `tests/Feature/Chat/`.
+
+### Deviations / Decisions (recorded in `P9_TICKETS.md` before coding, reproduced here)
+1. **`guest_notifications` table, not `notifications`.** `User` already carries Laravel's `Notifiable` trait (scaffolded in P0, unused since) — the conventional `notifications` table belongs to that, with a different schema. Reusing the name would collide with anything that later calls `$user->notify(...)`. Renamed before first use to avoid the landmine.
+2. **`NotificationService` triggers — built only what has a real firing action.** `welcome-on-connect` (device-token registration), `room-ready` (`AssignRoomAction`), and `inquiry-routed` (P6's stub) are real. `order-status` and `ticket-replied` are explicitly **not** built: the former needs P7's own out-of-scope `UpdateRequestStatusAction` (P10), the latter needs the `Ticket` model (P10). `NotificationService::pushToGuest()` is the exact primitive P10 will call for both — no speculative/dead code added now.
+3. **Chat gated tier-2 (`auth:guests` only), not tier-3 (`is_checked_in`).** ARCHITECTURE §3.7 point 2 explicitly lists "my chat/tickets" under the authenticated-guest tier, not the in-stay tier — a guest can message staff before check-in.
+4. **`inquiry-routed` is a DB record, not a push or a Firestore write.** No staff device-token/push channel exists (only the app is push-capable per §3.6), and Firestore's mirror is reserved for chat + the service/ticket ops queue per §3 — not inquiries. `NotifyDepartmentOnInquiry` now writes a department-addressed `GuestNotification`, queryable by the P10 dashboard.
+
+### Bugs found and fixed during testing (pre-existing, surfaced by P9 giving the P6/P7 stub listeners real bodies)
+1. **Every listener was firing twice.** This Laravel 12 app has no `EventServiceProvider` — events are auto-discovered from `app/Listeners`' `handle(SpecificEvent $event)` signatures. `AppServiceProvider::boot()` *also* had explicit `Event::listen(...)` calls for `InquirySubmitted`/`ServiceRequestPlaced` (present since P6/P7) — double-registration, invisible while the listener bodies were no-ops, but every P9 test showed exact 2x counts (2 pushes, 2 Firestore mirrors, 2 notification rows) for one triggering action. Fixed by removing all four explicit `Event::listen()` calls (the 2 legacy + 2 new) and relying purely on auto-discovery; `php artisan event:clear` run to drop any stale cache. P6/P7's own test suites still pass unchanged (their listeners were no-ops either way).
+2. **`NotificationService::pushToGuest` called the transport with an empty token list** when a guest had no registered device — harmless with the real SDK's own empty-array guard, but the fake test double (correctly) doesn't replicate that guard, and semantically a "sent_at" timestamp on a notification nobody was pushed to is wrong. Moved the "any tokens?" check into the service (business decision, not a transport detail) — `sent_at` now stays null when there's no device to push to.
+
+### Naive Reviewer Result: PASS WITH WARNINGS (all four fixed before commit)
+Workflow-backed `/code-review high` run against the full diff — 4 finders, independent verify pass, 8 candidate findings collapsing to 4 distinct issues (some found by more than one finder).
+1. **Fixed — external FCM call inside a DB transaction:** `NotificationService::pushToGuest` called `sendPush()` (external HTTP) inside the same `DB::transaction` as the `GuestNotification` insert. A push failure (e.g. one stale token in a multicast) would roll back and permanently lose the notification record. Removed the transaction wrapper — the record now persists regardless of push outcome, matching the no-token case's existing "persisted queryable fact" behavior.
+2. **Fixed — welcome notification never fired on token reassignment:** `RegisterDeviceTokenAction`'s "is this new" check was keyed on the **token** (`DeviceToken::where('token', ...)->exists()`), not the **guest**. A device previously registered to GuestA and later reused by GuestB (shared/kiosk device, phone handed down) correctly reassigned the row but never fired `GuestConnected` for GuestB, since the token itself wasn't new. Rewrote the check to be guest-scoped (`! DeviceToken::where('guest_id', $guest->id)->exists()`, evaluated before the write) and added `test_inheriting_a_previously_owned_token_still_fires_welcome_for_the_new_owner`.
+3. **Fixed — same-guest concurrent registration/send races:** both `RegisterDeviceTokenAction` and `SendMessageAction::handleFromGuest` read-then-wrote (existence check, then create) with no lock, so two concurrent requests for the same guest could each miss the other's not-yet-committed row — double-firing the welcome push, or splitting one guest's chat across two open conversations. Both now take a `Guest::whereKey($id)->lockForUpdate()` inside their transaction before the read, serializing same-guest concurrent calls; the lock scope is kept to the fast DB-only lookup, not the external Firestore/FCM call that follows.
+4. **Fixed — hardcoded Firebase project key:** `AppServiceProvider`'s binding read `config('firebase.projects.app.credentials')` literally instead of resolving the active project via `config('firebase.default')` (which `config/firebase.php` defines for exactly this purpose). If ops ever pointed `FIREBASE_PROJECT` at a different project slug, the binding would silently keep resolving `NullFirebaseService` even with valid credentials configured elsewhere. Now reads `config('firebase.default', 'app')` first.
+
+### Stop-and-Report
+- **Tests:** 226 passed, 0 failed, 0 skipped (205 prior + 21 new P9)
+- **Assertions:** 608
+- **New suites:** `tests/Feature/Notification/DeviceTokenTest.php` (7), `NotificationTriggersTest.php` (3), `ServiceRequestMirrorTest.php` (1), `tests/Feature/Chat/ChatTest.php` (10)
+- `migrate:fresh --seed` verified clean from empty DB with all 4 new migrations; P0–P8 suites unchanged (after the auto-discovery fix above)
+- **New error_codes introduced:** none (chat ownership check reuses `not_found`; message validation reuses `validation_failed`)

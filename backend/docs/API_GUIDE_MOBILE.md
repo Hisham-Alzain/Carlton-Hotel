@@ -291,9 +291,29 @@ Folio review and settlement, transport request.
 
 ---
 
-## Coming in P9 — Push notifications & staff chat
+## Module: Notifications & Chat (P9, tier-2 — any guest token)
 
-Device token registration, guest↔staff real-time chat.
+### POST /api/device-tokens
+
+**Purpose:** Register this device for push (FCM). Call on app launch/login whenever the stored token differs from the last registered one.
+
+**Request body:** `{ "token": "<fcm-registration-token>", "platform": "ios" | "android" | "web" }`
+
+**Response `data`:** `{ "uuid", "platform", "last_used_at" }`. Registering the same token again (e.g. app reopened) just refreshes `last_used_at` — safe to call idempotently.
+
+### Chat
+
+One ongoing support conversation with staff per guest — no thread management needed client-side.
+
+- `GET /api/conversations` — paginated list of your conversation(s) (in practice, one).
+- `GET /api/conversations/{uuid}/messages` — paginated history, oldest first.
+- `POST /api/conversations` — send a message; body `{ "body"?: string, "attachment"?: file }` (at least one required, image only, max 5MB). Auto-opens a conversation on your first message and reuses it while open.
+
+**Message shape:** `{ "uuid", "sender_type": "guest" | "staff", "body", "attachment_url", "created_at" }`.
+
+Live delivery mirrors to Firestore (`chats` collection, one doc per message keyed by `uuid`, filter by `conversation_uuid`) — subscribe there for real-time updates instead of polling; MySQL via the endpoints above remains the source of truth for history/pagination.
+
+**Push triggers already wired:** a welcome notification on first-ever device registration, and a "room ready" push when staff assign your room at check-in. Order-status and ticket-reply pushes land with the ops queue in P10.
 
 ---
 

@@ -66,6 +66,14 @@ return [
         'otp_verified'   => 'تم التحقق بنجاح.',
         'booking_linked' => 'تم ربط الحجز بنجاح.',
     ],
+    'notifications' => [
+        'welcome_title'        => 'مرحباً بك في كارلتون',
+        'welcome_body'         => 'كل شيء جاهز — سنبقيك على اطلاع هنا طوال فترة إقامتك.',
+        'room_ready_title'     => 'غرفتك جاهزة',
+        'room_ready_body'      => 'تم تخصيص غرفتك. نراك قريباً!',
+        'inquiry_routed_title' => 'طلب فعالية جديد',
+        'inquiry_routed_body'  => 'تم توجيه طلب جديد من :name إلى قسمكم.',
+    ],
     'health'     => ['ok' => 'الخدمة تعمل بشكل سليم.'],
     'validation' => [
         'required'             => 'حقل :attribute مطلوب.',

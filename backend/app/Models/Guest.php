@@ -60,4 +60,19 @@ class Guest extends Authenticatable
         return $this->hasMany(Reservation::class)
             ->whereNotIn('status', ['cancelled', 'checked_out']);
     }
+
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
+
+    public function guestNotifications(): HasMany
+    {
+        return $this->hasMany(GuestNotification::class);
+    }
+
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class);
+    }
 }

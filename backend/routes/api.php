@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\CheckInApprovalController;
+use App\Http\Controllers\Admin\ConversationController as AdminConversationController;
 use App\Http\Controllers\Admin\FolioController as AdminFolioController;
+use App\Http\Controllers\Api\ConversationController as ApiConversationController;
+use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
 use App\Http\Controllers\Admin\EventInquiryController as AdminEventInquiryController;
 use App\Http\Controllers\Admin\MenuCategoryController;
@@ -279,5 +282,27 @@ Route::middleware('auth:users')->prefix('cms/folios')->group(function () {
     });
     Route::middleware('permission:folios.settle')->group(function () {
         Route::post('/{folio}/settle', [AdminFolioController::class, 'settle']);
+    });
+});
+
+// ──────────────────────────────────────────────────────────────────────
+// P9 — Notifications & Chat: guest-side (tier-2, auth:guests only —
+// ARCHITECTURE §3.7 places device registration + chat under any guest token)
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware('auth:guests')->group(function () {
+    Route::post('/device-tokens',                     [DeviceTokenController::class, 'store']);
+    Route::get ('/conversations',                     [ApiConversationController::class, 'index']);
+    Route::post('/conversations',                     [ApiConversationController::class, 'send']);
+    Route::get ('/conversations/{conversation}/messages', [ApiConversationController::class, 'messages']);
+});
+
+// P9 — Chat: admin/staff side (tickets.view read, tickets.respond to reply — both seeded since P0)
+Route::middleware('auth:users')->prefix('cms/conversations')->group(function () {
+    Route::middleware('permission:tickets.view')->group(function () {
+        Route::get('/',                         [AdminConversationController::class, 'index']);
+        Route::get('/{conversation}/messages',  [AdminConversationController::class, 'messages']);
+    });
+    Route::middleware('permission:tickets.respond')->group(function () {
+        Route::post('/{conversation}/messages', [AdminConversationController::class, 'reply']);
     });
 });

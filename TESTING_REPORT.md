@@ -403,3 +403,37 @@ After finishing a module, add a section using the template below. Mark the done-
 - [x] pending reservation transitions to confirmed on payment — `test_cash_settlement_transitions_pending_reservation_to_confirmed`
 - [x] en + ar lang keys present: `payment_settled`, `payment_failed` — both present in both lang files
 - [x] `php artisan test` all green (142/142)
+
+---
+
+## P9 — Notifications, Chat & Real-time (Firebase)
+
+**Date:** 2026-07-15
+**Total:** 21 new tests / 48 assertions (full suite: 226 tests / 608 assertions)
+
+### Test Files
+
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/Feature/Notification/DeviceTokenTest.php` | 7 | Register creates row; re-registering the same token reassigns it (no duplicate); a token inherited from another guest still fires welcome for the new owner (guest-scoped, not token-scoped — regression test for a review-caught bug, see below); first-ever token fires `welcome` `GuestNotification` + exactly one push; second token for the same guest does not refire welcome; platform validation (`in:ios,android,web`); unauthenticated → 401 |
+| `tests/Feature/Notification/NotificationTriggersTest.php` | 3 | `AssignRoomAction` pushes `room_ready` to the guest's device token(s); no device token → notification recorded, zero pushes, `sent_at` stays null; public event-inquiry submit routes a department-addressed `GuestNotification` (`guest_id` null, `sent_at` set) |
+| `tests/Feature/Notification/ServiceRequestMirrorTest.php` | 1 | Placing a service request mirrors it to the `ops_queue` Firestore collection (fulfils P7's stub) |
+| `tests/Feature/Chat/ChatTest.php` | 10 | Guest with no reservation can start a chat (tier-2, not gated by booking/check-in); message mirrors to the `chats` Firestore collection; second message reuses the same open conversation (no duplicate); guest views own history in chronological order; guest cannot view another guest's conversation (404, ownership-checked); message requires `body` or `attachment`; unauthenticated → 401; staff with `tickets.respond` replies and claims the conversation; staff without permission → 403; staff with `tickets.view` lists conversations + reads history |
+
+### Notes on the Firebase transport
+`FirebaseServiceInterface` is bound to a real `FirebaseService` (kreait SDK) only when Firebase credentials are configured; this dev/CI environment has none, so `AppServiceProvider` binds `NullFirebaseService` (safe no-op) by default — same class of "integration code, not exercised by the suite" gap as P5's untested `ManualDriver` failure branch. All P9 tests rebind `FirebaseServiceInterface` to `Tests\Support\FakeFirebaseService` (recording spy) to assert push/mirror payloads, mirroring P6.5's `PaymentGatewayInterface` stub-binding precedent.
+
+### Regression fix surfaced by this phase
+Giving the P6/P7 stub listeners (`NotifyDepartmentOnInquiry`, `MirrorServiceRequestToFirestore`) real bodies exposed that every listener in the app was firing twice — Laravel's event auto-discovery (no `EventServiceProvider` in this app) plus leftover explicit `Event::listen()` calls in `AppServiceProvider` double-registered all four listeners. Fixed by removing the explicit registrations; confirmed via `NotificationTriggersTest`/`DeviceTokenTest` asserting exact counts (1 push / 1 notification row, not 2). P6/P7's own suites were unaffected (their listener bodies were no-ops either way) and remain green.
+
+### Workflow-backed review (`/code-review high`)
+4 finders + independent verify pass, 4 distinct confirmed issues, all fixed pre-signoff (see `LOG_REPORT.md` P9 "Naive Reviewer Result" for full detail): external FCM call inside a DB transaction losing the notification record on push failure; welcome notification keyed off the wrong scope (token, not guest) so a reassigned device never welcomed its new owner; missing row-lock allowing same-guest concurrent requests to double-fire welcome or split a chat across two open conversations; a hardcoded Firebase project key bypassing `config('firebase.default')`. One new regression test added (`test_inheriting_a_previously_owned_token_still_fires_welcome_for_the_new_owner`); the concurrency fixes are structural (row-level locking) and not independently re-tested here, matching this codebase's existing concurrency-test style (P4's `ConcurrencyTest` asserts outcome correctness under sequential calls against the same lock path, not true multi-threaded timing).
+
+### Done-Condition Checklist
+
+- [x] Push sends with correct payload — `test_first_ever_device_token_fires_welcome_notification`, `test_assigning_a_room_pushes_room_ready_to_the_guest` assert `$fake->pushes` tokens/title/body
+- [x] Chat persists in MySQL and mirrors to Firestore — `test_guest_sending_a_message_mirrors_to_firestore` asserts both the DB row and `$fake->mirrors`
+- [x] `NotifyDepartmentOnInquiry` (P6) and `MirrorServiceRequestToFirestore` (P7) seams fulfilled for real — `test_public_inquiry_submission_routes_a_notification_to_the_department`, `test_placing_a_service_request_mirrors_it_to_the_firestore_ops_queue`
+- [x] `order-status`/`ticket-replied` triggers explicitly re-deferred to P10 (needs `UpdateRequestStatusAction`/`Ticket`, both out of P7/P9 scope) — recorded in `P9_TICKETS.md`, not silently dropped
+- [x] `php artisan test` all green (226/226); P0–P8 suites unchanged
+- [x] `migrate:fresh --seed` verified clean from empty DB with all 4 new migrations

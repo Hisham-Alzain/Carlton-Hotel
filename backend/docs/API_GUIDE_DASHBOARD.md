@@ -364,6 +364,20 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 
 ---
 
+## Module: Chat (P9)
+
+Guest↔staff messaging. `tickets.view` reads, `tickets.respond` replies (both seeded since P0).
+
+- `GET /api/cms/conversations` — all conversations, most recent first (`tickets.view`).
+- `GET /api/cms/conversations/{uuid}/messages` — paginated history, oldest first (`tickets.view`).
+- `POST /api/cms/conversations/{uuid}/messages` — reply; body `{ "body"?: string, "attachment"?: file }` (`tickets.respond`). Claims the conversation (sets `assigned_user_id` to the replying staff member) on the first staff reply if unassigned.
+
+Mirrors to Firestore the same way as the guest side (see `API_GUIDE_MOBILE.md`) — subscribe for live updates.
+
+No push notification is sent to staff (the dashboard is web; it live-subscribes to Firestore instead of FCM).
+
+---
+
 ## Coming in later phases
 
 - **P3** — CMS CRUD (admin create/edit rooms, facilities, dining, etc. — `cms.edit` gated)
@@ -372,5 +386,4 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 - **P6** — Event inquiry triage, assignment, status
 - **P7** — Service request queue, menu catalog management, pre-arrival approvals
 - **P8** — Folio generation and settlement
-- **P9** — Staff chat, push notification management
-- **P10** — Unified operations queue + dashboard summary metrics
+- **P10** — Unified operations queue (service_requests + tickets + inquiry-routed `guest_notifications`) + dashboard summary metrics

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Booking;
 
+use App\Events\RoomAssigned;
 use App\Exceptions\ReservationStateException;
 use App\Exceptions\RoomAlreadyAssignedException;
 use App\Models\Reservation;
@@ -44,6 +45,9 @@ class AssignRoomAction
             $reservationRoom->update(['room_id' => $room->id]);
             $reservation->update(['status' => Reservation::STATUS_CHECKED_IN]);
         });
+
+        // Fulfilled in P9: pushes the "room ready" notification to the guest.
+        event(new RoomAssigned($reservation));
 
         return ['data' => $reservation->refresh()->load(['rooms.room', 'rooms.roomType']), 'code' => 200];
     }

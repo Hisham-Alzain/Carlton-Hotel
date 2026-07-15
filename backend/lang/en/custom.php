@@ -66,6 +66,14 @@ return [
         'otp_verified'   => 'Verification successful.',
         'booking_linked' => 'Booking linked successfully.',
     ],
+    'notifications' => [
+        'welcome_title'        => 'Welcome to Carlton',
+        'welcome_body'         => 'You are all set — we will keep you posted here throughout your stay.',
+        'room_ready_title'     => 'Your room is ready',
+        'room_ready_body'      => 'Your room has been assigned. See you soon!',
+        'inquiry_routed_title' => 'New event inquiry',
+        'inquiry_routed_body'  => 'A new inquiry from :name has been routed to your department.',
+    ],
     'health'     => ['ok' => 'Service healthy.'],
     'validation' => [
         'required'             => 'The :attribute field is required.',

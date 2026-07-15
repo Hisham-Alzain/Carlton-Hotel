@@ -8,14 +8,14 @@ import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:carlton/controllers/home/services_controller.dart';
 import 'package:carlton/controllers/main/main_controller.dart';
 import 'package:carlton/controllers/auth/sign_in_controller.dart';
-import 'package:carlton/controllers/splash/splash_controller.dart';
+import 'package:carlton/controllers/splash/splash_screen_controller.dart';
 import 'package:carlton/controllers/auth/welcome_back_controller.dart';
 import 'package:get/get.dart';
 
 class SplashBinding implements Bindings {
   @override
   void dependencies() {
-    Get.lazyPut(() => SplashController());
+    Get.lazyPut(() => SplashScreenController());
   }
 }
 

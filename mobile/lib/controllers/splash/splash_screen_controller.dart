@@ -1,14 +1,17 @@
+import 'dart:math';
+
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/session_service.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class SplashController extends GetxController with GetTickerProviderStateMixin {
+class SplashScreenController extends GetxController
+    with GetTickerProviderStateMixin {
   static const Color _nativeSplashColor = Color(0xFF14454C);
 
   late final AnimationController animationController;
-  late final Animation<Offset> positionAnimation;
+  late final Animation<double> rotationAnimation;
   late final Animation<double> scaleAnimation;
   late final Animation<double> opacityAnimation;
   late final Animation<Color?> gradientCenterAnimation;
@@ -21,16 +24,17 @@ class SplashController extends GetxController with GetTickerProviderStateMixin {
 
     animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 2500),
     );
 
-    positionAnimation =
-        Tween<Offset>(begin: const Offset(-200, 0), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: animationController,
-            curve: const Interval(0.0, 0.45, curve: Curves.easeOutCubic),
-          ),
-        );
+    // Spins from -1 full turn (radians) down to rest at 0, same timing
+    // window the old slide-in used.
+    rotationAnimation = Tween<double>(begin: -2 * pi, end: 0.0).animate(
+      CurvedAnimation(
+        parent: animationController,
+        curve: const Interval(0.0, 0.45, curve: Curves.easeOutCubic),
+      ),
+    );
 
     scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(

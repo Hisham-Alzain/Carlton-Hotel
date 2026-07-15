@@ -7,12 +7,12 @@ import 'package:carlton/views/booking/reservation_choice_view.dart';
 import 'package:carlton/views/home/ai_concierge_view.dart';
 import 'package:carlton/views/main/main_view.dart';
 import 'package:carlton/views/auth/sign_in_view.dart';
-import 'package:carlton/views/splash/splash_view.dart';
+import 'package:carlton/views/splash/splash_screen_view.dart';
 import 'package:carlton/views/auth/welcome_back_view.dart';
 import 'package:get/get.dart';
 
 abstract class Routes {
-  static const splash = '/splash';
+  static const splashScreen = '/splash-screen';
   static const main = '/main';
   static const signIn = '/sign-in';
   static const otpVerify = '/otp-verify';
@@ -27,8 +27,8 @@ abstract class Routes {
 abstract class Pages {
   static final List<GetPage<dynamic>> getPages = [
     GetPage(
-      name: Routes.splash,
-      page: () => const SplashView(),
+      name: Routes.splashScreen,
+      page: () => const SplashScreenView(),
       binding: SplashBinding(),
     ),
     GetPage(

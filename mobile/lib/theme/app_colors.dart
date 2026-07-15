@@ -15,6 +15,7 @@ abstract class AppColors {
   static const Color tealRing = Color(0xFF1B3339); // ring around check badge
   static const Color gold = Color(0xFFB8975A); // links, In-Progress status
   static const Color goldBadge = Color(0x8FB8975A); // gold @ 56%
+  static const Color logoGradient = Color(0xFF93C2CD); // logo gradient
 
   // ── Surfaces ─────────────────────────────────────────────────────────
   static const Color background = Color(0xFFFCFCFC);

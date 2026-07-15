@@ -9,7 +9,6 @@ import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
-
 import 'services/get_storage_service.dart';
 
 Future<void> main() async {
@@ -41,7 +40,7 @@ class MainApp extends StatelessWidget {
 
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: Routes.splash,
+      initialRoute: Routes.splashScreen,
       getPages: Pages.getPages,
       theme: Themes.theme,
       supportedLocales: const [Locale('en'), Locale('ar')],

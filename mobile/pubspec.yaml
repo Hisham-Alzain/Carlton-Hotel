@@ -67,9 +67,14 @@ flutter:
           weight: 700
         - asset: assets/fonts/PlusJakartaSans-ExtraBold.ttf
           weight: 800
-    - family: Cormorant
+    - family: The Seasons
       fonts:
-        - asset: assets/fonts/Cormorant-Variable.ttf
+       - asset: assets/fonts/The_Seasons_Light.ttf
+         weight: 300
+       - asset: assets/fonts/The_Seasons_Regular.ttf
+         weight: 400
+       - asset: assets/fonts/The_Seasons_Bold.ttf
+         weight: 700
 
   uses-material-design: true
 

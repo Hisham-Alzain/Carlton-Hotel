@@ -6,7 +6,6 @@ use App\Adapters\DirectAdapter;
 use App\Contracts\ChannelAdapterInterface;
 use App\Contracts\FirebaseServiceInterface;
 use App\Contracts\PaymentGatewayInterface;
-use App\Models\Guest;
 use App\Models\PoolCabana;
 use App\Models\RestaurantTable;
 use App\Models\SpaService;
@@ -49,13 +48,18 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(fn ($user) => $user instanceof User && $user->isSuperAdmin() ? true : null);
         Gate::policy(User::class, StaffPolicy::class);
 
+        // Guest/User are NOT aliased here on purpose: Relation::morphMap() is
+        // process-wide, and both models are also polymorphic causer/subject
+        // targets for Spatie's ActivityLog (via LogsActivity, used by nearly
+        // every model). Aliasing them would silently change causer_type/
+        // subject_type for every audited model, not just Message::sender.
+        // Message stores the FQCN directly; Message::senderLabel() maps it
+        // back to "guest"/"staff" for API output.
         Relation::morphMap([
             'spa_service'      => SpaService::class,
             'restaurant_table' => RestaurantTable::class,
             'pool_cabana'      => PoolCabana::class,
             'transfer'         => Transfer::class,
-            'guest'            => Guest::class,
-            'staff'            => User::class,
         ]);
     }
 }

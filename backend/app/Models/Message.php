@@ -31,4 +31,11 @@ class Message extends Model
     {
         return $this->fileUrl($this->attachment_path);
     }
+
+    // sender_type stores the FQCN (Guest/User are not in the global morph map
+    // — see AppServiceProvider). This maps it back to the short API label.
+    public function senderLabel(): string
+    {
+        return $this->sender_type === Guest::class ? self::SENDER_GUEST : self::SENDER_STAFF;
+    }
 }

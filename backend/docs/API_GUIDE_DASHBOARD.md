@@ -378,6 +378,19 @@ No push notification is sent to staff (the dashboard is web; it live-subscribes 
 
 ---
 
+## Module: Operations Queue & Dashboard (P10)
+
+The unified read+assign layer over `service_requests` and `tickets` (chatbot-created — empty until P11 ships). Every mutation mirrors live to the same Firestore `ops_queue` collection service-request creation already writes to (see `API_GUIDE_MOBILE.md`).
+
+- `GET /api/operations/queue` — merged, newest-first, paginated. Requires `service_requests.view` **or** `tickets.view`; each table is included only if the caller holds its own `.view` permission (holding just one silently omits the other, not a 403). Each item: `{ type: "service_request"|"ticket", uuid, subject, department, status, priority, assigned_user_uuid, created_at }`. `subject` is the service request's `type` or the ticket's `subject`.
+- `PATCH /api/operations/queue/{type}/{uuid}/assign` — `{ "user_uuid": "..." }`. `{type}` is `service-requests` or `tickets`. Permission differs by type: `service_requests.assign` / `tickets.assign`.
+- `PATCH /api/operations/queue/{type}/{uuid}/status` — `{ "status": "..." }`, validated against that item's own status enum. Permission: `service_requests.update` / `tickets.respond` (ticket status changes reuse the chat-reply permission — resolving a ticket is a form of responding to it).
+- `GET /api/dashboard/summary` — `{ service_requests?: {status: count}, tickets?: {status: count}, event_inquiries?: {status: count} }`. Each block appears only if you hold the matching `.view` permission (`tickets.view` unlocks both `tickets` and `event_inquiries` — event inquiries reuse the same permission P6 already gated their own admin routes with). No permissions → `{}`, not a 403.
+
+**Tickets are chatbot-only for now.** Nothing creates a `Ticket` until P11's `CreateTicketAction` — the table and queue support them from P10 onward so nothing needs to change when P11 lands.
+
+---
+
 ## Coming in later phases
 
 - **P3** — CMS CRUD (admin create/edit rooms, facilities, dining, etc. — `cms.edit` gated)
@@ -386,4 +399,4 @@ No push notification is sent to staff (the dashboard is web; it live-subscribes 
 - **P6** — Event inquiry triage, assignment, status
 - **P7** — Service request queue, menu catalog management, pre-arrival approvals
 - **P8** — Folio generation and settlement
-- **P10** — Unified operations queue (service_requests + tickets + inquiry-routed `guest_notifications`) + dashboard summary metrics
+- **P11** — AI chatbot (creates the first `Ticket` rows; RAG over CMS content)

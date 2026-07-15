@@ -12,6 +12,8 @@ class FakeFirebaseService implements FirebaseServiceInterface
     /** @var array<int, array{collection: string, document: string, data: array}> */
     public array $mirrors = [];
 
+    public bool $throwOnMirror = false;
+
     public function sendPush(array $tokens, string $title, string $body, array $data = []): void
     {
         $this->pushes[] = compact('tokens', 'title', 'body', 'data');
@@ -19,6 +21,9 @@ class FakeFirebaseService implements FirebaseServiceInterface
 
     public function mirrorToFirestore(string $collection, string $documentId, array $data): void
     {
+        if ($this->throwOnMirror) {
+            throw new \RuntimeException('Simulated Firestore outage');
+        }
         $this->mirrors[] = ['collection' => $collection, 'document' => $documentId, 'data' => $data];
     }
 }

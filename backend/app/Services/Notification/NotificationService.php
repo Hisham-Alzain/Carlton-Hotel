@@ -39,7 +39,9 @@ class NotificationService
     /**
      * Records a department-addressed notification. No push channel exists for
      * staff (§3.6 — the dashboard is web, live-updated via Firestore, not FCM);
-     * this is a persisted, queryable fact for the P10 ops dashboard to surface.
+     * this is a persisted, queryable fact. Not yet read by anything — P10's
+     * OperationsQueueService doesn't query guest_notifications; a future
+     * dashboard extension or P12 reporting can read this table directly.
      *
      * @param array<string, mixed> $data
      */

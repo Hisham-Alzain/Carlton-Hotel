@@ -68,7 +68,7 @@ class SendMessageAction
         $this->mirrorToFirestore('chats', $message->uuid, [
             'uuid'              => $message->uuid,
             'conversation_uuid' => $conversation->uuid,
-            'sender_type'       => $message->sender_type,
+            'sender_type'       => $message->senderLabel(),
             'body'              => $message->body,
             'attachment_path'   => $message->attachment_path,
             'created_at'        => $message->created_at->toIso8601String(),

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\FolioController as AdminFolioController;
 use App\Http\Controllers\Api\ConversationController as ApiConversationController;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
+use App\Http\Controllers\Admin\OperationsQueueController;
 use App\Http\Controllers\Admin\EventInquiryController as AdminEventInquiryController;
 use App\Http\Controllers\Admin\MenuCategoryController;
 use App\Http\Controllers\Admin\MenuItemController;
@@ -306,3 +307,19 @@ Route::middleware('auth:users')->prefix('cms/conversations')->group(function () 
         Route::post('/{conversation}/messages', [AdminConversationController::class, 'reply']);
     });
 });
+
+// ──────────────────────────────────────────────────────────────────────
+// P10 — Staff Ops Dashboard + Tickets: unified queue over service_requests
+// + tickets. Assign/status permission is checked in-service per {type}
+// (service-requests|tickets) since it differs per operation — see
+// OperationsQueueService::requiredPermission().
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware(['auth:users', 'permission:service_requests.view|tickets.view'])
+    ->get('/operations/queue', [OperationsQueueController::class, 'index']);
+
+Route::middleware('auth:users')->prefix('operations/queue/{type}/{uuid}')->group(function () {
+    Route::patch('/assign', [OperationsQueueController::class, 'assign']);
+    Route::patch('/status', [OperationsQueueController::class, 'updateStatus']);
+});
+
+Route::middleware('auth:users')->get('/dashboard/summary', [OperationsQueueController::class, 'summary']);

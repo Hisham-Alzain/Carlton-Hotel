@@ -437,3 +437,35 @@ Giving the P6/P7 stub listeners (`NotifyDepartmentOnInquiry`, `MirrorServiceRequ
 - [x] `order-status`/`ticket-replied` triggers explicitly re-deferred to P10 (needs `UpdateRequestStatusAction`/`Ticket`, both out of P7/P9 scope) — recorded in `P9_TICKETS.md`, not silently dropped
 - [x] `php artisan test` all green (226/226); P0–P8 suites unchanged
 - [x] `migrate:fresh --seed` verified clean from empty DB with all 4 new migrations
+
+---
+
+## P10 — Staff Ops Dashboard + Tickets
+
+**Date:** 2026-07-16
+**Total:** 24 new tests / 47 assertions (full suite: 250 tests / 655 assertions)
+
+### Test Files
+
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/Feature/Operations/RouteRequestActionTest.php` | 4 | Routes a service request by `type`; unmapped service-request type defaults to concierge; routes a ticket by `category`; unmapped ticket category defaults to concierge |
+| `tests/Feature/Operations/OperationsQueueTest.php` | 14 | Unified queue merges both tables; excludes a table the caller can't view; sorts newest-first across both tables; excludes completed/resolved items (queue = active work only); `priority` is a consistent type across both item types (post-review fix); queue requires `service_requests.view\|tickets.view`; assign updates `assigned_user_id` + mirrors to Firestore; assign permission differs correctly per type (service-request vs ticket, split across two tests per the Sanctum-guard-caching note below); status update permission differs correctly per type (same split); status value validated against the resolved item's own enum (a ticket status invalid for `ServiceRequest` → 422); unknown `{type}` segment → 404 |
+| `tests/Feature/Operations/DashboardSummaryTest.php` | 4 | Summary includes only the blocks the caller can view; `tickets.view` unlocks both `tickets` and `event_inquiries` blocks; no permissions → empty summary (`{}`, not 403); unauthenticated → 401 |
+| `tests/Feature/Notification/FirestoreMirrorResilienceTest.php` | 2 | A Firestore mirror failure (simulated via `FakeFirebaseService::$throwOnMirror`) does not fail the chat-send request; does not fail an assign request — in both cases the underlying DB write is asserted to have succeeded regardless |
+
+### Test-authoring note: Sanctum guard caching within one test method
+Two tests originally combined a "wrong permission → 403" and "right permission → 200" assertion for two different users in one method. Both intermittently/consistently failed with an unexpected second 403 — Laravel's Auth guard caches the resolved user for the life of the test's `$this->app` instance, not reset between two `patchJson()` calls in the same test (only a fresh test method gets a clean resolution). This is the same class of issue `StaffLoginTest` (P1) worked around with `auth()->forgetGuards()`. Resolved here by splitting into separate test methods instead — matches the codebase's existing one-assertion-per-test convention, worth remembering for any future test that authenticates as more than one user within a single method.
+
+### Workflow-backed review (`/code-review high`)
+4 finders + independent verify pass, 12 candidates → 9 distinct findings, 8 fixed pre-signoff, 1 reviewed and left as-is with rationale (see `LOG_REPORT.md` P10 "Naive Reviewer Result" for full detail). Most notable: a new global `Relation::morphMap()` entry silently collided with Spatie ActivityLog's polymorphic `causer`/`subject` columns for `User`/`Guest` (used by nearly every audited model in the app, not just the new `Message.sender` relation it was added for) — removed from the map, `Message` now stores the FQCN and exposes a computed `senderLabel()` instead. Also fixed: unguarded synchronous Firestore calls that could turn a successfully-committed write into a client-facing 500 (now caught/logged in the shared `MirrorsToFirestore` trait — one fix covers `SendMessageAction`, `AssignRequestAction`, `UpdateRequestStatusAction`, and P9's `MirrorServiceRequestToFirestore`); a `priority` field that silently changed JSON type (string vs int) per row in the merged queue; a device-token unique-constraint race between two *different* guests registering the same brand-new token concurrently.
+
+### Done-Condition Checklist
+
+- [x] One queue surfaces both `service_requests` and `tickets`, routed and live (Firestore-mirrored) — `test_unified_queue_merges_service_requests_and_tickets`, `test_assigning_a_service_request_updates_and_mirrors`
+- [x] Routing resolves the correct department for both item types — `RouteRequestActionTest` (all 4)
+- [x] Assignment and status updates are permission-gated per type — `OperationsQueueTest` (assign/status split tests)
+- [x] Dashboard summary respects permissions — `DashboardSummaryTest` (all 4)
+- [x] A Firestore mirror outage doesn't fail the underlying request — `FirestoreMirrorResilienceTest` (both tests)
+- [x] `php artisan test` all green (250/250); P0–P9 suites unchanged
+- [x] `migrate:fresh --seed` verified clean from empty DB with the new `tickets` migration

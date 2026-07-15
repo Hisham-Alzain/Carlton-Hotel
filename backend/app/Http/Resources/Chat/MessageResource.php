@@ -11,7 +11,7 @@ class MessageResource extends BaseResource
     {
         return [
             'uuid'            => $this->uuid,
-            'sender_type'     => $this->sender_type,
+            'sender_type'     => $this->resource->senderLabel(),
             'body'            => $this->body,
             'attachment_url'  => $this->attachment_url,
             'created_at'      => $this->created_at?->toIso8601String(),

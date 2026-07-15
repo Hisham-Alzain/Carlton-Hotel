@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:carlton/models/api/api_response.dart';
-import 'package:carlton/services/api/upload_donwload/file_download.dart';
-import 'package:carlton/services/api/upload_donwload/file_upload.dart';
+import 'package:carlton/services/api/upload_download/file_download.dart';
+import 'package:carlton/services/api/upload_download/file_upload.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
@@ -36,6 +36,10 @@ import 'ui/api_dialog_handler.dart';
 /// ```
 class ApiService extends GetxService {
   static const String baseUrl = '';
+
+  /// Base URL for file/image storage. Referenced by [CustomImage] to build
+  /// asset URLs; set per-environment like [baseUrl].
+  static const String storageBaseUrl = '';
   static const int apiTimeOutSeconds = 30;
 
   static ApiService get find => Get.find<ApiService>();
@@ -58,7 +62,6 @@ class ApiService extends GetxService {
 
   /// Called when a 401 / unauthorized response is received.
   /// Default is a no-op — wire to your logout / route-to-login flow.
-  /// TODO:
   void Function() onUnauthorized = () {};
 
   @override

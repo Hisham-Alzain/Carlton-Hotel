@@ -1,3 +1,5 @@
+import 'package:carlton/customWidgets/custom_texts.dart';
+import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pinput/pinput.dart';
@@ -13,44 +15,50 @@ class CustomPinput extends StatelessWidget {
     required this.controller,
     required this.length,
     required this.validator,
-    required this.onComplete,
+    this.onComplete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textStyle = Get.textTheme;
-    final TextStyle errorStyle = Get.textTheme.labelLarge!.copyWith(
-      color: Colors.red,
-      fontSize: 10,
+    final theme = Get.theme;
+
+    final errorStyle = theme.textTheme.bodySmall?.copyWith(
+      color: AppColors.error,
     );
+
+    final inputStyle = theme.textTheme.bodyLarge?.copyWith(
+      color: AppColors.ink,
+      fontWeight: FontWeight.w400,
+    );
+
     final PinTheme defaultPinTheme = PinTheme(
-      width: 65,
-      height: 65,
-      textStyle: textStyle.bodySmall,
+      width: 45,
+      height: 50,
+      textStyle: inputStyle,
       decoration: BoxDecoration(
-        // color: AppColors.grey9,
-        borderRadius: BorderRadius.circular(15),
-        // border: Border.all(color: AppColors.grey14),
+        color: AppColors.cream,
+        borderRadius: BorderRadius.circular(10),
       ),
     );
+
+    //TODO: error is not showing
     return Pinput(
       controller: controller,
       length: length,
       defaultPinTheme: defaultPinTheme,
-      // focusedPinTheme: defaultPinTheme.copyDecorationWith(
-      //   border: Border.all(color: AppColors.primaryColor, width: 2),
-      // ),
-      // submittedPinTheme: defaultPinTheme.copyDecorationWith(
-      //   color: AppColors.containerBackgroundColor,
-      //   border: Border.all(color: AppColors.primaryColor, width: 2),
-      // ),
-      showCursor: true,
+      errorPinTheme: defaultPinTheme.copyDecorationWith(
+        border: Border.all(color: AppColors.error, width: 1.5),
+      ),
       validator: validator,
       errorTextStyle: errorStyle,
       onCompleted: onComplete,
       closeKeyboardWhenCompleted: true,
       keyboardType: TextInputType.number,
-      //TODO: smsRetriever: ,
+      errorBuilder: (context, errorText) => RowTextComponent(
+        text: errorText,
+        icon: Icons.error_outline,
+        iconColor: AppColors.error,
+      ),
     );
   }
 }

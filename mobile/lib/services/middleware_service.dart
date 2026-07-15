@@ -36,20 +36,22 @@ class MiddlewareService extends GetxService {
       return;
     } else {
       try {
-        // log('token: $token');
         final response = await apiService.dio.get('/user/check-token');
         if (response.statusCode == 200) {
-          // await NotificationService.find.requestPermission();
           userType = response.data['data']['role'];
-          middlewareCase = MiddlewareCases.validToken;
         }
+        middlewareCase = MiddlewareCases.validToken;
       } on DioException catch (e) {
         if (e.response?.statusCode == 401) {
           middlewareCase = MiddlewareCases.invalidToken;
           await StorageService.remove(StorageKeys.token);
-          Future.delayed(const Duration(milliseconds: 3500), () async {
-            CustomDialogs.showSessionExpiredDialog();
-          });
+          CustomDialogs.showSessionExpiredDialog();
+        } else {
+          // Network failure / server error: the token can't be verified, but
+          // that is not proof it's invalid — keep the session and let a real
+          // 401 on an actual request log the user out. Without this branch a
+          // flaky connection bounces signed-in users to the login screen.
+          middlewareCase = MiddlewareCases.validToken;
         }
       }
     }

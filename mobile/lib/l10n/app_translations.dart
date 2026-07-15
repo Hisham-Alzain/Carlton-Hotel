@@ -35,6 +35,9 @@ class AppTranslations {
   static String get submit => 'general.submit'.tr;
   static String get confirm => 'general.confirm'.tr;
   static String get changeNumber => 'general.changeNumber'.tr;
+  static String get goBack => 'general.goBack'.tr;
+  static String get discoverAll => 'general.discoverAll'.tr;
+  static String get bookingComingSoon => 'general.bookingComingSoon'.tr;
 
   // Validation
   static String get requiredField => 'validation.requiredField'.tr;
@@ -123,6 +126,166 @@ class AppTranslations {
   static String get pleaseAgreeToTerms => 'auth.pleaseAgreeToTerms'.tr;
   static String get pleaseLoginToAddToCart => 'auth.pleaseLoginToAddToCart'.tr;
   static String get registrationSuccessful => 'auth.registrationSuccessful'.tr;
+
+  // Auth — Carlton flow
+  static String get welcomeBackTitle => 'auth.welcomeBackTitle'.tr;
+  static String get welcomeBackSubtitle => 'auth.welcomeBackSubtitle'.tr;
+  static String get signInTitle => 'auth.signInTitle'.tr;
+  static String get signInSubtitle => 'auth.signInSubtitle'.tr;
+  static String get signInByPhoneTab => 'auth.signInByPhoneTab'.tr;
+  static String get signInByEmailTab => 'auth.signInByEmailTab'.tr;
+  static String get emailAddressLabel => 'auth.emailAddressLabel'.tr;
+  static String get emailAddressHint => 'auth.emailAddressHint'.tr;
+  static String get nextButtonLabel => 'auth.nextButtonLabel'.tr;
+  static String get newGuestPrompt => 'auth.newGuestPrompt'.tr;
+  static String get createAccountLink => 'auth.createAccountLink'.tr;
+  static String get addPhoneTitle => 'auth.addPhoneTitle'.tr;
+  static String get addPhoneSubtitle => 'auth.addPhoneSubtitle'.tr;
+  static String get sendCodeButtonLabel => 'auth.sendCodeButtonLabel'.tr;
+  static String get verifyIdentityTitle => 'auth.verifyIdentityTitle'.tr;
+  static String otpSentTo(String destination) =>
+      'auth.otpSentTo'.trParams({'destination': destination});
+  static String get codeMismatch => 'auth.codeMismatch'.tr;
+  static String resendIn(String time) =>
+      'auth.resendIn'.trParams({'time': time});
+  static String get resendCodeLink => 'auth.resendCodeLink'.tr;
+  static String get verifyButtonLabel => 'auth.verifyButtonLabel'.tr;
+  static String get demoNewCodeSent => 'auth.demoNewCodeSent'.tr;
+  static String get createProfileTitle => 'auth.createProfileTitle'.tr;
+  static String get createProfileSubtitle => 'auth.createProfileSubtitle'.tr;
+  static String get firstNameLabel => 'auth.firstNameLabel'.tr;
+  static String get firstNameHint => 'auth.firstNameHint'.tr;
+  static String get lastNameLabel => 'auth.lastNameLabel'.tr;
+  static String get lastNameHint => 'auth.lastNameHint'.tr;
+  static String get continueButtonLabel => 'auth.continueButtonLabel'.tr;
+  static String get pleaseEnterPhoneNumber => 'auth.pleaseEnterPhoneNumber'.tr;
+  static String get pleaseEnterEmailAddress =>
+      'auth.pleaseEnterEmailAddress'.tr;
+  static String get pleaseEnterFirstName => 'auth.pleaseEnterFirstName'.tr;
+  static String get pleaseEnterLastName => 'auth.pleaseEnterLastName'.tr;
+  static String get phoneNumberHint => 'auth.phoneNumberHint'.tr;
+  static String get searchCountryHint => 'auth.searchCountryHint'.tr;
+
+  // Navigation
+  static String get navHome => 'nav.home'.tr;
+  static String get navStays => 'nav.stays'.tr;
+  static String get navBook => 'nav.book'.tr;
+  static String get navServices => 'nav.services'.tr;
+  static String get navAccount => 'nav.account'.tr;
+
+  // Home
+  static String get roomsSuites => 'home.roomsSuites'.tr;
+  static String get diningRestaurants => 'home.diningRestaurants'.tr;
+  static String get experiences => 'home.experiences'.tr;
+  static String get specialOffers => 'home.specialOffers'.tr;
+  static String get menuComingSoon => 'home.menuComingSoon'.tr;
+  static String get exploreComingSoon => 'home.exploreComingSoon'.tr;
+  static String sectionComingSoon(String section) =>
+      'home.sectionComingSoon'.trParams({'section': section});
+  static String get sectionRooms => 'home.sectionRooms'.tr;
+  static String get sectionDining => 'home.sectionDining'.tr;
+  static String get sectionExperiences => 'home.sectionExperiences'.tr;
+  static String get sectionOffers => 'home.sectionOffers'.tr;
+  static String get heroLocation => 'home.heroLocation'.tr;
+  static String get heroVideoTitlePre => 'home.heroVideoTitlePre'.tr;
+  static String get heroVideoTitleItalic => 'home.heroVideoTitleItalic'.tr;
+  static String get heroVideoTitlePost => 'home.heroVideoTitlePost'.tr;
+  static String get heroVideoSubtitle => 'home.heroVideoSubtitle'.tr;
+  static String get heroDiningTitlePre => 'home.heroDiningTitlePre'.tr;
+  static String get heroDiningTitleItalic => 'home.heroDiningTitleItalic'.tr;
+  static String get heroDiningTitlePost => 'home.heroDiningTitlePost'.tr;
+  static String get heroDiningSubtitle => 'home.heroDiningSubtitle'.tr;
+  static String get heroExperiencesTitlePre =>
+      'home.heroExperiencesTitlePre'.tr;
+  static String get heroExperiencesTitleItalic =>
+      'home.heroExperiencesTitleItalic'.tr;
+  static String get heroExperiencesTitlePost =>
+      'home.heroExperiencesTitlePost'.tr;
+  static String get heroExperiencesSubtitle =>
+      'home.heroExperiencesSubtitle'.tr;
+  static String get heroOffersTitlePre => 'home.heroOffersTitlePre'.tr;
+  static String get heroOffersTitleItalic => 'home.heroOffersTitleItalic'.tr;
+  static String get heroOffersSubtitle => 'home.heroOffersSubtitle'.tr;
+  static String get viewOffersLabel => 'home.viewOffersLabel'.tr;
+  static String get bookNowLabel => 'home.bookNowLabel'.tr;
+  static String get exploreLabel => 'home.exploreLabel'.tr;
+  static String get priceFromPrefix => 'home.priceFromPrefix'.tr;
+  static String get priceNightSuffix => 'home.priceNightSuffix'.tr;
+
+  // Services
+  static String get servicesTitle => 'services.title'.tr;
+  static String get signInPromptTitle => 'services.signInPromptTitle'.tr;
+  static String get signInPromptSubtitle => 'services.signInPromptSubtitle'.tr;
+  static String get signInButtonLabel => 'services.signInButtonLabel'.tr;
+  static String get createAccountButtonLabel =>
+      'services.createAccountButtonLabel'.tr;
+  static String get readyForNextStayTitle =>
+      'services.readyForNextStayTitle'.tr;
+  static String get readyForNextStaySubtitle =>
+      'services.readyForNextStaySubtitle'.tr;
+  static String get exploreAndBookButtonLabel =>
+      'services.exploreAndBookButtonLabel'.tr;
+  static String get allServicesTab => 'services.allServicesTab'.tr;
+  static String activeRequestsTab(int count) =>
+      'services.activeRequestsTab'.trParams({'count': '$count'});
+  static String get noActiveRequestsTitle =>
+      'services.noActiveRequestsTitle'.tr;
+  static String get noActiveRequestsSubtitle =>
+      'services.noActiveRequestsSubtitle'.tr;
+  static String get browseServicesButtonLabel =>
+      'services.browseServicesButtonLabel'.tr;
+  static String itemSelected(String item) =>
+      'services.itemSelected'.trParams({'item': item});
+  static String editingRequest(String title) =>
+      'services.editingRequest'.trParams({'title': title});
+  static String get editRequestLabel => 'services.editRequestLabel'.tr;
+  static String get cancelRequestLabel => 'services.cancelRequestLabel'.tr;
+  static String get cancelReasonHint => 'services.cancelReasonHint'.tr;
+  static String get requestCancelled => 'services.requestCancelled'.tr;
+  static String get checkedInSincePrefix => 'services.checkedInSincePrefix'.tr;
+  static String get nightsRemainingPrefix =>
+      'services.nightsRemainingPrefix'.tr;
+
+  // AI Concierge
+  static String get aiTabLabel => 'concierge.aiTabLabel'.tr;
+  static String get customerServiceTabLabel =>
+      'concierge.customerServiceTabLabel'.tr;
+  static String get howMayIAssist => 'concierge.howMayIAssist'.tr;
+  static String get helpDescription => 'concierge.helpDescription'.tr;
+  static String get conciergeComingSoon => 'concierge.comingSoon'.tr;
+
+  // Stays
+  static String get staysTitle => 'stays.title'.tr;
+  static String get staysComingSoonTitle => 'stays.comingSoonTitle'.tr;
+  static String get staysComingSoonSubtitle => 'stays.comingSoonSubtitle'.tr;
+
+  // Book
+  static String get bookTitle => 'book.title'.tr;
+  static String get bookComingSoonSubtitle => 'book.comingSoonSubtitle'.tr;
+
+  // Account
+  static String get accountTitle => 'account.title'.tr;
+  static String get accountComingSoonTitle => 'account.comingSoonTitle'.tr;
+  static String get accountComingSoonSubtitle =>
+      'account.comingSoonSubtitle'.tr;
+
+  // Booking / Reservation
+  static String get findBookingTitle => 'booking.findBookingTitle'.tr;
+  static String get findBookingSubtitle => 'booking.findBookingSubtitle'.tr;
+  static String get reservationCodeLabel => 'booking.reservationCodeLabel'.tr;
+  static String get reservationCodeHint => 'booking.reservationCodeHint'.tr;
+  static String get findReservationButtonLabel =>
+      'booking.findReservationButtonLabel'.tr;
+  static String get yourReservationTitle => 'booking.yourReservationTitle'.tr;
+  static String get yourReservationSubtitle =>
+      'booking.yourReservationSubtitle'.tr;
+  static String get haveReservationTitle => 'booking.haveReservationTitle'.tr;
+  static String get haveReservationSubtitle =>
+      'booking.haveReservationSubtitle'.tr;
+  static String get noReservationTitle => 'booking.noReservationTitle'.tr;
+  static String get noReservationSubtitle => 'booking.noReservationSubtitle'.tr;
+  static String get reservationPhoneDestination =>
+      'booking.reservationPhoneDestination'.tr;
 
   // Settings
   static String get settings => 'settings.settings'.tr;

@@ -1,4 +1,6 @@
+import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/services/settings_service.dart';
+import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -14,6 +16,7 @@ class CustomTextField extends StatelessWidget {
   final String? prefixIconPath;
   final String? Function(String?)? validator;
   final String? labelText;
+  final String? label;
   final Widget? suffixIcon;
   final String? hintText;
   final void Function(String)? onChanged;
@@ -25,10 +28,11 @@ class CustomTextField extends StatelessWidget {
   const CustomTextField({
     required this.controller,
     required this.textInputType,
-    required this.obsecureText,
+    this.obsecureText = false,
     this.height,
     this.width,
     this.labelText,
+    this.label,
     this.prefixIconColor,
     this.prefixIcon,
     this.prefixIconPath,
@@ -47,25 +51,34 @@ class CustomTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Get.theme;
 
-    final labelStyle = theme.textTheme.bodySmall;
-    final inputStyle = theme.textTheme.bodyLarge;
-    final hintStyle = theme.textTheme.bodyLarge?.copyWith(
-      // color: AppColors.grey13,
+    final labelStyle = theme.textTheme.labelMedium?.copyWith(
+      color: Colors.white,
+      fontWeight: FontWeight.w900,
     );
-    final errorStyle = theme.textTheme.bodySmall?.copyWith(color: Colors.red);
+    final inputStyle = theme.textTheme.bodyLarge?.copyWith(
+      color: AppColors.ink,
+      fontWeight: FontWeight.w400,
+    );
+    final hintStyle = theme.textTheme.bodyLarge?.copyWith(
+      color: AppColors.inkHint,
+      fontWeight: FontWeight.w400,
+    );
+    final errorStyle = theme.textTheme.bodySmall?.copyWith(
+      color: AppColors.error,
+    );
 
     OutlineInputBorder border(Color color) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(width: 2, color: color),
     );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (labelText != null && labelText!.isNotEmpty)
+        if (label != null)
           Padding(
-            padding: const EdgeInsets.only(bottom: 5),
-            child: Text(labelText!, style: labelStyle),
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(label!.toUpperCase(), style: labelStyle),
           ),
         SizedBox(
           height: height,
@@ -74,7 +87,7 @@ class CustomTextField extends StatelessWidget {
             controller: controller,
             keyboardType: textInputType,
             obscureText: obsecureText,
-            // cursorColor: AppColors.primaryColor,
+            cursorColor: AppColors.gold,
             style: inputStyle,
             validator: validator,
             onChanged: onChanged,
@@ -89,19 +102,25 @@ class CustomTextField extends StatelessWidget {
               alignLabelWithHint: true,
               //labelText: ,
               labelStyle: labelStyle,
-              // fillColor: AppColors.grey11,
+              fillColor: AppColors.cream,
               hintText: hintText,
               hintStyle: hintStyle,
               errorStyle: errorStyle,
               prefixIcon: _buildPrefixIcon(),
               suffixIcon: suffixIcon,
-              // border: border(AppColors.grey11),
-              // enabledBorder: border(AppColors.grey11),
-              // focusedBorder: border(AppColors.primaryColor),
-              errorBorder: border(Colors.red),
-              focusedErrorBorder: border(Colors.red),
+              border: border(AppColors.cream),
+              enabledBorder: border(AppColors.cream),
+              focusedBorder: border(AppColors.gold),
+              errorBorder: border(AppColors.error),
+              focusedErrorBorder: border(AppColors.error),
             ),
-            cursorErrorColor: Colors.red,
+            errorBuilder: (context, errorText) => RowTextComponent(
+              text: errorText,
+              textStyle: errorStyle,
+              icon: Icons.error_outline,
+              iconColor: AppColors.error,
+            ),
+            cursorErrorColor: AppColors.error,
             maxLines: obsecureText == true ? 1 : maxLines,
           ),
         ),

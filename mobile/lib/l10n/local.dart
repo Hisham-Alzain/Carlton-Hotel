@@ -42,6 +42,9 @@ class Local implements Translations {
     "general.submit": "Submit",
     "general.confirm": "confirm",
     "general.changeNumber": "changeNumber",
+    "general.goBack": "Go Back",
+    "general.discoverAll": "Discover All",
+    "general.bookingComingSoon": "Booking coming soon",
 
     // Validation
     "validation.requiredField": "Required Field",
@@ -133,6 +136,152 @@ class Local implements Translations {
     "auth.pleaseLoginToAddToCart": "Please Login to add to cart",
     "auth.registrationSuccessful": "Registration successful",
 
+    // Auth — Carlton flow
+    "auth.welcomeBackTitle": "Welcome back",
+    "auth.welcomeBackSubtitle": "You're now signed in to Carlton Hotel",
+    "auth.signInTitle": "Welcome Back",
+    "auth.signInSubtitle": "Sign in to your carltonsyria account",
+    "auth.signInByPhoneTab": "Sign in by Phone",
+    "auth.signInByEmailTab": "Sign in by Email",
+    "auth.emailAddressLabel": "Email Address",
+    "auth.emailAddressHint": "your@email.com",
+    "auth.nextButtonLabel": "NEXT",
+    "auth.newGuestPrompt": "New guest? ",
+    "auth.createAccountLink": "Create account",
+    "auth.addPhoneTitle": "Add your phone",
+    "auth.addPhoneSubtitle": "We'll text you a code to verify it's you",
+    "auth.sendCodeButtonLabel": "SEND CODE",
+    "auth.verifyIdentityTitle": "Verify your identity",
+    "auth.otpSentTo": "We sent a 6-digit code to @destination",
+    "auth.codeMismatch": "That code does not match",
+    "auth.resendIn": "Resend in @time",
+    "auth.resendCodeLink": "Resend code",
+    "auth.verifyButtonLabel": "VERIFY",
+    "auth.demoNewCodeSent": "Demo: a new code was sent",
+    "auth.createProfileTitle": "Create your profile",
+    "auth.createProfileSubtitle": "Tell us your name to personalize your stay",
+    "auth.firstNameLabel": "First Name",
+    "auth.firstNameHint": "e.g. Ahmed",
+    "auth.lastNameLabel": "Last Name",
+    "auth.lastNameHint": "e.g. Al-Rashid",
+    "auth.continueButtonLabel": "CONTINUE",
+    "auth.pleaseEnterPhoneNumber": "Please enter your phone number",
+    "auth.pleaseEnterEmailAddress": "Please enter your email address",
+    "auth.pleaseEnterFirstName": "Please enter your first name",
+    "auth.pleaseEnterLastName": "Please enter your last name",
+    "auth.phoneNumberHint": "Phone number",
+    "auth.searchCountryHint": "Search country",
+
+    // Navigation
+    "nav.home": "Home",
+    "nav.stays": "Stays",
+    "nav.book": "Book",
+    "nav.services": "Services",
+    "nav.account": "Account",
+
+    // Home
+    "home.roomsSuites": "Rooms & Suites",
+    "home.diningRestaurants": "Dining & Restaurants",
+    "home.experiences": "Experiences",
+    "home.specialOffers": "Special Offers",
+    "home.menuComingSoon": "Menu coming soon",
+    "home.exploreComingSoon": "Explore coming soon",
+    "home.sectionComingSoon": "@section — coming soon",
+    "home.sectionRooms": "Rooms",
+    "home.sectionDining": "Dining",
+    "home.sectionExperiences": "Experiences",
+    "home.sectionOffers": "Offers",
+    "home.heroLocation": "Damascus · Syria",
+    "home.heroVideoTitlePre": "Where every\n",
+    "home.heroVideoTitleItalic": "moment",
+    "home.heroVideoTitlePost": " is composed",
+    "home.heroVideoSubtitle": "A landmark of luxury in the heart of Damascus",
+    "home.heroDiningTitlePre": "Refined ",
+    "home.heroDiningTitleItalic": "flavors",
+    "home.heroDiningTitlePost": ",\ntimeless elegance.",
+    "home.heroDiningSubtitle":
+        "A refined dining experience, timeless hospitality.",
+    "home.heroExperiencesTitlePre": "A Quiet ",
+    "home.heroExperiencesTitleItalic": "Luxury",
+    "home.heroExperiencesTitlePost": "\nExperience",
+    "home.heroExperiencesSubtitle":
+        "Explore authentic experiences, crafted just for you.",
+    "home.heroOffersTitlePre": "Seasonal ",
+    "home.heroOffersTitleItalic": "Escapes",
+    "home.heroOffersSubtitle": "Curated packages for an unforgettable stay.",
+    "home.viewOffersLabel": "View Offers",
+    "home.bookNowLabel": "Book Now",
+    "home.exploreLabel": "Explore",
+    "home.priceFromPrefix": "From ",
+    "home.priceNightSuffix": "/night",
+
+    // Services
+    "services.title": "Services",
+    "services.signInPromptTitle": "Sign in to access room services",
+    "services.signInPromptSubtitle":
+        "Book Now and the full services list unlock once you sign in.",
+    "services.signInButtonLabel": "Sign in",
+    "services.createAccountButtonLabel": "Create Account",
+    "services.readyForNextStayTitle": "Ready for your next stay?",
+    "services.readyForNextStaySubtitle":
+        "You're signed in but don't have an active reservation. Explore "
+        "our rooms and book your stay to unlock in-room services.",
+    "services.exploreAndBookButtonLabel": "Explore & Book",
+    "services.allServicesTab": "All Services",
+    "services.activeRequestsTab": "Active Requests (@count)",
+    "services.noActiveRequestsTitle": "No active requests",
+    "services.noActiveRequestsSubtitle":
+        "Your current requests will appear here once they are submitted",
+    "services.browseServicesButtonLabel": "Browse services",
+    "services.itemSelected": "@item selected",
+    "services.editingRequest": 'Editing "@title"',
+    "services.editRequestLabel": "Edit Request",
+    "services.cancelRequestLabel": "Cancel Request",
+    "services.cancelReasonHint": "Reason (optional)",
+    "services.requestCancelled": "Request cancelled",
+    "services.checkedInSincePrefix": "Checked in since ",
+    "services.nightsRemainingPrefix": "Nights remaining  ",
+
+    // AI Concierge
+    "concierge.aiTabLabel": "Carlton AI Concierge",
+    "concierge.customerServiceTabLabel": "Customer Service",
+    "concierge.howMayIAssist": "How may I assist you?",
+    "concierge.helpDescription":
+        "From dining to travel, I will help curate the details.",
+    "concierge.comingSoon": "AI Concierge is coming soon",
+
+    // Stays
+    "stays.title": "Stays",
+    "stays.comingSoonTitle": "Stays coming soon",
+    "stays.comingSoonSubtitle":
+        "Your past and upcoming stays will appear here.",
+
+    // Book
+    "book.title": "Book",
+    "book.comingSoonSubtitle": "Reserve a room right from the app soon.",
+
+    // Account
+    "account.title": "Account",
+    "account.comingSoonTitle": "Account coming soon",
+    "account.comingSoonSubtitle": "Manage your profile and preferences here.",
+
+    // Booking / Reservation
+    "booking.findBookingTitle": "Find your booking",
+    "booking.findBookingSubtitle": "Enter your reservation details",
+    "booking.reservationCodeLabel": "Reservation Code",
+    "booking.reservationCodeHint": "e.g. CRS-812-4821",
+    "booking.findReservationButtonLabel": "FIND RESERVATION",
+    "booking.yourReservationTitle": "Your reservation",
+    "booking.yourReservationSubtitle":
+        "Do you have an existing booking with Carlton?",
+    "booking.haveReservationTitle": "I have a reservation",
+    "booking.haveReservationSubtitle":
+        "Link your existing booking to your profile",
+    "booking.noReservationTitle": "No reservation yet",
+    "booking.noReservationSubtitle": "Continue and make a booking later",
+    "booking.reservationPhoneDestination":
+        "the phone linked to your reservation",
+
     //Settings
     "settings.settings": "Settings",
     "settings.language": "Language",
@@ -208,6 +357,9 @@ class Local implements Translations {
     "general.submit": "إرسال",
     "general.confirm": "تأكيد",
     "general.changeNumber": "تغيير الرقم",
+    "general.goBack": "رجوع",
+    "general.discoverAll": "اكتشف الكل",
+    "general.bookingComingSoon": "الحجز قريباً",
 
     // Validation
     "validation.requiredField": "حقل مطلوب",
@@ -297,6 +449,146 @@ class Local implements Translations {
         "يرجى الموافقة على الشروط والأحكام وسياسة الخصوصية",
     "auth.pleaseLoginToAddToCart": "يرجى تسجيل الدخول لإضافة عناصر إلى السلة",
     "auth.registrationSuccessful": "تم التسجيل بنجاح",
+
+    // Auth — Carlton flow
+    "auth.welcomeBackTitle": "مرحباً بعودتك",
+    "auth.welcomeBackSubtitle": "تم تسجيل دخولك الآن إلى فندق كارلتون",
+    "auth.signInTitle": "مرحباً بعودتك",
+    "auth.signInSubtitle": "سجّل الدخول إلى حسابك في كارلتون سوريا",
+    "auth.signInByPhoneTab": "الدخول عبر الهاتف",
+    "auth.signInByEmailTab": "الدخول عبر البريد الإلكتروني",
+    "auth.emailAddressLabel": "البريد الإلكتروني",
+    "auth.emailAddressHint": "your@email.com",
+    "auth.nextButtonLabel": "التالي",
+    "auth.newGuestPrompt": "ضيف جديد؟ ",
+    "auth.createAccountLink": "إنشاء حساب",
+    "auth.addPhoneTitle": "أضف رقم هاتفك",
+    "auth.addPhoneSubtitle": "سنرسل لك رمزاً نصياً للتحقق من هويتك",
+    "auth.sendCodeButtonLabel": "إرسال الرمز",
+    "auth.verifyIdentityTitle": "تحقق من هويتك",
+    "auth.otpSentTo": "أرسلنا رمزاً مكوناً من 6 أرقام إلى @destination",
+    "auth.codeMismatch": "الرمز غير مطابق",
+    "auth.resendIn": "إعادة الإرسال خلال @time",
+    "auth.resendCodeLink": "إعادة إرسال الرمز",
+    "auth.verifyButtonLabel": "تحقق",
+    "auth.demoNewCodeSent": "تجريبي: تم إرسال رمز جديد",
+    "auth.createProfileTitle": "أنشئ ملفك الشخصي",
+    "auth.createProfileSubtitle": "أخبرنا باسمك لتخصيص إقامتك",
+    "auth.firstNameLabel": "الاسم الأول",
+    "auth.firstNameHint": "مثال: أحمد",
+    "auth.lastNameLabel": "اسم العائلة",
+    "auth.lastNameHint": "مثال: الراشد",
+    "auth.continueButtonLabel": "متابعة",
+    "auth.pleaseEnterPhoneNumber": "يرجى إدخال رقم هاتفك",
+    "auth.pleaseEnterEmailAddress": "يرجى إدخال بريدك الإلكتروني",
+    "auth.pleaseEnterFirstName": "يرجى إدخال اسمك الأول",
+    "auth.pleaseEnterLastName": "يرجى إدخال اسم العائلة",
+    "auth.phoneNumberHint": "رقم الهاتف",
+    "auth.searchCountryHint": "ابحث عن دولة",
+
+    // Navigation
+    "nav.home": "الرئيسية",
+    "nav.stays": "الإقامات",
+    "nav.book": "حجز",
+    "nav.services": "الخدمات",
+    "nav.account": "الحساب",
+
+    // Home
+    "home.roomsSuites": "الغرف والأجنحة",
+    "home.diningRestaurants": "المطاعم وتناول الطعام",
+    "home.experiences": "التجارب",
+    "home.specialOffers": "عروض خاصة",
+    "home.menuComingSoon": "القائمة قريباً",
+    "home.exploreComingSoon": "الاستكشاف قريباً",
+    "home.sectionComingSoon": "@section — قريباً",
+    "home.sectionRooms": "الغرف",
+    "home.sectionDining": "المطاعم",
+    "home.sectionExperiences": "التجارب",
+    "home.sectionOffers": "العروض",
+    "home.heroLocation": "دمشق · سوريا",
+    "home.heroVideoTitlePre": "حيث كل\n",
+    "home.heroVideoTitleItalic": "لحظة",
+    "home.heroVideoTitlePost": " تُنسّق بعناية",
+    "home.heroVideoSubtitle": "معلم للفخامة في قلب دمشق",
+    "home.heroDiningTitlePre": "نكهات ",
+    "home.heroDiningTitleItalic": "راقية",
+    "home.heroDiningTitlePost": "،\nوأناقة خالدة.",
+    "home.heroDiningSubtitle": "تجربة طعام راقية، وضيافة لا تُنسى.",
+    "home.heroExperiencesTitlePre": "فخامة ",
+    "home.heroExperiencesTitleItalic": "هادئة",
+    "home.heroExperiencesTitlePost": "\nتجربة استثنائية",
+    "home.heroExperiencesSubtitle": "اكتشف تجارب أصيلة، مصممة خصيصاً لك.",
+    "home.heroOffersTitlePre": "هروب ",
+    "home.heroOffersTitleItalic": "موسمي",
+    "home.heroOffersSubtitle": "باقات مُنتقاة لإقامة لا تُنسى.",
+    "home.viewOffersLabel": "عرض العروض",
+    "home.bookNowLabel": "احجز الآن",
+    "home.exploreLabel": "استكشف",
+    "home.priceFromPrefix": "ابتداءً من ",
+    "home.priceNightSuffix": "/الليلة",
+
+    // Services
+    "services.title": "الخدمات",
+    "services.signInPromptTitle": "سجّل الدخول للوصول إلى خدمات الغرف",
+    "services.signInPromptSubtitle":
+        "احجز الآن وستُفتح قائمة الخدمات الكاملة بمجرد تسجيل الدخول.",
+    "services.signInButtonLabel": "تسجيل الدخول",
+    "services.createAccountButtonLabel": "إنشاء حساب",
+    "services.readyForNextStayTitle": "مستعد لإقامتك القادمة؟",
+    "services.readyForNextStaySubtitle":
+        "أنت مسجّل الدخول ولكن ليس لديك حجز نشط. استكشف غرفنا واحجز "
+        "إقامتك لفتح خدمات الغرف.",
+    "services.exploreAndBookButtonLabel": "استكشف واحجز",
+    "services.allServicesTab": "جميع الخدمات",
+    "services.activeRequestsTab": "الطلبات النشطة (@count)",
+    "services.noActiveRequestsTitle": "لا توجد طلبات نشطة",
+    "services.noActiveRequestsSubtitle":
+        "ستظهر طلباتك الحالية هنا بمجرد إرسالها",
+    "services.browseServicesButtonLabel": "تصفح الخدمات",
+    "services.itemSelected": "تم اختيار @item",
+    "services.editingRequest": 'تعديل "@title"',
+    "services.editRequestLabel": "تعديل الطلب",
+    "services.cancelRequestLabel": "إلغاء الطلب",
+    "services.cancelReasonHint": "السبب (اختياري)",
+    "services.requestCancelled": "تم إلغاء الطلب",
+    "services.checkedInSincePrefix": "تم تسجيل الدخول منذ ",
+    "services.nightsRemainingPrefix": "الليالي المتبقية  ",
+
+    // AI Concierge
+    "concierge.aiTabLabel": "كونسيرج كارلتون الذكي",
+    "concierge.customerServiceTabLabel": "خدمة العملاء",
+    "concierge.howMayIAssist": "كيف يمكنني مساعدتك؟",
+    "concierge.helpDescription":
+        "من تناول الطعام إلى السفر، سأساعدك في تنسيق التفاصيل.",
+    "concierge.comingSoon": "كونسيرج الذكاء الاصطناعي قريباً",
+
+    // Stays
+    "stays.title": "الإقامات",
+    "stays.comingSoonTitle": "الإقامات قريباً",
+    "stays.comingSoonSubtitle": "ستظهر إقاماتك السابقة والقادمة هنا.",
+
+    // Book
+    "book.title": "حجز",
+    "book.comingSoonSubtitle": "احجز غرفة مباشرة من التطبيق قريباً.",
+
+    // Account
+    "account.title": "الحساب",
+    "account.comingSoonTitle": "الحساب قريباً",
+    "account.comingSoonSubtitle": "أدر ملفك الشخصي وتفضيلاتك هنا.",
+
+    // Booking / Reservation
+    "booking.findBookingTitle": "ابحث عن حجزك",
+    "booking.findBookingSubtitle": "أدخل تفاصيل حجزك",
+    "booking.reservationCodeLabel": "رمز الحجز",
+    "booking.reservationCodeHint": "مثال: CRS-812-4821",
+    "booking.findReservationButtonLabel": "البحث عن الحجز",
+    "booking.yourReservationTitle": "حجزك",
+    "booking.yourReservationSubtitle": "هل لديك حجز موجود مسبقاً لدى كارلتون؟",
+    "booking.haveReservationTitle": "لدي حجز",
+    "booking.haveReservationSubtitle": "اربط حجزك الحالي بملفك الشخصي",
+    "booking.noReservationTitle": "لا يوجد حجز بعد",
+    "booking.noReservationSubtitle": "تابع وقم بالحجز لاحقاً",
+    "booking.reservationPhoneDestination": "الهاتف المرتبط بحجزك",
 
     // settings
     "settings.settings": "الإعدادات",

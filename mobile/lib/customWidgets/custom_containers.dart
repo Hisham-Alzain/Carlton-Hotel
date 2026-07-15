@@ -1,50 +1,67 @@
+import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
-class EditContainer extends StatelessWidget {
+class CustomCard extends StatelessWidget {
   final double? height;
   final double? width;
-  final String? title;
-  final TextStyle? titleTextStyle;
-  final IconData? icon;
-  final void Function()? onPressed;
-  final Color? iconColor;
+  final EdgeInsetsGeometry? padding;
+  final Color? color;
+  final Color? borderColor;
+  final double borderWidth;
+  final double? borderRadius;
+  final VoidCallback? onTap;
   final Widget child;
 
-  const EditContainer({
+  const CustomCard({
     this.height,
     this.width,
-    this.title,
-    this.titleTextStyle,
-    this.icon,
-    this.onPressed,
-    this.iconColor,
+    this.padding,
+    this.color,
+    this.borderColor,
+    this.borderWidth = 1,
+    this.borderRadius,
+    this.onTap,
     required this.child,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final cardTheme = Theme.of(context).cardTheme;
+    final radius = BorderRadius.circular(
+      borderRadius ??
+          (cardTheme.shape as RoundedRectangleBorder?)?.borderRadius
+              .resolve(Directionality.of(context))
+              .topLeft
+              .x ??
+          16,
+    );
+    final resolvedBorderColor =
+        borderColor ?? (cardTheme.shape as RoundedRectangleBorder?)?.side.color;
+
+    return SizedBox(
       height: height,
       width: width,
-      decoration: BoxDecoration(),
-      child: Column(
-        spacing: 10,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (title != null) Text('$title', style: titleTextStyle),
-              if (icon != null)
-                IconButton(
-                  onPressed: onPressed,
-                  icon: Icon(icon, color: iconColor),
-                ),
-            ],
+      child: Material(
+        color: color ?? cardTheme.color,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            decoration: resolvedBorderColor != null
+                ? BoxDecoration(
+                    border: Border.all(
+                      color: resolvedBorderColor,
+                      width: borderWidth,
+                    ),
+                    borderRadius: radius,
+                  )
+                : null,
+            padding: padding ?? const EdgeInsets.all(16),
+            child: child,
           ),
-          child,
-        ],
+        ),
       ),
     );
   }
@@ -73,7 +90,12 @@ class ButtonsContainer extends StatelessWidget {
     return Container(
       height: height,
       width: width,
-      decoration: BoxDecoration(),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         spacing: 10,
@@ -88,41 +110,6 @@ class ButtonsContainer extends StatelessWidget {
           child,
         ],
       ),
-    );
-  }
-}
-
-class NotesContainer extends StatelessWidget {
-  final String? title;
-  final TextStyle? titleTextStyle;
-  final IconData? icon;
-  final Widget child;
-
-  const NotesContainer({
-    this.title,
-    this.titleTextStyle,
-    this.icon,
-    required this.child,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            if (icon != null) Icon(icon),
-            if (title != null) Text('$title', style: titleTextStyle),
-          ],
-        ),
-        Container(
-          width: Get.width,
-          // decoration:
-          padding: EdgeInsets.all(10),
-          child: child,
-        ),
-      ],
     );
   }
 }

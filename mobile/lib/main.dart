@@ -2,13 +2,13 @@ import 'package:carlton/l10n/local.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/middleware_service.dart';
-import 'package:carlton/services/permission_service.dart.dart';
+import 'package:carlton/services/permission_service.dart';
 import 'package:carlton/services/settings_service.dart';
 import 'package:carlton/theme/theme.dart';
+import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
-
 import 'services/get_storage_service.dart';
 
 Future<void> main() async {
@@ -40,9 +40,9 @@ class MainApp extends StatelessWidget {
 
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: Routes.view,
+      initialRoute: Routes.splashScreen,
       getPages: Pages.getPages,
-      theme: Themes().theme,
+      theme: Themes.theme,
       supportedLocales: const [Locale('en'), Locale('ar')],
       locale: settings.locale.value,
       onReady: () async {
@@ -59,6 +59,7 @@ class MainApp extends StatelessWidget {
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
+        CountryLocalizations.delegate,
       ],
     );
   }

@@ -1,4 +1,3 @@
-import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class CustomFilledButton extends StatelessWidget {
@@ -32,25 +31,6 @@ class CustomFilledButton extends StatelessWidget {
     super.key,
   });
 
-  /// The Auth flow's teal submit button (Figma TealBtn): 54px, uppercase
-  /// 14/600 letter-spaced label, spinner while [isLoading].
-  const CustomFilledButton.auth({
-    required String this.label,
-    required this.onPressed,
-    this.isLoading = false,
-    super.key,
-  }) : height = 54,
-       width = null,
-       child = null,
-       backgroundColor = AppColors.teal,
-       foregroundColor = Colors.white,
-       textStyle = const TextStyle(
-         fontSize: 14,
-         fontWeight: FontWeight.w600,
-         letterSpacing: 1,
-       ),
-       shape = null;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).filledButtonTheme.style;
@@ -68,6 +48,7 @@ class CustomFilledButton extends StatelessWidget {
         padding: const WidgetStatePropertyAll(EdgeInsets.zero),
       ),
       onPressed: isLoading ? null : onPressed,
+      //TODO: make this a custom indicator using the lgog
       child: isLoading
           ? const SizedBox(
               height: 18,

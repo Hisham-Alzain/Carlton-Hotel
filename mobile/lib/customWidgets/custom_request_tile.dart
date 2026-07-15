@@ -1,4 +1,4 @@
-import 'package:carlton/customWidgets/custom_chip.dart';
+import 'package:carlton/components/custom_chip.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';

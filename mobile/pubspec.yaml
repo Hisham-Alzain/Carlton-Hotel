@@ -75,6 +75,24 @@ flutter:
          weight: 400
        - asset: assets/fonts/The_Seasons_Bold.ttf
          weight: 700
+    - family: Cabinet Grotesk
+      fonts:
+        - asset: assets/fonts/CabinetGrotesk-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/CabinetGrotesk-Extralight.ttf
+          weight: 200
+        - asset: assets/fonts/CabinetGrotesk-Light.ttf
+          weight: 300
+        - asset: assets/fonts/CabinetGrotesk-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/CabinetGrotesk-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/CabinetGrotesk-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/CabinetGrotesk-Extrabold.ttf
+          weight: 800
+        - asset: assets/fonts/CabinetGrotesk-Black.ttf
+          weight: 900
 
   uses-material-design: true
 

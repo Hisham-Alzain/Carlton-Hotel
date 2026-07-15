@@ -1,4 +1,4 @@
-import 'package:carlton/customWidgets/custom_circle_icon_button.dart';
+import 'package:carlton/components/custom_circle_icon_button.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 

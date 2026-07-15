@@ -1,6 +1,6 @@
 import 'package:carlton/controllers/booking/reservation_choice_controller.dart';
-import 'package:carlton/customWidgets/custom_auth_background.dart';
-import 'package:carlton/customWidgets/custom_choice_card.dart';
+import 'package:carlton/components/custom_auth_background.dart';
+import 'package:carlton/components/cards/custom_choice_card.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -11,15 +11,13 @@ class ReservationChoiceView extends GetView<ReservationChoiceController> {
   @override
   Widget build(BuildContext context) {
     return CustomAuthBackground(
-      logoWidth: 130,
-      topPadding: 20,
       title: AppTranslations.yourReservationTitle,
       subtitle: AppTranslations.yourReservationSubtitle,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(23, 40, 23, 36),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 14,
+          spacing: 20,
           children: [
             CustomChoiceCard(
               iconPath: 'assets/icons/ReservationChoiceScreen.svg',

@@ -7,24 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// Demo-only: no backend wired up. Figma didn't show an error state for this
-/// screen, so it uses the generic required-field message.
+/// screen, so it uses the generic required-field message via [formKey].
 class FindBookingController extends GetxController {
+  final formKey = GlobalKey<FormState>();
   final codeController = TextEditingController();
   final lastNameController = TextEditingController();
 
-  String? codeError;
-  String? lastNameError;
   bool isSubmitting = false;
 
   Future<void> submit() async {
-    codeError = codeController.text.trim().isEmpty
-        ? AppTranslations.requiredField
-        : null;
-    lastNameError = lastNameController.text.trim().isEmpty
-        ? AppTranslations.requiredField
-        : null;
-    update();
-    if (codeError != null || lastNameError != null) return;
+    if (!formKey.currentState!.validate()) return;
 
     // Captured before the await: popping the screen mid-delay disposes the
     // TextEditingControllers.

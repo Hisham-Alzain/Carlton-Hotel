@@ -1,4 +1,4 @@
-package com.example.mobile;
+package com.tupcode.carlton;
 
 import io.flutter.embedding.android.FlutterActivity;
 

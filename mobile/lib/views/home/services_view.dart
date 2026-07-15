@@ -1,13 +1,13 @@
 import 'package:carlton/controllers/home/services_controller.dart';
-import 'package:carlton/customWidgets/custom_app_bar.dart';
+import 'package:carlton/components/custom_app_bar.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
-import 'package:carlton/customWidgets/custom_logo_avatar.dart';
+import 'package:carlton/components/custom_logo_avatar.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/enums/enums.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/theme/app_colors.dart';
-import 'package:carlton/customWidgets/custom_active_stay_section.dart';
+import 'package:carlton/components/custom_active_stay_section.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

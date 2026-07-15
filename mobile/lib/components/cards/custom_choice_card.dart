@@ -1,5 +1,7 @@
+import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 
 class CustomChoiceCard extends StatelessWidget {
   final IconData? icon;
@@ -19,57 +21,61 @@ class CustomChoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(21),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0x14F0EBE2),
+          color: AppColors.creamOverlay,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0x33F0EBE2)),
+          border: Border.all(color: AppColors.creamBorder, width: 1.5),
         ),
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 45,
+              height: 45,
               alignment: Alignment.center,
 
               margin: const EdgeInsetsDirectional.only(end: 16),
               decoration: BoxDecoration(
-                color: const Color(0x8FB8975A),
+                color: AppColors.goldBadge,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: iconPath != null
-                  ? SvgPicture.asset(iconPath!, width: 22, height: 22)
-                  : Icon(icon, color: Colors.white, size: 22),
+                  ? SvgPicture.asset(iconPath!, width: 20, height: 20)
+                  : Icon(icon, color: Colors.white, size: 20),
             ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 3,
+                spacing: 10,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
+                    style: textStyle.titleMedium?.copyWith(
                       fontWeight: FontWeight.w500,
+                      color: Colors.white,
                     ),
                   ),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: Color(0x99F0EBE2), // .6 alpha
-                      fontSize: 12,
+                    style: textStyle.labelLarge?.copyWith(
                       fontWeight: FontWeight.w500,
+                      color: AppColors.creamText,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.white, size: 20),
+            const Icon(
+              Icons.chevron_right,
+              color: AppColors.creamText,
+              size: 20,
+            ),
           ],
         ),
       ),

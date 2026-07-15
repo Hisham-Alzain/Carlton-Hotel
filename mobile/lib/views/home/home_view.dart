@@ -1,9 +1,9 @@
 import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
-import 'package:carlton/customWidgets/custom_hero_card.dart';
+import 'package:carlton/components/cards/custom_hero_card.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
-import 'package:carlton/customWidgets/custom_listing_card.dart';
-import 'package:carlton/customWidgets/custom_logo_avatar.dart';
+import 'package:carlton/components/cards/custom_listing_card.dart';
+import 'package:carlton/components/custom_logo_avatar.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/customWidgets/custom_section_header.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';

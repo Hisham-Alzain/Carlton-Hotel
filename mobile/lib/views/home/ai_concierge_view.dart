@@ -1,9 +1,9 @@
 import 'package:carlton/controllers/home/ai_concierge_controller.dart';
-import 'package:carlton/customWidgets/custom_chat_input_bar.dart';
-import 'package:carlton/customWidgets/custom_chip.dart';
-import 'package:carlton/customWidgets/custom_circle_icon_button.dart';
+import 'package:carlton/components/custom_chat_input_bar.dart';
+import 'package:carlton/components/custom_chip.dart';
+import 'package:carlton/components/custom_circle_icon_button.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
-import 'package:carlton/customWidgets/custom_segmented_toggle.dart';
+import 'package:carlton/customWidgets/custom_segmented_button.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +20,7 @@ class AiConciergeView extends GetView<AiConciergeController> {
           builder: (_) => Column(
             children: [
               _topBar(),
-              CustomSegmentedToggle.track(
+              CustomSegmentedButton.track(
                 selectedIndex: controller.tabIndex,
                 onChanged: controller.switchTab,
                 segments: [

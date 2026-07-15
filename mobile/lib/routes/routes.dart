@@ -1,9 +1,9 @@
 import 'package:carlton/bindings/binding.dart';
 import 'package:carlton/views/auth/create_profile_view.dart';
-import 'package:carlton/views/booking/find_booking_view.dart';
+import 'package:carlton/views/auth/find_booking_view.dart';
 import 'package:carlton/views/auth/otp_verify_view.dart';
 import 'package:carlton/views/auth/phone_entry_view.dart';
-import 'package:carlton/views/booking/reservation_choice_view.dart';
+import 'package:carlton/views/auth/reservation_choice_view.dart';
 import 'package:carlton/views/home/ai_concierge_view.dart';
 import 'package:carlton/views/main/main_view.dart';
 import 'package:carlton/views/auth/sign_in_view.dart';

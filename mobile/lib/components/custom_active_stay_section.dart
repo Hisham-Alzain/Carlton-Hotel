@@ -4,7 +4,7 @@ import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_request_tile.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
-import 'package:carlton/customWidgets/custom_stay_card.dart';
+import 'package:carlton/components/cards/custom_stay_card.dart';
 import 'package:carlton/customWidgets/custom_tab_bar.dart';
 import 'package:carlton/models/service_item.dart';
 import 'package:carlton/theme/app_colors.dart';

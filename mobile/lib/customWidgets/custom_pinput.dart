@@ -1,3 +1,5 @@
+import 'package:carlton/customWidgets/custom_texts.dart';
+import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pinput/pinput.dart';
@@ -8,58 +10,55 @@ class CustomPinput extends StatelessWidget {
   final String? Function(String?)? validator;
   final void Function(String)? onComplete;
 
-  final Color? fillColor;
-  final Color? textColor;
-  final double? boxSize;
-  final bool hasError;
-  final Color? errorBorderColor;
-
   const CustomPinput({
     super.key,
     required this.controller,
     required this.length,
     required this.validator,
-    required this.onComplete,
-    this.fillColor,
-    this.textColor,
-    this.boxSize,
-    this.hasError = false,
-    this.errorBorderColor,
+    this.onComplete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textStyle = Get.textTheme;
-    final TextStyle errorStyle = Get.textTheme.labelLarge!.copyWith(
-      color: Colors.red,
-      fontSize: 10,
+    final theme = Get.theme;
+
+    final errorStyle = theme.textTheme.bodySmall?.copyWith(
+      color: AppColors.error,
     );
-    final size = boxSize ?? 65;
+
+    final inputStyle = theme.textTheme.bodyLarge?.copyWith(
+      color: AppColors.ink,
+      fontWeight: FontWeight.w400,
+    );
+
     final PinTheme defaultPinTheme = PinTheme(
-      width: size,
-      height: size,
-      textStyle: (textStyle.bodySmall ?? const TextStyle()).copyWith(
-        color: textColor,
-      ),
+      width: 45,
+      height: 50,
+      textStyle: inputStyle,
       decoration: BoxDecoration(
-        color: fillColor,
-        borderRadius: BorderRadius.circular(15),
+        color: AppColors.cream,
+        borderRadius: BorderRadius.circular(10),
       ),
     );
+
+    //TODO: error is not showing
     return Pinput(
       controller: controller,
       length: length,
       defaultPinTheme: defaultPinTheme,
       errorPinTheme: defaultPinTheme.copyDecorationWith(
-        border: Border.all(color: errorBorderColor ?? Colors.red, width: 1.4),
+        border: Border.all(color: AppColors.error, width: 1.5),
       ),
-      forceErrorState: hasError,
-      showCursor: true,
       validator: validator,
       errorTextStyle: errorStyle,
       onCompleted: onComplete,
       closeKeyboardWhenCompleted: true,
       keyboardType: TextInputType.number,
+      errorBuilder: (context, errorText) => RowTextComponent(
+        text: errorText,
+        icon: Icons.error_outline,
+        iconColor: AppColors.error,
+      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/services/settings_service.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -15,9 +16,7 @@ class CustomTextField extends StatelessWidget {
   final String? prefixIconPath;
   final String? Function(String?)? validator;
   final String? labelText;
-
   final String? label;
-  final String? errorText;
   final Widget? suffixIcon;
   final String? hintText;
   final void Function(String)? onChanged;
@@ -25,11 +24,6 @@ class CustomTextField extends StatelessWidget {
   final TextDirection? textDirection;
   final int? maxLength;
   final int? maxLines;
-
-  final Color? fillColor;
-  final Color? textColor;
-  final Color? hintColor;
-  final double? borderRadius;
 
   const CustomTextField({
     required this.controller,
@@ -39,7 +33,6 @@ class CustomTextField extends StatelessWidget {
     this.width,
     this.labelText,
     this.label,
-    this.errorText,
     this.prefixIconColor,
     this.prefixIcon,
     this.prefixIconPath,
@@ -51,59 +44,31 @@ class CustomTextField extends StatelessWidget {
     this.textDirection,
     this.maxLength,
     this.maxLines,
-    this.fillColor,
-    this.textColor,
-    this.hintColor,
-    this.borderRadius,
     super.key,
   });
-
-  /// The Auth flow's cream filled field (Figma Text Input): 52px, radius 8,
-  /// no border, with the uppercase white [label] and red [errorText] row.
-  const CustomTextField.auth({
-    required this.controller,
-    required this.textInputType,
-    this.hintText,
-    this.label,
-    this.errorText,
-    this.onChanged,
-    this.onSubmitted,
-    super.key,
-  }) : obsecureText = false,
-       height = 52,
-       width = null,
-       labelText = null,
-       prefixIconColor = null,
-       prefixIcon = null,
-       prefixIconPath = null,
-       validator = null,
-       suffixIcon = null,
-       textDirection = null,
-       maxLength = null,
-       maxLines = null,
-       fillColor = AppColors.cream,
-       textColor = AppColors.ink,
-       hintColor = AppColors.inkHint,
-       borderRadius = 8;
 
   @override
   Widget build(BuildContext context) {
     final theme = Get.theme;
 
-    final labelStyle = theme.textTheme.bodySmall;
-    final inputStyle = theme.textTheme.bodyLarge?.copyWith(color: textColor);
-    final hintStyle = theme.textTheme.bodyLarge?.copyWith(color: hintColor);
-    final errorStyle = theme.textTheme.bodySmall?.copyWith(color: Colors.red);
-
-    final noBorder = borderRadius != null
-        ? OutlineInputBorder(
-            borderRadius: BorderRadius.circular(borderRadius!),
-            borderSide: BorderSide.none,
-          )
-        : null;
+    final labelStyle = theme.textTheme.labelMedium?.copyWith(
+      color: Colors.white,
+      fontWeight: FontWeight.w900,
+    );
+    final inputStyle = theme.textTheme.bodyLarge?.copyWith(
+      color: AppColors.ink,
+      fontWeight: FontWeight.w400,
+    );
+    final hintStyle = theme.textTheme.bodyLarge?.copyWith(
+      color: AppColors.inkHint,
+      fontWeight: FontWeight.w400,
+    );
+    final errorStyle = theme.textTheme.bodySmall?.copyWith(
+      color: AppColors.error,
+    );
 
     OutlineInputBorder border(Color color) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(width: 2, color: color),
     );
 
@@ -112,21 +77,8 @@ class CustomTextField extends StatelessWidget {
       children: [
         if (label != null)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              label!.toUpperCase(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ),
-        if (labelText != null && labelText!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 5),
-            child: Text(labelText!, style: labelStyle),
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(label!.toUpperCase(), style: labelStyle),
           ),
         SizedBox(
           height: height,
@@ -135,7 +87,7 @@ class CustomTextField extends StatelessWidget {
             controller: controller,
             keyboardType: textInputType,
             obscureText: obsecureText,
-            // cursorColor: AppColors.primaryColor,
+            cursorColor: AppColors.gold,
             style: inputStyle,
             validator: validator,
             onChanged: onChanged,
@@ -150,45 +102,28 @@ class CustomTextField extends StatelessWidget {
               alignLabelWithHint: true,
               //labelText: ,
               labelStyle: labelStyle,
-              fillColor: fillColor,
+              fillColor: AppColors.cream,
               hintText: hintText,
               hintStyle: hintStyle,
               errorStyle: errorStyle,
               prefixIcon: _buildPrefixIcon(),
               suffixIcon: suffixIcon,
-              border: noBorder,
-              enabledBorder: noBorder,
-              focusedBorder: noBorder,
-              errorBorder: border(Colors.red),
-              focusedErrorBorder: border(Colors.red),
+              border: border(AppColors.cream),
+              enabledBorder: border(AppColors.cream),
+              focusedBorder: border(AppColors.gold),
+              errorBorder: border(AppColors.error),
+              focusedErrorBorder: border(AppColors.error),
             ),
-            cursorErrorColor: Colors.red,
+            errorBuilder: (context, errorText) => RowTextComponent(
+              text: errorText,
+              textStyle: errorStyle,
+              icon: Icons.error_outline,
+              iconColor: AppColors.error,
+            ),
+            cursorErrorColor: AppColors.error,
             maxLines: obsecureText == true ? 1 : maxLines,
           ),
         ),
-        if (errorText != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Row(
-              spacing: 6,
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 13,
-                  color: AppColors.error,
-                ),
-                Expanded(
-                  child: Text(
-                    errorText!,
-                    style: const TextStyle(
-                      color: AppColors.error,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }

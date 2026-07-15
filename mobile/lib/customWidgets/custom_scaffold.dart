@@ -7,6 +7,7 @@ class CustomScaffold extends StatelessWidget {
   final Widget? bottomNav;
   final Color? backgroundColor;
   final bool extendBodyBehindAppBar;
+  final bool resizeToAvoidBottomInset;
 
   const CustomScaffold({
     required this.body,
@@ -15,6 +16,7 @@ class CustomScaffold extends StatelessWidget {
     this.bottomNav,
     this.backgroundColor,
     this.extendBodyBehindAppBar = false,
+    this.resizeToAvoidBottomInset = true,
   });
 
   @override
@@ -28,6 +30,7 @@ class CustomScaffold extends StatelessWidget {
         body: body,
         bottomNavigationBar: bottomNav,
         extendBodyBehindAppBar: extendBodyBehindAppBar,
+        resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       ),
     );
   }

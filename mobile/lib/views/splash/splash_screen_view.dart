@@ -9,6 +9,8 @@ class SplashScreenView extends GetView<SplashScreenController> {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
+
     return AnimatedBuilder(
       animation: controller.animationController,
       builder: (context, child) {
@@ -45,7 +47,7 @@ class SplashScreenView extends GetView<SplashScreenController> {
                   ),
                   Text(
                     'Carlton',
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    style: textStyle.displaySmall?.copyWith(
                       fontFamily: 'The Seasons',
                       fontWeight: FontWeight.w700,
                       foreground: Paint()
@@ -55,10 +57,10 @@ class SplashScreenView extends GetView<SplashScreenController> {
                     ),
                   ),
                   Text(
-                    'Hotel',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontFamily: 'The Seasons',
-                      fontWeight: FontWeight.w700,
+                    'HOTEL',
+                    style: textStyle.labelLarge?.copyWith(
+                      fontFamily: 'Cabinet Grotesk',
+                      fontWeight: FontWeight.w500,
                       foreground: Paint()
                         ..shader = const LinearGradient(
                           colors: [Colors.white, AppColors.logoGradient],

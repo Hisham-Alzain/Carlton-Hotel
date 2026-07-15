@@ -38,7 +38,7 @@ class RowTextComponent extends StatelessWidget {
       mainAxisAlignment: mainAxisAlignment ?? MainAxisAlignment.start,
       children: [
         if (icon != null)
-          Icon(icon, size: iconSize)
+          Icon(icon, size: iconSize, color: iconColor)
         else if (path != null)
           SvgPicture.asset(
             path!,

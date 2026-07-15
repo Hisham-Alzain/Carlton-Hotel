@@ -1,11 +1,11 @@
 import 'package:carlton/customWidgets/custom_elevated_button.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
+import 'package:carlton/enums/enums.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
-enum EmptyActionStyle { neutral, filled }
+import 'package:get/get.dart';
 
 class CustomEmptyPlaceholder extends StatelessWidget {
   final String? iconPath;
@@ -45,13 +45,15 @@ class CustomEmptyPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
+        padding: const EdgeInsets.all(10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
 
-          spacing: 12,
+          spacing: 10,
           children: [
             _icon(),
             Padding(
@@ -59,10 +61,9 @@ class CustomEmptyPlaceholder extends StatelessWidget {
               child: Text(
                 title,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: titleColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                style: textStyle.headlineSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -70,11 +71,14 @@ class CustomEmptyPlaceholder extends StatelessWidget {
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: subtitleColor, fontSize: 13),
+                style: textStyle.labelLarge?.copyWith(
+                  color: subtitleColor,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             if (onPrimary != null)
               Padding(
-                padding: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.all(10),
                 child: _buildPrimary(),
               ),
             if (secondaryLabel != null && onSecondary != null)

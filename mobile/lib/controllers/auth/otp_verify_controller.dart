@@ -19,6 +19,7 @@ class OtpVerifyController extends GetxController {
   static const countdownId = 'countdown';
 
   late final String destination;
+  final formKey = GlobalKey<FormState>();
   final pinController = TextEditingController();
 
   bool hasError = false;
@@ -56,10 +57,11 @@ class OtpVerifyController extends GetxController {
   }
 
   Future<void> verify() async {
+    if (!formKey.currentState!.validate()) return;
+
     // Captured before the await: popping the screen mid-delay disposes
     // pinController.
     final code = pinController.text;
-    if (code.length < 6) return;
 
     isVerifying = true;
     update();

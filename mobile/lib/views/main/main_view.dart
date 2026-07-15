@@ -1,5 +1,5 @@
 import 'package:carlton/controllers/main/main_controller.dart';
-import 'package:carlton/customWidgets/custom_bottom_nav.dart';
+import 'package:carlton/components/custom_bottom_nav.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/views/account/account_view.dart';
 import 'package:carlton/views/book/book_view.dart';

@@ -45,9 +45,9 @@ class FindBookingView extends GetView<FindBookingController> {
                   child: CustomFilledButton(
                     width: 350,
                     backgroundColor: AppColors.teal,
-                    label: AppTranslations.findReservationButtonLabel,
                     isLoading: controller.isSubmitting,
                     onPressed: controller.submit,
+                    child: Text(AppTranslations.findReservationButtonLabel),
                   ),
                 ),
               ],

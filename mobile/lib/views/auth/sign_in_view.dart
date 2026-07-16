@@ -7,6 +7,7 @@ import 'package:carlton/customWidgets/custom_text_field.dart';
 import 'package:carlton/customWidgets/custom_validation.dart';
 import 'package:carlton/enums/enums.dart';
 import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/models/segement_item.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -67,9 +68,9 @@ class SignInView extends GetView<SignInController> {
                 child: CustomFilledButton(
                   width: 350,
                   backgroundColor: AppColors.teal,
-                  label: AppTranslations.nextButtonLabel,
                   isLoading: controller.isSubmitting,
                   onPressed: controller.submit,
+                  child: Text(AppTranslations.nextButtonLabel),
                 ),
               ),
 

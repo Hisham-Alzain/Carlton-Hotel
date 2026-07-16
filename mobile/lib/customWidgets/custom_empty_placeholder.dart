@@ -1,7 +1,5 @@
-import 'package:carlton/customWidgets/custom_elevated_button.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
-import 'package:carlton/enums/enums.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -12,17 +10,12 @@ class CustomEmptyPlaceholder extends StatelessWidget {
   final double iconWidth;
   final double iconHeight;
   final Widget? iconWidget;
-
   final String title;
   final String? subtitle;
   final Color titleColor;
   final Color subtitleColor;
-
   final String? primaryLabel;
   final VoidCallback? onPrimary;
-
-  final EmptyActionStyle primaryStyle;
-
   final String? secondaryLabel;
   final VoidCallback? onSecondary;
 
@@ -37,7 +30,6 @@ class CustomEmptyPlaceholder extends StatelessWidget {
     this.subtitle,
     this.titleColor = AppColors.textPrimary,
     this.subtitleColor = AppColors.textPrimary,
-    this.primaryStyle = EmptyActionStyle.neutral,
     this.secondaryLabel,
     this.onSecondary,
     super.key,
@@ -51,20 +43,15 @@ class CustomEmptyPlaceholder extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(10),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-
-          spacing: 10,
+          mainAxisAlignment: MainAxisAlignment.center,
+          spacing: 20,
           children: [
             _icon(),
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                style: textStyle.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: textStyle.titleLarge?.copyWith(
+                fontWeight: FontWeight.w500,
               ),
             ),
             if (subtitle != null)
@@ -76,15 +63,17 @@ class CustomEmptyPlaceholder extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            if (onPrimary != null)
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: _buildPrimary(),
+            if (primaryLabel != null && onPrimary != null)
+              CustomFilledButton(
+                width: 300,
+                onPressed: onPrimary,
+                elevation: 10,
+                child: Text(primaryLabel!),
               ),
             if (secondaryLabel != null && onSecondary != null)
               CustomOutlinedButton(
-                height: 50,
-                width: double.infinity,
+                backgroundColor: Color(0x8FECECEC),
+                width: 300,
                 onPressed: onSecondary,
                 child: Text(secondaryLabel!),
               ),
@@ -100,17 +89,5 @@ class CustomEmptyPlaceholder extends StatelessWidget {
       return SvgPicture.asset(iconPath!, width: iconWidth, height: iconHeight);
     }
     return Image.asset(iconPath!, width: iconWidth, height: iconHeight);
-  }
-
-  Widget _buildPrimary() {
-    return SizedBox(
-      width: double.infinity,
-      child: primaryStyle == EmptyActionStyle.filled
-          ? CustomFilledButton(onPressed: onPrimary, child: Text(primaryLabel!))
-          : CustomElevatedButton(
-              onPressed: onPrimary,
-              child: Text(primaryLabel!),
-            ),
-    );
   }
 }

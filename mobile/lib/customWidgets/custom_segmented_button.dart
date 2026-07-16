@@ -1,13 +1,6 @@
+import 'package:carlton/models/segement_item.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-
-class SegmentItem {
-  final String label;
-  final String? iconPath;
-  final IconData? iconData;
-
-  const SegmentItem({required this.label, this.iconPath, this.iconData});
-}
 
 class CustomSegmentedButton extends StatelessWidget {
   final List<SegmentItem> segments;

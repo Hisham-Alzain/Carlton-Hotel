@@ -1,4 +1,3 @@
-import 'package:carlton/components/custom_app_bar.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/l10n/app_translations.dart';
@@ -12,7 +11,6 @@ class BookView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      appBar: CustomAppBar(title: AppTranslations.bookTitle),
       body: CustomEmptyPlaceholder(
         iconWidget: const Icon(
           Icons.calendar_month_outlined,

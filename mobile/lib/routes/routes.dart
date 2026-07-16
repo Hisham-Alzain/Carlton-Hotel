@@ -7,7 +7,7 @@ import 'package:carlton/views/auth/reservation_choice_view.dart';
 import 'package:carlton/views/home/ai_concierge_view.dart';
 import 'package:carlton/views/main/main_view.dart';
 import 'package:carlton/views/auth/sign_in_view.dart';
-import 'package:carlton/views/splash/splash_screen_view.dart';
+import 'package:carlton/views/splash_screen/splash_screen_view.dart';
 import 'package:carlton/views/auth/welcome_back_view.dart';
 import 'package:get/get.dart';
 

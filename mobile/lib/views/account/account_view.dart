@@ -1,6 +1,4 @@
-import 'package:carlton/components/custom_app_bar.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
-import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -10,8 +8,7 @@ class AccountView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScaffold(
-      appBar: CustomAppBar(title: AppTranslations.accountTitle),
+    return Scaffold(
       body: CustomEmptyPlaceholder(
         iconWidget: const Icon(
           Icons.person_outline,

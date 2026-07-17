@@ -24,10 +24,7 @@ Future<void> main() async {
   // await Get.put(NotificationService(), permanent: true).setup();
   Get.put(MiddlewareService(), permanent: true);
   Get.put(PermissionService(), permanent: true);
-  // LicenseRegistry.addLicense(() async* {
-  //   final license = await rootBundle.loadString('assets/fonts/ /OFL.txt');
-  //   yield LicenseEntryWithLineBreaks(['google_fonts'], license);
-  // });
+
   runApp(const MainApp());
 }
 
@@ -42,7 +39,7 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: Routes.splashScreen,
       getPages: Pages.getPages,
-      theme: Themes.theme,
+      theme: Themes().theme,
       supportedLocales: const [Locale('en'), Locale('ar')],
       locale: settings.locale.value,
       onReady: () async {

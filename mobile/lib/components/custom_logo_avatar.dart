@@ -4,38 +4,27 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class CustomLogoAvatar extends StatelessWidget {
   final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
 
-  final bool bordered;
-  final double logoSize;
-
-  const CustomLogoAvatar({
-    this.onTap,
-    this.onLongPress,
-    this.bordered = false,
-    this.logoSize = 24,
-    super.key,
-  });
+  const CustomLogoAvatar({this.onTap, super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      onLongPress: onLongPress,
-      behavior: HitTestBehavior.opaque,
+
       child: Container(
-        width: 48,
-        height: 48,
+        width: 60,
+        height: 60,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: AppColors.primaryTileBg,
           shape: BoxShape.circle,
-          border: bordered ? Border.all(color: Colors.white) : null,
+          border: Border.all(color: Colors.white, width: 1),
         ),
         child: SvgPicture.asset(
-          'assets/icons/logo.svg',
-          width: logoSize,
-          height: logoSize,
+          'assets/icons/badge_logo.svg',
+          width: 25,
+          height: 25,
         ),
       ),
     );

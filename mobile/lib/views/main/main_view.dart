@@ -1,17 +1,15 @@
+import 'package:carlton/components/custom_app_bar.dart';
 import 'package:carlton/controllers/main/main_controller.dart';
-import 'package:carlton/components/custom_bottom_nav.dart';
+import 'package:carlton/components/custom_bottom_navigation_bar.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/views/account/account_view.dart';
 import 'package:carlton/views/book/book_view.dart';
 import 'package:carlton/views/home/home_view.dart';
-import 'package:carlton/views/home/services_view.dart';
+import 'package:carlton/views/services/services_view.dart';
 import 'package:carlton/views/stays/stays_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// The bottom-nav shell: a [PageView] of the five tabs sharing one
-/// [AppBottomNav]. Full-screen routes (auth flow, AI Concierge) are pushed
-/// over this shell.
 class MainView extends GetView<MainController> {
   const MainView({super.key});
 
@@ -19,7 +17,9 @@ class MainView extends GetView<MainController> {
   Widget build(BuildContext context) {
     return GetBuilder<MainController>(
       builder: (_) => CustomScaffold(
-        bottomNav: AppBottomNav(
+        appBar: CustomAppBar(currentIndex: controller.currentIndex),
+        drawer: Drawer(),
+        bottomNav: CustoBottomNavigationBar(
           currentIndex: controller.currentIndex,
           onTap: controller.changeTab,
         ),

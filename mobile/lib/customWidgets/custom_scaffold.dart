@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 class CustomScaffold extends StatelessWidget {
   final PreferredSizeWidget? appBar;
+  final Widget? drawer;
   final Widget? body;
   final Widget? bottomNav;
   final Color? backgroundColor;
@@ -13,6 +14,7 @@ class CustomScaffold extends StatelessWidget {
     required this.body,
     super.key,
     this.appBar,
+    this.drawer,
     this.bottomNav,
     this.backgroundColor,
     this.extendBodyBehindAppBar = false,
@@ -27,6 +29,7 @@ class CustomScaffold extends StatelessWidget {
       child: Scaffold(
         backgroundColor: backgroundColor,
         appBar: appBar,
+        drawer: drawer,
         body: body,
         bottomNavigationBar: bottomNav,
         extendBodyBehindAppBar: extendBodyBehindAppBar,

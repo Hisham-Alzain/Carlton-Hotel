@@ -20,7 +20,7 @@ abstract class AppColors {
   // ── Surfaces ─────────────────────────────────────────────────────────
   static const Color background = Color(0xFFFCFCFC);
   static const Color surface = Colors.white;
-  static const Color cardBg = Color(0xFFF2F2F2);
+  static const Color cardBg = Color(0xFFF3F3F3);
   static const Color cardBorder = Color(0xFFE5E5E5);
   static const Color bottomNavBg = Color(0xFFF7F7F7);
   static const Color cream = Color(0xFFF0EBE2); // filled inputs on dark
@@ -59,6 +59,8 @@ abstract class AppColors {
   static const Color panelDark = Color(0xA3191512); // rgba(25,21,18,.64)
   static const Color scrimTop = Color(0xD4030708); // rgba(3,7,8,.83)
   static const Color scrimBottom = Color(0xE6030404); // rgba(3,4,4,.9)
+  static const Color bottomNavBarShadow = Color(0x33B3B3B3);
+  static const Color cardShadow = Color(0x40D3D3D3);
 
   // ── Progress / status ────────────────────────────────────────────────
   static const Color progressTrack = Color(0xFFEDF1F2);

@@ -10,7 +10,7 @@ class MainController extends GetxController {
   /// Nav order: Home 0 · Stays 1 · Book 2 · Services 3 · Account 4. Opens on
   /// Services — the only fully built tab — unless a starting index is passed
   /// via `Get.arguments`.
-  int currentIndex = 3;
+  int currentIndex = 0;
   late final PageController pageController;
 
   @override

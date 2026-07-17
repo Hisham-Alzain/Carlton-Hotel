@@ -48,9 +48,9 @@ class PhoneEntryView extends GetView<PhoneEntryController> {
                   child: CustomFilledButton(
                     width: 350,
                     backgroundColor: AppColors.teal,
-                    label: AppTranslations.sendCodeButtonLabel,
                     isLoading: controller.isSubmitting,
                     onPressed: controller.submit,
+                    child: Text(AppTranslations.sendCodeButtonLabel),
                   ),
                 ),
               ],

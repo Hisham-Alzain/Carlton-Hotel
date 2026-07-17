@@ -5,16 +5,11 @@ class CustomFilledButton extends StatelessWidget {
   final double? width;
   final void Function()? onPressed;
   final Widget? child;
-
-  /// Plain-text alternative to [child]; exactly one of the two is used.
-  final String? label;
   final TextStyle? textStyle;
   final Color? backgroundColor;
   final Color? foregroundColor;
   final OutlinedBorder? shape;
-
-  /// While true the button is disabled and shows a small spinner instead of
-  /// its content — the shared submit-in-flight treatment.
+  final double? elevation;
   final bool isLoading;
 
   const CustomFilledButton({
@@ -22,11 +17,11 @@ class CustomFilledButton extends StatelessWidget {
     this.width,
     required this.onPressed,
     this.child,
-    this.label,
     this.textStyle,
     this.backgroundColor,
     this.foregroundColor,
     this.shape,
+    this.elevation,
     this.isLoading = false,
     super.key,
   });
@@ -44,8 +39,7 @@ class CustomFilledButton extends StatelessWidget {
         backgroundColor: WidgetStatePropertyAll(backgroundColor),
         foregroundColor: WidgetStatePropertyAll(foregroundColor),
         shape: WidgetStatePropertyAll(shape),
-        elevation: const WidgetStatePropertyAll(0),
-        padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+        elevation: WidgetStatePropertyAll(elevation),
       ),
       onPressed: isLoading ? null : onPressed,
       //TODO: make this a custom indicator using the lgog
@@ -58,7 +52,7 @@ class CustomFilledButton extends StatelessWidget {
                 color: Colors.white,
               ),
             )
-          : child ?? Text(label!),
+          : child,
     );
   }
 }

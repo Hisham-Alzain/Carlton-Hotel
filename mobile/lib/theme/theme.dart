@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 const _mainFontFamily = 'Plus Jakarta Sans';
 
 class Themes {
-  static ThemeData get theme => ThemeData(
+  //TODO: add static when done
+  ThemeData get theme => ThemeData(
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primary,
       // The color of the spinning arrow/arc
@@ -120,7 +121,7 @@ class Themes {
         textStyle: const TextStyle(
           fontFamily: _mainFontFamily,
           fontSize: 15,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
@@ -131,20 +132,18 @@ class Themes {
     // services): offset (0,4), blur 4, color #D4D4D4.
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        backgroundColor: const Color(0x8FECECEC),
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.outlinedButtonText,
         disabledForegroundColor: Colors.grey,
-        elevation: 2,
+        elevation: 0,
         shadowColor: const Color(0xFFD4D4D4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        side: const BorderSide(
-          color: AppColors.outlinedButtonBorder,
-          width: 0.8,
-        ),
+        side: const BorderSide(color: Colors.white, width: 0.8),
         textStyle: const TextStyle(
+          //TODO:change font family
           fontFamily: _mainFontFamily,
           fontSize: 15,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
         ),
       ),
     ),
@@ -223,10 +222,11 @@ class Themes {
       titleTextStyle: const TextStyle(
         fontFamily: _mainFontFamily,
         fontSize: 20,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
         color: Colors.black,
       ),
       actionsIconTheme: const IconThemeData(color: AppColors.primary),
+      actionsPadding: const EdgeInsets.only(right: 10),
     ),
 
     drawerTheme: DrawerThemeData(backgroundColor: Colors.white),
@@ -285,6 +285,7 @@ class Themes {
       showUnselectedLabels: true,
       showSelectedLabels: true,
       backgroundColor: AppColors.bottomNavBg,
+      elevation: 0,
       selectedItemColor: AppColors.primary,
       unselectedItemColor: AppColors.navLabel,
       selectedLabelStyle: const TextStyle(
@@ -381,13 +382,11 @@ class Themes {
     ),
 
     cardTheme: CardThemeData(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadiusGeometry.circular(16),
-        side: const BorderSide(color: AppColors.cardBorder),
-      ),
+      shape: BoxBorder.all(color: AppColors.cardBorder),
       color: AppColors.cardBg,
       elevation: 0,
       margin: EdgeInsets.zero,
+      shadowColor: AppColors.cardShadow,
     ),
 
     radioTheme: RadioThemeData(

@@ -46,7 +46,7 @@ class SplashScreenView extends GetView<SplashScreenController> {
                     ),
                   ),
                   Text(
-                    'Carlton',
+                    'CARLTON',
                     style: textStyle.displaySmall?.copyWith(
                       fontFamily: 'The Seasons',
                       fontWeight: FontWeight.w700,

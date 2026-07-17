@@ -1,27 +1,26 @@
 import 'package:flutter/material.dart';
 
 class CustomOutlinedButton extends StatelessWidget {
-  final double height;
-  final double width;
-  final Widget? child;
+  final double? height;
+  final double? width;
+  final Widget child;
   final String? labelText;
   final TextStyle? labelStyle;
   final Color? borderColor;
-  final double borderWidth;
+  final double? borderWidth;
   final Color? backgroundColor;
   final Color? foregroundColor;
-
   final double? elevation;
   final void Function()? onPressed;
 
   const CustomOutlinedButton({
-    required this.height,
-    required this.width,
+    this.height,
+    this.width,
     required this.child,
     this.labelText,
     this.labelStyle,
     this.borderColor,
-    this.borderWidth = 1.5,
+    this.borderWidth,
     this.backgroundColor,
     this.foregroundColor,
     this.elevation,
@@ -41,9 +40,9 @@ class CustomOutlinedButton extends StatelessWidget {
         OutlinedButton(
           onPressed: onPressed,
           style: outlineButtonTheme?.copyWith(
-            fixedSize: WidgetStatePropertyAll(Size(width, height)),
-            minimumSize: WidgetStatePropertyAll(Size(width, height)),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            fixedSize: WidgetStatePropertyAll(Size(width ?? 300, height ?? 50)),
+            // minimumSize: WidgetStatePropertyAll(Size(width, height)),
+            // tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             backgroundColor: backgroundColor != null
                 ? WidgetStatePropertyAll(backgroundColor)
                 : null,
@@ -52,7 +51,7 @@ class CustomOutlinedButton extends StatelessWidget {
                 : null,
             side: borderColor != null
                 ? WidgetStatePropertyAll(
-                    BorderSide(color: borderColor!, width: borderWidth),
+                    BorderSide(color: borderColor!, width: borderWidth ?? 1),
                   )
                 : null,
             elevation: elevation != null

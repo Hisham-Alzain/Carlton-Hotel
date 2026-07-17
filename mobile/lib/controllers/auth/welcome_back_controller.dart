@@ -11,9 +11,9 @@ class WelcomeBackController extends GetxController {
   @override
   void onReady() {
     super.onReady();
-    // Future.delayed(_displayDuration, () {
-    //   if (isClosed) return;
-    //   Get.offAllNamed(Routes.main);
-    // });
+    Future.delayed(_displayDuration, () {
+      if (isClosed) return;
+      Get.offAllNamed(Routes.main);
+    });
   }
 }

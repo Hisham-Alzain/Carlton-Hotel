@@ -47,9 +47,9 @@ class CreateProfileView extends GetView<CreateProfileController> {
                   child: CustomFilledButton(
                     width: 350,
                     backgroundColor: AppColors.teal,
-                    label: AppTranslations.continueButtonLabel,
                     isLoading: controller.isSubmitting,
                     onPressed: controller.submit,
+                    child: Text(AppTranslations.continueButtonLabel),
                   ),
                 ),
               ],

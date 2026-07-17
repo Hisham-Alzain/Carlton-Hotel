@@ -33,6 +33,15 @@ pre-populated environment pointing at a freshly-seeded local database.
    including tier-3b in-room services). Folder `02 - Auth` has additional
    "Login as ..." requests for testing role-specific permission boundaries.
 
+## OTP codes
+
+No real SMS/WhatsApp/email provider is wired yet (`OtpDispatcher` is still a
+stub). In `local`/`testing` environments the OTP code is always **`000000`**
+— for any phone/email, any purpose (login, register, booking_link,
+booking_verification). No need to read logs or dig through the database;
+just type `000000`. This only applies outside production — real random
+codes are generated everywhere else.
+
 ## Keeping tokens fresh
 
 Every `php artisan migrate:fresh --seed` regenerates the database, which

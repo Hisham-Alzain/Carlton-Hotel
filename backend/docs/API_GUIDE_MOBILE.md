@@ -151,6 +151,8 @@ Three entry paths to a guest token. All end at the same place: a verified `guest
 ```
 No code in the response — delivered via the chosen channel. `expires_in` is seconds.
 
+**Dev/testing note:** no real SMS/WhatsApp/email provider is wired yet (`OtpDispatcher` is still a stub — tracked for a future phase). In local/testing environments the code is **always `000000`** — no need to dig through logs. This is environment-gated (`app()->isLocal() || app()->environment('testing')`); real random codes are generated everywhere else, so this has no effect once deployed.
+
 **Failure `error_code`s:**
 
 | Code | HTTP | UI action |

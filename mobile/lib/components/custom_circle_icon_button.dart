@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 
 class CustomCircleIconButton extends StatelessWidget {
-  final Widget icon;
+  final IconData? icon;
+  final String? iconPath;
   final VoidCallback? onTap;
   final double size;
   final Color? color;
   final Gradient? gradient;
 
   const CustomCircleIconButton({
-    required this.icon,
+    this.icon,
+    this.iconPath,
     this.onTap,
-    this.size = 39,
+    this.size = 40,
     this.color = Colors.white,
     this.gradient,
     super.key,
@@ -37,8 +40,32 @@ class CustomCircleIconButton extends StatelessWidget {
             ),
           ],
         ),
-        child: icon,
+        child: _buildPrefixIcon(),
       ),
     );
+  }
+
+  Widget? _buildPrefixIcon() {
+    if (icon != null) {
+      return Icon(
+        icon,
+        //  color: prefixIconColor ?? AppColors.primaryColor
+      );
+    } else if (iconPath != null) {
+      return Padding(
+        padding: const EdgeInsets.all(10),
+        child: iconPath != null
+            ? SvgPicture.asset(
+                iconPath.toString(),
+                // colorFilter: ColorFilter.mode(
+                //   prefixIconColor ?? AppColors.primaryColor,
+                //   BlendMode.srcIn,
+                // ),
+                height: 25,
+              )
+            : null,
+      );
+    }
+    return null;
   }
 }

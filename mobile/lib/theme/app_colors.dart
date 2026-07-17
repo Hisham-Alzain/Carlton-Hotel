@@ -75,4 +75,5 @@ abstract class AppColors {
   static const Color neutralButtonText = Color(0xFF0D0D0D);
   static const Color outlinedButtonText = Color(0xFF21545F);
   static const Color outlinedButtonBorder = Color(0x63FFFFFF);
+  static const Color chipBorder = Color(0x4dB9AE99);
 }

@@ -42,7 +42,7 @@ class CustomFilledButton extends StatelessWidget {
         elevation: WidgetStatePropertyAll(elevation),
       ),
       onPressed: isLoading ? null : onPressed,
-      //TODO: make this a custom indicator using the lgog
+      //TODO: make this a custom indicator using the icon
       child: isLoading
           ? const SizedBox(
               height: 18,

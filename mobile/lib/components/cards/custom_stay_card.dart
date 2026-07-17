@@ -1,26 +1,26 @@
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class CustomStayCard extends StatelessWidget {
   final String room;
   final String checkedInTime;
   final int nightsRemaining;
-  final String imagePath;
 
   const CustomStayCard({
     required this.room,
     required this.checkedInTime,
     required this.nightsRemaining,
-    required this.imagePath,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 116,
+    final TextTheme textStyle = Get.textTheme;
 
+    return Container(
+      height: 120,
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -28,50 +28,36 @@ class CustomStayCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white, width: 1.5),
       ),
-
-      child: MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: const TextScaler.linear(1.0)),
-        child: Stack(
-          children: [
-            Positioned(
-              right: 0,
-              top: 0,
-              bottom: 0,
-              width: 144,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(imagePath, fit: BoxFit.cover),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0x80EDF1F2), Color(0x80347F87)],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
-                spacing: 4,
+                spacing: 10,
                 children: [
-                  _RoomPill(room: room),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: _InfoLine(
-                      prefix: 'Checked in since ',
-                      value: checkedInTime,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: AppColors.sandPillBg,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: RowTextComponent(
+                      path: 'assets/icons/bed.svg',
+                      iconSize: 20,
+                      spacing: 10,
+                      text: room,
+                      textStyle: textStyle.labelMedium?.copyWith(
+                        color: AppColors.sandPillText,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
+                  _InfoLine(prefix: 'Checked in since ', value: checkedInTime),
                   _InfoLine(
                     prefix: 'Nights remaining  ',
                     value: '$nightsRemaining',
@@ -79,37 +65,23 @@ class CustomStayCard extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RoomPill extends StatelessWidget {
-  final String room;
-
-  const _RoomPill({required this.room});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      height: 27,
-      decoration: BoxDecoration(
-        color: AppColors.sandPillBg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: RowTextComponent(
-        path: 'assets/icons/bed.svg',
-        iconSize: 16,
-        spacing: 6,
-        text: room,
-        textStyle: const TextStyle(
-          color: AppColors.sandPillText,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
+          ),
+          Container(
+            width: 144,
+            foregroundDecoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0x80EDF1F2), Color(0x80347F87)],
+              ),
+            ),
+            child: Image.asset(
+              'assets/images/stay_room.png',
+              fit: BoxFit.cover,
+              height: double.infinity,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -123,19 +95,22 @@ class _InfoLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
+
     return Text.rich(
       TextSpan(
-        style: const TextStyle(
+        style: textStyle.labelSmall?.copyWith(
           color: Colors.white,
-          fontSize: 11,
           fontWeight: FontWeight.w300,
-          height: 1.4,
         ),
         children: [
           TextSpan(text: prefix),
           TextSpan(
             text: value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: textStyle.labelSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),

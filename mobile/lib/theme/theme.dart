@@ -178,7 +178,7 @@ class Themes {
         elevation: 0,
         textStyle: const TextStyle(
           fontFamily: _mainFontFamily,
-          fontSize: 14,
+          fontSize: 10,
           fontWeight: FontWeight.w500,
           letterSpacing: 0.1,
         ),
@@ -264,6 +264,7 @@ class Themes {
       labelColor: AppColors.primary,
       unselectedLabelColor: AppColors.primary,
       indicatorColor: AppColors.primary,
+      labelPadding: const EdgeInsets.all(10),
       labelStyle: const TextStyle(
         fontFamily: _mainFontFamily,
         fontSize: 14,
@@ -277,7 +278,7 @@ class Themes {
       indicator: const UnderlineTabIndicator(
         borderSide: BorderSide(color: AppColors.primary, width: 2.5),
       ),
-      indicatorSize: TabBarIndicatorSize.label,
+      indicatorSize: TabBarIndicatorSize.tab,
     ),
 
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -351,13 +352,13 @@ class Themes {
       showCheckmark: false,
       labelStyle: const TextStyle(
         fontFamily: _mainFontFamily,
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-        color: AppColors.textPrimary,
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textTealDark,
       ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppColors.cardBorder),
+        side: const BorderSide(color: AppColors.chipBorder),
       ),
     ),
 
@@ -418,7 +419,12 @@ class Themes {
       ),
     ),
 
-    popupMenuTheme: PopupMenuThemeData(color: Colors.white),
+    popupMenuTheme: PopupMenuThemeData(
+      iconColor: AppColors.textMuted,
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
 
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: Colors.white,

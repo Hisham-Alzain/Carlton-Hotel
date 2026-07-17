@@ -1,6 +1,6 @@
 import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
-import 'package:carlton/components/cards/custom_home_container.dart';
+import 'package:carlton/components/custom_home_container.dart';
 import 'package:carlton/components/cards/custom_listing_card.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/models/card_meta.dart';

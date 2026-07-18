@@ -88,6 +88,7 @@ class SignInView extends GetView<SignInController> {
                     Text(
                       AppTranslations.newGuestPrompt,
                       style: textStyle.labelLarge?.copyWith(
+                        fontFamily: 'DM Sans',
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
                       ),
@@ -97,6 +98,7 @@ class SignInView extends GetView<SignInController> {
                       child: Text(
                         AppTranslations.createAccountLink,
                         style: textStyle.labelLarge?.copyWith(
+                          fontFamily: 'DM Sans',
                           color: AppColors.gold,
                           fontWeight: FontWeight.w500,
                           decoration: TextDecoration.underline,

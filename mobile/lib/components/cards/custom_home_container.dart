@@ -1,6 +1,7 @@
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
+import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -56,6 +57,7 @@ class CustomHomeContainer extends StatelessWidget {
               ),
             ),
           ),
+          _ctaGlow(),
           ConstrainedBox(
             constraints: BoxConstraints(minHeight: height),
             child: Column(
@@ -93,7 +95,6 @@ class CustomHomeContainer extends StatelessWidget {
                           children: _titleSpans(title),
                         ),
                       ),
-                      //TODO:add comorent font
                       Text(
                         subtitle,
                         style: textStyle.labelLarge?.copyWith(
@@ -105,8 +106,10 @@ class CustomHomeContainer extends StatelessWidget {
                     ],
                   ),
                 ),
-                //TODO: needs working
-                _ctas(),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: _ctas(),
+                ),
               ],
             ),
           ),
@@ -155,6 +158,28 @@ class CustomHomeContainer extends StatelessWidget {
       );
     }
     return CustomImage(path: imagePath, fit: BoxFit.cover);
+  }
+
+  /// Soft light glow sitting behind the CTAs so the dark photo fades into a
+  /// lighter patch there instead of the buttons floating on a hard edge.
+  /// Clipped to the card's rounded corners by the outer Container.
+  Widget _ctaGlow() {
+    return Positioned(
+      left: -50,
+      right: -50,
+      bottom: -60,
+      height: 220,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.heroGlow.withValues(alpha: 0.9),
+              blurRadius: 25,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _ctas() {

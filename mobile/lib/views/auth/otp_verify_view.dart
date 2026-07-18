@@ -45,6 +45,7 @@ class OtpVerifyView extends GetView<OtpVerifyController> {
                               '${controller.secondsRemaining}s',
                             ),
                             style: textStyle.labelLarge?.copyWith(
+                              fontFamily: 'DM Sans',
                               color: AppColors.textOnDarkFaint,
                               fontWeight: FontWeight.w400,
                             ),
@@ -54,6 +55,7 @@ class OtpVerifyView extends GetView<OtpVerifyController> {
                             child: Text(
                               AppTranslations.resendCodeLink,
                               style: textStyle.labelLarge?.copyWith(
+                                fontFamily: 'DM Sans',
                                 color: AppColors.gold,
                                 fontWeight: FontWeight.w500,
                                 decoration: TextDecoration.underline,

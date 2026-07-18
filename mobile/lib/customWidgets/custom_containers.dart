@@ -157,7 +157,7 @@ class SectionContainer extends StatelessWidget {
               if (title != null)
                 Text(
                   title!,
-                  style: textStyle.titleLarge?.copyWith(
+                  style: textStyle.titleMedium?.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w500,
                   ),

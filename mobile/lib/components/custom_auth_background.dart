@@ -88,6 +88,7 @@ class CustomAuthBackground extends StatelessWidget {
                     subtitle!,
                     textAlign: TextAlign.center,
                     style: textStyle.titleSmall?.copyWith(
+                      fontFamily: 'DM Sans',
                       fontWeight: FontWeight.w400,
                       color: Colors.white,
                     ),

@@ -29,6 +29,9 @@ abstract class AppColors {
   static const Color creamText = Color(0x99F0EBE2); // cream @ 60%
   static const Color greyField = Color(0xFFF3F3F3); // light input pill
   static const Color disabled = Color(0xFFBDBDBD);
+  static const Color heroGlow = Color(
+    0xFFF2F2F2,
+  ); // soft CTA glow on hero cards
 
   // Sand (room pill, chip borders)
   static const Color sandPillBg = Color(0xFFE0D8C9);

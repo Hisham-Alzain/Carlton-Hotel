@@ -17,7 +17,7 @@ class OtpVerifyView extends GetView<OtpVerifyController> {
 
     return CustomAuthBackground(
       title: AppTranslations.verifyIdentityTitle,
-      //TODO: pass phonenumber with countrycode
+      //TODO: pass phone number with countrycode
       subtitle: AppTranslations.otpSentTo(controller.destination),
       child: GetBuilder<OtpVerifyController>(
         builder: (controller) => Padding(

@@ -51,6 +51,7 @@ class CustomEmptyPlaceholder extends StatelessWidget {
               title,
               textAlign: TextAlign.center,
               style: textStyle.titleLarge?.copyWith(
+                color: titleColor,
                 fontWeight: FontWeight.w500,
               ),
             ),

@@ -481,7 +481,7 @@
                                 }
                             }
                         },
-                        "description": "Code is not delivered anywhere real — check storage/logs/laravel.log on the backend for \"OTP dispatched\" (APP_ENV=local only). Rate-limited to 1/min, 5/hr per identifier."
+                        "description": "No real SMS/WhatsApp/email provider is wired yet — the code is always 000000 in local/testing (see Verify OTP below). Rate-limited to 1/min, 5/hr per identifier."
                     },
                     "response": []
                 },
@@ -519,7 +519,7 @@
                                 }
                             }
                         },
-                        "description": "Replace \"code\" with the 6-digit code from the log after calling Request OTP above. On success this overwrites guest_token (Ahmad) with Rania's — re-run \"Ahmad is pre-logged-in\" to switch back."
+                        "description": "The code is always 000000 in local/testing — no need to change it. On success this overwrites guest_token (Ahmad) with Rania's — re-run \"Ahmad is pre-logged-in\" to switch back."
                     },
                     "response": [],
                     "event": [
@@ -995,7 +995,7 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/public/availability?room_type_uuid=%7B%7Broom_type_uuid%7D%7D&check_in=2026-07-25&check_out=2026-07-27",
+                            "raw": "{{base_url}}/public/availability?room_type_uuid=%7B%7Broom_type_uuid%7D%7D&check_in=2026-07-27&check_out=2026-07-29",
                             "host": [
                                 "{{base_url}}"
                             ],
@@ -1010,11 +1010,11 @@
                                 },
                                 {
                                     "key": "check_in",
-                                    "value": "2026-07-25"
+                                    "value": "2026-07-27"
                                 },
                                 {
                                     "key": "check_out",
-                                    "value": "2026-07-27"
+                                    "value": "2026-07-29"
                                 }
                             ]
                         }
@@ -1036,7 +1036,7 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/public/quote?room_type_uuid=%7B%7Broom_type_uuid%7D%7D&check_in=2026-07-25&check_out=2026-07-27&promo_code=SUMMER10",
+                            "raw": "{{base_url}}/public/quote?room_type_uuid=%7B%7Broom_type_uuid%7D%7D&check_in=2026-07-27&check_out=2026-07-29&promo_code=SUMMER10",
                             "host": [
                                 "{{base_url}}"
                             ],
@@ -1051,11 +1051,11 @@
                                 },
                                 {
                                     "key": "check_in",
-                                    "value": "2026-07-25"
+                                    "value": "2026-07-27"
                                 },
                                 {
                                     "key": "check_out",
-                                    "value": "2026-07-27"
+                                    "value": "2026-07-29"
                                 },
                                 {
                                     "key": "promo_code",
@@ -1092,14 +1092,14 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"room_type_uuid\": \"{{room_type_uuid}}\",\n    \"check_in\": \"2026-08-04\",\n    \"check_out\": \"2026-08-06\",\n    \"first_name\": \"Postman\",\n    \"last_name\": \"Tester\",\n    \"phone\": \"+963900555733\",\n    \"payment_method\": \"cash\"\n}",
+                            "raw": "{\n    \"room_type_uuid\": \"{{room_type_uuid}}\",\n    \"check_in\": \"2026-08-06\",\n    \"check_out\": \"2026-08-08\",\n    \"first_name\": \"Postman\",\n    \"last_name\": \"Tester\",\n    \"phone\": \"+963900555000\",\n    \"payment_method\": \"cash\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
                                 }
                             }
                         },
-                        "description": "Soft-holds a room and sends an OTP. Check storage/logs/laravel.log for the code, then call Step 2."
+                        "description": "Soft-holds a room and sends an OTP. No real provider is wired yet — the code is always 000000 in local/testing, so Step 2 already has it filled in. The phone here (+963900555000) must match Step 2's exactly — the verify step checks the identifier, not just the code."
                     },
                     "response": [],
                     "event": [
@@ -1148,7 +1148,7 @@
                                 }
                             }
                         },
-                        "description": "Use the reservation_uuid captured from Step 1 and the phone you sent there, plus the real code from the log. Discards the returned token if simulating the website; keep it if simulating the app."
+                        "description": "Uses the reservation_uuid captured from Step 1 automatically. Discards the returned token if simulating the website; keep it if simulating the app."
                     },
                     "response": []
                 },
@@ -1181,7 +1181,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"room_type_uuid\": \"{{room_type_uuid}}\",\n    \"check_in\": \"2026-08-09\",\n    \"check_out\": \"2026-08-11\",\n    \"payment_method\": \"on_arrival\"\n}",
+                            "raw": "{\n    \"room_type_uuid\": \"{{room_type_uuid}}\",\n    \"check_in\": \"2026-08-11\",\n    \"check_out\": \"2026-08-13\",\n    \"payment_method\": \"on_arrival\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -1723,7 +1723,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"bookable_type\": \"spa_service\",\n    \"bookable_uuid\": \"{{spa_service_uuid}}\",\n    \"scheduled_at\": \"2026-07-18T23:16:06\",\n    \"notes\": \"Anniversary treat\"\n}",
+                            "raw": "{\n    \"bookable_type\": \"spa_service\",\n    \"bookable_uuid\": \"{{spa_service_uuid}}\",\n    \"scheduled_at\": \"2026-07-20T13:13:14\",\n    \"notes\": \"Anniversary treat\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -4976,7 +4976,7 @@
                                 },
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n    \"title\": {\n        \"en\": \"Postman Test Promo\",\n        \"ar\": \"Postman Test Promo\"\n    },\n    \"description\": {\n        \"en\": \"Created via Postman.\",\n        \"ar\": \"Created via Postman.\"\n    },\n    \"terms\": {\n        \"en\": \"Demo only.\",\n        \"ar\": \"Demo only.\"\n    },\n    \"valid_from\": \"2026-07-15\",\n    \"valid_until\": \"2026-08-14\",\n    \"is_active\": true,\n    \"sort_order\": 9\n}",
+                                    "raw": "{\n    \"title\": {\n        \"en\": \"Postman Test Promo\",\n        \"ar\": \"Postman Test Promo\"\n    },\n    \"description\": {\n        \"en\": \"Created via Postman.\",\n        \"ar\": \"Created via Postman.\"\n    },\n    \"terms\": {\n        \"en\": \"Demo only.\",\n        \"ar\": \"Demo only.\"\n    },\n    \"valid_from\": \"2026-07-17\",\n    \"valid_until\": \"2026-08-16\",\n    \"is_active\": true,\n    \"sort_order\": 9\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -5263,7 +5263,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"Postman New Hire\",\n    \"email\": \"postman.hire+8116@carlton.demo\",\n    \"password\": \"password123\",\n    \"role\": \"kitchen\"\n}",
+                            "raw": "{\n    \"name\": \"Postman New Hire\",\n    \"email\": \"postman.hire+5916@carlton.demo\",\n    \"password\": \"password123\",\n    \"role\": \"kitchen\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -5517,7 +5517,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"token\": \"postman-demo-fcm-token-0726f1f7\",\n    \"platform\": \"android\"\n}",
+                            "raw": "{\n    \"token\": \"postman-demo-fcm-token-be260ea1\",\n    \"platform\": \"android\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"

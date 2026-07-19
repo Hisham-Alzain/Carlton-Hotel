@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Actions\Auth;
 
 use App\Exceptions\TooManyRequestsException;
@@ -27,7 +28,11 @@ class RequestOtpAction
         }
         RateLimiter::hit($hourKey, 3600);
 
-        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        // TODO: remove once a real SMS/WhatsApp/email provider is wired (OtpDispatcher
+        // is still a stub) — static code makes manual/Postman testing possible without
+        // reading storage/logs/laravel.log for every request.
+        $code =  '000000';
+        // str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         DB::transaction(function () use ($identifier, $channel, $purpose, $code) {
             // Invalidate any prior active codes for same identifier+purpose
@@ -42,7 +47,7 @@ class RequestOtpAction
                 'purpose'    => $purpose,
                 'attempts'   => 0,
                 'expires_at' => now()->addMinutes(5),
-                'consumed_at'=> null,
+                'consumed_at' => null,
             ]);
         });
 

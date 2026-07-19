@@ -1,6 +1,7 @@
 import 'package:carlton/models/segement_item.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 
 class CustomSegmentedButton extends StatelessWidget {
   final List<SegmentItem> segments;
@@ -39,7 +40,7 @@ class CustomSegmentedButton extends StatelessWidget {
     required this.segments,
     required this.selectedIndex,
     required this.onChanged,
-    this.height = 48,
+    this.height = 60,
     super.key,
   }) : backgroundColor = Colors.transparent,
        foregroundColor = AppColors.textSecondary,
@@ -47,24 +48,24 @@ class CustomSegmentedButton extends StatelessWidget {
        selectedForegroundColor = AppColors.primary,
        side = BorderSide.none,
        shape = const RoundedRectangleBorder(
-         borderRadius: BorderRadius.all(Radius.circular(9)),
+         borderRadius: BorderRadius.all(Radius.circular(10)),
        ),
        trackColor = AppColors.cardBg;
 
   @override
   Widget build(BuildContext context) {
     final button = SegmentedButton<int>(
-      segments: [
-        for (var i = 0; i < segments.length; i++)
-          ButtonSegment(
-            value: i,
-            label: Padding(
-              padding: const EdgeInsets.all(15),
-              child: Text(segments[i].label),
-            ),
-            icon: _icon(segments[i]),
+      segments: List.generate(
+        segments.length,
+        (i) => ButtonSegment(
+          value: i,
+          label: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text(segments[i].label),
           ),
-      ],
+          icon: _icon(segments[i]),
+        ),
+      ),
       selected: {selectedIndex},
       showSelectedIcon: false,
       emptySelectionAllowed: false,
@@ -85,10 +86,10 @@ class CustomSegmentedButton extends StatelessWidget {
 
     return Container(
       height: height,
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: trackColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: button,
     );
@@ -96,11 +97,10 @@ class CustomSegmentedButton extends StatelessWidget {
 
   Widget? _icon(SegmentItem segment) {
     if (segment.iconData != null) {
-      return Icon(segment.iconData, size: 16);
+      return Icon(segment.iconData, size: 14);
+    } else if (segment.iconPath != null) {
+      return SvgPicture.asset(segment.iconPath!, height: 14, width: 14);
     }
-    // SegmentedButton's icon doesn't take a color param directly — it
-    // inherits from foregroundColor/selectedForegroundColor automatically
-    // via IconTheme, so SvgPicture needs no explicit colorFilter here.
     return null;
   }
 }

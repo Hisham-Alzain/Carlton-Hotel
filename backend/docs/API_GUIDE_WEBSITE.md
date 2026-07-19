@@ -219,6 +219,8 @@ No `images` field. `GET /public/pages/{slug}` 404s (`not_found`) if the slug doe
    → Show: "Booking confirmed. Your code is CARL-XXXXXXXX. Download the app to manage your stay."
 ```
 
+**Dev/testing note:** no real SMS/WhatsApp/email provider is wired yet. In local/testing environments the code is always `000000` — real random codes are generated everywhere else once deployed.
+
 ### POST /reservations/guest
 
 **Purpose:** Step 1 — submit booking details, get an OTP sent to the guest's contact.

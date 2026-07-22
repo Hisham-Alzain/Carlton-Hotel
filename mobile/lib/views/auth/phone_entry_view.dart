@@ -26,6 +26,15 @@ class PhoneEntryView extends GetView<PhoneEntryController> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 20,
               children: [
+                CustomTextField(
+                  controller: controller.emailController,
+                  textInputType: TextInputType.emailAddress,
+                  label: 'Email Address',
+                  hintText: 'your@email.com',
+                  validator: (p0) =>
+                      CustomValidation().validateRequiredField(p0) ??
+                      CustomValidation().validateEmail(p0),
+                ),
                 Row(
                   spacing: 10,
                   mainAxisAlignment: MainAxisAlignment.end,

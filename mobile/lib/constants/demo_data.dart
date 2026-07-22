@@ -63,6 +63,13 @@ abstract class DemoData {
     ),
   ];
 
+  /// Bridge the sparse Home [RoomItem] to the rich [RoomOption] the details
+  /// screen needs, matching on name (a real API would return one model).
+  static RoomOption roomDetailsFor(RoomItem item) => roomOptions.firstWhere(
+    (o) => o.name == item.name || o.name.startsWith(item.name),
+    orElse: () => roomOptions.first,
+  );
+
   static const restaurants = <RestaurantItem>[
     RestaurantItem(
       name: 'Al-Sham Restaurant',

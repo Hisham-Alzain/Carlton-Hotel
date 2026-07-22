@@ -53,13 +53,13 @@ class CustomActiveStayCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(18, 24, 18, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 11,
               children: [
                 _action(
                   'REQUEST SERVICE',
                   background: AppColors.surface,
                   onPressed: onRequestService,
                 ),
-                const SizedBox(height: 11),
                 _action(
                   'EXPRESS CHECKOUT',
                   background: AppColors.neutralButtonBg,
@@ -89,9 +89,9 @@ class CustomActiveStayCard extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
+            spacing: 6,
             children: [
               SvgPicture.asset('assets/icons/bed.svg', width: 16, height: 16),
-              const SizedBox(width: 6),
               Flexible(
                 child: Text(
                   '${stay.subtitle ?? stay.roomName}, Checked In',
@@ -157,9 +157,9 @@ class CustomActiveStayCard extends StatelessWidget {
         const Divider(height: 1, thickness: 1, color: AppColors.white10),
         const SizedBox(height: 8),
         Row(
+          spacing: 9,
           children: [
             Expanded(child: _dateBox('CHECK-IN', stay.checkInLabel ?? '')),
-            const SizedBox(width: 9),
             Expanded(child: _dateBox('CHECK-OUT', stay.checkOutLabel ?? '')),
           ],
         ),

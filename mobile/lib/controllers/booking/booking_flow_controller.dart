@@ -144,6 +144,23 @@ class BookingFlowController extends GetxController {
     CustomBottomSheet.show(content: RoomDetailsSheet(room: room));
   }
 
+  /// Entry from the Home room list: open the full-screen details page.
+  void openRoomDetailsScreen(RoomOption room) {
+    roomImageIndex = 0;
+    update();
+    Get.toNamed(Routes.roomDetails, arguments: room);
+  }
+
+  /// "Select This Room" from the details screen — start a fresh booking with
+  /// this room preselected. Resets first (like every other booking entry) so a
+  /// prior booking's guest/card/add-on data never carries over.
+  void beginBooking(RoomOption room) {
+    reset();
+    selectedRoom = room;
+    update();
+    Get.toNamed(Routes.planStay);
+  }
+
   void selectRoom(RoomOption room) {
     selectedRoom = room;
     update();

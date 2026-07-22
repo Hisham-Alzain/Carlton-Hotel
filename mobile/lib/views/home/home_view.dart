@@ -68,7 +68,7 @@ class HomeView extends GetView<HomeController> {
               ),
             ],
             priceAmount: controller.rooms[index].priceAmount,
-            onTap: controller.explore,
+            onTap: () => controller.openRoomDetails(controller.rooms[index]),
           ),
         ),
       ),

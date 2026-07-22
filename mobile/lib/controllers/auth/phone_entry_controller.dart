@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 /// Field validation is handled by [formKey] via the CustomTextField validator.
 class PhoneEntryController extends GetxController {
   final formKey = GlobalKey<FormState>();
+  final emailController = TextEditingController();
   final phoneController = TextEditingController();
 
   bool isSubmitting = false;
@@ -29,6 +30,7 @@ class PhoneEntryController extends GetxController {
 
   @override
   void onClose() {
+    emailController.dispose();
     phoneController.dispose();
     super.onClose();
   }

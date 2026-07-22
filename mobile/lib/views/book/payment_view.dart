@@ -141,6 +141,7 @@ Widget _cardForm(BookingFlowController c) => Container(
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 10,
               children: [
                 Expanded(
                   child: Column(
@@ -158,7 +159,6 @@ Widget _cardForm(BookingFlowController c) => Container(
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,6 +188,7 @@ Widget _cardForm(BookingFlowController c) => Container(
             ),
             const SizedBox(height: 10),
             Row(
+              spacing: 6,
               children: [
                 SvgPicture.asset(
                   'assets/icons/lock.svg',
@@ -198,7 +199,6 @@ Widget _cardForm(BookingFlowController c) => Container(
                     BlendMode.srcIn,
                   ),
                 ),
-                const SizedBox(width: 6),
                 const Text(
                   '256-bit SSL encrypted · PCI DSS compliant',
                   style: TextStyle(
@@ -225,6 +225,7 @@ Widget _promoBox(BookingFlowController c) => Container(
   ),
   child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
+    spacing: 10,
     children: [
       const Text(
         'Promo Code',
@@ -235,9 +236,9 @@ Widget _promoBox(BookingFlowController c) => Container(
           color: AppColors.navLabel,
         ),
       ),
-      const SizedBox(height: 10),
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 8,
         children: [
           Expanded(
             child: CustomTextField(
@@ -247,7 +248,6 @@ Widget _promoBox(BookingFlowController c) => Container(
               fillColor: AppColors.greyField,
             ),
           ),
-          const SizedBox(width: 8),
           CustomFilledButton(
             height: 44,
             onPressed: c.applyPromo,

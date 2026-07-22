@@ -37,6 +37,7 @@ class GuestDetailsView extends StatelessWidget {
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 12,
                   children: [
                     Expanded(
                       child: Column(
@@ -52,7 +53,6 @@ class GuestDetailsView extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,13 +81,13 @@ class GuestDetailsView extends StatelessWidget {
                 _label('Phone Number*'),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
+                  spacing: 8,
                   children: [
                     CustomCountryCodePicker(
                       onCodeChanged: (code) =>
                           c.dialCode = code.dialCode ?? '+963',
                       fillColor: AppColors.greyField,
                     ),
-                    const SizedBox(width: 8),
                     Expanded(
                       child: CustomTextField(
                         controller: c.phoneCtrl,

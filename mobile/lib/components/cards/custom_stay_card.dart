@@ -1,3 +1,4 @@
+import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -7,11 +8,13 @@ class CustomStayCard extends StatelessWidget {
   final String room;
   final String checkedInTime;
   final int nightsRemaining;
+  final String imagePath;
 
   const CustomStayCard({
     required this.room,
     required this.checkedInTime,
     required this.nightsRemaining,
+    required this.imagePath,
     super.key,
   });
 
@@ -75,8 +78,8 @@ class CustomStayCard extends StatelessWidget {
                 colors: [Color(0x80EDF1F2), Color(0x80347F87)],
               ),
             ),
-            child: Image.asset(
-              'assets/images/stay_room.png',
+            child: CustomImage(
+              path: imagePath,
               fit: BoxFit.cover,
               height: double.infinity,
             ),

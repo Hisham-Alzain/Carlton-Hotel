@@ -1,3 +1,4 @@
+import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/l10n/local.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/api/api_service.dart';
@@ -24,6 +25,7 @@ Future<void> main() async {
   // await Get.put(NotificationService(), permanent: true).setup();
   Get.put(MiddlewareService(), permanent: true);
   Get.put(PermissionService(), permanent: true);
+  Get.put(BookingFlowController(), permanent: true);
 
   runApp(const MainApp());
 }

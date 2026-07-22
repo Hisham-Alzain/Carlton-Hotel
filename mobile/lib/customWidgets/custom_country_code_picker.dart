@@ -6,8 +6,13 @@ import 'package:get/get.dart';
 
 class CustomCountryCodePicker extends StatelessWidget {
   final void Function(CountryCode) onCodeChanged;
+  final Color? fillColor;
 
-  const CustomCountryCodePicker({required this.onCodeChanged, super.key});
+  const CustomCountryCodePicker({
+    required this.onCodeChanged,
+    this.fillColor,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +53,7 @@ class CustomCountryCodePicker extends StatelessWidget {
         // width: 90,
         height: 60,
         decoration: BoxDecoration(
-          color: AppColors.cream,
+          color: fillColor ?? AppColors.cream,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(

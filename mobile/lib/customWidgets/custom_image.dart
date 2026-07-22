@@ -28,9 +28,15 @@ class CustomImage extends StatelessWidget {
   String get url =>
       path.startsWith('http') ? path : '${ApiService.storageBaseUrl}$path';
 
-  /// Bundled asset paths render locally; anything else is fetched over the
-  /// network (absolute http URLs or storage-relative API paths).
   bool get _isAsset => path.startsWith('assets/');
+
+  // A cache dimension is only meaningful for a finite, positive size. Callers may
+  // pass width/height as double.infinity ("fill available"), which must not reach
+  // .round() — Infinity.toInt() throws UnsupportedError.
+  static int? _cacheDim(double? logical, double dpr) {
+    if (logical == null || !logical.isFinite || logical <= 0) return null;
+    return (logical * dpr).round();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +68,7 @@ class CustomImage extends StatelessWidget {
       height: height,
       width: width,
       fit: fit,
-      cacheWidth: targetWidth != null ? (targetWidth * dpr).round() : null,
+      cacheWidth: _cacheDim(targetWidth, dpr),
     );
   }
 
@@ -87,8 +93,8 @@ class CustomImage extends StatelessWidget {
       height: height,
       width: width,
       fit: fit ?? BoxFit.cover,
-      memCacheWidth: width != null ? (width! * dpr).round() : null,
-      memCacheHeight: height != null ? (height! * dpr).round() : null,
+      memCacheWidth: _cacheDim(width, dpr),
+      memCacheHeight: _cacheDim(height, dpr),
       placeholder: (_, _) => _shimmer(),
       errorWidget: (_, url, error) {
         if (!kReleaseMode) log('Image Error [$url]: $error');

@@ -71,6 +71,9 @@ class ServicesController extends GetxController
 
   void switchTab(int index) => tabController.animateTo(index);
 
+  void quickRequest(String label) =>
+      CustomSnackbars.showSuccess(message: '$label requested');
+
   void toggleLogin() {
     isLoggedIn = !isLoggedIn;
     update();

@@ -1,4 +1,5 @@
 import 'package:carlton/controllers/auth/create_profile_controller.dart';
+import 'package:carlton/controllers/stays/stays_controller.dart';
 import 'package:carlton/controllers/booking/find_booking_controller.dart';
 import 'package:carlton/controllers/booking/reservation_choice_controller.dart';
 import 'package:carlton/controllers/auth/otp_verify_controller.dart';
@@ -27,6 +28,7 @@ class MainBinding implements Bindings {
     // owned here.
     Get.lazyPut(() => HomeController(), fenix: true);
     Get.lazyPut(() => ServicesController(), fenix: true);
+    Get.lazyPut(() => StaysController(), fenix: true);
   }
 }
 
@@ -85,3 +87,7 @@ class AiConciergeBinding implements Bindings {
     Get.lazyPut(() => AiConciergeController());
   }
 }
+
+// Booking flow — all 5 steps share one BookingFlowController, registered
+// once, permanently, at app boot (see main.dart) as a GetxService. No
+// per-route binding needed.

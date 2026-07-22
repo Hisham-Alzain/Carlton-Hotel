@@ -24,6 +24,7 @@ class CustomTextField extends StatelessWidget {
   final TextDirection? textDirection;
   final int? maxLength;
   final int? maxLines;
+  final Color? fillColor;
 
   const CustomTextField({
     required this.controller,
@@ -31,6 +32,7 @@ class CustomTextField extends StatelessWidget {
     this.obsecureText = false,
     this.height,
     this.width,
+    this.fillColor,
     this.labelText,
     this.label,
     this.prefixIconColor,
@@ -67,6 +69,8 @@ class CustomTextField extends StatelessWidget {
       color: AppColors.error,
     );
 
+    final fill = fillColor ?? AppColors.cream;
+
     OutlineInputBorder border(Color color) => OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(width: 2, color: color),
@@ -99,17 +103,18 @@ class CustomTextField extends StatelessWidget {
             maxLength: maxLength,
             decoration: InputDecoration(
               filled: true,
+              counterText: '',
               alignLabelWithHint: true,
               //labelText: ,
               labelStyle: labelStyle,
-              fillColor: AppColors.cream,
+              fillColor: fill,
               hintText: hintText,
               hintStyle: hintStyle,
               errorStyle: errorStyle,
               prefixIcon: _buildPrefixIcon(),
               suffixIcon: suffixIcon,
-              border: border(AppColors.cream),
-              enabledBorder: border(AppColors.cream),
+              border: border(fill),
+              enabledBorder: border(fill),
               focusedBorder: border(AppColors.gold),
               errorBorder: border(AppColors.error),
               focusedErrorBorder: border(AppColors.error),
@@ -121,7 +126,7 @@ class CustomTextField extends StatelessWidget {
               iconColor: AppColors.error,
             ),
             cursorErrorColor: AppColors.error,
-            maxLines: obsecureText == true ? 1 : maxLines,
+            maxLines: obsecureText == true ? 1 : (maxLines ?? 1),
           ),
         ),
       ],

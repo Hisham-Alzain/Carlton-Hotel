@@ -15,6 +15,13 @@ class CustomServiceCard extends StatelessWidget {
 
     return Card(
       color: AppColors.primaryTileBg,
+      elevation: 1,
+      shadowColor: const Color(0x40FFFFFF),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white, width: 1.5),
+      ),
       child: Stack(
         children: [
           PositionedDirectional(

@@ -9,6 +9,20 @@ class CustomCircleIconButton extends StatelessWidget {
   final Color? color;
   final Gradient? gradient;
 
+  /// White ring around the circle. Default `true` for the elevated white
+  /// button; pass `false` for a flat variant (e.g. the Figma sheet close).
+  final bool bordered;
+
+  /// Soft drop shadow under the circle. Default `true`; pass `false` for flat.
+  final bool shadow;
+
+  /// SVG glyph height. Defaults to 25 (the original elevated button); set it
+  /// smaller for a compact button.
+  final double iconSize;
+
+  /// Padding around the glyph inside the circle. Defaults to 10.
+  final double iconPadding;
+
   const CustomCircleIconButton({
     this.icon,
     this.iconPath,
@@ -16,6 +30,10 @@ class CustomCircleIconButton extends StatelessWidget {
     this.size = 40,
     this.color = Colors.white,
     this.gradient,
+    this.bordered = true,
+    this.shadow = true,
+    this.iconSize = 25,
+    this.iconPadding = 10,
     super.key,
   });
 
@@ -31,14 +49,16 @@ class CustomCircleIconButton extends StatelessWidget {
           shape: BoxShape.circle,
           color: gradient == null ? color : null,
           gradient: gradient,
-          border: Border.all(color: Colors.white),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x40888888),
-              blurRadius: 2,
-              offset: Offset(0, 1),
-            ),
-          ],
+          border: bordered ? Border.all(color: Colors.white) : null,
+          boxShadow: shadow
+              ? const [
+                  BoxShadow(
+                    color: Color(0x40888888),
+                    blurRadius: 2,
+                    offset: Offset(0, 1),
+                  ),
+                ]
+              : null,
         ),
         child: _buildPrefixIcon(),
       ),
@@ -47,23 +67,11 @@ class CustomCircleIconButton extends StatelessWidget {
 
   Widget? _buildPrefixIcon() {
     if (icon != null) {
-      return Icon(
-        icon,
-        //  color: prefixIconColor ?? AppColors.primaryColor
-      );
+      return Icon(icon);
     } else if (iconPath != null) {
       return Padding(
-        padding: const EdgeInsets.all(10),
-        child: iconPath != null
-            ? SvgPicture.asset(
-                iconPath.toString(),
-                // colorFilter: ColorFilter.mode(
-                //   prefixIconColor ?? AppColors.primaryColor,
-                //   BlendMode.srcIn,
-                // ),
-                height: 25,
-              )
-            : null,
+        padding: EdgeInsets.all(iconPadding),
+        child: SvgPicture.asset(iconPath!, height: iconSize),
       );
     }
     return null;

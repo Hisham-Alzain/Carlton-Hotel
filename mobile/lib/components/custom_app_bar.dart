@@ -1,18 +1,10 @@
-// components/custom_app_bar.dart
 import 'package:carlton/components/custom_logo_avatar.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Titles for indices 1-4. Index 0 (Home) uses [_LogoTitle] instead.
-const _tabTitles = [
-  '', // unused — Home renders _LogoTitle
-  'STAYS',
-  'BOOK',
-  'SERVICES',
-  'ACCOUNT',
-];
+const _tabTitles = ['', 'My Stays', 'BOOK', 'SERVICES', 'ACCOUNT'];
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int currentIndex;
@@ -36,7 +28,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
-/// The two-line "CARLTON / HOTEL" wordmark shown only on the Home tab.
 class _LogoTitle extends StatelessWidget {
   final TextTheme textTheme;
 

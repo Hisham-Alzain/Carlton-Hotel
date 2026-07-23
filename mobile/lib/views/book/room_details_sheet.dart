@@ -8,8 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// Room detail bottom sheet (Figma "One Room Page") shown from the Choose Room
-/// step. Wraps the shared [RoomDetailsContent] in sheet chrome; "Select This
-/// Room" continues the in-progress booking.
+/// step. Sheet chrome — background, top radius, height cap, bottom safe-area
+/// inset — comes from `CustomBottomSheet`; see
+/// `BookingFlowController.openRoomDetails`. "Select This Room" continues the
+/// in-progress booking.
 class RoomDetailsSheet extends StatelessWidget {
   final RoomOption room;
 
@@ -18,42 +20,33 @@ class RoomDetailsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<BookingFlowController>();
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.92;
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: RoomDetailsContent(
-        room: room,
-        actions: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 10,
-          children: [
-            CustomFilledButton(
-              width: double.infinity,
-              height: 52,
-              backgroundColor: AppColors.teal,
-              onPressed: () {
-                Get.back<void>();
-                controller.selectRoom(room);
-              },
-              child: const Text('Select This Room'),
-            ),
-            CustomElevatedButton(
-              width: double.infinity,
-              height: 48,
-              elevation: 0,
-              backgroundColor: AppColors.neutralIconBg,
-              foregroundColor: AppColors.navLabel,
-              onPressed: () => Get.back<void>(),
-              child: const Text('Back to Rooms'),
-            ),
-          ],
-        ),
+    return RoomDetailsContent(
+      room: room,
+      actions: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 10,
+        children: [
+          CustomFilledButton(
+            width: double.infinity,
+            height: 52,
+            backgroundColor: AppColors.lagoonTeal,
+            onPressed: () {
+              Get.back();
+              controller.selectRoom(room);
+            },
+            child: const Text('Select This Room'),
+          ),
+          CustomElevatedButton(
+            width: double.infinity,
+            height: 48,
+            elevation: 0,
+            backgroundColor: AppColors.whisperGrey,
+            foregroundColor: AppColors.inkBlack,
+            onPressed: () => Get.back(),
+            child: const Text('Back to Rooms'),
+          ),
+        ],
       ),
     );
   }

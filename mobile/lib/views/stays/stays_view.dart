@@ -20,8 +20,13 @@ class StaysView extends StatelessWidget {
         children: [
           TabBar(
             controller: c.tabController,
-            tabs: [for (final t in StaysController.tabs) Tab(text: t)],
+            tabs: const [
+              Tab(text: 'Active'),
+              Tab(text: 'Upcoming'),
+              Tab(text: 'Past'),
+            ],
           ),
+          //TODO: do not pass controller excplictely when wireing up apis
           Expanded(
             child: TabBarView(
               controller: c.tabController,
@@ -78,26 +83,28 @@ class _UpcomingTab extends StatelessWidget {
         onAction: controller.startBooking,
       );
     }
-    return ListView(
+    return ListView.builder(
       padding: const EdgeInsets.all(20),
-      children: [
-        for (final stay in controller.upcoming) ...[
-          CustomUpcomingStayCard(
-            stay: stay,
-            onCancel: () => controller.requestCancel(stay),
-          ),
-          if (stay.nextCheckInDays != null) ...[
-            const SizedBox(height: 12),
-            CustomInfoBanner(
-              iconPath: 'assets/icons/calendar.svg',
-              message:
-                  'Your next check-in is in ${stay.nextCheckInDays} days. '
-                  'Pre-order amenities and services before arrival.',
+      itemCount: controller.upcoming.length,
+      itemBuilder: (_, i) {
+        final stay = controller.upcoming[i];
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CustomUpcomingStayCard(
+              stay: stay,
+              onCancel: () => controller.requestCancel(stay),
             ),
+            if (stay.nextCheckInDays != null)
+              CustomInfoBanner(
+                iconPath: 'assets/icons/calendar.svg',
+                message:
+                    'Your next check-in is in ${stay.nextCheckInDays} days. '
+                    'Pre-order amenities and services before arrival.',
+              ),
           ],
-          const SizedBox(height: 16),
-        ],
-      ],
+        );
+      },
     );
   }
 }
@@ -114,17 +121,14 @@ class _PastTab extends StatelessWidget {
         subtitle: 'Completed stays and receipts will appear here.',
       );
     }
-    return ListView.separated(
+    return ListView.builder(
       padding: const EdgeInsets.all(20),
       itemCount: controller.past.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (_, i) {
         final stay = controller.past[i];
         return CustomPastStayCard(
           stay: stay,
-          onViewReceipt: () {
-            if (stay.receipt != null) controller.showReceipt(stay.receipt!);
-          },
+          onViewReceipt: () => controller.showReceipt(stay),
           onBookAgain: controller.startBooking,
         );
       },
@@ -150,7 +154,7 @@ class _Empty extends StatelessWidget {
     return CustomEmptyPlaceholder(
       iconWidget: const Icon(
         Icons.bed_outlined,
-        size: 56,
+        size: 50,
         color: AppColors.primary,
       ),
       title: title,

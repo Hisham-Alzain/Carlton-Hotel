@@ -46,7 +46,7 @@ class CreateProfileView extends GetView<CreateProfileController> {
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: CustomFilledButton(
                     width: 350,
-                    backgroundColor: AppColors.teal,
+                    backgroundColor: AppColors.lagoonTeal,
                     isLoading: controller.isSubmitting,
                     onPressed: controller.submit,
                     child: Text(AppTranslations.continueButtonLabel),

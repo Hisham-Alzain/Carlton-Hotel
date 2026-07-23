@@ -2,6 +2,8 @@
 // pre-formatted to match Figma copy); a real API layer would swap these for
 // typed dates/amounts. Nothing here talks to a backend yet.
 
+import 'package:carlton/customWidgets/custom_country_code_picker.dart';
+
 enum StayStatus { active, upcoming, past }
 
 /// One line in a receipt breakdown.
@@ -151,7 +153,7 @@ class GuestDetails {
     this.firstName = '',
     this.lastName = '',
     this.email = '',
-    this.dialCode = '+963',
+    this.dialCode = kDefaultDialCode,
     this.phone = '',
     this.specialRequests = '',
   });

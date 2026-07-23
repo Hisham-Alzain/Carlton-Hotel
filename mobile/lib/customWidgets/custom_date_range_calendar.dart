@@ -65,12 +65,12 @@ class CustomDateRangeCalendar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(15.18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.hairline, width: 1.18),
+        border: Border.all(color: AppColors.black06, width: 1.18),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A6B6B6B),
+            color: AppColors.slateShadow04,
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
@@ -99,19 +99,19 @@ class CustomDateRangeCalendar extends StatelessWidget {
             fontFamily: 'Plus Jakarta Sans',
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppColors.navLabel,
+            color: AppColors.inkBlack,
           ),
         ),
         daysOfWeekStyle: const DaysOfWeekStyle(
           weekdayStyle: TextStyle(
             fontFamily: 'DM Sans',
             fontSize: 11,
-            color: AppColors.textMuted,
+            color: AppColors.taupeBrown,
           ),
           weekendStyle: TextStyle(
             fontFamily: 'DM Sans',
             fontSize: 11,
-            color: AppColors.textMuted,
+            color: AppColors.taupeBrown,
           ),
         ),
         calendarBuilders: CalendarBuilders<void>(
@@ -123,36 +123,36 @@ class CustomDateRangeCalendar extends StatelessWidget {
                 style: const TextStyle(
                   fontFamily: 'DM Sans',
                   fontSize: 11,
-                  color: AppColors.textMuted,
+                  color: AppColors.taupeBrown,
                 ),
               ),
             );
           },
           defaultBuilder: (context, day, focused) =>
-              _cell('${day.day}', text: AppColors.navLabel),
+              _cell('${day.day}', text: AppColors.inkBlack),
           todayBuilder: (context, day, focused) =>
-              _cell('${day.day}', text: AppColors.navLabel),
+              _cell('${day.day}', text: AppColors.inkBlack),
           outsideBuilder: (context, day, focused) => const SizedBox.shrink(),
           disabledBuilder: (context, day, focused) =>
-              _cell('${day.day}', text: AppColors.calendarDisabledText),
+              _cell('${day.day}', text: AppColors.pearlGrey),
           rangeStartBuilder: (context, day, focused) => _cell(
             '${day.day}',
             bg: AppColors.primary,
-            text: AppColors.surface,
+            text: AppColors.white,
             radius: 8,
             weight: FontWeight.w600,
           ),
           rangeEndBuilder: (context, day, focused) => _cell(
             '${day.day}',
             bg: AppColors.primary,
-            text: AppColors.surface,
+            text: AppColors.white,
             radius: 8,
             weight: FontWeight.w600,
           ),
           withinRangeBuilder: (context, day, focused) => _cell(
             '${day.day}',
-            bg: AppColors.calendarRangeBg,
-            text: AppColors.navLabel,
+            bg: AppColors.primary08,
+            text: AppColors.inkBlack,
           ),
         ),
       ),

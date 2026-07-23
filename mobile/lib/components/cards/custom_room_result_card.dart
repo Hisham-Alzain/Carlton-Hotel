@@ -1,3 +1,4 @@
+import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/models/booking_models.dart';
@@ -27,7 +28,7 @@ class CustomRoomResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = room.pricePerNight * (nights == 0 ? 1 : nights);
     return Material(
-      color: AppColors.surface,
+      color: AppColors.white,
       borderRadius: BorderRadius.circular(14),
       clipBehavior: Clip.antiAlias,
       elevation: 0,
@@ -36,7 +37,7 @@ class CustomRoomResultCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x14000000),
+              color: AppColors.black08,
               blurRadius: 12,
               offset: Offset(0, 2),
             ),
@@ -73,7 +74,7 @@ class CustomRoomResultCard extends StatelessWidget {
                               fontFamily: 'Plus Jakarta Sans',
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.navLabel,
+                              color: AppColors.inkBlack,
                             ),
                           ),
                         ),
@@ -103,7 +104,7 @@ class CustomRoomResultCard extends StatelessWidget {
                       decoration: const BoxDecoration(
                         border: Border(
                           top: BorderSide(
-                            color: AppColors.hairlineFaint,
+                            color: AppColors.black05,
                             width: 1.18,
                           ),
                         ),
@@ -121,7 +122,7 @@ class CustomRoomResultCard extends StatelessWidget {
                                 style: const TextStyle(
                                   fontFamily: 'DM Sans',
                                   fontSize: 12,
-                                  color: AppColors.textMuted,
+                                  color: AppColors.taupeBrown,
                                 ),
                               ),
                               Text(
@@ -149,12 +150,10 @@ class CustomRoomResultCard extends StatelessWidget {
     );
   }
 
-  Widget _priceBadge() => Container(
+  Widget _priceBadge() => PillContainer(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-    decoration: BoxDecoration(
-      color: const Color(0xE0FFFFFF),
-      borderRadius: BorderRadius.circular(6),
-    ),
+    backgroundColor: AppColors.white88,
+    radius: 6,
     child: Text.rich(
       TextSpan(
         children: [
@@ -172,7 +171,7 @@ class CustomRoomResultCard extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'DM Sans',
               fontSize: 11,
-              color: AppColors.textMuted,
+              color: AppColors.taupeBrown,
             ),
           ),
         ],
@@ -191,7 +190,7 @@ class CustomRoomResultCard extends StatelessWidget {
           fontFamily: 'DM Sans',
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: AppColors.navLabel,
+          color: AppColors.inkBlack,
         ),
       ),
       const SizedBox(width: 3),
@@ -200,7 +199,7 @@ class CustomRoomResultCard extends StatelessWidget {
         style: const TextStyle(
           fontFamily: 'DM Sans',
           fontSize: 11,
-          color: AppColors.textMuted,
+          color: AppColors.taupeBrown,
         ),
       ),
     ],
@@ -209,35 +208,33 @@ class CustomRoomResultCard extends StatelessWidget {
   Widget _meta(String iconPath, String text) => RowTextComponent(
     path: iconPath,
     iconSize: 10,
-    iconColor: AppColors.metaText,
+    iconColor: AppColors.graphite,
     text: text,
     textStyle: const TextStyle(
       fontFamily: 'Plus Jakarta Sans',
       fontSize: 11,
       fontWeight: FontWeight.w300,
-      color: AppColors.metaText,
+      color: AppColors.graphite,
     ),
     spacing: 4,
   );
 
-  Widget _chip(String label) => Container(
+  Widget _chip(String label) => PillContainer(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-    decoration: BoxDecoration(
-      color: AppColors.cream,
-      borderRadius: BorderRadius.circular(4),
-    ),
+    backgroundColor: AppColors.cream,
+    radius: 4,
     child: Text(
       label,
       style: const TextStyle(
         fontFamily: 'DM Sans',
         fontSize: 10,
-        color: AppColors.chipTextGold,
+        color: AppColors.cocoaGold,
       ),
     ),
   );
 
   Widget _selectButton() => Material(
-    color: AppColors.teal,
+    color: AppColors.lagoonTeal,
     borderRadius: BorderRadius.circular(8),
     child: InkWell(
       onTap: onSelect,

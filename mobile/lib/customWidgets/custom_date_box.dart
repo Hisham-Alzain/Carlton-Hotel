@@ -22,7 +22,7 @@ class CustomDateBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AppColors.dateBoxSelectedBg : AppColors.background,
+      color: selected ? AppColors.ivoryCream : AppColors.ghostWhite,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,
@@ -36,8 +36,8 @@ class CustomDateBox extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: selected
-                  ? AppColors.dateBoxSelectedBorder
-                  : AppColors.dateBoxBorder,
+                  ? AppColors.harvestGold46
+                  : AppColors.fogGrey35,
               width: 1.18,
             ),
           ),
@@ -51,7 +51,7 @@ class CustomDateBox extends StatelessWidget {
                   fontFamily: 'DM Sans',
                   fontSize: 10,
                   letterSpacing: 0.5,
-                  color: AppColors.gold,
+                  color: AppColors.antiqueGold,
                 ),
               ),
               const SizedBox(height: 4),

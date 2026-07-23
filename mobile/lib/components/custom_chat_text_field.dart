@@ -29,11 +29,11 @@ class CustomChatTextField extends StatelessWidget {
     final theme = Get.theme;
 
     final inputStyle = theme.textTheme.bodyLarge?.copyWith(
-      color: AppColors.ink,
+      color: AppColors.espressoInk,
       fontWeight: FontWeight.w400,
     );
     final hintStyle = theme.textTheme.bodyLarge?.copyWith(
-      color: AppColors.inkHint,
+      color: AppColors.espressoInk50,
       fontWeight: FontWeight.w400,
     );
 
@@ -55,7 +55,7 @@ class CustomChatTextField extends StatelessWidget {
             : TextDirection.ltr,
         decoration: InputDecoration(
           filled: true,
-          fillColor: AppColors.greyField,
+          fillColor: AppColors.whisperGrey,
           hintText: hintText ?? 'Ask me anything...',
           hintStyle: hintStyle,
           border: pillBorder(Colors.white),
@@ -66,7 +66,7 @@ class CustomChatTextField extends StatelessWidget {
             children: [
               // IconButton(
               //   icon: const Icon(Icons.mic_none),
-              //   color: AppColors.inkHint,
+              //   color: AppColors.espressoInk50,
               //   onPressed: onMicTap,
               // ),
               GestureDetector(
@@ -77,7 +77,7 @@ class CustomChatTextField extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: canSend ? AppColors.primary : AppColors.disabled,
+                    color: canSend ? AppColors.primary : AppColors.silverGrey,
                   ),
                   child: const Icon(
                     Icons.arrow_upward,

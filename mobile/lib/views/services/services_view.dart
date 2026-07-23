@@ -128,7 +128,7 @@ class _QuickRequests extends StatelessWidget {
             fontFamily: 'Plus Jakarta Sans',
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.navLabel,
+            color: AppColors.inkBlack,
           ),
         ),
         const SizedBox(height: 12),
@@ -156,7 +156,7 @@ class _QuickChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.cardBg,
+      color: AppColors.featherGrey,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,
@@ -168,7 +168,7 @@ class _QuickChip extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'DM Sans',
               fontSize: 13,
-              color: AppColors.navLabel,
+              color: AppColors.inkBlack,
             ),
           ),
         ),

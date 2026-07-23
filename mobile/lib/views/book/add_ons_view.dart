@@ -1,9 +1,10 @@
+import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/components/cards/custom_add_on_summary_tile.dart';
 import 'package:carlton/components/custom_booking_app_bar.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
-import 'package:carlton/customWidgets/custom_price_summary.dart';
+import 'package:carlton/components/custom_price_summary.dart';
 import 'package:carlton/customWidgets/custom_selectable_card.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +42,7 @@ class AddOnsView extends StatelessWidget {
                         fontFamily: 'Plus Jakarta Sans',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.navLabel,
+                        color: AppColors.inkBlack,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -72,7 +73,7 @@ class AddOnsView extends StatelessWidget {
     height: 36,
     alignment: Alignment.center,
     decoration: BoxDecoration(
-      color: AppColors.softButtonBg,
+      color: AppColors.pearlCream,
       borderRadius: BorderRadius.circular(10),
     ),
     child: SvgPicture.asset(
@@ -99,25 +100,27 @@ class _Footer extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (hasExtras) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: AppColors.cream,
-                  borderRadius: BorderRadius.circular(10),
+              PillContainer(
+                // The row no longer pads itself — fold what it used to add
+                // into the pill.
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 10,
                 ),
+                backgroundColor: AppColors.cream,
                 child: CustomPriceSummaryRow(
-                  label: 'Extras total',
+                  title: 'Extras total',
                   value: '+\$${controller.extrasTotal}',
-                  labelStyle: const TextStyle(
+                  titleStyle: const TextStyle(
                     fontFamily: 'DM Sans',
                     fontSize: 13,
-                    color: AppColors.navLabel,
+                    color: AppColors.inkBlack,
                   ),
                   valueStyle: const TextStyle(
                     fontFamily: 'Plus Jakarta Sans',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.creamTextDeep,
+                    color: AppColors.walnutGold,
                   ),
                 ),
               ),
@@ -125,7 +128,7 @@ class _Footer extends StatelessWidget {
             ],
             CustomFilledButton(
               width: double.infinity,
-              backgroundColor: AppColors.teal,
+              backgroundColor: AppColors.lagoonTeal,
               onPressed: controller.continueFromAddOns,
               child: Text(controller.addOnsCtaLabel),
             ),

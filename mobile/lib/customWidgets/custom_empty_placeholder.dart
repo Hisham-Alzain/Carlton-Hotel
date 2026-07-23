@@ -7,9 +7,10 @@ import 'package:get/get.dart';
 
 class CustomEmptyPlaceholder extends StatelessWidget {
   final String? iconPath;
-  final double iconWidth;
-  final double iconHeight;
+  final double? iconWidth;
+  final double? iconHeight;
   final Widget? iconWidget;
+  final Color? iconContainerColor;
   final String title;
   final String? subtitle;
   final Color titleColor;
@@ -25,13 +26,14 @@ class CustomEmptyPlaceholder extends StatelessWidget {
     this.iconWidget,
     this.primaryLabel,
     this.onPrimary,
-    this.iconWidth = 70,
-    this.iconHeight = 70,
+    this.iconWidth,
+    this.iconHeight,
     this.subtitle,
-    this.titleColor = AppColors.textPrimary,
-    this.subtitleColor = AppColors.textPrimary,
+    this.titleColor = AppColors.slateGrey,
+    this.subtitleColor = AppColors.slateGrey,
     this.secondaryLabel,
     this.onSecondary,
+    this.iconContainerColor,
     super.key,
   });
 
@@ -46,7 +48,14 @@ class CustomEmptyPlaceholder extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           spacing: 20,
           children: [
-            _icon(),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: iconContainerColor,
+              ),
+              child: _icon(),
+            ),
             Text(
               title,
               textAlign: TextAlign.center,
@@ -73,7 +82,7 @@ class CustomEmptyPlaceholder extends StatelessWidget {
               ),
             if (secondaryLabel != null && onSecondary != null)
               CustomOutlinedButton(
-                backgroundColor: Color(0x8FECECEC),
+                backgroundColor: AppColors.platinumGrey56,
                 width: 300,
                 onPressed: onSecondary,
                 child: Text(secondaryLabel!),

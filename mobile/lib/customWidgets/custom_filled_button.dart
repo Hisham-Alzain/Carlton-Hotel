@@ -12,6 +12,7 @@ class CustomFilledButton extends StatelessWidget {
   final double? elevation;
   final bool isLoading;
 
+  //TODO: check if able to send custom text style
   const CustomFilledButton({
     this.height,
     this.width,

@@ -52,7 +52,7 @@ class SplashScreenView extends GetView<SplashScreenController> {
                       fontWeight: FontWeight.w700,
                       foreground: Paint()
                         ..shader = const LinearGradient(
-                          colors: [Colors.white, AppColors.logoGradient],
+                          colors: [Colors.white, AppColors.mistTeal],
                         ).createShader(const Rect.fromLTWH(0, 0, 200, 70)),
                     ),
                   ),
@@ -63,7 +63,7 @@ class SplashScreenView extends GetView<SplashScreenController> {
                       fontWeight: FontWeight.w500,
                       foreground: Paint()
                         ..shader = const LinearGradient(
-                          colors: [Colors.white, AppColors.logoGradient],
+                          colors: [Colors.white, AppColors.mistTeal],
                         ).createShader(const Rect.fromLTWH(0, 0, 200, 70)),
                     ),
                   ),

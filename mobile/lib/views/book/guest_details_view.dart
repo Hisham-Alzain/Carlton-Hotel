@@ -4,6 +4,7 @@ import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
+import 'package:carlton/customWidgets/custom_validation.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -16,7 +17,7 @@ class GuestDetailsView extends StatelessWidget {
     fontFamily: 'Plus Jakarta Sans',
     fontSize: 12,
     fontWeight: FontWeight.w600,
-    color: AppColors.navLabel,
+    color: AppColors.inkBlack,
   );
 
   Widget _label(String text) => Padding(
@@ -48,7 +49,7 @@ class GuestDetailsView extends StatelessWidget {
                             controller: c.firstNameCtrl,
                             textInputType: TextInputType.name,
                             hintText: 'Ahmed',
-                            fillColor: AppColors.greyField,
+                            fillColor: AppColors.whisperGrey,
                           ),
                         ],
                       ),
@@ -62,7 +63,7 @@ class GuestDetailsView extends StatelessWidget {
                             controller: c.lastNameCtrl,
                             textInputType: TextInputType.name,
                             hintText: 'Al-Rashid',
-                            fillColor: AppColors.greyField,
+                            fillColor: AppColors.whisperGrey,
                           ),
                         ],
                       ),
@@ -75,7 +76,7 @@ class GuestDetailsView extends StatelessWidget {
                   controller: c.emailCtrl,
                   textInputType: TextInputType.emailAddress,
                   hintText: 'your@email.com',
-                  fillColor: AppColors.greyField,
+                  fillColor: AppColors.whisperGrey,
                 ),
                 const SizedBox(height: 16),
                 _label('Phone Number*'),
@@ -83,18 +84,21 @@ class GuestDetailsView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   spacing: 8,
                   children: [
-                    CustomCountryCodePicker(
-                      onCodeChanged: (code) =>
-                          c.dialCode = code.dialCode ?? '+963',
-                      fillColor: AppColors.greyField,
-                    ),
+                    CustomCountryCodePicker(phone: c.phone),
                     Expanded(
                       child: CustomTextField(
-                        controller: c.phoneCtrl,
+                        controller: c.phone.controller,
+                        inputFormatters: [c.phone.formatter],
                         textInputType: TextInputType.phone,
+                        textDirection: TextDirection.ltr,
                         label: '',
                         hintText: 'Phone number',
-                        fillColor: AppColors.greyField,
+                        fillColor: AppColors.whisperGrey,
+                        validator: (p0) =>
+                            CustomValidation().validatePhoneNumber(
+                              p0,
+                              dialCode: c.phone.dialCode,
+                            ),
                       ),
                     ),
                   ],
@@ -107,7 +111,7 @@ class GuestDetailsView extends StatelessWidget {
                   hintText:
                       'Any dietary needs, room preferences, or special occasions…',
                   maxLines: 3,
-                  fillColor: AppColors.greyField,
+                  fillColor: AppColors.whisperGrey,
                 ),
               ],
             ),
@@ -118,7 +122,7 @@ class GuestDetailsView extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
               child: CustomFilledButton(
                 width: double.infinity,
-                backgroundColor: AppColors.teal,
+                backgroundColor: AppColors.lagoonTeal,
                 onPressed: c.continueFromGuest,
                 child: const Text('Continue'),
               ),

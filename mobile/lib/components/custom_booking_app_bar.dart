@@ -31,8 +31,8 @@ class CustomBookingAppBar extends StatelessWidget
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(bottom: BorderSide(color: AppColors.hairlineFaint)),
+        color: AppColors.white,
+        border: Border(bottom: BorderSide(color: AppColors.black05)),
       ),
       child: SafeArea(
         bottom: false,
@@ -44,14 +44,14 @@ class CustomBookingAppBar extends StatelessWidget
               child: Row(
                 children: [
                   InkWell(
-                    onTap: onBack ?? () => Get.back<void>(),
+                    onTap: onBack ?? () => Get.back(),
                     borderRadius: BorderRadius.circular(20),
                     child: SvgPicture.asset(
                       'assets/icons/arrow_left.svg',
                       width: 24,
                       height: 24,
                       colorFilter: const ColorFilter.mode(
-                        AppColors.navLabel,
+                        AppColors.inkBlack,
                         BlendMode.srcIn,
                       ),
                     ),
@@ -64,7 +64,7 @@ class CustomBookingAppBar extends StatelessWidget
                         fontFamily: 'Plus Jakarta Sans',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.navLabel,
+                        color: AppColors.inkBlack,
                       ),
                     ),
                   ),
@@ -76,7 +76,7 @@ class CustomBookingAppBar extends StatelessWidget
                       height: 32,
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
-                        color: Color(0xBADDDDDD),
+                        color: AppColors.pebbleGrey73,
                         shape: BoxShape.circle,
                       ),
                       child: SvgPicture.asset(
@@ -84,7 +84,7 @@ class CustomBookingAppBar extends StatelessWidget
                         width: 16,
                         height: 16,
                         colorFilter: const ColorFilter.mode(
-                          AppColors.navLabel,
+                          AppColors.inkBlack,
                           BlendMode.srcIn,
                         ),
                       ),

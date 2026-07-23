@@ -23,7 +23,7 @@ class BookView extends StatelessWidget {
               height: 84,
               alignment: Alignment.center,
               decoration: const BoxDecoration(
-                color: AppColors.statusProgressIconBg,
+                color: AppColors.antiqueGold08,
                 shape: BoxShape.circle,
               ),
               child: SvgPicture.asset(
@@ -43,7 +43,7 @@ class BookView extends StatelessWidget {
                 fontFamily: 'Plus Jakarta Sans',
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: AppColors.navLabel,
+                color: AppColors.inkBlack,
               ),
             ),
             const SizedBox(height: 8),
@@ -54,13 +54,13 @@ class BookView extends StatelessWidget {
                 fontFamily: 'DM Sans',
                 fontSize: 13,
                 height: 1.5,
-                color: AppColors.textMuted,
+                color: AppColors.taupeBrown,
               ),
             ),
             const SizedBox(height: 24),
             CustomFilledButton(
               width: double.infinity,
-              backgroundColor: AppColors.teal,
+              backgroundColor: AppColors.lagoonTeal,
               onPressed: () {
                 Get.find<BookingFlowController>().reset();
                 Get.toNamed(Routes.planStay);

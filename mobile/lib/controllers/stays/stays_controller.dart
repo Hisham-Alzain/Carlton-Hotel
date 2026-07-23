@@ -1,11 +1,13 @@
+import 'package:carlton/components/sheets/cancel_reservation_sheet.dart';
+import 'package:carlton/components/sheets/receipt_sheet.dart';
 import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
+import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/routes/routes.dart';
-import 'package:carlton/views/stays/cancel_sheet.dart';
-import 'package:carlton/views/stays/receipt_sheet.dart';
+import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -14,8 +16,6 @@ import 'package:get/get.dart';
 /// in-memory upcoming list. Registered in `MainBinding` since Stays is a tab.
 class StaysController extends GetxController
     with GetSingleTickerProviderStateMixin {
-  static const tabs = ['Active', 'Upcoming', 'Past'];
-
   late final TabController tabController;
 
   final Stay? active = DemoData.activeStay();
@@ -29,18 +29,50 @@ class StaysController extends GetxController
     tabController = TabController(length: 3, vsync: this, initialIndex: 1);
   }
 
-  void showReceipt(ReceiptData receipt) {
-    CustomBottomSheet.show(content: ReceiptSheet(receipt: receipt));
+  void showReceipt(Stay stay) {
+    final receipt = stay.receipt;
+    if (receipt == null) return;
+
+    CustomBottomSheet.show<void>(
+      title: 'Receipt',
+      subtitle: '${stay.roomName} · ${receipt.dateLabel}',
+      child: ReceiptSheet(receipt: receipt),
+      actions: CustomFilledButton(
+        width: double.infinity,
+        backgroundColor: AppColors.lagoonTeal,
+        onPressed: () {
+          Get.back();
+          CustomSnackbars.showInfo(message: 'Receipt download coming soon');
+        },
+        child: const Text('Download PDF Receipt'),
+      ),
+    );
   }
 
   void requestCancel(Stay stay) {
-    CustomBottomSheet.show(
-      content: CancelSheet(
-        stay: stay,
-        onConfirm: () {
-          Get.back<void>();
-          _cancelReservation(stay);
-        },
+    CustomBottomSheet.show<void>(
+      child: CancelReservationSheet(stay: stay),
+      actions: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 10,
+        children: [
+          CustomFilledButton(
+            width: double.infinity,
+            backgroundColor: AppColors.brickRed,
+            onPressed: () {
+              Get.back();
+              _cancelReservation(stay);
+            },
+            child: const Text('Yes, Cancel Reservation'),
+          ),
+          CustomFilledButton(
+            width: double.infinity,
+            backgroundColor: AppColors.pearlCream,
+            foregroundColor: AppColors.inkBlack,
+            onPressed: () => Get.back(),
+            child: const Text('No, Keep My Reservation'),
+          ),
+        ],
       ),
     );
   }

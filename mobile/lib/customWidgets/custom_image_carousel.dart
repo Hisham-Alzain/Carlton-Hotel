@@ -74,7 +74,7 @@ class CustomImageCarousel extends StatelessWidget {
       'assets/icons/chevron_left.svg',
       width: 18,
       height: 18,
-      colorFilter: const ColorFilter.mode(AppColors.navLabel, BlendMode.srcIn),
+      colorFilter: const ColorFilter.mode(AppColors.inkBlack, BlendMode.srcIn),
     );
     if (flip) glyph = Transform.flip(flipX: true, child: glyph);
     return InkWell(
@@ -85,7 +85,7 @@ class CustomImageCarousel extends StatelessWidget {
         height: 36,
         alignment: Alignment.center,
         decoration: const BoxDecoration(
-          color: Color(0xBAFFFFFF),
+          color: AppColors.white73,
           shape: BoxShape.circle,
         ),
         child: glyph,
@@ -102,7 +102,7 @@ class CustomImageCarousel extends StatelessWidget {
           width: i == active ? 18 : 6,
           height: 6,
           decoration: BoxDecoration(
-            color: i == active ? Colors.white : const Color(0x80FFFFFF),
+            color: i == active ? Colors.white : AppColors.white50,
             borderRadius: BorderRadius.circular(3),
           ),
         ),

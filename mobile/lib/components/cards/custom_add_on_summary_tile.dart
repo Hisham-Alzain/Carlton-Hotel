@@ -1,3 +1,4 @@
+import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -18,12 +19,8 @@ class CustomAddOnSummaryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.softButtonBg,
-        borderRadius: BorderRadius.circular(10),
-      ),
+    return PillContainer(
+      backgroundColor: AppColors.pearlCream,
       child: Row(
         children: [
           ClipRRect(
@@ -47,7 +44,7 @@ class CustomAddOnSummaryTile extends StatelessWidget {
                     fontFamily: 'Plus Jakarta Sans',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.navLabel,
+                    color: AppColors.inkBlack,
                   ),
                 ),
                 const SizedBox(height: 1),
@@ -56,7 +53,7 @@ class CustomAddOnSummaryTile extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'DM Sans',
                     fontSize: 11,
-                    color: AppColors.textMuted,
+                    color: AppColors.taupeBrown,
                   ),
                 ),
               ],

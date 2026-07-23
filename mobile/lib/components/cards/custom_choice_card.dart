@@ -29,9 +29,9 @@ class CustomChoiceCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.creamOverlay,
+          color: AppColors.cream08,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.creamBorder, width: 1.5),
+          border: Border.all(color: AppColors.cream20, width: 1.5),
         ),
         child: Row(
           children: [
@@ -42,7 +42,7 @@ class CustomChoiceCard extends StatelessWidget {
 
               margin: const EdgeInsetsDirectional.only(end: 16),
               decoration: BoxDecoration(
-                color: AppColors.goldBadge,
+                color: AppColors.antiqueGold56,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: iconPath != null
@@ -65,7 +65,7 @@ class CustomChoiceCard extends StatelessWidget {
                     subtitle,
                     style: textStyle.labelLarge?.copyWith(
                       fontWeight: FontWeight.w500,
-                      color: AppColors.creamText,
+                      color: AppColors.cream60,
                     ),
                   ),
                 ],
@@ -73,7 +73,7 @@ class CustomChoiceCard extends StatelessWidget {
             ),
             const Icon(
               Icons.chevron_right,
-              color: AppColors.creamText,
+              color: AppColors.cream60,
               size: 20,
             ),
           ],

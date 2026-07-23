@@ -1,3 +1,4 @@
+import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -53,7 +54,7 @@ class CustomCircleIconButton extends StatelessWidget {
           boxShadow: shadow
               ? const [
                   BoxShadow(
-                    color: Color(0x40888888),
+                    color: AppColors.shadowGrey25,
                     blurRadius: 2,
                     offset: Offset(0, 1),
                   ),

@@ -46,7 +46,7 @@ class CustomStayCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     height: 30,
                     decoration: BoxDecoration(
-                      color: AppColors.sandPillBg,
+                      color: AppColors.sandBeige,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: RowTextComponent(
@@ -55,7 +55,7 @@ class CustomStayCard extends StatelessWidget {
                       spacing: 10,
                       text: room,
                       textStyle: textStyle.labelMedium?.copyWith(
-                        color: AppColors.sandPillText,
+                        color: AppColors.espressoBrown,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -75,7 +75,7 @@ class CustomStayCard extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0x80EDF1F2), Color(0x80347F87)],
+                colors: [AppColors.iceBlue50, AppColors.surfTeal50],
               ),
             ),
             child: CustomImage(

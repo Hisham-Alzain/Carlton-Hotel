@@ -1,8 +1,9 @@
+import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/components/custom_circle_icon_button.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_image_carousel.dart';
 import 'package:carlton/customWidgets/custom_info_banner.dart';
-import 'package:carlton/customWidgets/custom_price_summary.dart';
+import 'package:carlton/components/custom_price_summary.dart';
 import 'package:carlton/customWidgets/custom_rating_stars.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/models/booking_models.dart';
@@ -40,16 +41,16 @@ class RoomDetailsContent extends StatelessWidget {
               index: c.roomImageIndex,
               onIndexChanged: c.setRoomImage,
               height: 220,
-              topRight: CustomCircleIconButton(
-                iconPath: 'assets/icons/close.svg',
-                size: 32,
-                color: const Color(0xBADDDDDD),
-                bordered: false,
-                shadow: false,
-                iconSize: 16,
-                iconPadding: 8,
-                onTap: () => Get.back<void>(),
-              ),
+              // topRight: CustomCircleIconButton(
+              //   iconPath: 'assets/icons/close.svg',
+              //   size: 32,
+              //   color: AppColors.pebbleGrey73,
+              //   bordered: false,
+              //   shadow: false,
+              //   iconSize: 16,
+              //   iconPadding: 8,
+              //   onTap: () => Get.back(),
+              // ),
             ),
           ),
           Padding(
@@ -88,17 +89,16 @@ class RoomDetailsContent extends StatelessWidget {
                   message: 'Free cancellation until 48 hours before check-in.',
                 ),
                 const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.cream,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                PillContainer(
+                  // The row no longer pads itself, so absorb the 10 it used to
+                  // add on top of the pill's own 10.
+                  padding: const EdgeInsets.all(20),
+                  backgroundColor: AppColors.cream,
                   child: CustomPriceSummaryRow(
-                    label:
+                    title:
                         'Total for ${controller.nights} night${controller.nights == 1 ? '' : 's'}',
                     value: '\$$total',
-                    labelStyle: _totalLabelStyle,
+                    titleStyle: _totalLabelStyle,
                     valueStyle: _totalValueStyle,
                   ),
                 ),
@@ -140,14 +140,14 @@ class RoomDetailsContent extends StatelessWidget {
   Widget _highlightTile(IconLabel item) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
     decoration: BoxDecoration(
-      color: AppColors.highlightTileBg,
+      color: AppColors.pearlCream65,
       borderRadius: BorderRadius.circular(10),
       border: Border.all(color: Colors.white),
     ),
     child: RowTextComponent(
       path: item.iconPath,
       iconSize: 15,
-      iconColor: AppColors.gold,
+      iconColor: AppColors.antiqueGold,
       text: item.label,
       textStyle: _tileTextStyle,
       expandText: true,
@@ -157,7 +157,7 @@ class RoomDetailsContent extends StatelessWidget {
   Widget _amenityTile(IconLabel item) => RowTextComponent(
     path: item.iconPath,
     iconSize: 13,
-    iconColor: AppColors.gold,
+    iconColor: AppColors.antiqueGold,
     text: item.label,
     textStyle: _tileTextStyle,
     spacing: 8,
@@ -167,13 +167,13 @@ class RoomDetailsContent extends StatelessWidget {
   Widget _meta(String iconPath, String text) => RowTextComponent(
     path: iconPath,
     iconSize: 12,
-    iconColor: AppColors.metaText,
+    iconColor: AppColors.graphite,
     text: text,
     textStyle: const TextStyle(
       fontFamily: 'Plus Jakarta Sans',
       fontSize: 12,
       fontWeight: FontWeight.w300,
-      color: AppColors.metaText,
+      color: AppColors.graphite,
     ),
     spacing: 4,
   );
@@ -182,33 +182,33 @@ class RoomDetailsContent extends StatelessWidget {
     fontFamily: 'Plus Jakarta Sans',
     fontSize: 19,
     fontWeight: FontWeight.w700,
-    color: AppColors.navLabel,
+    color: AppColors.inkBlack,
   );
 
   static const _descriptionStyle = TextStyle(
     fontFamily: 'DM Sans',
     fontSize: 13,
     height: 1.65,
-    color: Color(0xFF555555),
+    color: AppColors.dimGrey,
   );
 
   static const _headingStyle = TextStyle(
     fontFamily: 'Plus Jakarta Sans',
     fontSize: 14,
     fontWeight: FontWeight.w600,
-    color: AppColors.navLabel,
+    color: AppColors.inkBlack,
   );
 
   static const _tileTextStyle = TextStyle(
     fontFamily: 'DM Sans',
     fontSize: 12,
-    color: AppColors.navLabel,
+    color: AppColors.inkBlack,
   );
 
   static const _totalLabelStyle = TextStyle(
     fontFamily: 'DM Sans',
     fontSize: 13,
-    color: AppColors.navLabel,
+    color: AppColors.inkBlack,
   );
 
   static const _totalValueStyle = TextStyle(

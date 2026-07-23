@@ -28,9 +28,9 @@ class ButtonsContainer extends StatelessWidget {
       width: width,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cardBg,
+        color: AppColors.featherGrey,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: AppColors.linenGrey),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -46,6 +46,45 @@ class ButtonsContainer extends StatelessWidget {
           child,
         ],
       ),
+    );
+  }
+}
+
+/// A rounded, solid-filled container used all over the app for status pills,
+/// price badges, chips and summary strips.
+///
+/// It only covers the plain `Container(padding + BoxDecoration(color,
+/// borderRadius))` shape — anything that also needs a border, gradient or
+/// shadow should stay a bespoke `Container`.
+class PillContainer extends StatelessWidget {
+  final double? height;
+  final double? width;
+  final Widget child;
+  final Color backgroundColor;
+  final EdgeInsetsGeometry padding;
+  final double radius;
+
+  const PillContainer({
+    this.height,
+    this.width,
+    required this.child,
+    required this.backgroundColor,
+    this.padding = const EdgeInsets.all(10),
+    this.radius = 6,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      width: width,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(radius),
+      ),
+      child: child,
     );
   }
 }

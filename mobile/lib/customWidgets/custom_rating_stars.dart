@@ -48,7 +48,7 @@ class CustomRatingStars extends StatelessWidget {
               fontFamily: 'Plus Jakarta Sans',
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.navLabel,
+              color: AppColors.inkBlack,
             ),
           ),
         ],
@@ -59,7 +59,7 @@ class CustomRatingStars extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'DM Sans',
               fontSize: 12,
-              color: AppColors.textMuted,
+              color: AppColors.taupeBrown,
             ),
           ),
         ],

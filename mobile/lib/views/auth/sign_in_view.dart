@@ -26,90 +26,101 @@ class SignInView extends GetView<SignInController> {
       child: GetBuilder<SignInController>(
         builder: (controller) => Padding(
           padding: const EdgeInsets.all(10),
-          child: Column(
-            spacing: 20,
-            children: [
-              CustomSegmentedButton(
-                selectedIndex: controller.method == SignInMethod.phone ? 0 : 1,
-                onChanged: (index) => controller.switchMethod(
-                  index == 0 ? SignInMethod.phone : SignInMethod.email,
-                ),
-                segments: [
-                  SegmentItem(label: AppTranslations.signInByPhoneTab),
-                  SegmentItem(label: AppTranslations.signInByEmailTab),
-                ],
-              ),
-              controller.method == SignInMethod.email
-                  ? CustomTextField(
-                      controller: controller.emailController,
-                      textInputType: TextInputType.emailAddress,
-                      hintText: AppTranslations.emailAddressHint,
-                      label: AppTranslations.emailAddressLabel,
-                    )
-                  : Row(
-                      spacing: 10,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        CustomCountryCodePicker(onCodeChanged: (p0) {}),
-                        Flexible(
-                          child: CustomTextField(
-                            controller: controller.phoneController,
-                            textInputType: TextInputType.phone,
-                            label: 'Phone Number',
-                            hintText: 'Phone number',
-                            validator: (p0) =>
-                                CustomValidation().validateRequiredField(p0),
-                          ),
-                        ),
-                      ],
-                    ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: CustomFilledButton(
-                  width: 350,
-                  backgroundColor: AppColors.teal,
-                  isLoading: controller.isSubmitting,
-                  onPressed: controller.submit,
-                  child: Text(AppTranslations.nextButtonLabel),
-                ),
-              ),
-
-              Container(
-                height: 55,
-                decoration: BoxDecoration(
-                  color: AppColors.panelDark,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.borderDark, width: 1.5),
-                ),
-                child: Row(
-                  spacing: 10,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      AppTranslations.newGuestPrompt,
-                      style: textStyle.labelLarge?.copyWith(
-                        fontFamily: 'DM Sans',
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => Get.toNamed(Routes.createProfile),
-                      child: Text(
-                        AppTranslations.createAccountLink,
-                        style: textStyle.labelLarge?.copyWith(
-                          fontFamily: 'DM Sans',
-                          color: AppColors.gold,
-                          fontWeight: FontWeight.w500,
-                          decoration: TextDecoration.underline,
-                          decorationColor: AppColors.gold,
-                        ),
-                      ),
-                    ),
+          child: Form(
+            key: controller.formKey,
+            child: Column(
+              spacing: 20,
+              children: [
+                CustomSegmentedButton(
+                  selectedIndex: controller.method == SignInMethod.phone
+                      ? 0
+                      : 1,
+                  onChanged: (index) => controller.switchMethod(
+                    index == 0 ? SignInMethod.phone : SignInMethod.email,
+                  ),
+                  segments: [
+                    SegmentItem(label: AppTranslations.signInByPhoneTab),
+                    SegmentItem(label: AppTranslations.signInByEmailTab),
                   ],
                 ),
-              ),
-            ],
+                controller.method == SignInMethod.email
+                    ? CustomTextField(
+                        controller: controller.emailController,
+                        textInputType: TextInputType.emailAddress,
+                        hintText: AppTranslations.emailAddressHint,
+                        label: AppTranslations.emailAddressLabel,
+                        validator: (p0) => CustomValidation().validateEmail(p0),
+                      )
+                    : Row(
+                        spacing: 10,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          CustomCountryCodePicker(phone: controller.phone),
+                          Flexible(
+                            child: CustomTextField(
+                              controller: controller.phone.controller,
+                              inputFormatters: [controller.phone.formatter],
+                              textInputType: TextInputType.phone,
+                              textDirection: TextDirection.ltr,
+                              label: 'Phone Number',
+                              hintText: 'Phone number',
+                              validator: (p0) =>
+                                  CustomValidation().validatePhoneNumber(
+                                    p0,
+                                    dialCode: controller.phone.dialCode,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: CustomFilledButton(
+                    width: 350,
+                    backgroundColor: AppColors.lagoonTeal,
+                    isLoading: controller.isSubmitting,
+                    onPressed: controller.submit,
+                    child: Text(AppTranslations.nextButtonLabel),
+                  ),
+                ),
+
+                Container(
+                  height: 55,
+                  decoration: BoxDecoration(
+                    color: AppColors.coffeeInk64,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.ironGrey, width: 1.5),
+                  ),
+                  child: Row(
+                    spacing: 10,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        AppTranslations.newGuestPrompt,
+                        style: textStyle.labelLarge?.copyWith(
+                          fontFamily: 'DM Sans',
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Get.toNamed(Routes.createProfile),
+                        child: Text(
+                          AppTranslations.createAccountLink,
+                          style: textStyle.labelLarge?.copyWith(
+                            fontFamily: 'DM Sans',
+                            color: AppColors.antiqueGold,
+                            fontWeight: FontWeight.w500,
+                            decoration: TextDecoration.underline,
+                            decorationColor: AppColors.antiqueGold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

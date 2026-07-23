@@ -51,7 +51,7 @@ class CustomHomeContainer extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0x00000000), Color(0xB3000000)],
+                  colors: [Colors.transparent, AppColors.black70],
                   stops: [0.50, 1],
                 ),
               ),
@@ -173,7 +173,7 @@ class CustomHomeContainer extends StatelessWidget {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: AppColors.heroGlow.withValues(alpha: 0.9),
+              color: AppColors.whisperGrey.withValues(alpha: 0.9),
               blurRadius: 25,
             ),
           ],
@@ -190,7 +190,7 @@ class CustomHomeContainer extends StatelessWidget {
           decoration: const BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: Color(0xFFD4D4D4),
+                color: AppColors.mistGrey,
                 blurRadius: 4,
                 offset: Offset(0, 4),
               ),

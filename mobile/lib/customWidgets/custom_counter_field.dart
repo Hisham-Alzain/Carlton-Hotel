@@ -35,12 +35,12 @@ class CustomCounterField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(17.18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.hairline, width: 1.18),
+        border: Border.all(color: AppColors.black06, width: 1.18),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A6B6B6B),
+            color: AppColors.slateShadow04,
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
@@ -58,7 +58,7 @@ class CustomCounterField extends StatelessWidget {
                   title,
                   style: textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
-                    color: AppColors.navLabel,
+                    color: AppColors.inkBlack,
                   ),
                 ),
                 if (subtitle != null) ...[
@@ -68,7 +68,7 @@ class CustomCounterField extends StatelessWidget {
                     style: const TextStyle(
                       fontFamily: 'DM Sans',
                       fontSize: 12,
-                      color: AppColors.textMuted,
+                      color: AppColors.taupeBrown,
                     ),
                   ),
                 ],
@@ -127,8 +127,8 @@ class _StepButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = filled ? AppColors.primary : AppColors.neutralIconBg;
-    final iconColor = filled ? Colors.white : AppColors.navLabel;
+    final bg = filled ? AppColors.primary : AppColors.whisperGrey;
+    final iconColor = filled ? Colors.white : AppColors.inkBlack;
     return Opacity(
       opacity: enabled ? 1 : 0.4,
       child: Material(

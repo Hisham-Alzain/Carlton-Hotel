@@ -1,4 +1,5 @@
 import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,14 +10,15 @@ import 'package:get/get.dart';
 class PhoneEntryController extends GetxController {
   final formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
-  final phoneController = TextEditingController();
+  final phone = PhoneFieldState();
 
   bool isSubmitting = false;
 
   Future<void> submit() async {
     if (!formKey.currentState!.validate()) return;
 
-    final value = phoneController.text.trim();
+    // Carries the dial code — the OTP screen shows this verbatim.
+    final value = phone.controller.text.trim();
 
     isSubmitting = true;
     update();
@@ -31,7 +33,7 @@ class PhoneEntryController extends GetxController {
   @override
   void onClose() {
     emailController.dispose();
-    phoneController.dispose();
+    phone.dispose();
     super.onClose();
   }
 }

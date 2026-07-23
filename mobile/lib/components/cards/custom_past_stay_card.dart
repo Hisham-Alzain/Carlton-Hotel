@@ -1,7 +1,9 @@
-import 'package:carlton/components/custom_status_chip.dart';
+import 'package:carlton/customWidgets/custom_containers.dart';
+import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Past-stay card for the My Stays "Past" tab: room + dates + COMPLETED chip,
 /// total charged, and the View Receipt / Book Again button row. Kept as a
@@ -20,140 +22,99 @@ class CustomPastStayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(15.18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.pastCardBorder, width: 1.18),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x59E2E2E2),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
+    final TextTheme textStyle = Get.textTheme;
+
+    return Card(
+      color: AppColors.white,
+      shape: BeveledRectangleBorder(
+        side: BorderSide(color: AppColors.white92, width: 1),
+        borderRadius: BorderRadiusGeometry.circular(12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      stay.roomName,
-                      style: const TextStyle(
-                        fontFamily: 'Plus Jakarta Sans',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.navLabel,
+      margin: const EdgeInsets.all(10),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          spacing: 10,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              spacing: 10,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        stay.roomName,
+                        style: textStyle.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.inkBlack,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      stay.dateRangeLabel ?? '',
-                      style: const TextStyle(
-                        fontFamily: 'DM Sans',
-                        fontSize: 12,
-                        color: AppColors.textMuted,
+
+                      Text(
+                        stay.dateRangeLabel ?? '',
+                        style: textStyle.labelMedium?.copyWith(
+                          fontFamily: 'DM Sans',
+                          color: AppColors.taupeBrown,
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+                PillContainer(
+                  backgroundColor: AppColors.successGreen07,
+                  child: Text(
+                    'COMPLETED',
+                    style: textStyle.labelSmall?.copyWith(
+                      fontFamily: 'DM Sans',
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.forestGreen,
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              const CustomStatusChip.completed(),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Total charged',
-                style: TextStyle(
-                  fontFamily: 'DM Sans',
-                  fontSize: 13,
-                  color: AppColors.textMuted,
-                ),
-              ),
-              Text(
-                stay.totalCharged ?? '',
-                style: const TextStyle(
-                  fontFamily: 'Plus Jakarta Sans',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _CardButton(
-                  label: 'View Receipt',
-                  background: AppColors.softButtonBg,
-                  foreground: AppColors.navLabel,
-                  onTap: onViewReceipt,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _CardButton(
-                  label: 'Book Again',
-                  background: AppColors.primary,
-                  foreground: Colors.white,
-                  onTap: onBookAgain,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CardButton extends StatelessWidget {
-  final String label;
-  final Color background;
-  final Color foreground;
-  final VoidCallback onTap;
-
-  const _CardButton({
-    required this.label,
-    required this.background,
-    required this.foreground,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: background,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: SizedBox(
-          height: 36,
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'DM Sans',
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: foreground,
-              ),
+              ],
             ),
-          ),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total charged',
+                  style: textStyle.labelLarge?.copyWith(
+                    fontFamily: 'DM Sans',
+                    color: AppColors.taupeBrown,
+                  ),
+                ),
+                Text(
+                  stay.totalCharged ?? '',
+                  style: textStyle.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+
+            Row(
+              spacing: 10,
+              children: [
+                CustomFilledButton(
+                  backgroundColor: AppColors.pearlCream,
+                  foregroundColor: AppColors.inkBlack,
+                  onPressed: onViewReceipt,
+                  child: Text('View Receipt'),
+                ),
+                CustomFilledButton(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  onPressed: onBookAgain,
+                  child: Text('Book Again'),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

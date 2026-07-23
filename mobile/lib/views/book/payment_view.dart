@@ -63,8 +63,8 @@ class PaymentView extends StatelessWidget {
                 child: CustomFilledButton(
                   width: double.infinity,
                   backgroundColor: c.canReviewBooking
-                      ? AppColors.teal
-                      : AppColors.calendarDisabledText,
+                      ? AppColors.lagoonTeal
+                      : AppColors.pearlGrey,
                   onPressed: c.canReviewBooking ? c.reviewBooking : null,
                   child: const Text('Review Booking'),
                 ),
@@ -81,7 +81,7 @@ class PaymentView extends StatelessWidget {
     height: 38,
     alignment: Alignment.center,
     decoration: BoxDecoration(
-      color: selected ? const Color(0x1208414D) : AppColors.softButtonBg,
+      color: selected ? AppColors.primary07 : AppColors.pearlCream,
       borderRadius: BorderRadius.circular(10),
     ),
     child: SvgPicture.asset(assetPath, width: 20, height: 20),
@@ -92,14 +92,14 @@ const _sectionLabelStyle = TextStyle(
   fontFamily: 'Plus Jakarta Sans',
   fontSize: 14,
   fontWeight: FontWeight.w600,
-  color: AppColors.navLabel,
+  color: AppColors.inkBlack,
 );
 
 const _fieldLabelStyle = TextStyle(
   fontFamily: 'Plus Jakarta Sans',
   fontSize: 12,
   fontWeight: FontWeight.w600,
-  color: AppColors.navLabel,
+  color: AppColors.inkBlack,
 );
 
 Widget _fieldLabel(String text) => Padding(
@@ -110,11 +110,11 @@ Widget _fieldLabel(String text) => Padding(
 Widget _cardForm(BookingFlowController c) => Container(
   clipBehavior: Clip.antiAlias,
   decoration: BoxDecoration(
-    color: AppColors.surface,
+    color: AppColors.white,
     borderRadius: BorderRadius.circular(14),
-    border: Border.all(color: const Color(0x12000000), width: 1.18),
+    border: Border.all(color: AppColors.black07, width: 1.18),
     boxShadow: const [
-      BoxShadow(color: Color(0x0F000000), blurRadius: 12, offset: Offset(0, 2)),
+      BoxShadow(color: AppColors.black06, blurRadius: 12, offset: Offset(0, 2)),
     ],
   ),
   child: Column(
@@ -134,7 +134,7 @@ Widget _cardForm(BookingFlowController c) => Container(
               controller: c.cardNumberCtrl,
               textInputType: TextInputType.number,
               hintText: '1234 5678 9012 3456',
-              fillColor: AppColors.greyField,
+              fillColor: AppColors.whisperGrey,
               maxLength: 19,
               onChanged: (_) => c.onPaymentFieldChanged(),
             ),
@@ -152,7 +152,7 @@ Widget _cardForm(BookingFlowController c) => Container(
                         controller: c.cardExpiryCtrl,
                         textInputType: TextInputType.datetime,
                         hintText: 'MM/YY',
-                        fillColor: AppColors.greyField,
+                        fillColor: AppColors.whisperGrey,
                         maxLength: 5,
                         onChanged: (_) => c.onPaymentFieldChanged(),
                       ),
@@ -168,7 +168,7 @@ Widget _cardForm(BookingFlowController c) => Container(
                         controller: c.cardCvvCtrl,
                         textInputType: TextInputType.number,
                         hintText: '•••',
-                        fillColor: AppColors.greyField,
+                        fillColor: AppColors.whisperGrey,
                         maxLength: 4,
                         onChanged: (_) => c.onPaymentFieldChanged(),
                       ),
@@ -183,7 +183,7 @@ Widget _cardForm(BookingFlowController c) => Container(
               controller: c.cardNameCtrl,
               textInputType: TextInputType.name,
               hintText: 'Ahmed Al-Rashid',
-              fillColor: AppColors.greyField,
+              fillColor: AppColors.whisperGrey,
               onChanged: (_) => c.onPaymentFieldChanged(),
             ),
             const SizedBox(height: 10),
@@ -195,7 +195,7 @@ Widget _cardForm(BookingFlowController c) => Container(
                   width: 12,
                   height: 12,
                   colorFilter: const ColorFilter.mode(
-                    AppColors.textMuted,
+                    AppColors.taupeBrown,
                     BlendMode.srcIn,
                   ),
                 ),
@@ -204,7 +204,7 @@ Widget _cardForm(BookingFlowController c) => Container(
                   style: TextStyle(
                     fontFamily: 'DM Sans',
                     fontSize: 11,
-                    color: AppColors.textMuted,
+                    color: AppColors.taupeBrown,
                   ),
                 ),
               ],
@@ -219,9 +219,9 @@ Widget _cardForm(BookingFlowController c) => Container(
 Widget _promoBox(BookingFlowController c) => Container(
   padding: const EdgeInsets.all(15.18),
   decoration: BoxDecoration(
-    color: AppColors.surface,
+    color: AppColors.white,
     borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: AppColors.hairline, width: 1.18),
+    border: Border.all(color: AppColors.black06, width: 1.18),
   ),
   child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +233,7 @@ Widget _promoBox(BookingFlowController c) => Container(
           fontFamily: 'Plus Jakarta Sans',
           fontSize: 13,
           fontWeight: FontWeight.w500,
-          color: AppColors.navLabel,
+          color: AppColors.inkBlack,
         ),
       ),
       Row(
@@ -245,7 +245,7 @@ Widget _promoBox(BookingFlowController c) => Container(
               controller: c.promoCtrl,
               textInputType: TextInputType.text,
               hintText: 'Enter promo code',
-              fillColor: AppColors.greyField,
+              fillColor: AppColors.whisperGrey,
             ),
           ),
           CustomFilledButton(

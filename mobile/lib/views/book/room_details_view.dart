@@ -17,14 +17,14 @@ class RoomDetailsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final args = Get.arguments;
     if (args is! RoomOption) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => Get.back<void>());
-      return const Scaffold(backgroundColor: AppColors.surface);
+      WidgetsBinding.instance.addPostFrameCallback((_) => Get.back());
+      return const Scaffold(backgroundColor: AppColors.white);
     }
     final room = args;
     final controller = Get.find<BookingFlowController>();
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.white,
       body: SafeArea(
         bottom: false,
         child: RoomDetailsContent(
@@ -36,7 +36,7 @@ class RoomDetailsView extends StatelessWidget {
               CustomFilledButton(
                 width: double.infinity,
                 height: 52,
-                backgroundColor: AppColors.teal,
+                backgroundColor: AppColors.lagoonTeal,
                 onPressed: () => controller.beginBooking(room),
                 child: const Text('Select This Room'),
               ),
@@ -44,9 +44,9 @@ class RoomDetailsView extends StatelessWidget {
                 width: double.infinity,
                 height: 48,
                 elevation: 0,
-                backgroundColor: AppColors.neutralIconBg,
-                foregroundColor: AppColors.navLabel,
-                onPressed: () => Get.back<void>(),
+                backgroundColor: AppColors.whisperGrey,
+                foregroundColor: AppColors.inkBlack,
+                onPressed: () => Get.back(),
                 child: const Text('Back'),
               ),
             ],

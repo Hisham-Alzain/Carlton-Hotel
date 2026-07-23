@@ -23,11 +23,11 @@ class CustomPinput extends StatelessWidget {
     final theme = Get.theme;
 
     final errorStyle = theme.textTheme.bodySmall?.copyWith(
-      color: AppColors.error,
+      color: AppColors.salmonRed,
     );
 
     final inputStyle = theme.textTheme.bodyLarge?.copyWith(
-      color: AppColors.ink,
+      color: AppColors.espressoInk,
       fontWeight: FontWeight.w400,
     );
 
@@ -41,13 +41,12 @@ class CustomPinput extends StatelessWidget {
       ),
     );
 
-    //TODO: error is not showing
     return Pinput(
       controller: controller,
       length: length,
       defaultPinTheme: defaultPinTheme,
       errorPinTheme: defaultPinTheme.copyDecorationWith(
-        border: Border.all(color: AppColors.error, width: 1.5),
+        border: Border.all(color: AppColors.salmonRed, width: 1.5),
       ),
       validator: validator,
       errorTextStyle: errorStyle,
@@ -57,7 +56,7 @@ class CustomPinput extends StatelessWidget {
       errorBuilder: (context, errorText) => RowTextComponent(
         text: errorText,
         icon: Icons.error_outline,
-        iconColor: AppColors.error,
+        iconColor: AppColors.salmonRed,
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
+import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/routes/routes.dart';
@@ -43,9 +44,8 @@ class BookingFlowController extends GetxController {
   final firstNameCtrl = TextEditingController();
   final lastNameCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
-  final phoneCtrl = TextEditingController();
+  final phone = PhoneFieldState();
   final specialRequestsCtrl = TextEditingController();
-  String dialCode = '+963';
 
   // Payment
   PaymentMethod paymentMethod = PaymentMethod.card;
@@ -141,7 +141,14 @@ class BookingFlowController extends GetxController {
 
   void openRoomDetails(RoomOption room) {
     roomImageIndex = 0;
-    CustomBottomSheet.show(content: RoomDetailsSheet(room: room));
+    update();
+    CustomBottomSheet.show<void>(
+      // The content scrolls itself and carries its own close button.
+      scrollable: false,
+      showClose: false,
+      heightFactor: 0.92,
+      child: RoomDetailsSheet(room: room),
+    );
   }
 
   /// Entry from the Home room list: open the full-screen details page.
@@ -236,9 +243,8 @@ class BookingFlowController extends GetxController {
     firstNameCtrl.clear();
     lastNameCtrl.clear();
     emailCtrl.clear();
-    phoneCtrl.clear();
+    phone.reset();
     specialRequestsCtrl.clear();
-    dialCode = '+963';
     paymentMethod = PaymentMethod.card;
     cardNumberCtrl.clear();
     cardExpiryCtrl.clear();
@@ -253,7 +259,6 @@ class BookingFlowController extends GetxController {
       firstNameCtrl,
       lastNameCtrl,
       emailCtrl,
-      phoneCtrl,
       specialRequestsCtrl,
       cardNumberCtrl,
       cardExpiryCtrl,
@@ -263,6 +268,7 @@ class BookingFlowController extends GetxController {
     ]) {
       c.dispose();
     }
+    phone.dispose();
     super.onClose();
   }
 }

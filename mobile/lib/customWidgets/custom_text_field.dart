@@ -2,6 +2,7 @@ import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/services/settings_service.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 
@@ -25,6 +26,7 @@ class CustomTextField extends StatelessWidget {
   final int? maxLength;
   final int? maxLines;
   final Color? fillColor;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextField({
     required this.controller,
@@ -46,6 +48,7 @@ class CustomTextField extends StatelessWidget {
     this.textDirection,
     this.maxLength,
     this.maxLines,
+    this.inputFormatters,
     super.key,
   });
 
@@ -58,15 +61,15 @@ class CustomTextField extends StatelessWidget {
       fontWeight: FontWeight.w900,
     );
     final inputStyle = theme.textTheme.bodyLarge?.copyWith(
-      color: AppColors.ink,
+      color: AppColors.espressoInk,
       fontWeight: FontWeight.w400,
     );
     final hintStyle = theme.textTheme.bodyLarge?.copyWith(
-      color: AppColors.inkHint,
+      color: AppColors.espressoInk50,
       fontWeight: FontWeight.w400,
     );
     final errorStyle = theme.textTheme.bodySmall?.copyWith(
-      color: AppColors.error,
+      color: AppColors.salmonRed,
     );
 
     final fill = fillColor ?? AppColors.cream;
@@ -91,16 +94,18 @@ class CustomTextField extends StatelessWidget {
             controller: controller,
             keyboardType: textInputType,
             obscureText: obsecureText,
-            cursorColor: AppColors.gold,
+            cursorColor: AppColors.antiqueGold,
             style: inputStyle,
             validator: validator,
             onChanged: onChanged,
             onFieldSubmitted: onSubmitted,
             textDirection:
-                SettingsService.find.locale.value.languageCode == 'ar'
-                ? TextDirection.rtl
-                : TextDirection.ltr,
+                textDirection ??
+                (SettingsService.find.locale.value.languageCode == 'ar'
+                    ? TextDirection.rtl
+                    : TextDirection.ltr),
             maxLength: maxLength,
+            inputFormatters: inputFormatters,
             decoration: InputDecoration(
               filled: true,
               counterText: '',
@@ -115,17 +120,18 @@ class CustomTextField extends StatelessWidget {
               suffixIcon: suffixIcon,
               border: border(fill),
               enabledBorder: border(fill),
-              focusedBorder: border(AppColors.gold),
-              errorBorder: border(AppColors.error),
-              focusedErrorBorder: border(AppColors.error),
+              focusedBorder: border(AppColors.antiqueGold),
+              errorBorder: border(AppColors.salmonRed),
+              focusedErrorBorder: border(AppColors.salmonRed),
             ),
             errorBuilder: (context, errorText) => RowTextComponent(
               text: errorText,
               textStyle: errorStyle,
               icon: Icons.error_outline,
-              iconColor: AppColors.error,
+              iconColor: AppColors.salmonRed,
+              expandText: true,
             ),
-            cursorErrorColor: AppColors.error,
+            cursorErrorColor: AppColors.salmonRed,
             maxLines: obsecureText == true ? 1 : (maxLines ?? 1),
           ),
         ),

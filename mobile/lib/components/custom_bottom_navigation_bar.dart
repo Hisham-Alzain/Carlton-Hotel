@@ -45,19 +45,19 @@ class CustoBottomNavigationBar extends StatelessWidget {
       onTap: onTap,
       items: [
         BottomNavigationBarItem(
-          icon: _navIcon(items[0].iconPath, AppColors.navLabel),
+          icon: _navIcon(items[0].iconPath, AppColors.inkBlack),
           activeIcon: _navIcon(items[0].iconPath, AppColors.primary),
           label: items[0].label.toUpperCase(),
         ),
         BottomNavigationBarItem(
-          icon: _navIcon(items[1].iconPath, AppColors.navLabel),
+          icon: _navIcon(items[1].iconPath, AppColors.inkBlack),
           activeIcon: _navIcon(items[1].iconPath, AppColors.primary),
           label: items[1].label.toUpperCase(),
         ),
         BottomNavigationBarItem(
           icon: _BookNavIcon(
             iconPath: items[2].iconPath,
-            color: AppColors.navLabel,
+            color: AppColors.inkBlack,
           ),
           activeIcon: _BookNavIcon(
             iconPath: items[2].iconPath,
@@ -66,12 +66,12 @@ class CustoBottomNavigationBar extends StatelessWidget {
           label: items[2].label.toUpperCase(),
         ),
         BottomNavigationBarItem(
-          icon: _navIcon(items[3].iconPath, AppColors.navLabel),
+          icon: _navIcon(items[3].iconPath, AppColors.inkBlack),
           activeIcon: _navIcon(items[3].iconPath, AppColors.primary),
           label: items[3].label.toUpperCase(),
         ),
         BottomNavigationBarItem(
-          icon: _navIcon(items[4].iconPath, AppColors.navLabel),
+          icon: _navIcon(items[4].iconPath, AppColors.inkBlack),
           activeIcon: _navIcon(items[4].iconPath, AppColors.primary),
           label: items[4].label.toUpperCase(),
         ),
@@ -101,7 +101,7 @@ class _BookNavIcon extends StatelessWidget {
         border: Border.all(color: Colors.white),
         boxShadow: const [
           BoxShadow(
-            color: AppColors.bottomNavBarShadow,
+            color: AppColors.ashShadow20,
             blurRadius: 20,
             offset: Offset(0, -4),
           ),

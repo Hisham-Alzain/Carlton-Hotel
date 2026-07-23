@@ -43,14 +43,14 @@ class CustomSegmentedButton extends StatelessWidget {
     this.height = 60,
     super.key,
   }) : backgroundColor = Colors.transparent,
-       foregroundColor = AppColors.textSecondary,
+       foregroundColor = AppColors.ashGrey,
        selectedBackgroundColor = Colors.white,
        selectedForegroundColor = AppColors.primary,
        side = BorderSide.none,
        shape = const RoundedRectangleBorder(
          borderRadius: BorderRadius.all(Radius.circular(10)),
        ),
-       trackColor = AppColors.cardBg;
+       trackColor = AppColors.featherGrey;
 
   @override
   Widget build(BuildContext context) {

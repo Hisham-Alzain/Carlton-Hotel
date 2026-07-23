@@ -14,9 +14,9 @@ class CustomServiceCard extends StatelessWidget {
     final TextTheme textStyle = Get.textTheme;
 
     return Card(
-      color: AppColors.primaryTileBg,
+      color: AppColors.primary06,
       elevation: 1,
-      shadowColor: const Color(0x40FFFFFF),
+      shadowColor: AppColors.white25,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -55,7 +55,7 @@ class CustomServiceCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: textStyle.labelMedium?.copyWith(
-                    color: AppColors.tileSubtitle,
+                    color: AppColors.stoneTaupe,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

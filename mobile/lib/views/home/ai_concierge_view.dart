@@ -68,7 +68,7 @@ class AiConciergeView extends GetView<AiConciergeController> {
                         AppTranslations.helpDescription,
                         textAlign: TextAlign.center,
                         style: textStyle.labelMedium?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.ashGrey,
                           fontWeight: FontWeight.w400,
                         ),
                       ),

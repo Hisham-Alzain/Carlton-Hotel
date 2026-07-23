@@ -1,3 +1,4 @@
+import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/components/custom_booking_app_bar.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_counter_field.dart';
@@ -35,7 +36,7 @@ class PlanStayView extends StatelessWidget {
                       fontFamily: 'Plus Jakarta Sans',
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.navLabel,
+                      color: AppColors.inkBlack,
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -114,12 +115,9 @@ class _Footer extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
+            PillContainer(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.cream,
-                borderRadius: BorderRadius.circular(10),
-              ),
+              backgroundColor: AppColors.cream,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -129,7 +127,7 @@ class _Footer extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'DM Sans',
                         fontSize: 13,
-                        color: AppColors.navLabel,
+                        color: AppColors.inkBlack,
                       ),
                     ),
                   ),
@@ -138,7 +136,7 @@ class _Footer extends StatelessWidget {
                     style: const TextStyle(
                       fontFamily: 'Plus Jakarta Sans',
                       fontSize: 13,
-                      color: AppColors.creamTextDeep,
+                      color: AppColors.walnutGold,
                     ),
                   ),
                 ],
@@ -147,7 +145,7 @@ class _Footer extends StatelessWidget {
             const SizedBox(height: 12),
             CustomFilledButton(
               width: double.infinity,
-              backgroundColor: AppColors.teal,
+              backgroundColor: AppColors.lagoonTeal,
               onPressed: controller.searchRooms,
               child: const Text('Search Rooms'),
             ),

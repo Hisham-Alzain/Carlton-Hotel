@@ -26,7 +26,7 @@ class CustomStepProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final active = activeColor ?? AppColors.primary;
-    final inactive = inactiveColor ?? AppColors.progressTrack;
+    final inactive = inactiveColor ?? AppColors.iceBlue;
 
     return Row(
       children: List.generate(totalSteps, (i) {

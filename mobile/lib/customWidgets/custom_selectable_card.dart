@@ -33,7 +33,7 @@ class CustomSelectableCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
+      color: AppColors.white,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -42,12 +42,12 @@ class CustomSelectableCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: selected ? AppColors.primary : AppColors.hairline,
+              color: selected ? AppColors.primary : AppColors.black06,
               width: 1.18,
             ),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x0A000000),
+                color: AppColors.black04,
                 blurRadius: 3,
                 offset: Offset(0, 1),
               ),
@@ -72,7 +72,7 @@ class CustomSelectableCard extends StatelessWidget {
                           fontFamily: 'Plus Jakarta Sans',
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.navLabel,
+                          color: AppColors.inkBlack,
                         ),
                       ),
                       if (subtitle != null) ...[
@@ -82,7 +82,7 @@ class CustomSelectableCard extends StatelessWidget {
                           style: const TextStyle(
                             fontFamily: 'DM Sans',
                             fontSize: 11,
-                            color: AppColors.textMuted,
+                            color: AppColors.taupeBrown,
                           ),
                         ),
                       ],
@@ -96,7 +96,7 @@ class CustomSelectableCard extends StatelessWidget {
                       fontFamily: 'Plus Jakarta Sans',
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textMuted,
+                      color: AppColors.taupeBrown,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -129,7 +129,7 @@ class _Control extends StatelessWidget {
           border: Border.all(
             color: selected
                 ? AppColors.primary
-                : AppColors.calendarDisabledText,
+                : AppColors.pearlGrey,
             width: 1.18,
           ),
         ),
@@ -152,9 +152,9 @@ class _Control extends StatelessWidget {
       width: 22,
       height: 22,
       decoration: BoxDecoration(
-        color: selected ? AppColors.primary : AppColors.neutralIconBg,
+        color: selected ? AppColors.primary : AppColors.whisperGrey,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0x1A000000), width: 1.18),
+        border: Border.all(color: AppColors.black10, width: 1.18),
       ),
       child: selected
           ? Center(

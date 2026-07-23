@@ -1,3 +1,4 @@
+import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/components/cards/custom_room_result_card.dart';
 import 'package:carlton/components/custom_booking_app_bar.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
@@ -21,12 +22,9 @@ class ChooseRoomView extends StatelessWidget {
         builder: (c) => ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            Container(
+            PillContainer(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.softButtonBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
+              backgroundColor: AppColors.pearlCream,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -36,7 +34,7 @@ class ChooseRoomView extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'DM Sans',
                         fontSize: 12,
-                        color: AppColors.navLabel,
+                        color: AppColors.inkBlack,
                       ),
                     ),
                   ),
@@ -45,7 +43,7 @@ class ChooseRoomView extends StatelessWidget {
                     style: const TextStyle(
                       fontFamily: 'Plus Jakarta Sans',
                       fontSize: 12,
-                      color: AppColors.creamTextDeep,
+                      color: AppColors.walnutGold,
                     ),
                   ),
                 ],

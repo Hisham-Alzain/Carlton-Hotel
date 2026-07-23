@@ -1,11 +1,10 @@
-import 'package:carlton/components/custom_status_chip.dart';
-import 'package:carlton/customWidgets/custom_copy_pill.dart';
+import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
-import 'package:carlton/customWidgets/custom_snackbar.dart';
+import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 
 /// Upcoming-stay card for the My Stays "Upcoming" tab: photo header with an
 /// "Upcoming" pill and nightly-price badge, room + room number, CHECK-IN /
@@ -25,70 +24,151 @@ class CustomUpcomingStayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
+
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0x7AD9D9D9), width: 1.18),
+        border: Border.all(color: AppColors.cloudGrey48, width: 1),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x52DBDBDB),
+            color: AppColors.pebbleGrey32,
             blurRadius: 4,
+            spreadRadius: 0,
             offset: Offset(0, 2),
           ),
         ],
       ),
       child: Column(
+        spacing: 10,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _header(),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          SizedBox(
+            height: 100,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                Text(
-                  stay.roomName,
-                  style: const TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.navLabel,
+                if (stay.imagePath != null)
+                  CustomImage(
+                    path: 'assets/images/stay_room.png',
+                    fit: BoxFit.cover,
                   ),
-                ),
-                if (stay.subtitle != null) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    stay.subtitle!,
-                    style: const TextStyle(
-                      fontFamily: 'DM Sans',
-                      fontSize: 12,
-                      color: AppColors.textMuted,
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.iceBlue70, AppColors.steelTeal70],
                     ),
                   ),
-                ],
-                const SizedBox(height: 12),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: PillContainer(
+                      backgroundColor: AppColors.sandBeige,
+                      child: Text(
+                        'Upcoming',
+                        style: textStyle.labelSmall?.copyWith(
+                          fontFamily: 'DM Sans',
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.espressoBrown,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              spacing: 10,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Row(
+                  spacing: 10,
+                  children: [
+                    Text(
+                      stay.roomName,
+                      style: textStyle.titleMedium?.copyWith(
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.inkBlack,
+                      ),
+                    ),
+                    PillContainer(
+                      padding: EdgeInsets.zero,
+                      backgroundColor: AppColors.white90,
+                      child: Text(
+                        stay.pricePerNight!,
+                        style: textStyle.titleMedium?.copyWith(
+                          fontFamily: 'DM Sans',
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  stay.subtitle!,
+                  style: textStyle.labelMedium?.copyWith(
+                    fontFamily: 'DM Sans',
+                    color: AppColors.taupeBrown,
+                  ),
+                ),
+                Row(
+                  spacing: 10,
                   children: [
                     Expanded(
-                      child: _DateChip(
+                      child: _DateContainer(
                         label: 'Check-in',
                         value: stay.checkInLabel ?? '',
                       ),
                     ),
-                    const SizedBox(width: 10),
+
                     Expanded(
-                      child: _DateChip(
+                      child: _DateContainer(
                         label: 'Check-out',
                         value: stay.checkOutLabel ?? '',
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                _resAndShare(),
-                const SizedBox(height: 12),
-                _cancelButton(),
+
+                PillContainer(
+                  backgroundColor: AppColors.cream,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Res. #${stay.resCode ?? ''}',
+                        style: textStyle.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {},
+                        icon: Icon(Icons.copy, color: AppColors.taupeBrown),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Center(
+                  child: CustomOutlinedButton(
+                    onPressed: onCancel,
+                    foregroundColor: AppColors.brickRed,
+                    borderColor: AppColors.crimsonRed30,
+                    child: Text('Cancel Reservation'),
+                  ),
+                ),
               ],
             ),
           ),
@@ -96,138 +176,37 @@ class CustomUpcomingStayCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _header() {
-    return SizedBox(
-      height: 90,
-      width: double.infinity,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (stay.imagePath != null)
-            CustomImage(path: stay.imagePath!, fit: BoxFit.cover),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xB3EDF1F2), Color(0xB334727F)],
-              ),
-            ),
-          ),
-          Positioned(
-            left: 14,
-            top: 14,
-            child: const CustomStatusChip.upcoming(),
-          ),
-          if (stay.pricePerNight != null)
-            Positioned(
-              right: 14,
-              top: 15,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xE6FFFFFF),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  stay.pricePerNight!,
-                  style: const TextStyle(
-                    fontFamily: 'DM Sans',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _resAndShare() {
-    return CustomCopyPill(
-      value: 'Res. #${stay.resCode ?? ''}',
-      copiedMessage: 'Reservation number copied',
-      trailing: InkWell(
-        onTap:
-            onShare ??
-            () => CustomSnackbars.showInfo(message: 'Sharing coming soon'),
-        borderRadius: BorderRadius.circular(6),
-        child: SvgPicture.asset(
-          'assets/icons/share.svg',
-          width: 13,
-          height: 13,
-          colorFilter: const ColorFilter.mode(
-            AppColors.textMuted,
-            BlendMode.srcIn,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _cancelButton() {
-    return InkWell(
-      onTap: onCancel,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        height: 48,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.dangerBorder, width: 1.18),
-        ),
-        child: const Text(
-          'Cancel Reservation',
-          style: TextStyle(
-            fontFamily: 'DM Sans',
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: AppColors.danger,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
-class _DateChip extends StatelessWidget {
+class _DateContainer extends StatelessWidget {
   final String label;
   final String value;
 
-  const _DateChip({required this.label, required this.value});
+  const _DateContainer({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-      decoration: BoxDecoration(
-        color: AppColors.dateChipBg,
-        borderRadius: BorderRadius.circular(8),
-      ),
+    final TextTheme textStyle = Get.textTheme;
+
+    return PillContainer(
+      backgroundColor: AppColors.frostGrey,
+      radius: 8,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: textStyle.labelSmall?.copyWith(
               fontFamily: 'DM Sans',
-              fontSize: 9,
-              letterSpacing: 0.5,
-              color: AppColors.goldDeep,
+              color: AppColors.bronzeGold,
             ),
           ),
-          const SizedBox(height: 2),
+
           Text(
             value,
-            style: const TextStyle(
-              fontFamily: 'Plus Jakarta Sans',
-              fontSize: 13,
+            style: textStyle.labelMedium?.copyWith(
               fontWeight: FontWeight.w500,
-              color: AppColors.navLabel,
+              color: AppColors.inkBlack,
             ),
           ),
         ],

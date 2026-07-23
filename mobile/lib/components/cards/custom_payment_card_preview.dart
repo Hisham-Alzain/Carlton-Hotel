@@ -1,3 +1,4 @@
+import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -27,9 +28,9 @@ class CustomPaymentCardPreview extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFF08414D),
-                    Color(0xFF1C6B7A),
-                    Color(0xFF2F7D8E),
+                    AppColors.primary,
+                    AppColors.marineTeal,
+                    AppColors.lagoonTeal,
                   ],
                   stops: [0, 0.6, 1],
                 ),
@@ -56,7 +57,7 @@ class CustomPaymentCardPreview extends StatelessWidget {
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 2,
-                    color: Color(0xE6FFFFFF),
+                    color: AppColors.white90,
                   ),
                 ),
                 const Spacer(),
@@ -95,7 +96,7 @@ class CustomPaymentCardPreview extends StatelessWidget {
           fontFamily: 'DM Sans',
           fontSize: 9,
           letterSpacing: 0.5,
-          color: Color(0x80FFFFFF),
+          color: AppColors.white50,
         ),
       ),
       const SizedBox(height: 2),
@@ -104,7 +105,7 @@ class CustomPaymentCardPreview extends StatelessWidget {
         style: const TextStyle(
           fontFamily: 'Plus Jakarta Sans',
           fontSize: 13,
-          color: Color(0xE6FFFFFF),
+          color: AppColors.white90,
         ),
       ),
     ],

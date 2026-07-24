@@ -71,11 +71,7 @@ class CustomChoiceCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.cream60,
-              size: 20,
-            ),
+            const Icon(Icons.chevron_right, color: AppColors.cream60, size: 20),
           ],
         ),
       ),

@@ -27,6 +27,7 @@ class RoomDetailsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     final controller = Get.find<BookingFlowController>();
     final total = room.pricePerNight * controller.nights;
 
@@ -53,41 +54,45 @@ class RoomDetailsContent extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            padding: const EdgeInsets.all(10),
             child: Column(
+              spacing: 10,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(room.name, style: _titleStyle),
-                const SizedBox(height: 7),
+                Text(
+                  room.name,
+                  style: textStyle.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.inkBlack,
+                  ),
+                ),
                 Wrap(
-                  spacing: 12,
-                  runSpacing: 6,
+                  spacing: 10,
+                  runSpacing: 10,
                   children: [
                     _meta('assets/icons/space.svg', room.area),
                     _meta('assets/icons/view.svg', room.view),
                     _meta('assets/icons/king_bed.svg', room.bed),
                   ],
                 ),
-                const SizedBox(height: 10),
                 CustomRatingStars(
                   rating: room.rating,
                   reviewCount: room.reviewCount,
                 ),
-                const SizedBox(height: 14),
-                Text(room.description, style: _descriptionStyle),
-                const SizedBox(height: 16),
-                const Text('Highlights', style: _headingStyle),
-                const SizedBox(height: 12),
+                Text(
+                  room.description,
+                  style: textStyle.labelMedium?.copyWith(
+                    fontFamily: 'DM Sans',
+                    color: AppColors.dimGrey,
+                  ),
+                ),
+                Text('Highlights', style: _headingStyle(textStyle)),
                 _pairedGrid(room.highlights, _highlightTile, runSpacing: 10),
-                const SizedBox(height: 16),
-                const Text('All Amenities', style: _headingStyle),
-                const SizedBox(height: 12),
-                _pairedGrid(room.amenities, _amenityTile, runSpacing: 12),
-                const SizedBox(height: 16),
+                Text('All Amenities', style: _headingStyle(textStyle)),
+                _pairedGrid(room.amenities, _amenityTile, runSpacing: 10),
                 const CustomInfoBanner(
                   message: 'Free cancellation until 48 hours before check-in.',
                 ),
-                const SizedBox(height: 16),
                 PillContainer(
                   // The row no longer pads itself, so absorb the 10 it used to
                   // add on top of the pill's own 10.
@@ -97,13 +102,18 @@ class RoomDetailsContent extends StatelessWidget {
                     title:
                         'Total for ${controller.nights} night${controller.nights == 1 ? '' : 's'}',
                     value: '\$$total',
-                    titleStyle: _totalLabelStyle,
-                    valueStyle: _totalValueStyle,
+                    titleStyle: textStyle.labelMedium?.copyWith(
+                      fontFamily: 'DM Sans',
+                      color: AppColors.inkBlack,
+                    ),
+                    valueStyle: textStyle.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                //TODO: make the buttons fill the space
                 actions,
-                SizedBox(height: 20 + MediaQuery.paddingOf(context).bottom),
               ],
             ),
           ),
@@ -112,11 +122,19 @@ class RoomDetailsContent extends StatelessWidget {
     );
   }
 
+  TextStyle? _headingStyle(TextTheme textStyle) => textStyle.labelLarge
+      ?.copyWith(fontWeight: FontWeight.w600, color: AppColors.inkBlack);
+
+  TextStyle? _tileTextStyle(TextTheme textStyle) => textStyle.labelMedium
+      ?.copyWith(fontFamily: 'DM Sans', color: AppColors.inkBlack);
+
+  //TODO: do not use for loop
   Widget _pairedGrid<T>(
     List<T> items,
     Widget Function(T) tileBuilder, {
     required double runSpacing,
   }) => Column(
+    spacing: 10,
     children: [
       for (var i = 0; i < items.length; i += 2)
         Padding(
@@ -136,84 +154,49 @@ class RoomDetailsContent extends StatelessWidget {
     ],
   );
 
-  Widget _highlightTile(IconLabel item) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
-    decoration: BoxDecoration(
-      color: AppColors.pearlCream65,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: Colors.white),
-    ),
-    child: RowTextComponent(
+  Widget _highlightTile(IconLabel item) {
+    final TextTheme textStyle = Get.textTheme;
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.pearlCream65,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white),
+      ),
+      child: RowTextComponent(
+        path: item.iconPath,
+        iconColor: AppColors.antiqueGold,
+        text: item.label,
+        textStyle: _tileTextStyle(textStyle),
+        spacing: 10,
+        expandText: true,
+      ),
+    );
+  }
+
+  Widget _amenityTile(IconLabel item) {
+    final TextTheme textStyle = Get.textTheme;
+    return RowTextComponent(
       path: item.iconPath,
-      iconSize: 15,
       iconColor: AppColors.antiqueGold,
       text: item.label,
-      textStyle: _tileTextStyle,
+      textStyle: _tileTextStyle(textStyle),
+      spacing: 10,
       expandText: true,
-    ),
-  );
+    );
+  }
 
-  Widget _amenityTile(IconLabel item) => RowTextComponent(
-    path: item.iconPath,
-    iconSize: 13,
-    iconColor: AppColors.antiqueGold,
-    text: item.label,
-    textStyle: _tileTextStyle,
-    spacing: 8,
-    expandText: true,
-  );
-
-  Widget _meta(String iconPath, String text) => RowTextComponent(
-    path: iconPath,
-    iconSize: 12,
-    iconColor: AppColors.graphite,
-    text: text,
-    textStyle: const TextStyle(
-      fontFamily: 'Plus Jakarta Sans',
-      fontSize: 12,
-      fontWeight: FontWeight.w300,
-      color: AppColors.graphite,
-    ),
-    spacing: 4,
-  );
-
-  static const _titleStyle = TextStyle(
-    fontFamily: 'Plus Jakarta Sans',
-    fontSize: 19,
-    fontWeight: FontWeight.w700,
-    color: AppColors.inkBlack,
-  );
-
-  static const _descriptionStyle = TextStyle(
-    fontFamily: 'DM Sans',
-    fontSize: 13,
-    height: 1.65,
-    color: AppColors.dimGrey,
-  );
-
-  static const _headingStyle = TextStyle(
-    fontFamily: 'Plus Jakarta Sans',
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    color: AppColors.inkBlack,
-  );
-
-  static const _tileTextStyle = TextStyle(
-    fontFamily: 'DM Sans',
-    fontSize: 12,
-    color: AppColors.inkBlack,
-  );
-
-  static const _totalLabelStyle = TextStyle(
-    fontFamily: 'DM Sans',
-    fontSize: 13,
-    color: AppColors.inkBlack,
-  );
-
-  static const _totalValueStyle = TextStyle(
-    fontFamily: 'Plus Jakarta Sans',
-    fontSize: 15,
-    fontWeight: FontWeight.w700,
-    color: AppColors.primary,
-  );
+  Widget _meta(String iconPath, String text) {
+    final TextTheme textStyle = Get.textTheme;
+    return RowTextComponent(
+      path: iconPath,
+      iconColor: AppColors.graphite,
+      text: text,
+      textStyle: textStyle.labelMedium?.copyWith(
+        fontWeight: FontWeight.w300,
+        color: AppColors.graphite,
+      ),
+      spacing: 10,
+    );
+  }
 }

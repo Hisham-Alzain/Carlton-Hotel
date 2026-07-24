@@ -3,6 +3,7 @@ import 'package:carlton/customWidgets/custom_info_banner.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Body of the "Cancel Reservation?" sheet. The confirm / keep buttons are
 /// supplied separately as the sheet's pinned actions — see
@@ -14,6 +15,7 @@ class CancelReservationSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     final dates = [
       stay.checkInLabel,
       stay.checkOutLabel,
@@ -31,10 +33,8 @@ class CancelReservationSheet extends StatelessWidget {
         ),
         Text.rich(
           TextSpan(
-            style: const TextStyle(
+            style: textStyle.labelMedium?.copyWith(
               fontFamily: 'DM Sans',
-              fontSize: 13,
-              height: 1.5,
               color: AppColors.steelGrey,
             ),
             children: [

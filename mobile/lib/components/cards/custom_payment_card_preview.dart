@@ -1,6 +1,7 @@
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 
 /// The gradient credit-card visual that heads the Payment card form. Purely
 /// decorative — mirrors [name] / [expiry] as the user types. Matched to Figma:
@@ -32,6 +33,7 @@ class CustomPaymentCardPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     return SizedBox(
       height: 160,
       width: double.infinity,
@@ -70,11 +72,9 @@ class CustomPaymentCardPreview extends StatelessWidget {
                 const Spacer(),
                 Text(
                   _displayNumber,
-                  style: const TextStyle(
+                  style: textStyle.titleMedium?.copyWith(
                     fontFamily: 'DM Sans',
-                    fontSize: 17,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 2,
                     color: AppColors.white90,
                   ),
                 ),
@@ -104,28 +104,28 @@ class CustomPaymentCardPreview extends StatelessWidget {
     decoration: BoxDecoration(color: Color(color), shape: BoxShape.circle),
   );
 
-  Widget _field(String label, String value) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(
-        label.toUpperCase(),
-        style: const TextStyle(
-          fontFamily: 'DM Sans',
-          fontSize: 9,
-          letterSpacing: 0.5,
-          color: AppColors.white50,
+  Widget _field(String label, String value) {
+    final TextTheme textStyle = Get.textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: textStyle.labelSmall?.copyWith(
+            fontFamily: 'DM Sans',
+            color: AppColors.white50,
+          ),
         ),
-      ),
-      const SizedBox(height: 2),
-      Text(
-        value,
-        style: const TextStyle(
-          fontFamily: 'Plus Jakarta Sans',
-          fontSize: 13,
-          color: AppColors.white90,
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: textStyle.labelMedium?.copyWith(
+            fontFamily: 'Plus Jakarta Sans',
+            color: AppColors.white90,
+          ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }

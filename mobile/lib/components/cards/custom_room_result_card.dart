@@ -1,10 +1,12 @@
 import 'package:carlton/customWidgets/custom_containers.dart';
+import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 
 /// Room result card for "Choose Your Room" (Step 2), matched to Figma: a
 /// white 14px-radius card with a soft shadow, a 150px image with a "$/night"
@@ -26,231 +28,194 @@ class CustomRoomResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
+
     final total = room.pricePerNight * (nights == 0 ? 1 : nights);
-    return Material(
-      color: AppColors.white,
-      borderRadius: BorderRadius.circular(14),
-      clipBehavior: Clip.antiAlias,
-      elevation: 0,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.black08,
-              blurRadius: 12,
-              offset: Offset(0, 2),
-            ),
-          ],
+    return InkWell(
+      onTap: onTap,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        color: AppColors.white,
+        shape: ContinuousRectangleBorder(
+          borderRadius: BorderRadiusGeometry.circular(14),
         ),
-        child: InkWell(
-          onTap: onTap,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  CustomImage(
-                    path: room.images.first,
-                    width: double.infinity,
-                    height: 150,
-                    fit: BoxFit.cover,
+        margin: const EdgeInsets.all(10),
+        elevation: 1,
+        child: Column(
+          spacing: 10,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                CustomImage(
+                  path: room.images.first,
+                  width: double.infinity,
+                  height: 150,
+                  fit: BoxFit.cover,
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: PillContainer(
+                      backgroundColor: AppColors.white88,
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '\$${room.pricePerNight}',
+                              style: textStyle.labelMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            TextSpan(
+                              text: '/night',
+                              style: textStyle.labelSmall?.copyWith(
+                                fontFamily: 'DM Sans',
+                                color: AppColors.taupeBrown,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                  Positioned(right: 14, top: 14, child: _priceBadge()),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            room.name,
-                            style: const TextStyle(
-                              fontFamily: 'Plus Jakarta Sans',
-                              fontSize: 15,
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                spacing: 10,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    spacing: 10,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          room.name,
+                          style: textStyle.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.inkBlack,
+                          ),
+                        ),
+                      ),
+
+                      Row(
+                        spacing: 10,
+                        children: [
+                          SvgPicture.asset('assets/icons/star.svg'),
+
+                          Text(
+                            room.rating.toStringAsFixed(1),
+                            style: textStyle.labelMedium?.copyWith(
+                              fontFamily: 'DM Sans',
                               fontWeight: FontWeight.w600,
                               color: AppColors.inkBlack,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        _rating(),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 10.5,
-                      runSpacing: 4,
-                      children: [
-                        _meta('assets/icons/space.svg', room.area),
-                        _meta('assets/icons/view.svg', room.view),
-                        _meta('assets/icons/king_bed.svg', room.bed),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [for (final c in room.amenityChips) _chip(c)],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.only(top: 11.18),
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                            color: AppColors.black05,
-                            width: 1.18,
+
+                          Text(
+                            '(${room.reviewCount})',
+                            style: textStyle.labelSmall?.copyWith(
+                              fontFamily: 'DM Sans',
+                              color: AppColors.taupeBrown,
+                            ),
                           ),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Total for $nights night${nights == 1 ? '' : 's'}',
-                                style: const TextStyle(
-                                  fontFamily: 'DM Sans',
-                                  fontSize: 12,
-                                  color: AppColors.taupeBrown,
-                                ),
-                              ),
-                              Text(
-                                '\$$total',
-                                style: const TextStyle(
-                                  fontFamily: 'Plus Jakarta Sans',
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          _selectButton(),
                         ],
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _meta('assets/icons/space.svg', room.area),
+                      _meta('assets/icons/view.svg', room.view),
+                      _meta('assets/icons/king_bed.svg', room.bed),
+                    ],
+                  ),
+
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    //TODO: do not use for loop
+                    children: [for (final c in room.amenityChips) _chip(c)],
+                  ),
+
+                  const Divider(color: AppColors.cocoaGold),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Total for $nights night${nights == 1 ? '' : 's'}',
+                            style: textStyle.labelMedium?.copyWith(
+                              fontFamily: 'DM Sans',
+                              color: AppColors.taupeBrown,
+                            ),
+                          ),
+                          Text(
+                            '\$$total',
+                            style: textStyle.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      CustomFilledButton(
+                        backgroundColor: AppColors.lagoonTeal,
+                        onPressed: onSelect,
+                        child: Text('Select Room'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _priceBadge() => PillContainer(
-    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-    backgroundColor: AppColors.white88,
-    radius: 6,
-    child: Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(
-            text: '\$${room.pricePerNight}',
-            style: const TextStyle(
-              fontFamily: 'Plus Jakarta Sans',
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
-            ),
-          ),
-          const TextSpan(
-            text: '/night',
-            style: TextStyle(
-              fontFamily: 'DM Sans',
-              fontSize: 11,
-              color: AppColors.taupeBrown,
-            ),
-          ),
-        ],
+  Widget _meta(String iconPath, String text) {
+    final TextTheme textStyle = Get.textTheme;
+    return RowTextComponent(
+      path: iconPath,
+      iconColor: AppColors.graphite,
+      text: text,
+      textStyle: textStyle.labelSmall?.copyWith(
+        fontWeight: FontWeight.w300,
+        color: AppColors.graphite,
       ),
-    ),
-  );
+      spacing: 10,
+    );
+  }
 
-  Widget _rating() => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      SvgPicture.asset('assets/icons/star.svg', width: 12, height: 12),
-      const SizedBox(width: 3),
-      Text(
-        room.rating.toStringAsFixed(1),
-        style: const TextStyle(
+  Widget _chip(String label) {
+    final TextTheme textStyle = Get.textTheme;
+    return PillContainer(
+      padding: const EdgeInsets.all(10),
+      backgroundColor: AppColors.cream,
+      radius: 4,
+      child: Text(
+        label,
+        style: textStyle.labelSmall?.copyWith(
           fontFamily: 'DM Sans',
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: AppColors.inkBlack,
+          color: AppColors.cocoaGold,
         ),
       ),
-      const SizedBox(width: 3),
-      Text(
-        '(${room.reviewCount})',
-        style: const TextStyle(
-          fontFamily: 'DM Sans',
-          fontSize: 11,
-          color: AppColors.taupeBrown,
-        ),
-      ),
-    ],
-  );
-
-  Widget _meta(String iconPath, String text) => RowTextComponent(
-    path: iconPath,
-    iconSize: 10,
-    iconColor: AppColors.graphite,
-    text: text,
-    textStyle: const TextStyle(
-      fontFamily: 'Plus Jakarta Sans',
-      fontSize: 11,
-      fontWeight: FontWeight.w300,
-      color: AppColors.graphite,
-    ),
-    spacing: 4,
-  );
-
-  Widget _chip(String label) => PillContainer(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-    backgroundColor: AppColors.cream,
-    radius: 4,
-    child: Text(
-      label,
-      style: const TextStyle(
-        fontFamily: 'DM Sans',
-        fontSize: 10,
-        color: AppColors.cocoaGold,
-      ),
-    ),
-  );
-
-  Widget _selectButton() => Material(
-    color: AppColors.lagoonTeal,
-    borderRadius: BorderRadius.circular(8),
-    child: InkWell(
-      onTap: onSelect,
-      borderRadius: BorderRadius.circular(8),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: Text(
-          'Select Room',
-          style: TextStyle(
-            fontFamily: 'DM Sans',
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    ),
-  );
+    );
+  }
 }

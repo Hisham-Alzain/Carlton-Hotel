@@ -1,25 +1,14 @@
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
-const _headingStyle = TextStyle(
-  fontFamily: 'Plus Jakarta Sans',
-  fontSize: 12,
-  fontWeight: FontWeight.w600,
-  color: AppColors.inkBlack,
-);
-
-const _bodyStyle = TextStyle(
-  fontFamily: 'DM Sans',
-  fontSize: 12,
-  color: AppColors.inkBlack,
-);
+import 'package:get/get.dart';
 
 class CustomPayAtHotelPanel extends StatelessWidget {
   const CustomPayAtHotelPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -55,20 +44,18 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Text(
+                Text(
                   'Pay at Hotel',
-                  style: TextStyle(
+                  style: textStyle.titleMedium?.copyWith(
                     fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 17,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
                   ),
                 ),
-                const Text(
+                Text(
                   'No payment required now',
-                  style: TextStyle(
+                  style: textStyle.labelMedium?.copyWith(
                     fontFamily: 'DM Sans',
-                    fontSize: 12,
                     color: AppColors.graphite,
                   ),
                 ),
@@ -81,18 +68,21 @@ class CustomPayAtHotelPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 10,
               children: [
-                const Text('How it works', style: _headingStyle),
-                const Text(
+                Text('How it works', style: _headingStyle(textStyle)),
+                Text(
                   'Your reservation is secured without any charge today. '
                   'Payment will be collected at the front desk upon check-in.',
-                  style: _bodyStyle,
+                  style: textStyle.labelMedium?.copyWith(
+                    fontFamily: 'DM Sans',
+                    color: AppColors.inkBlack,
+                  ),
                 ),
                 // 14, not 4: the old spacer sat between two 10px gaps.
-                const Padding(
-                  padding: EdgeInsets.only(top: 14),
+                Padding(
+                  padding: const EdgeInsets.only(top: 14),
                   child: Text(
                     'Accepted Payment Methods at Hotel',
-                    style: _headingStyle,
+                    style: _headingStyle(textStyle),
                   ),
                 ),
                 const _MethodRow(
@@ -131,12 +121,11 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                             BlendMode.srcIn,
                           ),
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'Free cancellation up to 48 hours before arrival',
-                            style: TextStyle(
+                            style: textStyle.labelMedium?.copyWith(
                               fontFamily: 'DM Sans',
-                              fontSize: 12,
                               color: AppColors.inkBlack,
                             ),
                           ),
@@ -152,6 +141,13 @@ class CustomPayAtHotelPanel extends StatelessWidget {
       ),
     );
   }
+
+  TextStyle? _headingStyle(TextTheme textStyle) =>
+      textStyle.labelMedium?.copyWith(
+        fontFamily: 'Plus Jakarta Sans',
+        fontWeight: FontWeight.w600,
+        color: AppColors.inkBlack,
+      );
 }
 
 class _MethodRow extends StatelessWidget {
@@ -162,6 +158,7 @@ class _MethodRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     return Row(
       spacing: 10,
       children: [
@@ -176,9 +173,8 @@ class _MethodRow extends StatelessWidget {
         ),
         Text(
           label,
-          style: const TextStyle(
+          style: textStyle.labelMedium?.copyWith(
             fontFamily: 'DM Sans',
-            fontSize: 13,
             color: AppColors.inkBlack,
           ),
         ),

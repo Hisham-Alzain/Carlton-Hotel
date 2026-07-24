@@ -3,13 +3,7 @@ import 'package:carlton/customWidgets/custom_text_field.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
-const _labelStyle = TextStyle(
-  fontFamily: 'Plus Jakarta Sans',
-  fontSize: 12,
-  fontWeight: FontWeight.w600,
-  color: AppColors.inkBlack,
-);
+import 'package:get/get.dart';
 
 class CustomCardForm extends StatelessWidget {
   final TextEditingController numberCtrl;
@@ -29,12 +23,13 @@ class CustomCardForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.black07, width: 1.18),
+        border: Border.all(color: AppColors.black07, width: 1),
         boxShadow: const [
           BoxShadow(
             color: AppColors.black06,
@@ -52,81 +47,74 @@ class CustomCardForm extends StatelessWidget {
             number: numberCtrl.text,
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+            padding: const EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 12,
+              spacing: 10,
               children: [
-                _LabeledField(
+                CustomTextField(
+                  controller: numberCtrl,
+                  textInputType: TextInputType.number,
                   label: 'Card Number',
-                  child: CustomTextField(
-                    controller: numberCtrl,
-                    textInputType: TextInputType.number,
-                    hintText: '1234 5678 9012 3456',
-                    fillColor: AppColors.whisperGrey,
-                    maxLength: 19,
-                    onChanged: (_) => onChanged(),
-                  ),
+                  labelColor: AppColors.inkBlack,
+                  hintText: '1234 5678 9012 3456',
+                  fillColor: AppColors.whisperGrey,
+                  maxLength: 16,
+                  onChanged: (_) => onChanged(),
                 ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 10,
                   children: [
                     Expanded(
-                      child: _LabeledField(
+                      child: CustomTextField(
+                        controller: expiryCtrl,
+                        textInputType: TextInputType.datetime,
                         label: 'Expiry Date',
-                        child: CustomTextField(
-                          controller: expiryCtrl,
-                          textInputType: TextInputType.datetime,
-                          hintText: 'MM/YY',
-                          fillColor: AppColors.whisperGrey,
-                          maxLength: 5,
-                          onChanged: (_) => onChanged(),
-                        ),
+                        labelColor: AppColors.inkBlack,
+                        hintText: 'MM/YY',
+                        fillColor: AppColors.whisperGrey,
+                        maxLength: 4,
+                        onChanged: (_) => onChanged(),
                       ),
                     ),
                     Expanded(
-                      child: _LabeledField(
+                      child: CustomTextField(
+                        controller: cvvCtrl,
+                        textInputType: TextInputType.number,
                         label: 'CVV / CVC',
-                        child: CustomTextField(
-                          controller: cvvCtrl,
-                          textInputType: TextInputType.number,
-                          hintText: '•••',
-                          fillColor: AppColors.whisperGrey,
-                          maxLength: 4,
-                          onChanged: (_) => onChanged(),
-                        ),
+                        labelColor: AppColors.inkBlack,
+                        hintText: '•••',
+                        fillColor: AppColors.whisperGrey,
+                        maxLength: 3,
+                        onChanged: (_) => onChanged(),
                       ),
                     ),
                   ],
                 ),
-                _LabeledField(
+                CustomTextField(
+                  controller: nameCtrl,
+                  textInputType: TextInputType.name,
                   label: 'Name on Card',
-                  child: CustomTextField(
-                    controller: nameCtrl,
-                    textInputType: TextInputType.name,
-                    hintText: 'Ahmed Al-Rashid',
-                    fillColor: AppColors.whisperGrey,
-                    onChanged: (_) => onChanged(),
-                  ),
+                  labelColor: AppColors.inkBlack,
+                  hintText: 'Ahmed Al-Rashid',
+                  fillColor: AppColors.whisperGrey,
+                  onChanged: (_) => onChanged(),
                 ),
                 Row(
-                  spacing: 6,
+                  spacing: 10,
                   children: [
                     SvgPicture.asset(
                       'assets/icons/lock.svg',
-                      width: 12,
-                      height: 12,
                       colorFilter: const ColorFilter.mode(
                         AppColors.taupeBrown,
                         BlendMode.srcIn,
                       ),
                     ),
-                    const Text(
+                    Text(
                       '256-bit SSL encrypted · PCI DSS compliant',
-                      style: TextStyle(
+                      style: textStyle.labelSmall?.copyWith(
                         fontFamily: 'DM Sans',
-                        fontSize: 11,
                         color: AppColors.taupeBrown,
                       ),
                     ),
@@ -137,25 +125,6 @@ class CustomCardForm extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _LabeledField extends StatelessWidget {
-  final String label;
-  final Widget child;
-
-  const _LabeledField({required this.label, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 6,
-      children: [
-        Text(label, style: _labelStyle),
-        child,
-      ],
     );
   }
 }

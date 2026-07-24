@@ -18,6 +18,10 @@ class CustomTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final String? labelText;
   final String? label;
+
+  /// Colour of [label]. Defaults to white for the dark auth backgrounds; pass a
+  /// dark colour (e.g. on light forms like Guest Details) so it stays legible.
+  final Color? labelColor;
   final Widget? suffixIcon;
   final String? hintText;
   final void Function(String)? onChanged;
@@ -41,6 +45,7 @@ class CustomTextField extends StatelessWidget {
     this.borderColor,
     this.labelText,
     this.label,
+    this.labelColor,
     this.prefixIconColor,
     this.prefixIcon,
     this.prefixIconPath,
@@ -61,7 +66,8 @@ class CustomTextField extends StatelessWidget {
     final theme = Get.theme;
 
     final labelStyle = theme.textTheme.labelMedium?.copyWith(
-      color: Colors.white,
+      fontFamily: 'DM Sans',
+      color: labelColor ?? Colors.white,
       fontWeight: FontWeight.w900,
     );
     final inputStyle = theme.textTheme.bodyLarge?.copyWith(

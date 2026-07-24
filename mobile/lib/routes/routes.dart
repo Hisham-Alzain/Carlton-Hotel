@@ -9,7 +9,6 @@ import 'package:carlton/views/book/booking_confirmed_view.dart';
 import 'package:carlton/views/book/choose_room_view.dart';
 import 'package:carlton/views/book/guest_details_view.dart';
 import 'package:carlton/views/book/payment_view.dart';
-import 'package:carlton/views/book/plan_stay_view.dart';
 import 'package:carlton/views/book/review_booking_view.dart';
 import 'package:carlton/views/book/room_details_view.dart';
 import 'package:carlton/views/home/ai_concierge_view.dart';
@@ -34,7 +33,6 @@ abstract class Routes {
   static const serviceCategory = '/services/category';
 
   // Booking flow (5 steps, sharing one permanent BookingFlowController).
-  static const planStay = '/booking/plan';
   static const roomDetails = '/booking/room-details';
   static const chooseRoom = '/booking/rooms';
   static const addOns = '/booking/add-ons';
@@ -100,7 +98,6 @@ abstract class Pages {
       name: Routes.serviceCategory,
       page: () => const ServiceCategoryDetailView(),
     ),
-    GetPage(name: Routes.planStay, page: () => const PlanStayView()),
     GetPage(name: Routes.roomDetails, page: () => const RoomDetailsView()),
     GetPage(name: Routes.chooseRoom, page: () => const ChooseRoomView()),
     GetPage(name: Routes.addOns, page: () => const AddOnsView()),

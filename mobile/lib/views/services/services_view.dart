@@ -123,60 +123,24 @@ class _QuickRequests extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     return Column(
+      spacing: 10,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Quick Requests',
-          style: TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.inkBlack,
-          ),
+          style: textStyle.titleSmall?.copyWith(color: AppColors.primary),
         ),
-        const SizedBox(height: 12),
         Wrap(
           spacing: 10,
           runSpacing: 10,
           children: [
             for (final label in DemoData.quickRequests)
-              _QuickChip(
-                label: label,
-                onTap: () => controller.quickRequest(label),
-              ),
+              Chip(label: Text(label)),
           ],
         ),
       ],
-    );
-  }
-}
-
-class _QuickChip extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _QuickChip({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.featherGrey,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'DM Sans',
-              fontSize: 13,
-              color: AppColors.inkBlack,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

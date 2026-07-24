@@ -51,6 +51,7 @@ abstract class AppColors {
   static const Color pearlCream = Color(0xFFF8F6F3);
   static const Color pearlCream65 = Color(0xA6F8F6F3); // @ 65%
   static const Color ivoryCream = Color(0xFFFDFAF4);
+  static const Color oliveTaupe = Color(0xFF5C5548);
 
   // ── Ink / grey ──
   static const Color nearBlack = Color(0xFF0D0D0D);

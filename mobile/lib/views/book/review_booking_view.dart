@@ -1,5 +1,4 @@
 import 'package:carlton/components/booking_summary_header.dart';
-import 'package:carlton/components/custom_booking_app_bar.dart';
 import 'package:carlton/components/custom_price_summary.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
@@ -61,127 +60,134 @@ class ReviewBookingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      appBar: const CustomBookingAppBar(
-        title: 'Review Booking',
-        currentStep: 6,
-      ),
+      // appBar: const CustomBookingAppBar(
+      //   title: 'Review Booking',
+      //   currentStep: 6,
+      // ),
       body: GetBuilder<BookingFlowController>(
-        builder: (c) => Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  BookingSummaryHeader(controller: c),
-                  const SizedBox(height: 14),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.black06, width: 1.18),
+        builder: (c) {
+          final TextTheme textStyle = Get.textTheme;
+          return Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    BookingSummaryHeader(controller: c),
+                    const SizedBox(height: 14),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.black06,
+                          width: 1.18,
+                        ),
+                      ),
+                      child: _breakdown(c),
                     ),
-                    child: _breakdown(c),
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.black06, width: 1.18),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.black06,
+                          width: 1.18,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 12,
+                        children: [
+                          Text(
+                            'Guest & Payment',
+                            style: textStyle.labelLarge?.copyWith(
+                              fontFamily: 'Plus Jakarta Sans',
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.inkBlack,
+                            ),
+                          ),
+                          _infoRow(
+                            'Guest',
+                            '${c.firstNameCtrl.text} ${c.lastNameCtrl.text}',
+                          ),
+                          _infoRow('Email', c.emailCtrl.text),
+                          _infoRow('Payment', c.paymentMethodDisplay),
+                        ],
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: 12,
+                  ],
+                ),
+              ),
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                  child: CustomFilledButton(
+                    width: double.infinity,
+                    backgroundColor:
+                        c.paymentMethod == PaymentMethod.applePay ||
+                            c.paymentMethod == PaymentMethod.googlePay
+                        ? AppColors.inkBlack
+                        : AppColors.lagoonTeal,
+                    onPressed: c.confirmBooking,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      spacing: 8,
                       children: [
-                        const Text(
-                          'Guest & Payment',
-                          style: _sectionTitleStyle,
-                        ),
-                        _infoRow(
-                          'Guest',
-                          '${c.firstNameCtrl.text} ${c.lastNameCtrl.text}',
-                        ),
-                        _infoRow('Email', c.emailCtrl.text),
-                        _infoRow('Payment', c.paymentMethodDisplay),
+                        if (_icons[c.paymentMethod] case final glyph?)
+                          SvgPicture.asset(
+                            glyph,
+                            width: 16,
+                            height: 16,
+                            // Apple mark is white; the Google "G" keeps its colours.
+                            colorFilter:
+                                c.paymentMethod == PaymentMethod.applePay
+                                ? const ColorFilter.mode(
+                                    AppColors.white,
+                                    BlendMode.srcIn,
+                                  )
+                                : null,
+                          ),
+                        Text(c.confirmCtaLabel),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                child: CustomFilledButton(
-                  width: double.infinity,
-                  backgroundColor:
-                      c.paymentMethod == PaymentMethod.applePay ||
-                          c.paymentMethod == PaymentMethod.googlePay
-                      ? AppColors.inkBlack
-                      : AppColors.lagoonTeal,
-                  onPressed: c.confirmBooking,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: 8,
-                    children: [
-                      if (_icons[c.paymentMethod] case final glyph?)
-                        SvgPicture.asset(
-                          glyph,
-                          width: 16,
-                          height: 16,
-                          // Apple mark is white; the Google "G" keeps its colours.
-                          colorFilter: c.paymentMethod == PaymentMethod.applePay
-                              ? const ColorFilter.mode(
-                                  AppColors.white,
-                                  BlendMode.srcIn,
-                                )
-                              : null,
-                        ),
-                      Text(c.confirmCtaLabel),
-                    ],
-                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _infoRow(String label, String value) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: const TextStyle(
-          fontFamily: 'DM Sans',
-          fontSize: 13,
-          color: AppColors.dimGrey,
-        ),
-      ),
-      Flexible(
-        child: Text(
-          value,
-          textAlign: TextAlign.end,
-          style: const TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: AppColors.inkBlack,
+  Widget _infoRow(String label, String value) {
+    final TextTheme textStyle = Get.textTheme;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: textStyle.labelMedium?.copyWith(
+            fontFamily: 'DM Sans',
+            color: AppColors.dimGrey,
           ),
         ),
-      ),
-    ],
-  );
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: textStyle.labelMedium?.copyWith(
+              fontFamily: 'Plus Jakarta Sans',
+              color: AppColors.inkBlack,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
-
-const _sectionTitleStyle = TextStyle(
-  fontFamily: 'Plus Jakarta Sans',
-  fontSize: 14,
-  fontWeight: FontWeight.w600,
-  color: AppColors.inkBlack,
-);

@@ -1,6 +1,7 @@
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 
 /// Star rating with optional numeric score and review count, used on room cards
 /// and Room Details. Renders [starCount] glyphs — filled (gold) up to
@@ -24,6 +25,7 @@ class CustomRatingStars extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     final filled = rating.floor().clamp(0, starCount);
 
     return Row(
@@ -44,9 +46,8 @@ class CustomRatingStars extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             rating.toStringAsFixed(1),
-            style: const TextStyle(
+            style: textStyle.labelMedium?.copyWith(
               fontFamily: 'Plus Jakarta Sans',
-              fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.inkBlack,
             ),
@@ -56,9 +57,8 @@ class CustomRatingStars extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             '($reviewCount reviews)',
-            style: const TextStyle(
+            style: textStyle.labelMedium?.copyWith(
               fontFamily: 'DM Sans',
-              fontSize: 12,
               color: AppColors.taupeBrown,
             ),
           ),

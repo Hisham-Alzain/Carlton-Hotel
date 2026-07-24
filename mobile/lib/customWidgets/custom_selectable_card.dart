@@ -1,8 +1,9 @@
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 
 /// Trailing control style for a [CustomSelectableCard].
+/// TODO:move to enums
 enum SelectableControl { checkbox, radio }
 
 /// Selectable list tile shared by Add-Ons (checkbox) and Payment methods
@@ -32,6 +33,7 @@ class CustomSelectableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     return Material(
       color: AppColors.white,
       borderRadius: BorderRadius.circular(12),
@@ -43,7 +45,7 @@ class CustomSelectableCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: selected ? AppColors.primary : AppColors.black06,
-              width: 1.18,
+              width: 1,
             ),
             boxShadow: const [
               BoxShadow(
@@ -54,34 +56,28 @@ class CustomSelectableCard extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 15.18,
-              vertical: 13.18,
-            ),
+            padding: const EdgeInsets.all(10),
             child: Row(
+              spacing: 10,
               children: [
-                if (leading != null) ...[leading!, const SizedBox(width: 12)],
+                if (leading != null) ...[leading!],
                 Expanded(
                   child: Column(
+                    spacing: 10,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
-                          fontFamily: 'Plus Jakarta Sans',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                        style: textStyle.labelLarge?.copyWith(
                           color: AppColors.inkBlack,
                         ),
                       ),
                       if (subtitle != null) ...[
-                        const SizedBox(height: 2),
                         Text(
                           subtitle!,
-                          style: const TextStyle(
+                          style: textStyle.labelSmall?.copyWith(
                             fontFamily: 'DM Sans',
-                            fontSize: 11,
                             color: AppColors.taupeBrown,
                           ),
                         ),
@@ -92,16 +88,17 @@ class CustomSelectableCard extends StatelessWidget {
                 if (trailingText != null) ...[
                   Text(
                     trailingText!,
-                    style: const TextStyle(
-                      fontFamily: 'Plus Jakarta Sans',
-                      fontSize: 14,
+                    style: textStyle.labelLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppColors.taupeBrown,
                     ),
                   ),
-                  const SizedBox(width: 8),
                 ],
-                _Control(control: control, selected: selected),
+                _Control(
+                  control: control,
+                  selected: selected,
+                  onChanged: onTap,
+                ),
               ],
             ),
           ),
@@ -115,60 +112,26 @@ class _Control extends StatelessWidget {
   final SelectableControl control;
   final bool selected;
 
-  const _Control({required this.control, required this.selected});
+  /// Fired when the control is toggled; mirrors the card's own tap.
+  final VoidCallback onChanged;
+
+  const _Control({
+    required this.control,
+    required this.selected,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Both are styled through the app theme (checkboxTheme / radioTheme).
     if (control == SelectableControl.radio) {
-      return Container(
-        width: 20,
-        height: 20,
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: selected
-                ? AppColors.primary
-                : AppColors.pearlGrey,
-            width: 1.18,
-          ),
-        ),
-        child: selected
-            ? Center(
-                child: Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              )
-            : null,
+      return RadioGroup<bool>(
+        groupValue: selected,
+        onChanged: (_) => onChanged(),
+        child: const Radio<bool>(value: true),
       );
     }
 
-    return Container(
-      width: 22,
-      height: 22,
-      decoration: BoxDecoration(
-        color: selected ? AppColors.primary : AppColors.whisperGrey,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.black10, width: 1.18),
-      ),
-      child: selected
-          ? Center(
-              child: SvgPicture.asset(
-                'assets/icons/check.svg',
-                width: 13,
-                height: 13,
-                colorFilter: const ColorFilter.mode(
-                  Colors.white,
-                  BlendMode.srcIn,
-                ),
-              ),
-            )
-          : null,
-    );
+    return Checkbox(value: selected, onChanged: (_) => onChanged());
   }
 }

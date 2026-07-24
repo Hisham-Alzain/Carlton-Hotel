@@ -37,7 +37,7 @@ class RoomDetailsView extends StatelessWidget {
                 width: double.infinity,
                 height: 52,
                 backgroundColor: AppColors.lagoonTeal,
-                onPressed: () => controller.beginBooking(room),
+                onPressed: () {},
                 child: const Text('Select This Room'),
               ),
               CustomElevatedButton(

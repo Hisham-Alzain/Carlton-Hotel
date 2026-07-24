@@ -1,6 +1,5 @@
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 /// Title/subtitle row with a −/+ stepper, used for the Adults / Children guest
 /// counts on Plan Your Stay. Controlled: it renders [value] and reports the
@@ -29,28 +28,22 @@ class CustomCounterField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final canDecrement = value > min;
-    final canIncrement = value < max;
 
-    return Container(
-      padding: const EdgeInsets.all(17.18),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.black06, width: 1.18),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.slateShadow04,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
+    return Card(
+      color: AppColors.white,
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadiusGeometry.circular(12),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
+      margin: const EdgeInsets.all(10),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Row(
+          spacing: 10,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              spacing: 10,
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -62,93 +55,52 @@ class CustomCounterField extends StatelessWidget {
                   ),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 2),
                   Text(
                     subtitle!,
-                    style: const TextStyle(
+                    style: textTheme.labelMedium?.copyWith(
                       fontFamily: 'DM Sans',
-                      fontSize: 12,
                       color: AppColors.taupeBrown,
                     ),
                   ),
                 ],
               ],
             ),
-          ),
-          Row(
-            children: [
-              _StepButton(
-                iconPath: 'assets/icons/minus.svg',
-                filled: false,
-                enabled: canDecrement,
-                onTap: () => onChanged(value - 1),
-              ),
-              const SizedBox(width: 14),
-              ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 20),
-                child: Text(
+            Row(
+              spacing: 20,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.whisperGrey,
+                  ),
+                  child: IconButton(
+                    onPressed: () => onChanged(value - 1),
+                    icon: const Icon(Icons.remove, color: AppColors.inkBlack),
+                  ),
+                ),
+
+                Text(
                   '$value',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 18,
+                  style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
                   ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              _StepButton(
-                iconPath: 'assets/icons/plus.svg',
-                filled: true,
-                enabled: canIncrement,
-                onTap: () => onChanged(value + 1),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
 
-class _StepButton extends StatelessWidget {
-  final String iconPath;
-  final bool filled;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  const _StepButton({
-    required this.iconPath,
-    required this.filled,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = filled ? AppColors.primary : AppColors.whisperGrey;
-    final iconColor = filled ? Colors.white : AppColors.inkBlack;
-    return Opacity(
-      opacity: enabled ? 1 : 0.4,
-      child: Material(
-        color: bg,
-        shape: const CircleBorder(),
-        child: InkWell(
-          onTap: enabled ? onTap : null,
-          customBorder: const CircleBorder(),
-          child: SizedBox(
-            width: 32,
-            height: 32,
-            child: Center(
-              child: SvgPicture.asset(
-                iconPath,
-                width: 14,
-                height: 14,
-                colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-              ),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primary,
+                  ),
+                  child: IconButton(
+                    onPressed: () => onChanged(value + 1),
+                    icon: const Icon(Icons.add, color: AppColors.white),
+                  ),
+                ),
+              ],
             ),
-          ),
+          ],
         ),
       ),
     );

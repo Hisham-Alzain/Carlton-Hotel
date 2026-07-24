@@ -96,7 +96,7 @@ class StaysController extends GetxController
   /// or card details into the next one.
   void startBooking() {
     Get.find<BookingFlowController>().reset();
-    Get.toNamed(Routes.planStay);
+    // Get.toNamed(Routes.planStay);
   }
 
   @override

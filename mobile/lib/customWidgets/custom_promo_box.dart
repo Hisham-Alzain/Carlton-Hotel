@@ -2,6 +2,7 @@ import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class CustomPromoBox extends StatelessWidget {
   final TextEditingController controller;
@@ -15,6 +16,7 @@ class CustomPromoBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     return Container(
       padding: const EdgeInsets.all(15.18),
       decoration: BoxDecoration(
@@ -26,12 +28,10 @@ class CustomPromoBox extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 10,
         children: [
-          const Text(
+          Text(
             'Promo Code',
-            style: TextStyle(
+            style: textStyle.labelMedium?.copyWith(
               fontFamily: 'Plus Jakarta Sans',
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
               color: AppColors.inkBlack,
             ),
           ),

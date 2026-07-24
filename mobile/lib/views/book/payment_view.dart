@@ -1,10 +1,8 @@
 import 'package:carlton/components/booking_summary_header.dart';
-import 'package:carlton/components/custom_booking_app_bar.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_card_form.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_pay_at_hotel_panel.dart';
-import 'package:carlton/customWidgets/custom_promo_box.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/customWidgets/custom_selectable_card.dart';
 import 'package:carlton/customWidgets/custom_wallet_panel.dart';
@@ -13,13 +11,7 @@ import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-
-const _sectionLabelStyle = TextStyle(
-  fontFamily: 'Plus Jakarta Sans',
-  fontSize: 14,
-  fontWeight: FontWeight.w600,
-  color: AppColors.inkBlack,
-);
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 /// Step 5 — payment method + card form (Figma "Booking / Step 8"). Review
 /// Booking stays disabled until the selected method's details are complete.
@@ -36,69 +28,82 @@ class PaymentView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      appBar: const CustomBookingAppBar(title: 'Payment', currentStep: 5),
-      body: GetBuilder<BookingFlowController>(
-        builder: (c) => Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: 14,
-                  children: [
-                    BookingSummaryHeader(controller: c),
-                    CustomPromoBox(
-                      controller: c.promoCtrl,
-                      onApply: c.applyPromo,
-                    ),
-                    const Text('Payment Method', style: _sectionLabelStyle),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 8,
-                      children: [
-                        for (final m in PaymentMethod.values)
-                          CustomSelectableCard(
-                            title: m.label,
-                            subtitle: m.subtitle,
-                            control: SelectableControl.radio,
-                            selected: c.paymentMethod == m,
-                            onTap: () => c.selectPaymentMethod(m),
-                            leading: _leadingIcon(
-                              _icons[m]!,
-                              c.paymentMethod == m,
-                            ),
-                          ),
-                      ],
-                    ),
-                    _methodBody(c),
-                  ],
-                ),
-              ),
+      appBar: AppBar(
+        title: Text('Payment'),
+        iconTheme: IconThemeData(color: Colors.black),
+        actions: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.whisperGrey,
             ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                child: CustomFilledButton(
-                  width: double.infinity,
+            child: IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.close, color: AppColors.inkBlack),
+            ),
+          ),
+        ],
+      ),
+      body: GetBuilder<BookingFlowController>(
+        builder: (c) {
+          final TextTheme textStyle = Get.textTheme;
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 10,
+              children: [
+                AnimatedSmoothIndicator(
+                  activeIndex: 4,
+                  count: 6,
+                  effect: SlideEffect(
+                    dotHeight: 5,
+                    dotWidth: 50,
+                    spacing: 20,
+                    activeDotColor: AppColors.primary,
+                    dotColor: AppColors.iceBlue,
+                  ),
+                ),
+                BookingSummaryHeader(controller: c),
+                // CustomPromoBox(
+                //   controller: c.promoCtrl,
+                //   onApply: c.applyPromo,
+                // ),
+                Text(
+                  'Payment Method',
+                  style: textStyle.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.inkBlack,
+                  ),
+                ),
+                for (final m in PaymentMethod.values)
+                  CustomSelectableCard(
+                    title: m.label,
+                    subtitle: m.subtitle,
+                    control: SelectableControl.radio,
+                    selected: c.paymentMethod == m,
+                    onTap: () => c.selectPaymentMethod(m),
+                    leading: _leadingIcon(_icons[m]!, c.paymentMethod == m),
+                  ),
+                _methodBody(c),
+                CustomFilledButton(
                   backgroundColor: c.canReviewBooking
                       ? AppColors.lagoonTeal
                       : AppColors.pearlGrey,
                   onPressed: c.canReviewBooking ? c.reviewBooking : null,
                   child: const Text('Continue'),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   static Widget _leadingIcon(String assetPath, bool selected) => Container(
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     alignment: Alignment.center,
     decoration: BoxDecoration(
       color: selected ? AppColors.primary07 : AppColors.pearlCream,
@@ -132,6 +137,7 @@ class PaymentView extends StatelessWidget {
           footer:
               "You'll be redirected to Apple Pay to complete authorization.",
         );
+      //TODO: add correct google  icon
       case PaymentMethod.googlePay:
         return const CustomWalletPanel(
           glyphPath: 'assets/icons/pay_google.svg',

@@ -21,6 +21,7 @@ class BookingConfirmedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     final c = Get.find<BookingFlowController>();
     final code = c.confirmationCode ?? '';
     final email = c.emailCtrl.text.trim();
@@ -77,9 +78,28 @@ class BookingConfirmedView extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               spacing: 4,
                               children: [
-                                Text('Booking Confirmed!', style: _titleStyle),
-                                Text(room?.name ?? '', style: _roomStyle),
-                                Text(c.dateRange, style: _dateStyle),
+                                Text(
+                                  'Booking Confirmed!',
+                                  style: textStyle.headlineSmall?.copyWith(
+                                    fontFamily: 'Plus Jakarta Sans',
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                Text(
+                                  room?.name ?? '',
+                                  style: textStyle.labelLarge?.copyWith(
+                                    fontFamily: 'DM Sans',
+                                    color: AppColors.slateGrey,
+                                  ),
+                                ),
+                                Text(
+                                  c.dateRange,
+                                  style: textStyle.labelMedium?.copyWith(
+                                    fontFamily: 'DM Sans',
+                                    color: AppColors.slateGrey,
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -115,55 +135,59 @@ class BookingConfirmedView extends StatelessWidget {
     );
   }
 
-  Widget _header() => Container(
-    height: 61,
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    decoration: const BoxDecoration(
-      color: AppColors.white,
-      border: Border(bottom: BorderSide(color: AppColors.black05, width: 1.18)),
-    ),
-    child: Row(
-      children: [
-        // Not a gap: a 32px counterweight to the close button, so the centred
-        // title lands on the true centre. `spacing:` can't express it.
-        const SizedBox(width: 32),
-        const Expanded(
-          child: Text(
-            'Booking Confirmed',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Plus Jakarta Sans',
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.inkBlack,
-            ),
-          ),
+  Widget _header() {
+    final TextTheme textStyle = Get.textTheme;
+    return Container(
+      height: 61,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        border: Border(
+          bottom: BorderSide(color: AppColors.black05, width: 1.18),
         ),
-        InkWell(
-          onTap: () => Get.until((r) => r.isFirst),
-          customBorder: const CircleBorder(),
-          child: Container(
-            width: 32,
-            height: 32,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppColors.pebbleGrey73,
-              shape: BoxShape.circle,
-            ),
-            child: SvgPicture.asset(
-              'assets/icons/close.svg',
-              width: 16,
-              height: 16,
-              colorFilter: const ColorFilter.mode(
-                AppColors.inkBlack,
-                BlendMode.srcIn,
+      ),
+      child: Row(
+        children: [
+          // Not a gap: a 32px counterweight to the close button, so the centred
+          // title lands on the true centre. `spacing:` can't express it.
+          const SizedBox(width: 32),
+          Expanded(
+            child: Text(
+              'Booking Confirmed',
+              textAlign: TextAlign.center,
+              style: textStyle.titleMedium?.copyWith(
+                fontFamily: 'Plus Jakarta Sans',
+                fontWeight: FontWeight.w600,
+                color: AppColors.inkBlack,
               ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
+          InkWell(
+            onTap: () => Get.until((r) => r.isFirst),
+            customBorder: const CircleBorder(),
+            child: Container(
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: AppColors.pebbleGrey73,
+                shape: BoxShape.circle,
+              ),
+              child: SvgPicture.asset(
+                'assets/icons/close.svg',
+                width: 16,
+                height: 16,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.inkBlack,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _badge() => Container(
     width: 96,
@@ -182,85 +206,85 @@ class BookingConfirmedView extends StatelessWidget {
     ),
   );
 
-  Widget _codeBox(String code) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-    decoration: BoxDecoration(
-      color: AppColors.cream,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 4,
-      children: [
-        const Text(
-          'CONFIRMATION CODE',
-          style: TextStyle(
-            fontFamily: 'DM Sans',
-            fontSize: 11,
-            letterSpacing: 0.5,
-            color: AppColors.walnutGold,
-          ),
-        ),
-        Text(
-          code,
-          style: const TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.5,
-            color: AppColors.primary,
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Widget _copyButton(String code) => InkWell(
-    onTap: code.isEmpty ? null : () => _copyCode(code),
-    borderRadius: BorderRadius.circular(10),
-    child: Container(
-      width: 230,
-      height: 52,
-      alignment: Alignment.center,
+  Widget _codeBox(String code) {
+    final TextTheme textStyle = Get.textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.linenGrey,
-        borderRadius: BorderRadius.circular(10),
+        color: AppColors.cream,
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         spacing: 4,
         children: [
-          SvgPicture.asset(
-            'assets/icons/copy.svg',
-            width: 17,
-            height: 17,
-            colorFilter: const ColorFilter.mode(
-              AppColors.charcoal,
-              BlendMode.srcIn,
+          Text(
+            'CONFIRMATION CODE',
+            style: textStyle.labelSmall?.copyWith(
+              fontFamily: 'DM Sans',
+              color: AppColors.walnutGold,
             ),
           ),
-          const Text(
-            'Copy',
-            style: TextStyle(
-              fontFamily: 'DM Sans',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.charcoal,
+          Text(
+            code,
+            style: textStyle.titleLarge?.copyWith(
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
             ),
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
+
+  Widget _copyButton(String code) {
+    final TextTheme textStyle = Get.textTheme;
+    return InkWell(
+      onTap: code.isEmpty ? null : () => _copyCode(code),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 230,
+        height: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.linenGrey,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          spacing: 4,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/copy.svg',
+              width: 17,
+              height: 17,
+              colorFilter: const ColorFilter.mode(
+                AppColors.charcoal,
+                BlendMode.srcIn,
+              ),
+            ),
+            Text(
+              'Copy',
+              style: textStyle.labelLarge?.copyWith(
+                fontFamily: 'DM Sans',
+                color: AppColors.charcoal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _sentNote(String email) {
-    const base = TextStyle(
+    final TextTheme textStyle = Get.textTheme;
+    final base = textStyle.labelMedium?.copyWith(
       fontFamily: 'DM Sans',
-      fontSize: 13,
       color: AppColors.graphite,
     );
     if (email.isEmpty) {
-      return const Text(
+      return Text(
         'A confirmation is on its way. We look forward to welcoming you.',
         textAlign: TextAlign.center,
         style: base,
@@ -284,25 +308,4 @@ class BookingConfirmedView extends StatelessWidget {
       textAlign: TextAlign.center,
     );
   }
-
-  static const _titleStyle = TextStyle(
-    fontFamily: 'Plus Jakarta Sans',
-    fontSize: 24,
-    fontWeight: FontWeight.w600,
-    color: AppColors.primary,
-  );
-
-  static const _roomStyle = TextStyle(
-    fontFamily: 'DM Sans',
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-    color: AppColors.slateGrey,
-  );
-
-  static const _dateStyle = TextStyle(
-    fontFamily: 'DM Sans',
-    fontSize: 13,
-    fontWeight: FontWeight.w500,
-    color: AppColors.slateGrey,
-  );
 }

@@ -1,6 +1,8 @@
+import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 
 class CustomWalletPanel extends StatelessWidget {
   final String glyphPath;
@@ -24,26 +26,27 @@ class CustomWalletPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     return Container(
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.black07, width: 1.18),
+        border: Border.all(color: AppColors.black07, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
             color: AppColors.inkBlack,
-            padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
+            padding: const EdgeInsets.all(10),
             child: Column(
-              spacing: 8,
+              spacing: 10,
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 50,
+                  height: 50,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: badgeColor,
@@ -51,8 +54,8 @@ class CustomWalletPanel extends StatelessWidget {
                   ),
                   child: SvgPicture.asset(
                     glyphPath,
-                    width: 26,
-                    height: 26,
+                    width: 30,
+                    height: 30,
                     colorFilter: tintGlyphWhite
                         ? const ColorFilter.mode(
                             AppColors.white,
@@ -64,9 +67,7 @@ class CustomWalletPanel extends StatelessWidget {
                 Text(
                   title,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 16,
+                  style: textStyle.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.white,
                   ),
@@ -74,9 +75,8 @@ class CustomWalletPanel extends StatelessWidget {
                 Text(
                   subtitle,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: textStyle.labelMedium?.copyWith(
                     fontFamily: 'DM Sans',
-                    fontSize: 12,
                     color: AppColors.white73,
                   ),
                 ),
@@ -87,45 +87,43 @@ class CustomWalletPanel extends StatelessWidget {
             padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 12,
+              spacing: 10,
               children: [
+                //TODO:do not use for loop
                 for (final b in bullets)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 8,
+                    spacing: 10,
                     children: [
-                      const Icon(
-                        Icons.check_circle,
-                        size: 18,
-                        color: AppColors.successGreen,
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.successGreen),
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          size: 10,
+                          color: AppColors.successGreen,
+                        ),
                       ),
-                      Expanded(
-                        child: Text(
-                          b,
-                          style: const TextStyle(
-                            fontFamily: 'DM Sans',
-                            fontSize: 13,
-                            color: AppColors.inkBlack,
-                          ),
+                      Text(
+                        b,
+                        style: textStyle.labelMedium?.copyWith(
+                          fontFamily: 'DM Sans',
+                          color: AppColors.inkBlack,
                         ),
                       ),
                     ],
                   ),
-                Container(
+                PillContainer(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.whisperGrey,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  padding: const EdgeInsets.all(10),
+                  backgroundColor: AppColors.whisperGrey,
+                  radius: 8,
                   child: Text(
                     footer,
-                    style: const TextStyle(
+                    style: textStyle.labelSmall?.copyWith(
                       fontFamily: 'DM Sans',
-                      fontSize: 11,
                       color: AppColors.dimGrey,
                     ),
                   ),

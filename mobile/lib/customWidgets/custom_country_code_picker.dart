@@ -130,15 +130,21 @@ class CustomCountryCodePicker extends StatelessWidget {
   /// Optional extra hook for callers that need the raw [CountryCode].
   final void Function(CountryCode)? onCodeChanged;
 
+  /// Fill for the picker button, the dialog, and its search field. Defaults to
+  /// cream; pass the field's fill (e.g. whisperGrey) so the two match.
+  final Color? fillColor;
+
   const CustomCountryCodePicker({
     required this.phone,
     this.onCodeChanged,
+    this.fillColor,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Get.theme;
+    final fill = fillColor ?? AppColors.cream;
 
     // final labelStyle = theme.textTheme.labelSmall?.copyWith(
     //   fontFamily: 'JetJetBrainsMono',
@@ -181,7 +187,7 @@ class CustomCountryCodePicker extends StatelessWidget {
         // width: 90,
         height: 60,
         decoration: BoxDecoration(
-          color: AppColors.cream,
+          color: fill,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -197,18 +203,18 @@ class CustomCountryCodePicker extends StatelessWidget {
           ],
         ),
       ),
-      dialogBackgroundColor: AppColors.cream,
+      dialogBackgroundColor: fill,
       barrierColor: Colors.transparent,
       dialogItemPadding: const EdgeInsetsGeometry.all(10),
       dialogTextStyle: inputStyle,
       searchStyle: inputStyle,
       searchDecoration: InputDecoration(
-        border: border(AppColors.cream),
+        border: border(fill),
         enabledBorder: border(AppColors.antiqueGold),
         focusedBorder: border(AppColors.antiqueGold),
         errorBorder: border(AppColors.salmonRed),
         hint: Text(AppTranslations.search, style: hintStyle),
-        fillColor: AppColors.cream,
+        fillColor: fill,
         filled: true,
         iconColor: AppColors.antiqueGold,
       ),

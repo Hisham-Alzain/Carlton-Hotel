@@ -1,3 +1,4 @@
+import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,6 +30,9 @@ class MainController extends GetxController {
     if (Get.isRegistered<HomeController>()) {
       Get.find<HomeController>().setTabVisible(index == 0);
     }
+    // Book (tab 2) is a live plan editor — start every visit from a fresh
+    // draft, matching the old "Start Booking" behavior.
+    if (index == 2) Get.find<BookingFlowController>().reset();
     update();
   }
 

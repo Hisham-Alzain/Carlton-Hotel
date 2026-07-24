@@ -1,67 +1,106 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 /// Full-bleed image carousel with prev/next arrows and page dots — generic
-/// enough for any multi-photo gallery (room details, listings, etc). Fully
-/// controlled: the caller owns [index] and reacts to [onIndexChanged].
-class CustomImageCarousel extends StatelessWidget {
+/// enough for any multi-photo gallery (room details, listings, etc). Swipe is
+/// driven by `carousel_slider`; the caller still owns [index] and is notified
+/// of changes through [onIndexChanged], so external state stays in sync.
+class CustomImageCarousel extends StatefulWidget {
   final List<String> images;
   final int index;
   final ValueChanged<int> onIndexChanged;
   final double height;
-
-  /// Optional overlay in the top-right corner (e.g. a close button).
-  final Widget? topRight;
 
   const CustomImageCarousel({
     required this.images,
     required this.index,
     required this.onIndexChanged,
     this.height = 220,
-    this.topRight,
     super.key,
   });
 
   @override
+  State<CustomImageCarousel> createState() => _CustomImageCarouselState();
+}
+
+class _CustomImageCarouselState extends State<CustomImageCarousel> {
+  final _controller = CarouselSliderController();
+  late int _current = _clamp(widget.index);
+
+  int _clamp(int i) =>
+      widget.images.isEmpty ? 0 : i.clamp(0, widget.images.length - 1);
+
+  @override
+  void didUpdateWidget(CustomImageCarousel old) {
+    super.didUpdateWidget(old);
+    // The owner moved the index externally (e.g. a reset) — follow it. Guarded
+    // so the onPageChanged -> onIndexChanged -> rebuild round-trip is a no-op.
+    final target = _clamp(widget.index);
+    if (target != _current && widget.images.isNotEmpty) {
+      _current = target;
+      _controller.animateToPage(target);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (images.isEmpty) return SizedBox(height: height);
-    final active = index.clamp(0, images.length - 1);
+    final images = widget.images;
+    if (images.isEmpty) return SizedBox(height: widget.height);
+    final hasMany = images.length > 1;
 
     return SizedBox(
-      height: height,
+      height: widget.height,
       width: double.infinity,
       child: Stack(
         children: [
-          Positioned.fill(
-            child: CustomImage(path: images[active], fit: BoxFit.cover),
+          CarouselSlider(
+            carouselController: _controller,
+            options: CarouselOptions(
+              height: widget.height,
+              viewportFraction: 1,
+              initialPage: _current,
+              enableInfiniteScroll: hasMany,
+              onPageChanged: (i, _) {
+                setState(() => _current = i);
+                widget.onIndexChanged(i);
+              },
+            ),
+            //TODO: do not use for loop
+            items: [
+              for (final path in images)
+                CustomImage(
+                  path: path,
+                  width: double.infinity,
+                  height: widget.height,
+                  fit: BoxFit.cover,
+                ),
+            ],
           ),
-          if (topRight != null)
-            Positioned(right: 14, top: 14, child: topRight!),
-          if (images.length > 1) ...[
+
+          if (hasMany) ...[
             Positioned(
               left: 14,
-              top: height / 2 - 18,
+              top: widget.height / 2 - 18,
               child: _arrow(
-                onTap: () => onIndexChanged(
-                  (active - 1 + images.length) % images.length,
-                ),
+                icon: Icons.chevron_left,
+                onTap: _controller.previousPage,
               ),
             ),
             Positioned(
               right: 14,
-              top: height / 2 - 18,
+              top: widget.height / 2 - 18,
               child: _arrow(
-                onTap: () => onIndexChanged((active + 1) % images.length),
-                flip: true,
+                icon: Icons.chevron_right,
+                onTap: _controller.nextPage,
               ),
             ),
             Positioned(
               bottom: 14,
               left: 0,
               right: 0,
-              child: _dots(images.length, active),
+              child: _dots(images.length, _current),
             ),
           ],
         ],
@@ -69,26 +108,19 @@ class CustomImageCarousel extends StatelessWidget {
     );
   }
 
-  Widget _arrow({required VoidCallback onTap, bool flip = false}) {
-    Widget glyph = SvgPicture.asset(
-      'assets/icons/chevron_left.svg',
-      width: 18,
-      height: 18,
-      colorFilter: const ColorFilter.mode(AppColors.inkBlack, BlendMode.srcIn),
-    );
-    if (flip) glyph = Transform.flip(flipX: true, child: glyph);
-    return InkWell(
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: Container(
-        width: 36,
-        height: 36,
-        alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          color: AppColors.white73,
-          shape: BoxShape.circle,
-        ),
-        child: glyph,
+  Widget _arrow({required IconData icon, required VoidCallback onTap}) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: const BoxDecoration(
+        color: AppColors.white73,
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        onPressed: onTap,
+        padding: EdgeInsets.zero,
+        iconSize: 22,
+        icon: Icon(icon, color: AppColors.inkBlack),
       ),
     );
   }

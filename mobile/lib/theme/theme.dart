@@ -331,30 +331,28 @@ class Themes {
     checkboxTheme: CheckboxThemeData(
       fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
         if (states.contains(WidgetState.selected)) {
-          // return AppColors.primaryColor; // Color when checked
+          return AppColors.primary; // Color when checked
         }
         return Colors.transparent; // Transparent when unchecked
       }),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       checkColor: const WidgetStatePropertyAll(Colors.white),
-      side: const BorderSide(
-        // color:
-      ),
+      side: const BorderSide(color: AppColors.black10, width: 1),
     ),
 
     chipTheme: ChipThemeData(
-      backgroundColor: AppColors.featherGrey,
+      backgroundColor: AppColors.primary08,
       selectedColor: AppColors.primary,
       showCheckmark: false,
       labelStyle: const TextStyle(
         fontFamily: _mainFontFamily,
         fontSize: 12,
         fontWeight: FontWeight.w400,
-        color: AppColors.charcoalTeal,
+        color: AppColors.oliveTaupe,
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppColors.linenTaupe30),
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.white, width: 1),
       ),
     ),
 
@@ -387,7 +385,10 @@ class Themes {
     ),
 
     radioTheme: RadioThemeData(
-      // fillColor: WidgetStatePropertyAll()
+      fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        if (states.contains(WidgetState.selected)) return AppColors.primary;
+        return AppColors.pearlGrey;
+      }),
     ),
     datePickerTheme: DatePickerThemeData(),
 

@@ -1,5 +1,6 @@
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Labelled date field used for CHECK-IN / CHECK-OUT (Upcoming stay card, static;
 /// Plan Your Stay, tappable). [selected] swaps to the warm fill + gold border the
@@ -21,51 +22,41 @@ class CustomDateBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: selected ? AppColors.ivoryCream : AppColors.ghostWhite,
+    final TextTheme textStyle = Get.textTheme;
+    return InkWell(
+      onTap: onTap,
       borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 15.18,
-            vertical: 13.18,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.ivoryCream : AppColors.ghostWhite,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? AppColors.harvestGold46 : AppColors.fogGrey35,
+            width: 1,
           ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: selected
-                  ? AppColors.harvestGold46
-                  : AppColors.fogGrey35,
-              width: 1.18,
+        ),
+        child: Column(
+          spacing: 10,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label.toUpperCase(),
+              style: textStyle.labelSmall?.copyWith(
+                fontFamily: 'DM Sans',
+                color: AppColors.antiqueGold,
+              ),
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label.toUpperCase(),
-                style: const TextStyle(
-                  fontFamily: 'DM Sans',
-                  fontSize: 10,
-                  letterSpacing: 0.5,
-                  color: AppColors.antiqueGold,
-                ),
+
+            Text(
+              value,
+              style: textStyle.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
               ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontFamily: 'Plus Jakarta Sans',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

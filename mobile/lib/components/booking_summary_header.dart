@@ -1,8 +1,10 @@
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
+import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
+import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 
 /// Room hero + total-so-far card shared by the Payment and Review Booking
 /// screens (Figma "Booking / Step 12", node 2146:16780).
@@ -13,6 +15,7 @@ class BookingSummaryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     final c = controller;
     final room = c.selectedRoom!;
 
@@ -30,6 +33,7 @@ class BookingSummaryHeader extends StatelessWidget {
         ],
       ),
       child: Column(
+        spacing: 10,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
@@ -40,69 +44,62 @@ class BookingSummaryHeader extends StatelessWidget {
                 CustomImage(path: room.images.first, fit: BoxFit.cover),
                 DecoratedBox(
                   decoration: BoxDecoration(
-                    color: AppColors.slateTeal.withValues(alpha: 0.79),
+                    color: AppColors.slateTeal.withValues(alpha: 0.8),
                   ),
                 ),
-                Positioned(
-                  left: 14,
-                  bottom: 12,
-                  right: 14,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        room.name,
-                        style: const TextStyle(
-                          fontFamily: 'Plus Jakarta Sans',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.white,
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          room.name,
+                          style: textStyle.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.white,
+                          ),
                         ),
-                      ),
-                      Text(
-                        '${c.dateRange} · ${c.nights} nights',
-                        style: const TextStyle(
-                          fontFamily: 'DM Sans',
-                          fontSize: 12,
-                          color: AppColors.white73,
+                        Text(
+                          '${c.dateRange} · ${c.nights} nights',
+                          style: textStyle.labelMedium?.copyWith(
+                            fontFamily: 'DM Sans',
+                            color: AppColors.white73,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(color: AppColors.primary, width: 1.18),
-              ),
-            ),
+          Padding(
+            padding: const EdgeInsets.all(10),
             child: Row(
+              spacing: 10,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
+                    spacing: 10,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         'Total',
-                        style: TextStyle(
+                        style: textStyle.labelLarge?.copyWith(
                           fontFamily: 'Plus Jakarta Sans',
-                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppColors.inkBlack,
                         ),
                       ),
                       Text(
                         'Includes taxes and service fees',
-                        style: TextStyle(
+                        style: textStyle.labelSmall?.copyWith(
                           fontFamily: 'DM Sans',
-                          fontSize: 9,
                           color: AppColors.primary,
                         ),
                       ),
@@ -110,49 +107,30 @@ class BookingSummaryHeader extends StatelessWidget {
                   ),
                 ),
                 Column(
+                  spacing: 10,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       '\$${c.grandTotal}',
-                      style: const TextStyle(
+                      style: textStyle.titleLarge?.copyWith(
                         fontFamily: 'Plus Jakarta Sans',
-                        fontSize: 20,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primary,
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.linenGrey,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        spacing: 4,
-                        children: [
-                          const Text(
-                            'View price details',
-                            style: TextStyle(
-                              fontFamily: 'DM Sans',
-                              fontSize: 9,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          SvgPicture.asset(
-                            'assets/icons/chevron_down.svg',
-                            width: 13,
-                            height: 13,
-                            colorFilter: const ColorFilter.mode(
-                              AppColors.primary,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                        ],
+                    PillContainer(
+                      backgroundColor: AppColors.linenGrey,
+                      radius: 4,
+                      child: RowTextComponent(
+                        text: 'View price details',
+                        textStyle: textStyle.labelSmall?.copyWith(
+                          fontFamily: 'DM Sans',
+                          color: AppColors.primary,
+                        ),
+                        icon: Icons.arrow_drop_down,
+                        iconColor: AppColors.primary,
+                        spacing: 10,
                       ),
                     ),
                   ],

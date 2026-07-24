@@ -112,6 +112,7 @@ class CustomRequestCard extends StatelessWidget {
   /// A row in the 3-dot popover (matches the Figma "Home" menu frame): a small
   /// outline icon + label in #2A2A2A medium.
   Widget _menuRow(IconData icon, String label, double iconSize) {
+    final TextTheme textStyle = Get.textTheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 10,
@@ -119,11 +120,7 @@ class CustomRequestCard extends StatelessWidget {
         Icon(icon, size: iconSize, color: AppColors.charcoal),
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.charcoal,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          style: textStyle.labelLarge?.copyWith(color: AppColors.charcoal),
         ),
       ],
     );

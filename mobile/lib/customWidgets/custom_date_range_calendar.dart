@@ -1,5 +1,6 @@
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class CustomDateRangeCalendar extends StatelessWidget {
@@ -33,6 +34,7 @@ class CustomDateRangeCalendar extends StatelessWidget {
     double radius = 4,
     FontWeight weight = FontWeight.w400,
   }) {
+    final TextTheme textStyle = Get.textTheme;
     return Center(
       child: Container(
         width: 42,
@@ -49,9 +51,8 @@ class CustomDateRangeCalendar extends StatelessWidget {
               ),
         child: Text(
           day,
-          style: TextStyle(
+          style: textStyle.labelMedium?.copyWith(
             fontFamily: 'DM Sans',
-            fontSize: 12,
             fontWeight: weight,
             color: text,
           ),
@@ -62,6 +63,7 @@ class CustomDateRangeCalendar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
     return Container(
       padding: const EdgeInsets.all(15.18),
       decoration: BoxDecoration(
@@ -95,22 +97,19 @@ class CustomDateRangeCalendar extends StatelessWidget {
           leftChevronVisible: showNavigation,
           rightChevronVisible: showNavigation,
           headerPadding: const EdgeInsets.only(bottom: 12),
-          titleTextStyle: const TextStyle(
+          titleTextStyle: textStyle.labelMedium!.copyWith(
             fontFamily: 'Plus Jakarta Sans',
-            fontSize: 13,
             fontWeight: FontWeight.w600,
             color: AppColors.inkBlack,
           ),
         ),
-        daysOfWeekStyle: const DaysOfWeekStyle(
-          weekdayStyle: TextStyle(
+        daysOfWeekStyle: DaysOfWeekStyle(
+          weekdayStyle: textStyle.labelSmall!.copyWith(
             fontFamily: 'DM Sans',
-            fontSize: 11,
             color: AppColors.taupeBrown,
           ),
-          weekendStyle: TextStyle(
+          weekendStyle: textStyle.labelSmall!.copyWith(
             fontFamily: 'DM Sans',
-            fontSize: 11,
             color: AppColors.taupeBrown,
           ),
         ),
@@ -120,9 +119,8 @@ class CustomDateRangeCalendar extends StatelessWidget {
             return Center(
               child: Text(
                 labels[day.weekday % 7],
-                style: const TextStyle(
+                style: textStyle.labelSmall?.copyWith(
                   fontFamily: 'DM Sans',
-                  fontSize: 11,
                   color: AppColors.taupeBrown,
                 ),
               ),

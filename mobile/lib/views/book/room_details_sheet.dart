@@ -1,6 +1,5 @@
 import 'package:carlton/components/room_details_content.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
-import 'package:carlton/customWidgets/custom_elevated_button.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -24,12 +23,9 @@ class RoomDetailsSheet extends StatelessWidget {
     return RoomDetailsContent(
       room: room,
       actions: Column(
-        mainAxisSize: MainAxisSize.min,
         spacing: 10,
         children: [
           CustomFilledButton(
-            width: double.infinity,
-            height: 52,
             backgroundColor: AppColors.lagoonTeal,
             onPressed: () {
               Get.back();
@@ -37,10 +33,7 @@ class RoomDetailsSheet extends StatelessWidget {
             },
             child: const Text('Select This Room'),
           ),
-          CustomElevatedButton(
-            width: double.infinity,
-            height: 48,
-            elevation: 0,
+          CustomFilledButton(
             backgroundColor: AppColors.whisperGrey,
             foregroundColor: AppColors.inkBlack,
             onPressed: () => Get.back(),

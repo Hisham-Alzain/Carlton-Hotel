@@ -167,7 +167,6 @@ class BookingFlowController extends GetxController {
       // The content scrolls itself and carries its own close button.
       scrollable: false,
       showClose: false,
-      heightFactor: 0.92,
       child: RoomDetailsSheet(room: room),
     );
   }
@@ -182,13 +181,13 @@ class BookingFlowController extends GetxController {
   /// "Select This Room" from the details screen — start a fresh booking with
   /// this room preselected. Resets first (like every other booking entry) so a
   /// prior booking's guest/card/add-on data never carries over.
-  void beginBooking(RoomOption room) {
-    reset();
-    selectedRoom = room;
-    roomPreselected = true;
-    update();
-    Get.toNamed(Routes.planStay);
-  }
+  // void beginBooking(RoomOption room) {
+  //   reset();
+  //   selectedRoom = room;
+  //   roomPreselected = true;
+  //   update();
+  //   Get.toNamed(Routes.planStay);
+  // }
 
   void selectRoom(RoomOption room) {
     selectedRoom = room;
@@ -212,7 +211,12 @@ class BookingFlowController extends GetxController {
   void continueFromAddOns() => Get.toNamed(Routes.guestDetails);
 
   // ── Step 4 — Guest Details ───────────────────────────────────────────────
-  void continueFromGuest() => Get.toNamed(Routes.payment);
+  final guestFormKey = GlobalKey<FormState>();
+
+  void continueFromGuest() {
+    // if (!guestFormKey.currentState!.validate()) return;
+    Get.toNamed(Routes.payment);
+  }
 
   // ── Step 5 — Payment ─────────────────────────────────────────────────────
   bool get isCardComplete =>
@@ -303,6 +307,9 @@ class BookingFlowController extends GetxController {
     promoCtrl.clear();
     promoApplied = false;
     confirmationCode = null;
+    // Rebuild live listeners (the Book tab's plan editor) after a reset; other
+    // callers navigate away right after, so this is harmless for them.
+    update();
   }
 
   @override

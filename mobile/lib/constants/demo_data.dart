@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/models/home_models.dart';
 import 'package:carlton/models/service_item.dart';
+import 'package:carlton/models/service_models.dart';
 import 'package:carlton/models/service_request.dart';
 
 /// Every hardcoded demo value in the app lives here, so wiring the real
@@ -14,6 +17,19 @@ abstract class DemoData {
 
   /// Simulated network round-trip used by every demo submit.
   static const networkDelay = Duration(milliseconds: 800);
+
+  // ── Checkout pricing (Figma Payment / Review flow) ────────────────────────
+  /// Taxes & fees applied to the booking subtotal.
+  static const taxRate = 0.15;
+
+  /// Discount applied once any promo code is entered (demo accepts anything).
+  static const promoRate = 0.10;
+
+  /// A fresh demo reservation code, e.g. "CRS-812-9032".
+  static String newConfirmationCode() {
+    final r = Random();
+    return 'CRS-${800 + r.nextInt(200)}-${1000 + r.nextInt(9000)}';
+  }
 
   // ── Homepage (Figma "homepage", node 2089:861) ─────────────────────────
   /// The hotel promo clip (the Figma hero's video fill). The source file is
@@ -96,6 +112,7 @@ abstract class DemoData {
 
   // ── Current stay (Services stay card, Figma 2073:133) ──────────────────
   static const room = 'Room 812';
+  static const stayRoomName = 'Grand Damascus Suite';
   static const checkedInTime = '3:00 PM';
   static const nightsRemaining = 2;
   static const stayImagePath = 'assets/images/stay_room.png';
@@ -167,6 +184,70 @@ abstract class DemoData {
       imageOpacity: 1,
     ),
   ];
+
+  // ── Services category detail (hub tile -> option list -> request sheet) ──
+  static const serviceCategories = <ServiceDetailCategory>[
+    ServiceDetailCategory(
+      key: 'room_service',
+      name: 'Room Service',
+      subtitle: '24-hour dining to your room',
+      imagePath: 'assets/images/tile_room_service.png',
+      options: [
+        ServiceOption(
+          iconPath: 'assets/icons/svc_breakfast.svg',
+          title: 'Carlton Breakfast',
+          description: 'Full breakfast selection with fresh juice',
+          eta: 'ETA: 25–35 min',
+        ),
+        ServiceOption(
+          iconPath: 'assets/icons/svc_lunch.svg',
+          title: 'Lunch Menu',
+          description: 'Syrian and international cuisine',
+          eta: 'ETA: 30–45 min',
+        ),
+        ServiceOption(
+          iconPath: 'assets/icons/svc_latenight.svg',
+          title: 'Late Night Menu',
+          description: 'Light bites available until 2 AM',
+          eta: 'ETA: 20–30 min',
+        ),
+      ],
+    ),
+    ServiceDetailCategory(
+      key: 'housekeeping',
+      name: 'Housekeeping',
+      subtitle: 'On demand',
+      imagePath: 'assets/images/tile_housekeeping.png',
+      options: [
+        ServiceOption(
+          iconPath: 'assets/icons/svc_clean.svg',
+          title: 'Room Cleaning',
+          description: 'Full room service and tidying',
+          eta: 'ETA: 45 min',
+        ),
+        ServiceOption(
+          iconPath: 'assets/icons/svc_towels.svg',
+          title: 'Fresh Towels',
+          description: 'Towels and linens replacement',
+          eta: 'ETA: 15 min',
+        ),
+        ServiceOption(
+          iconPath: 'assets/icons/svc_turndown.svg',
+          title: 'Turndown Service',
+          description: 'Evening bed preparation',
+          eta: 'ETA: On request',
+        ),
+      ],
+    ),
+  ];
+
+  /// Looks up a [ServiceDetailCategory] by its hub grid title (case-insensitive).
+  static ServiceDetailCategory? serviceCategoryByName(String name) {
+    for (final category in serviceCategories) {
+      if (category.name.toLowerCase() == name.toLowerCase()) return category;
+    }
+    return null;
+  }
 
   // ── Active requests (Figma "Services 2") ────────────────────────────────
   /// Returned as a fresh mutable list — the controller removes entries when

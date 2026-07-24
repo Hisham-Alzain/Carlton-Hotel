@@ -147,7 +147,9 @@ class _Footer extends StatelessWidget {
               width: double.infinity,
               backgroundColor: AppColors.lagoonTeal,
               onPressed: controller.searchRooms,
-              child: const Text('Search Rooms'),
+              child: Text(
+                controller.roomPreselected ? 'Continue' : 'Search Rooms',
+              ),
             ),
           ],
         ),

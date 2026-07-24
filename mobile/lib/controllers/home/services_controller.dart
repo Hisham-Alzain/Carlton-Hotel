@@ -1,11 +1,15 @@
 import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
 import 'package:carlton/customWidgets/custom_dialogs.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/enums/enums.dart';
 import 'package:carlton/models/reservation.dart';
 import 'package:carlton/models/service_item.dart';
+import 'package:carlton/models/service_models.dart';
 import 'package:carlton/models/service_request.dart';
+import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/session_service.dart';
+import 'package:carlton/views/services/service_request_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -73,6 +77,28 @@ class ServicesController extends GetxController
 
   void quickRequest(String label) =>
       CustomSnackbars.showSuccess(message: '$label requested');
+
+  /// Opens the category detail screen for a services-hub grid tile, matching
+  /// its title against [DemoData.serviceCategories]. Categories without demo
+  /// detail data fall back to the coming-soon snackbar.
+  void openServiceCategory(String categoryName) {
+    final category = DemoData.serviceCategoryByName(categoryName);
+    if (category == null) {
+      CustomSnackbars.showInfo(message: '$categoryName coming soon');
+      return;
+    }
+    Get.toNamed(Routes.serviceCategory, arguments: category);
+  }
+
+  /// Title/subtitle go to the sheet shell rather than the body so they share
+  /// the close button's row (Figma "Services 4").
+  void openServiceRequest(ServiceOption option) {
+    CustomBottomSheet.show<void>(
+      title: option.title,
+      subtitle: '${option.description} · ${option.etaLabel}',
+      child: ServiceRequestSheet(option: option),
+    );
+  }
 
   void toggleLogin() {
     isLoggedIn = !isLoggedIn;

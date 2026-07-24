@@ -9,8 +9,26 @@ import 'package:flutter_svg/flutter_svg.dart';
 class CustomPaymentCardPreview extends StatelessWidget {
   final String name;
   final String expiry;
+  final String number;
 
-  const CustomPaymentCardPreview({this.name = '', this.expiry = '', super.key});
+  const CustomPaymentCardPreview({
+    this.name = '',
+    this.expiry = '',
+    this.number = '',
+    super.key,
+  });
+
+  /// 16 slots grouped in fours: typed digits fill in, the rest stay as dots so
+  /// the number appears on the card as the guest writes it.
+  String get _displayNumber {
+    final digits = number.replaceAll(RegExp(r'\D'), '');
+    final buf = StringBuffer();
+    for (var i = 0; i < 16; i++) {
+      buf.write(i < digits.length ? digits[i] : '•');
+      if (i % 4 == 3 && i != 15) buf.write('  ');
+    }
+    return buf.toString();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +68,9 @@ class CustomPaymentCardPreview extends StatelessWidget {
                   height: 26,
                 ),
                 const Spacer(),
-                const Text(
-                  '••••  ••••  ••••  ••••',
-                  style: TextStyle(
+                Text(
+                  _displayNumber,
+                  style: const TextStyle(
                     fontFamily: 'DM Sans',
                     fontSize: 17,
                     fontWeight: FontWeight.w700,

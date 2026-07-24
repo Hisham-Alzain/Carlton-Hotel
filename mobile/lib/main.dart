@@ -26,7 +26,7 @@ Future<void> main() async {
   Get.put(MiddlewareService(), permanent: true);
   Get.put(PermissionService(), permanent: true);
   Get.put(BookingFlowController(), permanent: true);
-
+  
   runApp(const MainApp());
 }
 

@@ -73,8 +73,12 @@ class _ActiveStayServices extends StatelessWidget {
                 crossAxisSpacing: 10,
                 childAspectRatio: 1.5,
               ),
-              itemBuilder: (context, index) =>
-                  CustomServiceCard(item: controller.services[index]),
+              itemBuilder: (context, index) => GestureDetector(
+                onTap: () => controller.openServiceCategory(
+                  controller.services[index].title,
+                ),
+                child: CustomServiceCard(item: controller.services[index]),
+              ),
             ),
             _QuickRequests(controller: controller),
           ],

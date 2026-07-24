@@ -1,4 +1,5 @@
 import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/controllers/main/main_controller.dart';
 import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
 import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
@@ -37,6 +38,10 @@ class BookingFlowController extends GetxController {
   RoomOption? selectedRoom;
   final Set<String> selectedAddOnIds = {};
 
+  /// True when the booking began from a room tapped on Home, so the room is
+  /// already chosen and the Choose-Room step is skipped after picking dates.
+  bool roomPreselected = false;
+
   /// Which photo of [selectedRoom] the Room Details carousel is showing.
   int roomImageIndex = 0;
 
@@ -54,6 +59,10 @@ class BookingFlowController extends GetxController {
   final cardCvvCtrl = TextEditingController();
   final cardNameCtrl = TextEditingController();
   final promoCtrl = TextEditingController();
+  bool promoApplied = false;
+
+  /// Set on confirm; shown on the Booking Confirmed screen.
+  String? confirmationCode;
 
   // ── Cross-screen derived values ─────────────────────────────────────────
   int get nights {
@@ -95,7 +104,14 @@ class BookingFlowController extends GetxController {
       .where((a) => selectedAddOnIds.contains(a.id))
       .fold(0, (sum, a) => sum + a.price);
 
-  int get grandTotal => roomTotal + extrasTotal;
+  int get subtotal => roomTotal + extrasTotal;
+
+  int get taxes => (subtotal * DemoData.taxRate).round();
+
+  int get promoDiscount =>
+      promoApplied ? (subtotal * DemoData.promoRate).round() : 0;
+
+  int get grandTotal => subtotal + taxes - promoDiscount;
 
   // ── Step 1 — Plan Your Stay ──────────────────────────────────────────────
   void onRangeSelected(DateTime? start, DateTime? end, DateTime focused) {
@@ -128,6 +144,11 @@ class BookingFlowController extends GetxController {
   void searchRooms() {
     if (!hasDates) {
       CustomSnackbars.showInfo(message: 'Select your dates first');
+      return;
+    }
+    // Room already chosen on Home → skip Choose-Room, go straight to add-ons.
+    if (roomPreselected && selectedRoom != null) {
+      Get.toNamed(Routes.addOns);
       return;
     }
     Get.toNamed(Routes.chooseRoom);
@@ -164,6 +185,7 @@ class BookingFlowController extends GetxController {
   void beginBooking(RoomOption room) {
     reset();
     selectedRoom = room;
+    roomPreselected = true;
     update();
     Get.toNamed(Routes.planStay);
   }
@@ -215,17 +237,44 @@ class BookingFlowController extends GetxController {
       CustomSnackbars.showInfo(message: 'Enter a promo code first');
       return;
     }
+    promoApplied = true;
+    update();
     CustomSnackbars.showSuccess(
       message: 'Promo code "${promoCtrl.text.trim()}" applied',
     );
   }
 
+  /// "Credit Card ••••1234" / "Apple Pay" / … for the Review summary row.
+  String get paymentMethodDisplay {
+    if (paymentMethod != PaymentMethod.card) return paymentMethod.label;
+    final digits = cardNumberCtrl.text.replaceAll(RegExp(r'\D'), '');
+    final last4 = digits.length >= 4 ? digits.substring(digits.length - 4) : '';
+    return last4.isEmpty ? 'Credit Card' : 'Credit Card ••••$last4';
+  }
+
+  /// Review CTA copy — "Confirm & Pay \$X" for paid methods, "Confirm Booking"
+  /// when paying at the hotel.
+  String get confirmCtaLabel => paymentMethod == PaymentMethod.payAtHotel
+      ? 'Confirm Booking'
+      : 'Confirm & Pay \$$grandTotal';
+
   void reviewBooking() {
     if (!canReviewBooking) return;
+    Get.toNamed(Routes.reviewBooking);
+  }
+
+  /// Demo confirm — mints a reservation code and shows the success screen.
+  void confirmBooking() {
+    confirmationCode = DemoData.newConfirmationCode();
+    update();
+    Get.toNamed(Routes.bookingConfirmed);
+  }
+
+  /// "View My Stays" from the confirmation screen — back to the shell on the
+  /// Stays tab.
+  void viewMyStays() {
     Get.until((r) => r.isFirst);
-    CustomSnackbars.showSuccess(
-      message: 'Booking confirmed for ${selectedRoom?.name ?? 'your stay'}',
-    );
+    Get.find<MainController>().changeTab(1);
   }
 
   /// Clears every field back to its starting value — call before entering the
@@ -238,6 +287,7 @@ class BookingFlowController extends GetxController {
     adults = DemoData.bookingAdults;
     children = DemoData.bookingChildren;
     selectedRoom = null;
+    roomPreselected = false;
     roomImageIndex = 0;
     selectedAddOnIds.clear();
     firstNameCtrl.clear();
@@ -251,6 +301,8 @@ class BookingFlowController extends GetxController {
     cardCvvCtrl.clear();
     cardNameCtrl.clear();
     promoCtrl.clear();
+    promoApplied = false;
+    confirmationCode = null;
   }
 
   @override

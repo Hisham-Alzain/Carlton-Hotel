@@ -26,6 +26,9 @@ class CustomTextField extends StatelessWidget {
   final int? maxLength;
   final int? maxLines;
   final Color? fillColor;
+
+  /// Resting border. Defaults to the fill, i.e. no visible outline.
+  final Color? borderColor;
   final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextField({
@@ -35,6 +38,7 @@ class CustomTextField extends StatelessWidget {
     this.height,
     this.width,
     this.fillColor,
+    this.borderColor,
     this.labelText,
     this.label,
     this.prefixIconColor,
@@ -73,6 +77,7 @@ class CustomTextField extends StatelessWidget {
     );
 
     final fill = fillColor ?? AppColors.cream;
+    final resting = borderColor ?? fill;
 
     OutlineInputBorder border(Color color) => OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
@@ -118,8 +123,8 @@ class CustomTextField extends StatelessWidget {
               errorStyle: errorStyle,
               prefixIcon: _buildPrefixIcon(),
               suffixIcon: suffixIcon,
-              border: border(fill),
-              enabledBorder: border(fill),
+              border: border(resting),
+              enabledBorder: border(resting),
               focusedBorder: border(AppColors.antiqueGold),
               errorBorder: border(AppColors.salmonRed),
               focusedErrorBorder: border(AppColors.salmonRed),

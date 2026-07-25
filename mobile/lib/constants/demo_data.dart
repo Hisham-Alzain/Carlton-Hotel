@@ -279,7 +279,7 @@ abstract class DemoData {
   // The initial dates/guests the booking flow opens with. A real API would
   // return the calendar bounds + any pre-selected values instead.
   static final DateTime bookingFirstDay = DateTime(2026, 1, 1);
-  static final DateTime bookingLastDay = DateTime(2027, 12, 31);
+  static final DateTime bookingLastDay = DateTime(2100, 12, 31);
   static final DateTime bookingCheckIn = DateTime(2026, 8, 14);
   static final DateTime bookingCheckOut = DateTime(2026, 8, 16);
   static const int bookingAdults = 2;

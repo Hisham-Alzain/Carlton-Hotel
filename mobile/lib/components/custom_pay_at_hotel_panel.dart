@@ -1,3 +1,4 @@
+import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -14,21 +15,21 @@ class CustomPayAtHotelPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.black07, width: 1.18),
+        border: Border.all(color: AppColors.black07, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+            padding: const EdgeInsets.all(10),
             color: AppColors.lagoonTeal.withValues(alpha: 0.10),
             child: Column(
               spacing: 10,
               children: [
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: 60,
+                  height: 60,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppColors.primary07,
@@ -36,8 +37,8 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                   ),
                   child: SvgPicture.asset(
                     'assets/icons/pay_hotel.svg',
-                    width: 26,
-                    height: 26,
+                    width: 25,
+                    height: 25,
                     colorFilter: const ColorFilter.mode(
                       AppColors.primary,
                       BlendMode.srcIn,
@@ -47,7 +48,6 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                 Text(
                   'Pay at Hotel',
                   style: textStyle.titleMedium?.copyWith(
-                    fontFamily: 'Plus Jakarta Sans',
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
                   ),
@@ -78,12 +78,9 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                   ),
                 ),
                 // 14, not 4: the old spacer sat between two 10px gaps.
-                Padding(
-                  padding: const EdgeInsets.only(top: 14),
-                  child: Text(
-                    'Accepted Payment Methods at Hotel',
-                    style: _headingStyle(textStyle),
-                  ),
+                Text(
+                  'Accepted Payment Methods at Hotel',
+                  style: _headingStyle(textStyle),
                 ),
                 const _MethodRow(
                   iconPath: 'assets/icons/card_line.svg',
@@ -97,41 +94,32 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                   iconPath: 'assets/icons/cash.svg',
                   label: 'Cash (SYP or USD)',
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 14),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.successGreen08,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      spacing: 8,
-                      children: [
-                        SvgPicture.asset(
-                          'assets/icons/check.svg',
-                          width: 14,
-                          height: 14,
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.successGreen,
-                            BlendMode.srcIn,
+                PillContainer(
+                  width: double.infinity,
+                  radius: 8,
+                  backgroundColor: AppColors.successGreen08,
+                  child: Row(
+                    spacing: 8,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/check.svg',
+                        width: 14,
+                        height: 14,
+                        colorFilter: const ColorFilter.mode(
+                          AppColors.successGreen,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Free cancellation up to 48 hours before arrival',
+                          style: textStyle.labelMedium?.copyWith(
+                            fontFamily: 'DM Sans',
+                            color: AppColors.inkBlack,
                           ),
                         ),
-                        Expanded(
-                          child: Text(
-                            'Free cancellation up to 48 hours before arrival',
-                            style: textStyle.labelMedium?.copyWith(
-                              fontFamily: 'DM Sans',
-                              color: AppColors.inkBlack,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -142,12 +130,8 @@ class CustomPayAtHotelPanel extends StatelessWidget {
     );
   }
 
-  TextStyle? _headingStyle(TextTheme textStyle) =>
-      textStyle.labelMedium?.copyWith(
-        fontFamily: 'Plus Jakarta Sans',
-        fontWeight: FontWeight.w600,
-        color: AppColors.inkBlack,
-      );
+  TextStyle? _headingStyle(TextTheme textStyle) => textStyle.labelMedium
+      ?.copyWith(fontWeight: FontWeight.w600, color: AppColors.inkBlack);
 }
 
 class _MethodRow extends StatelessWidget {

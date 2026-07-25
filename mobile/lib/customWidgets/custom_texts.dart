@@ -8,6 +8,10 @@ class RowTextComponent extends StatelessWidget {
   final double? iconSize;
   final Color? iconColor;
   final String? path;
+
+  /// Pre-styled widget shown in place of the [icon]/[path] glyph — e.g. an icon
+  /// wrapped in a PillContainer badge. Takes precedence over [icon]/[path].
+  final Widget? leading;
   final TextStyle? textStyle;
   final TextStyle? titleStyle;
   final MainAxisAlignment? mainAxisAlignment;
@@ -22,6 +26,7 @@ class RowTextComponent extends StatelessWidget {
     this.iconSize,
     this.iconColor,
     this.path,
+    this.leading,
     this.textStyle,
     this.titleStyle,
     this.mainAxisAlignment,
@@ -37,7 +42,9 @@ class RowTextComponent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: mainAxisAlignment ?? MainAxisAlignment.start,
       children: [
-        if (icon != null)
+        if (leading != null)
+          leading!
+        else if (icon != null)
           Icon(icon, size: iconSize, color: iconColor)
         else if (path != null)
           SvgPicture.asset(

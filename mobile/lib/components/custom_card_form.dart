@@ -1,6 +1,7 @@
 import 'package:carlton/components/cards/custom_payment_card_preview.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
 import 'package:carlton/theme/app_colors.dart';
+import 'package:carlton/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -74,7 +75,8 @@ class CustomCardForm extends StatelessWidget {
                         labelColor: AppColors.inkBlack,
                         hintText: 'MM/YY',
                         fillColor: AppColors.whisperGrey,
-                        maxLength: 4,
+                        maxLength: 5,
+                        inputFormatters: [ExpiryDateInputFormatter()],
                         onChanged: (_) => onChanged(),
                       ),
                     ),

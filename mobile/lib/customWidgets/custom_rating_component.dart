@@ -1,20 +1,22 @@
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// Star rating with optional numeric score and review count, used on room cards
-/// and Room Details. Renders [starCount] glyphs — filled (gold) up to
-/// `rating.floor()`, outline (grey) after — using the exported Figma stars,
-/// which carry their own colors, so they are drawn untinted.
-class CustomRatingStars extends StatelessWidget {
+/// and Room Details. Renders [starCount] glyphs via [RatingBarIndicator] using
+/// the exported Figma star, which carries its own gold color; the unrated
+/// portion is tinted grey via [RatingBarIndicator.unratedColor]. Being an
+/// indicator it is read-only and supports fractional fill.
+class CustomRatingComponent extends StatelessWidget {
   final double rating;
   final int starCount;
   final double starSize;
   final int? reviewCount;
   final bool showScore;
 
-  const CustomRatingStars({
+  const CustomRatingComponent({
     required this.rating,
     this.starCount = 5,
     this.starSize = 12,
@@ -26,24 +28,20 @@ class CustomRatingStars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
-    final filled = rating.floor().clamp(0, starCount);
 
     return Row(
-      mainAxisSize: MainAxisSize.min,
+      spacing: 10,
       children: [
-        for (var i = 0; i < starCount; i++)
-          Padding(
-            padding: EdgeInsets.only(right: i == starCount - 1 ? 0 : 6),
-            child: SvgPicture.asset(
-              i < filled
-                  ? 'assets/icons/star.svg'
-                  : 'assets/icons/star_outline.svg',
-              width: starSize,
-              height: starSize,
-            ),
-          ),
+        RatingBarIndicator(
+          rating: rating,
+          itemCount: starCount,
+          itemSize: starSize,
+          unratedColor: AppColors.pearlGrey,
+          itemPadding: const EdgeInsets.only(right: 6),
+          itemBuilder: (context, _) =>
+              SvgPicture.asset('assets/icons/star.svg'),
+        ),
         if (showScore) ...[
-          const SizedBox(width: 8),
           Text(
             rating.toStringAsFixed(1),
             style: textStyle.labelMedium?.copyWith(
@@ -54,7 +52,6 @@ class CustomRatingStars extends StatelessWidget {
           ),
         ],
         if (reviewCount != null) ...[
-          const SizedBox(width: 6),
           Text(
             '($reviewCount reviews)',
             style: textStyle.labelMedium?.copyWith(

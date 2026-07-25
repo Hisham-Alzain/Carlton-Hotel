@@ -67,16 +67,16 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
                 widget.onIndexChanged(i);
               },
             ),
-            //TODO: do not use for loop
-            items: [
-              for (final path in images)
-                CustomImage(
-                  path: path,
-                  width: double.infinity,
-                  height: widget.height,
-                  fit: BoxFit.cover,
-                ),
-            ],
+            items: images
+                .map(
+                  (path) => CustomImage(
+                    path: path,
+                    width: double.infinity,
+                    height: widget.height,
+                    fit: BoxFit.cover,
+                  ),
+                )
+                .toList(),
           ),
 
           if (hasMany) ...[
@@ -127,17 +127,17 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
 
   Widget _dots(int count, int active) => Row(
     mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      for (var i = 0; i < count; i++)
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          width: i == active ? 18 : 6,
-          height: 6,
-          decoration: BoxDecoration(
-            color: i == active ? Colors.white : AppColors.white50,
-            borderRadius: BorderRadius.circular(3),
-          ),
+    children: List.generate(
+      count,
+      (i) => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        width: i == active ? 18 : 6,
+        height: 6,
+        decoration: BoxDecoration(
+          color: i == active ? Colors.white : AppColors.white50,
+          borderRadius: BorderRadius.circular(3),
         ),
-    ],
+      ),
+    ),
   );
 }

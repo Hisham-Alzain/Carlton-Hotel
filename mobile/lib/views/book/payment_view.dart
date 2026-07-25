@@ -1,11 +1,12 @@
 import 'package:carlton/components/booking_summary_header.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
-import 'package:carlton/customWidgets/custom_card_form.dart';
+import 'package:carlton/components/custom_card_form.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
-import 'package:carlton/customWidgets/custom_pay_at_hotel_panel.dart';
+import 'package:carlton/components/custom_pay_at_hotel_panel.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
-import 'package:carlton/customWidgets/custom_selectable_card.dart';
-import 'package:carlton/customWidgets/custom_wallet_panel.dart';
+import 'package:carlton/components/custom_selectable_card.dart';
+import 'package:carlton/components/custom_wallet_panel.dart';
+import 'package:carlton/enums/enums.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +30,7 @@ class PaymentView extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScaffold(
       appBar: AppBar(
-        title: Text('Payment'),
+        title: Text('Review Booking'),
         iconTheme: IconThemeData(color: Colors.black),
         actions: [
           Container(
@@ -76,8 +77,8 @@ class PaymentView extends StatelessWidget {
                     color: AppColors.inkBlack,
                   ),
                 ),
-                for (final m in PaymentMethod.values)
-                  CustomSelectableCard(
+                ...PaymentMethod.values.map(
+                  (m) => CustomSelectableCard(
                     title: m.label,
                     subtitle: m.subtitle,
                     control: SelectableControl.radio,
@@ -85,6 +86,7 @@ class PaymentView extends StatelessWidget {
                     onTap: () => c.selectPaymentMethod(m),
                     leading: _leadingIcon(_icons[m]!, c.paymentMethod == m),
                   ),
+                ),
                 _methodBody(c),
                 CustomFilledButton(
                   backgroundColor: c.canReviewBooking
@@ -137,10 +139,9 @@ class PaymentView extends StatelessWidget {
           footer:
               "You'll be redirected to Apple Pay to complete authorization.",
         );
-      //TODO: add correct google  icon
       case PaymentMethod.googlePay:
         return const CustomWalletPanel(
-          glyphPath: 'assets/icons/pay_google.svg',
+          glyphPath: 'assets/icons/google.svg',
           badgeColor: AppColors.white,
           tintGlyphWhite: false,
           title: 'Google Pay',

@@ -8,6 +8,10 @@ enum SnackbarType { success, error, warning, info }
 
 enum SignInMethod { phone, email }
 
+/// Trailing control style for a `CustomSelectableCard` — a checkbox (Add-Ons,
+/// multi-select) or a radio (Payment methods, single-select).
+enum SelectableControl { checkbox, radio }
+
 /// Which home state the Services screen renders, derived from the session:
 /// a guest with no booking (browse + sign-in prompt), a signed-in user with
 /// no current reservation (Explore & Book), or an active stay (stay card).

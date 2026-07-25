@@ -390,6 +390,7 @@ class Themes {
         return AppColors.pearlGrey;
       }),
     ),
+
     datePickerTheme: DatePickerThemeData(),
 
     searchBarTheme: SearchBarThemeData(

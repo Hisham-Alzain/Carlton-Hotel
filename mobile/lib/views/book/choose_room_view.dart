@@ -23,6 +23,7 @@ class ChooseRoomView extends StatelessWidget {
               shape: BoxShape.circle,
               color: AppColors.whisperGrey,
             ),
+            //TODO: implement this
             child: IconButton(
               onPressed: () {},
               icon: const Icon(Icons.close, color: AppColors.inkBlack),

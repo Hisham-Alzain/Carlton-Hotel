@@ -7,6 +7,7 @@ import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/cache/cache_manager.dart';
 import 'package:shimmer/shimmer.dart';
 
+//TODO: do not use local assets here use fluttet=r default image widget
 class CustomImage extends StatelessWidget {
   final String path;
   final double? height;

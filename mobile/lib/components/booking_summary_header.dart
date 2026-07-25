@@ -91,7 +91,6 @@ class BookingSummaryHeader extends StatelessWidget {
                       Text(
                         'Total',
                         style: textStyle.labelLarge?.copyWith(
-                          fontFamily: 'Plus Jakarta Sans',
                           fontWeight: FontWeight.w700,
                           color: AppColors.inkBlack,
                         ),
@@ -114,11 +113,11 @@ class BookingSummaryHeader extends StatelessWidget {
                     Text(
                       '\$${c.grandTotal}',
                       style: textStyle.titleLarge?.copyWith(
-                        fontFamily: 'Plus Jakarta Sans',
                         fontWeight: FontWeight.w700,
                         color: AppColors.primary,
                       ),
                     ),
+                    //TODO: must show the price details when pressed
                     PillContainer(
                       backgroundColor: AppColors.linenGrey,
                       radius: 4,

@@ -12,7 +12,6 @@ class CustomDateRangeCalendar extends StatelessWidget {
   final void Function(DateTime? start, DateTime? end, DateTime focusedDay)
   onRangeSelected;
   final ValueChanged<DateTime>? onPageChanged;
-  final bool showNavigation;
 
   const CustomDateRangeCalendar({
     required this.firstDay,
@@ -22,7 +21,6 @@ class CustomDateRangeCalendar extends StatelessWidget {
     this.rangeStart,
     this.rangeEnd,
     this.onPageChanged,
-    this.showNavigation = false,
     super.key,
   });
 
@@ -37,8 +35,8 @@ class CustomDateRangeCalendar extends StatelessWidget {
     final TextTheme textStyle = Get.textTheme;
     return Center(
       child: Container(
-        width: 42,
-        height: 32,
+        width: 50,
+        height: 40,
         alignment: Alignment.center,
         decoration: bg == null && borderColor == null
             ? null
@@ -64,20 +62,13 @@ class CustomDateRangeCalendar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
-    return Container(
-      padding: const EdgeInsets.all(15.18),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.black06, width: 1.18),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.slateShadow04,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
+    return Card(
+      color: AppColors.white,
+      shape: ContinuousRectangleBorder(
+        borderRadius: BorderRadiusGeometry.circular(12),
+        side: BorderSide(color: AppColors.black06, width: 1),
       ),
+      elevation: 1,
       child: TableCalendar<void>(
         firstDay: firstDay,
         lastDay: lastDay,
@@ -87,18 +78,19 @@ class CustomDateRangeCalendar extends StatelessWidget {
         rangeSelectionMode: RangeSelectionMode.enforced,
         calendarFormat: CalendarFormat.month,
         availableGestures: AvailableGestures.horizontalSwipe,
-        rowHeight: 36,
+        rowHeight: 50,
         daysOfWeekHeight: 20,
         onRangeSelected: onRangeSelected,
         onPageChanged: onPageChanged,
+        calendarStyle: const CalendarStyle(
+          rangeHighlightColor: Colors.transparent,
+        ),
         headerStyle: HeaderStyle(
           formatButtonVisible: false,
           titleCentered: true,
-          leftChevronVisible: showNavigation,
-          rightChevronVisible: showNavigation,
-          headerPadding: const EdgeInsets.only(bottom: 12),
-          titleTextStyle: textStyle.labelMedium!.copyWith(
-            fontFamily: 'Plus Jakarta Sans',
+          leftChevronVisible: false,
+          rightChevronVisible: false,
+          titleTextStyle: textStyle.labelLarge!.copyWith(
             fontWeight: FontWeight.w600,
             color: AppColors.inkBlack,
           ),
@@ -131,8 +123,10 @@ class CustomDateRangeCalendar extends StatelessWidget {
           todayBuilder: (context, day, focused) =>
               _cell('${day.day}', text: AppColors.inkBlack),
           outsideBuilder: (context, day, focused) => const SizedBox.shrink(),
-          disabledBuilder: (context, day, focused) =>
-              _cell('${day.day}', text: AppColors.pearlGrey),
+          disabledBuilder: (context, day, focused) => Opacity(
+            opacity: 0.4,
+            child: _cell('${day.day}', text: AppColors.inkBlack),
+          ),
           rangeStartBuilder: (context, day, focused) => _cell(
             '${day.day}',
             bg: AppColors.primary,

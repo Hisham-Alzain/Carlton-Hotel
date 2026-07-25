@@ -3,7 +3,7 @@ import 'package:carlton/components/cards/custom_past_stay_card.dart';
 import 'package:carlton/components/cards/custom_upcoming_stay_card.dart';
 import 'package:carlton/controllers/stays/stays_controller.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
-import 'package:carlton/customWidgets/custom_info_banner.dart';
+import 'package:carlton/components/custom_info_banner.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

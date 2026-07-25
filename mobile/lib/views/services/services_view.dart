@@ -22,13 +22,13 @@ class ServicesView extends GetView<ServicesController> {
         builder: (controller) {
           switch (controller.homeState) {
             // Guest with a current stay: their room + full room-service catalog.
-            case ServicesHomeState.activeStay:
+            case ServicesHomeState.guestBrowse:
               return _ActiveStayServices(controller: controller);
             // Signed in, no booking: invite them to book.
             case ServicesHomeState.exploreAndBook:
               return const _ExploreAndBook();
             // Not signed in: services are gated behind sign-in.
-            case ServicesHomeState.guestBrowse:
+            case ServicesHomeState.activeStay:
               return const _GuestBrowse();
           }
         },
@@ -135,10 +135,9 @@ class _QuickRequests extends StatelessWidget {
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: [
-            for (final label in DemoData.quickRequests)
-              Chip(label: Text(label)),
-          ],
+          children: DemoData.quickRequests
+              .map((label) => Chip(label: Text(label)))
+              .toList(),
         ),
       ],
     );

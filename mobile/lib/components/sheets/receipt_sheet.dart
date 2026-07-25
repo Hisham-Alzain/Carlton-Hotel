@@ -1,5 +1,5 @@
 import 'package:carlton/customWidgets/custom_containers.dart';
-import 'package:carlton/customWidgets/custom_info_banner.dart';
+import 'package:carlton/components/custom_info_banner.dart';
 import 'package:carlton/components/custom_price_summary.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';

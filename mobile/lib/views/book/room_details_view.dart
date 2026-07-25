@@ -2,6 +2,7 @@ import 'package:carlton/components/room_details_content.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_elevated_button.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
+import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -23,8 +24,9 @@ class RoomDetailsView extends StatelessWidget {
     final room = args;
     final controller = Get.find<BookingFlowController>();
 
-    return Scaffold(
-      backgroundColor: AppColors.white,
+    return CustomScaffold(
+      //TODO: check what to add in title
+      appBar: AppBar(iconTheme: IconThemeData(color: AppColors.inkBlack)),
       body: SafeArea(
         bottom: false,
         child: RoomDetailsContent(
@@ -35,15 +37,13 @@ class RoomDetailsView extends StatelessWidget {
             children: [
               CustomFilledButton(
                 width: double.infinity,
-                height: 52,
+
                 backgroundColor: AppColors.lagoonTeal,
                 onPressed: () {},
                 child: const Text('Select This Room'),
               ),
-              CustomElevatedButton(
+              CustomFilledButton(
                 width: double.infinity,
-                height: 48,
-                elevation: 0,
                 backgroundColor: AppColors.whisperGrey,
                 foregroundColor: AppColors.inkBlack,
                 onPressed: () => Get.back(),

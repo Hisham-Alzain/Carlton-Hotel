@@ -9,7 +9,7 @@ import 'package:carlton/models/service_models.dart';
 import 'package:carlton/models/service_request.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/session_service.dart';
-import 'package:carlton/views/services/service_request_sheet.dart';
+import 'package:carlton/components/sheets/service_request_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

@@ -8,4 +8,8 @@ extension DateExtensions on DateTime {
   String formatDateMonth() {
     return DateFormat('MMM-yyyy').format(this);
   }
+
+  String formatDatePicker() {
+    return DateFormat('MMM d, yyyy').format(this);
+  }
 }

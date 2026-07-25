@@ -24,11 +24,13 @@ import 'package:intl/intl.dart';
 /// guest/card details would carry into the next one.
 class BookingFlowController extends GetxController {
   // Dates + guests
-  final DateTime firstDay = DemoData.bookingFirstDay;
-  final DateTime lastDay = DemoData.bookingLastDay;
-  DateTime focusedDay = DemoData.bookingCheckIn;
-  DateTime? rangeStart = DemoData.bookingCheckIn;
-  DateTime? rangeEnd = DemoData.bookingCheckOut;
+  final DateTime firstDay = DateUtils.dateOnly(DateTime.now());
+  final DateTime lastDay = DateTime(2100, 12, 31);
+  DateTime focusedDay = DateUtils.dateOnly(DateTime.now());
+  DateTime? rangeStart = DateUtils.dateOnly(DateTime.now());
+  DateTime? rangeEnd = DateUtils.dateOnly(
+    DateTime.now(),
+  ).add(const Duration(days: 1));
   int adults = DemoData.bookingAdults;
   int children = DemoData.bookingChildren;
 
@@ -86,9 +88,9 @@ class BookingFlowController extends GetxController {
       hasDates ? '$dateRange · $nights nights' : dateRange;
 
   String get guestSummary {
-    final a = '$adults Adult${adults == 1 ? '' : 's'}';
+    final a = '$adults Adult ${adults == 1 ? '' : 's'}';
     if (children == 0) return a;
-    return '$a, $children Child${children == 1 ? '' : 'ren'}';
+    return '$a, $children Child ${children == 1 ? '' : 'ren'}';
   }
 
   /// "Aug 14 → Aug 16 · \$280/night" — the Add-Ons summary tile (Figma omits
@@ -115,9 +117,16 @@ class BookingFlowController extends GetxController {
 
   // ── Step 1 — Plan Your Stay ──────────────────────────────────────────────
   void onRangeSelected(DateTime? start, DateTime? end, DateTime focused) {
-    rangeStart = start;
-    rangeEnd = end;
     focusedDay = focused;
+    // A hotel stay must be at least one night: if both endpoints land on the
+    // same day, keep it as the check-in and wait for a later check-out.
+    if (start != null && end != null && !end.isAfter(start)) {
+      rangeStart = start;
+      rangeEnd = null;
+    } else {
+      rangeStart = start;
+      rangeEnd = end;
+    }
     update();
   }
 

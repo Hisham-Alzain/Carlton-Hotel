@@ -5,7 +5,6 @@ import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// Room result card for "Choose Your Room" (Step 2), matched to Figma: a
@@ -107,7 +106,7 @@ class CustomRoomResultCard extends StatelessWidget {
                       Row(
                         spacing: 10,
                         children: [
-                          SvgPicture.asset('assets/icons/star.svg'),
+                          const Icon(Icons.star, color: AppColors.antiqueGold),
 
                           Text(
                             room.rating.toStringAsFixed(1),
@@ -143,8 +142,7 @@ class CustomRoomResultCard extends StatelessWidget {
                   Wrap(
                     spacing: 10,
                     runSpacing: 10,
-                    //TODO: do not use for loop
-                    children: [for (final c in room.amenityChips) _chip(c)],
+                    children: room.amenityChips.map(_chip).toList(),
                   ),
 
                   const Divider(color: AppColors.cocoaGold),

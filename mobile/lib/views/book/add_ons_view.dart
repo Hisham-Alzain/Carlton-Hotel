@@ -4,10 +4,9 @@ import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/components/custom_price_summary.dart';
-import 'package:carlton/customWidgets/custom_selectable_card.dart';
+import 'package:carlton/components/custom_selectable_card.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -98,25 +97,7 @@ class AddOnsView extends StatelessWidget {
                                 trailingText: '+\$${a.price}',
                                 selected: c.selectedAddOnIds.contains(a.id),
                                 onTap: () => c.toggleAddOn(a.id),
-                                //TODO: move to the custom widget
-                                leading: Container(
-                                  width: 40,
-                                  height: 40,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.pearlCream,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: SvgPicture.asset(
-                                    a.iconPath,
-                                    width: 16,
-                                    height: 16,
-                                    colorFilter: const ColorFilter.mode(
-                                      AppColors.primary,
-                                      BlendMode.srcIn,
-                                    ),
-                                  ),
-                                ),
+                                iconPath: a.iconPath,
                               ),
                             );
                           },
@@ -125,7 +106,6 @@ class AddOnsView extends StatelessWidget {
                     ],
                   ),
                 ),
-                //TODO:
                 if (true) ...[
                   PillContainer(
                     // The row no longer pads itself — fold what it used to add

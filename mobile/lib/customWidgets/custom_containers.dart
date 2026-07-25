@@ -63,6 +63,7 @@ class PillContainer extends StatelessWidget {
   final Color backgroundColor;
   final EdgeInsetsGeometry padding;
   final double radius;
+  final BoxBorder? border;
 
   const PillContainer({
     this.height,
@@ -71,6 +72,7 @@ class PillContainer extends StatelessWidget {
     required this.backgroundColor,
     this.padding = const EdgeInsets.all(10),
     this.radius = 6,
+    this.border,
     super.key,
   });
 
@@ -83,6 +85,7 @@ class PillContainer extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(radius),
+        border: border,
       ),
       child: child,
     );

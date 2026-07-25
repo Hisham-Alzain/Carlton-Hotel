@@ -89,9 +89,8 @@ class CustomWalletPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 10,
               children: [
-                //TODO:do not use for loop
-                for (final b in bullets)
-                  Row(
+                ...bullets.map(
+                  (b) => Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 10,
                     children: [
@@ -106,15 +105,18 @@ class CustomWalletPanel extends StatelessWidget {
                           color: AppColors.successGreen,
                         ),
                       ),
-                      Text(
-                        b,
-                        style: textStyle.labelMedium?.copyWith(
-                          fontFamily: 'DM Sans',
-                          color: AppColors.inkBlack,
+                      Flexible(
+                        child: Text(
+                          b,
+                          style: textStyle.labelMedium?.copyWith(
+                            fontFamily: 'DM Sans',
+                            color: AppColors.inkBlack,
+                          ),
                         ),
                       ),
                     ],
                   ),
+                ),
                 PillContainer(
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),

@@ -26,47 +26,41 @@ class CustomServiceOptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = Get.textTheme;
 
-    return Material(
-      color: Colors.white,
+    return InkWell(
+      onTap: onTap,
       borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.black06),
-          ),
+      child: Card(
+        margin: const EdgeInsets.all(10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadiusGeometry.circular(14),
+          side: BorderSide(color: AppColors.black06),
+        ),
+        color: AppColors.white,
+        elevation: 1,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
           child: Row(
-            spacing: 12,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 20,
             children: [
-              PillContainer(
-                width: 44,
-                height: 44,
-                backgroundColor: AppColors.pearlCream,
-                radius: 10,
-                padding: const EdgeInsets.all(8),
-                child: SvgPicture.asset(
-                  iconPath,
-                  colorFilter: const ColorFilter.mode(
-                    AppColors.antiqueGold,
-                    BlendMode.srcIn,
-                  ),
+              SvgPicture.asset(
+                height: 30,
+                width: 30,
+                iconPath,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.antiqueGold,
+                  BlendMode.srcIn,
                 ),
               ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 4,
+                  spacing: 10,
                   children: [
                     Text(
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: textStyle.labelLarge?.copyWith(
-                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: AppColors.inkBlack,
                       ),
@@ -76,21 +70,16 @@ class CustomServiceOptionTile extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: textStyle.labelMedium?.copyWith(
-                        fontSize: 13,
                         color: AppColors.dimGrey,
                       ),
                     ),
                     PillContainer(
                       backgroundColor: AppColors.cream,
-                      radius: 6,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
+                      radius: 3,
+                      padding: const EdgeInsets.all(10),
                       child: Text(
                         eta,
                         style: textStyle.labelSmall?.copyWith(
-                          fontSize: 12,
                           color: AppColors.walnutGold,
                         ),
                       ),
@@ -98,15 +87,7 @@ class CustomServiceOptionTile extends StatelessWidget {
                   ],
                 ),
               ),
-              SvgPicture.asset(
-                'assets/icons/chevron_right.svg',
-                height: 16,
-                width: 16,
-                colorFilter: const ColorFilter.mode(
-                  AppColors.dimGrey,
-                  BlendMode.srcIn,
-                ),
-              ),
+              const Icon(Icons.chevron_right, color: AppColors.mochaBrown),
             ],
           ),
         ),

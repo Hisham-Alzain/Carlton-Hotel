@@ -32,6 +32,7 @@ abstract class AppColors {
 
   // ── Gold / brown / sand ──
   static const Color bronzeGold = Color(0xFF8C6B30);
+  static const Color mochaBrown = Color(0xFF604E40);
   static const Color cocoaGold = Color(0xFF604F30);
   static const Color walnutGold = Color(0xFF735E39);
   static const Color antiqueGold = Color(0xFFB8975A);
@@ -84,6 +85,7 @@ abstract class AppColors {
   static const Color pebbleGrey32 = Color(0x52DBDBDB); // @ 32%
   static const Color smokeGrey = Color(0xFFE0E0E0);
   static const Color linenGrey = Color(0xFFE5E5E5);
+  static const Color pearlSilver = Color(0xFFE8E8E8);
   static const Color platinumGrey90 = Color(0xE6ECECEC); // @ 90%
   static const Color platinumGrey56 = Color(0x8FECECEC); // @ 56%
   static const Color paperGrey92 = Color(0xEBEEEEEE); // @ 92%

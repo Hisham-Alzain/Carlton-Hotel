@@ -28,6 +28,8 @@ class CustomCounterField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final canDecrement = value > min;
+    final canIncrement = value < max;
 
     return Card(
       color: AppColors.white,
@@ -74,8 +76,15 @@ class CustomCounterField extends StatelessWidget {
                     color: AppColors.whisperGrey,
                   ),
                   child: IconButton(
-                    onPressed: () => onChanged(value - 1),
-                    icon: const Icon(Icons.remove, color: AppColors.inkBlack),
+                    onPressed: canDecrement
+                        ? () => onChanged((value - 1).clamp(min, max))
+                        : null,
+                    icon: Icon(
+                      Icons.remove,
+                      color: canDecrement
+                          ? AppColors.inkBlack
+                          : AppColors.pearlGrey,
+                    ),
                   ),
                 ),
 
@@ -91,11 +100,16 @@ class CustomCounterField extends StatelessWidget {
                 Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primary,
+                    color: canIncrement ? AppColors.primary : AppColors.whisperGrey,
                   ),
                   child: IconButton(
-                    onPressed: () => onChanged(value + 1),
-                    icon: const Icon(Icons.add, color: AppColors.white),
+                    onPressed: canIncrement
+                        ? () => onChanged((value + 1).clamp(min, max))
+                        : null,
+                    icon: Icon(
+                      Icons.add,
+                      color: canIncrement ? AppColors.white : AppColors.pearlGrey,
+                    ),
                   ),
                 ),
               ],

@@ -26,6 +26,7 @@ class RoomDetailsSheet extends StatelessWidget {
         spacing: 10,
         children: [
           CustomFilledButton(
+            width: double.infinity,
             backgroundColor: AppColors.lagoonTeal,
             onPressed: () {
               Get.back();
@@ -34,6 +35,7 @@ class RoomDetailsSheet extends StatelessWidget {
             child: const Text('Select This Room'),
           ),
           CustomFilledButton(
+            width: double.infinity,
             backgroundColor: AppColors.whisperGrey,
             foregroundColor: AppColors.inkBlack,
             onPressed: () => Get.back(),

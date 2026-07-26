@@ -8,6 +8,7 @@ use App\Http\Resources\Cms\MediaResource;
 use App\Models\DiningVenue;
 use App\Models\EventSpace;
 use App\Models\Facility;
+use App\Models\HomeSlider;
 use App\Models\Media;
 use App\Models\Promotion;
 use App\Models\Room;
@@ -84,6 +85,16 @@ class MediaController extends BaseController
     }
 
     public function destroyEventSpace(Request $request, EventSpace $eventSpace, Media $media): JsonResponse
+    {
+        return $this->delete($request, $media);
+    }
+
+    public function storeHomeSlider(UploadMediaRequest $request, HomeSlider $homeSlider): JsonResponse
+    {
+        return $this->upload($request, $homeSlider);
+    }
+
+    public function destroyHomeSlider(Request $request, HomeSlider $homeSlider, Media $media): JsonResponse
     {
         return $this->delete($request, $media);
     }

@@ -7,6 +7,7 @@ use App\Enums\RoomView;
 use App\Models\DiningVenue;
 use App\Models\EventSpace;
 use App\Models\Facility;
+use App\Models\HomeSlider;
 use App\Models\Page;
 use App\Models\Promotion;
 use App\Models\Room;
@@ -26,6 +27,36 @@ class CmsContentSeeder extends Seeder
         $this->eventSpaces();
         $this->pages();
         $this->promotions();
+        $this->homeSliders();
+    }
+
+    private function homeSliders(): void
+    {
+        $slides = [
+            [
+                'header' => ['en' => 'Timeless Damascus Hospitality', 'ar' => 'ضيافة دمشقية خالدة'],
+                'location' => ['en' => 'Damascus, Syria', 'ar' => 'دمشق، سوريا'],
+                'desc' => ['en' => 'A landmark address in the heart of the city, welcoming guests since 1998.',
+                           'ar' => 'عنوان مميز في قلب المدينة، يرحب بالضيوف منذ عام 1998.'],
+            ],
+            [
+                'header' => ['en' => 'Rooftop Dining Above the City', 'ar' => 'مطعم على السطح فوق المدينة'],
+                'location' => ['en' => 'Carlton Rooftop', 'ar' => 'سطح كارلتون'],
+                'desc' => ['en' => 'Syrian and international cuisine served under the Damascus skyline.',
+                           'ar' => 'مأكولات سورية وعالمية تُقدَّم تحت سماء دمشق.'],
+            ],
+        ];
+
+        foreach ($slides as $i => $s) {
+            $slider = HomeSlider::create([
+                'header_text'      => $s['header'],
+                'location'         => $s['location'],
+                'description_text' => $s['desc'],
+                'is_active'        => true,
+                'sort_order'       => $i,
+            ]);
+            $this->attachPhotos($slider, [$s['header']['en']]);
+        }
     }
 
     private function roomTypesAndRooms(): void

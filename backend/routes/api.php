@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Admin\AmenityController as AdminAmenityController;
 use App\Http\Controllers\Admin\CheckInApprovalController;
+use App\Http\Controllers\Admin\HomeSliderController as AdminHomeSliderController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
+use App\Http\Controllers\Api\HomeSliderController as ApiHomeSliderController;
 use App\Http\Controllers\Api\AmenityController as ApiAmenityController;
 use App\Http\Controllers\Api\ReviewController as ApiReviewController;
 use App\Http\Controllers\Admin\ConversationController as AdminConversationController;
@@ -83,6 +85,7 @@ Route::prefix('auth')->group(function () {
 // P3 — CMS: Public read endpoints (no auth, is_active only)
 // ──────────────────────────────────────────────────────────────────────
 Route::prefix('public')->group(function () {
+    Route::get('/home-sliders',           [ApiHomeSliderController::class, 'index']);
     Route::get('/room-types',             [ApiRoomTypeController::class,   'index']);
     Route::get('/room-types/{roomType}',  [ApiRoomTypeController::class,   'show']);
     Route::get('/rooms',                  [ApiRoomController::class,       'index']);
@@ -160,6 +163,15 @@ Route::middleware(['auth:users', 'permission:cms.edit'])->prefix('cms')->group(f
     Route::get   ('/amenities/{amenity}',                         [AdminAmenityController::class, 'show']);
     Route::put   ('/amenities/{amenity}',                         [AdminAmenityController::class, 'update']);
     Route::delete('/amenities/{amenity}',                         [AdminAmenityController::class, 'destroy']);
+
+    // Home sliders
+    Route::get   ('/home-sliders',                                [AdminHomeSliderController::class, 'index']);
+    Route::post  ('/home-sliders',                                [AdminHomeSliderController::class, 'store']);
+    Route::get   ('/home-sliders/{homeSlider}',                   [AdminHomeSliderController::class, 'show']);
+    Route::put   ('/home-sliders/{homeSlider}',                   [AdminHomeSliderController::class, 'update']);
+    Route::delete('/home-sliders/{homeSlider}',                   [AdminHomeSliderController::class, 'destroy']);
+    Route::post  ('/home-sliders/{homeSlider}/images',            [MediaController::class, 'storeHomeSlider']);
+    Route::delete('/home-sliders/{homeSlider}/images/{media}',    [MediaController::class, 'destroyHomeSlider']);
 
     // Reviews — read + moderation only; guests are the only authors.
     Route::get  ('/reviews',                                      [AdminReviewController::class, 'index']);

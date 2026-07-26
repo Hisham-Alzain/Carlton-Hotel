@@ -16,6 +16,9 @@ class DiningVenueResource extends BaseResource
             'cuisine_type' => $this->getTranslations('cuisine_type'),
             'location'     => $this->getTranslations('location'),
             'hours'        => $this->getTranslations('hours'),
+            // Denormalized from published reviews — null until the first one lands.
+            'rating'       => $this->rating_avg,
+            'rating_count' => $this->rating_count,
             'is_active'    => $this->is_active,
             'sort_order'   => $this->sort_order,
             'images'       => MediaResource::collection($this->whenLoaded('images')),

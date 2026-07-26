@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasReviews;
 use App\Traits\HasTranslations;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class DiningVenue extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, LogsActivity;
+    use HasFactory, HasUuid, HasTranslations, HasReviews, LogsActivity;
 
     protected $translatable = ['name', 'description', 'cuisine_type', 'location', 'hours'];
 

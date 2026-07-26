@@ -29,6 +29,8 @@ return [
         'folio_generated'         => 'Folio generated.',
         'folio_settled'           => 'Folio settled.',
         'folio_approved'          => 'Checkout approved.',
+        'review_submitted'        => 'Thank you for your review.',
+        'review_moderated'        => 'Review updated.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',

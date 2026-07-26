@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Admin\AmenityController as AdminAmenityController;
 use App\Http\Controllers\Admin\CheckInApprovalController;
+use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Api\AmenityController as ApiAmenityController;
+use App\Http\Controllers\Api\ReviewController as ApiReviewController;
 use App\Http\Controllers\Admin\ConversationController as AdminConversationController;
 use App\Http\Controllers\Admin\FolioController as AdminFolioController;
 use App\Http\Controllers\Api\ConversationController as ApiConversationController;
@@ -92,6 +94,8 @@ Route::prefix('public')->group(function () {
     Route::get('/event-spaces',               [ApiEventSpaceController::class,  'index']);
     Route::get('/event-spaces/{eventSpace}',  [ApiEventSpaceController::class,  'show']);
     Route::get('/amenities',              [ApiAmenityController::class,    'index']);
+    // {type} is a ReviewableType value (room_type|dining_venue) — see ReviewService.
+    Route::get('/reviews/{type}/{uuid}',  [ApiReviewController::class,     'index']);
     Route::get('/pages/{slug}',           [ApiPageController::class,       'show']);
     Route::get('/promotions',             [ApiPromotionController::class,  'index']);
     Route::get('/promotions/{promotion}', [ApiPromotionController::class,  'show']);
@@ -157,6 +161,10 @@ Route::middleware(['auth:users', 'permission:cms.edit'])->prefix('cms')->group(f
     Route::put   ('/amenities/{amenity}',                         [AdminAmenityController::class, 'update']);
     Route::delete('/amenities/{amenity}',                         [AdminAmenityController::class, 'destroy']);
 
+    // Reviews — read + moderation only; guests are the only authors.
+    Route::get  ('/reviews',                                      [AdminReviewController::class, 'index']);
+    Route::patch('/reviews/{review}/publish',                     [AdminReviewController::class, 'setPublished']);
+
     // Pages
     Route::get   ('/pages',                                       [AdminPageController::class, 'index']);
     Route::post  ('/pages',                                       [AdminPageController::class, 'store']);
@@ -200,6 +208,11 @@ Route::middleware('auth:users')->prefix('cms/event-inquiries')->group(function (
 // Public (no auth) — two-step guest booking
 Route::post('/reservations/guest',        [ReservationController::class, 'storeAsGuest']);
 Route::post('/reservations/guest/verify', [ReservationController::class, 'verifyGuestBooking']);
+
+// Guest reviews — tier-2 (any guest token). Verified-stay is derived from the
+// guest's reservation history inside SubmitReviewAction, not gated at the route.
+Route::middleware('auth:guests')
+    ->post('/reviews/{type}/{uuid}', [ApiReviewController::class, 'store']);
 
 // Authenticated guest — one-step booking + self-service
 Route::middleware('auth:guests')->prefix('reservations')->group(function () {

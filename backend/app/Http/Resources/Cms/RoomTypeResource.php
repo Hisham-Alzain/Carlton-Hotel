@@ -20,6 +20,9 @@ class RoomTypeResource extends BaseResource
             'size_sqm'           => $this->size_sqm,
             'base_price_usd'     => $this->base_price_usd,
             'cancellation_hours' => $this->cancellation_hours,
+            // Denormalized from published reviews — null until the first one lands.
+            'rating'             => $this->rating_avg,
+            'rating_count'       => $this->rating_count,
             'is_active'          => $this->is_active,
             'sort_order'         => $this->sort_order,
             // Room card thumbnail — the first image by sort_order.

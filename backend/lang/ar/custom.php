@@ -29,6 +29,8 @@ return [
         'folio_generated'         => 'تم إنشاء الفاتورة.',
         'folio_settled'           => 'تم تسوية الفاتورة.',
         'folio_approved'          => 'تمت الموافقة على تسجيل المغادرة.',
+        'review_submitted'        => 'شكراً لتقييمك.',
+        'review_moderated'        => 'تم تحديث التقييم.',
     ],
     'errors'     => [
         'server_error'           => 'حدث خطأ ما.',

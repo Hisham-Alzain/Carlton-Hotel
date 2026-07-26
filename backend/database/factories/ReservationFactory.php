@@ -48,6 +48,15 @@ class ReservationFactory extends Factory
         return $this->state(fn () => ['status' => ReservationStatus::CHECKED_IN]);
     }
 
+    public function checkedOut(): static
+    {
+        return $this->state(fn () => [
+            'status'    => ReservationStatus::CHECKED_OUT,
+            'check_in'  => now()->subDays(5)->toDateString(),
+            'check_out' => now()->subDays(2)->toDateString(),
+        ]);
+    }
+
     public function cancelled(): static
     {
         return $this->state(fn () => ['status' => ReservationStatus::CANCELLED]);

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Booking;
 
+use App\Enums\ModifierType;
 use App\Exceptions\InvalidPromoException;
 use App\Models\PricingRule;
 use App\Models\PromoCode;
@@ -24,7 +25,7 @@ class QuoteReservationAction
             ->get();
 
         foreach ($rules as $rule) {
-            if ($rule->modifier_type === PricingRule::TYPE_PERCENTAGE) {
+            if ($rule->modifier_type === ModifierType::PERCENTAGE) {
                 $daily *= 1 + ((float) $rule->modifier_value / 100);
             } else {
                 $daily += (float) $rule->modifier_value;
@@ -42,7 +43,7 @@ class QuoteReservationAction
                 throw new InvalidPromoException(__('custom.errors.invalid_promo'));
             }
 
-            if ($promoModel->type === PromoCode::TYPE_PERCENTAGE) {
+            if ($promoModel->type === ModifierType::PERCENTAGE) {
                 $discount = round($subtotal * ((float) $promoModel->value / 100), 2);
             } else {
                 $discount = min((float) $promoModel->value, $subtotal);

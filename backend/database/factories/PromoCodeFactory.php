@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ModifierType;
 use App\Models\PromoCode;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -13,7 +14,7 @@ class PromoCodeFactory extends Factory
     {
         return [
             'code'       => strtoupper($this->faker->unique()->bothify('????##')),
-            'type'       => PromoCode::TYPE_PERCENTAGE,
+            'type'       => ModifierType::PERCENTAGE,
             'value'      => $this->faker->randomFloat(2, 5, 25),
             'expires_at' => now()->addMonth(),
             'max_uses'   => null,

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Payment;
 
 use App\Contracts\PaymentGatewayInterface;
+use App\Enums\ReservationStatus;
 use App\Models\Reservation;
 use App\Models\User;
 use App\Payments\ManualDriver;
@@ -70,7 +71,7 @@ class PaymentTest extends TestCase
              ])
              ->assertOk();
 
-        $this->assertEquals(Reservation::STATUS_CONFIRMED, $reservation->fresh()->status);
+        $this->assertEquals(ReservationStatus::CONFIRMED, $reservation->fresh()->status);
     }
 
     public function test_on_arrival_path_records_payment(): void
@@ -105,7 +106,7 @@ class PaymentTest extends TestCase
              ])
              ->assertOk();
 
-        $this->assertEquals(Reservation::STATUS_CONFIRMED, $reservation->fresh()->status);
+        $this->assertEquals(ReservationStatus::CONFIRMED, $reservation->fresh()->status);
     }
 
     public function test_permission_gate_blocks_unpermitted_user(): void
@@ -152,7 +153,7 @@ class PaymentTest extends TestCase
              ->assertJson(['success' => false, 'error_code' => 'payment_failed']);
 
         $this->assertDatabaseMissing('payments', ['payable_id' => $reservation->id]);
-        $this->assertEquals('pending', $reservation->fresh()->status);
+        $this->assertEquals(ReservationStatus::PENDING, $reservation->fresh()->status);
     }
 
     public function test_validation_rejects_invalid_method(): void

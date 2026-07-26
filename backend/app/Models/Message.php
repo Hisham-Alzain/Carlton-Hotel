@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MessageSender;
 use App\Traits\FileTrait;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
@@ -13,9 +14,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class Message extends Model
 {
     use FileTrait, HasFactory, HasUuid, LogsActivity;
-
-    const SENDER_GUEST = 'guest';
-    const SENDER_STAFF  = 'staff';
 
     protected $fillable = ['conversation_id', 'sender_type', 'sender_id', 'body', 'attachment_path', 'read_at'];
 
@@ -34,8 +32,8 @@ class Message extends Model
 
     // sender_type stores the FQCN (Guest/User are not in the global morph map
     // — see AppServiceProvider). This maps it back to the short API label.
-    public function senderLabel(): string
+    public function senderLabel(): MessageSender
     {
-        return $this->sender_type === Guest::class ? self::SENDER_GUEST : self::SENDER_STAFF;
+        return $this->sender_type === Guest::class ? MessageSender::GUEST : MessageSender::STAFF;
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\BookableType;
+use App\Enums\ServiceBookingStatus;
 use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\ServiceBooking;
@@ -17,10 +19,10 @@ class ServiceBookingFactory extends Factory
         return [
             'guest_id'       => Guest::factory(),
             'reservation_id' => Reservation::factory(),
-            'bookable_type'  => 'spa_service',
+            'bookable_type'  => BookableType::SPA_SERVICE->value,
             'bookable_id'    => SpaService::factory(),
             'scheduled_at'   => $this->faker->dateTimeBetween('+1 day', '+10 days'),
-            'status'         => ServiceBooking::STATUS_PENDING,
+            'status'         => ServiceBookingStatus::PENDING,
         ];
     }
 }

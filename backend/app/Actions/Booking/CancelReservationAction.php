@@ -2,25 +2,20 @@
 
 namespace App\Actions\Booking;
 
+use App\Enums\ReservationStatus;
 use App\Exceptions\ReservationStateException;
 use App\Models\Reservation;
 use Illuminate\Support\Facades\DB;
 
 class CancelReservationAction
 {
-    private const CANCELLABLE = [
-        Reservation::STATUS_PENDING_VERIFICATION,
-        Reservation::STATUS_PENDING,
-        Reservation::STATUS_CONFIRMED,
-    ];
-
     public function handle(Reservation $reservation): array
     {
-        if (! in_array($reservation->status, self::CANCELLABLE)) {
+        if (! $reservation->status->isCancellable()) {
             throw new ReservationStateException(__('custom.errors.reservation_state'));
         }
 
-        DB::transaction(fn () => $reservation->update(['status' => Reservation::STATUS_CANCELLED]));
+        DB::transaction(fn () => $reservation->update(['status' => ReservationStatus::CANCELLED]));
 
         return ['data' => null, 'code' => 204];
     }

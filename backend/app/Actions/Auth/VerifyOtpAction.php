@@ -1,6 +1,7 @@
 <?php
 namespace App\Actions\Auth;
 
+use App\Enums\OtpPurpose;
 use App\Exceptions\OtpExpiredException;
 use App\Exceptions\OtpInvalidException;
 use App\Exceptions\OtpLockedException;
@@ -14,8 +15,11 @@ class VerifyOtpAction
 {
     private const MAX_ATTEMPTS = 5;
 
-    public function handle(string $identifier, string $code, string $purpose, ?string $bookingCode = null): array
+    public function handle(string $identifier, string $code, OtpPurpose|string $purpose, ?string $bookingCode = null): array
     {
+        // Public HTTP callers still pass raw strings; normalize once at the boundary.
+        $purpose = $purpose instanceof OtpPurpose ? $purpose : OtpPurpose::from($purpose);
+
         $otp = OtpCode::forIdentifier($identifier, $purpose)
             ->orderByDesc('id')
             ->first();
@@ -60,7 +64,7 @@ class VerifyOtpAction
                 $guest->markEmailVerified();
             }
 
-            if ($bookingCode && $purpose === OtpCode::PURPOSE_BOOKING_LINK) {
+            if ($bookingCode && $purpose === OtpPurpose::BOOKING_LINK) {
                 // Second factor re-checked at redemption: identifier must match reservation's contact
                 Reservation::where('booking_code', $bookingCode)
                     ->whereNull('guest_id')

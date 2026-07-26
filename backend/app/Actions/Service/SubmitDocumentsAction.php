@@ -2,6 +2,7 @@
 
 namespace App\Actions\Service;
 
+use App\Enums\CheckInApprovalStatus;
 use App\Models\CheckInApproval;
 use App\Models\Guest;
 use App\Models\GuestDocument;
@@ -35,7 +36,7 @@ class SubmitDocumentsAction
 
             CheckInApproval::updateOrCreate(
                 ['reservation_id' => $reservation->id],
-                ['status' => CheckInApproval::STATUS_PENDING, 'approved_by' => null]
+                ['status' => CheckInApprovalStatus::PENDING, 'approved_by' => null]
             );
 
             return ['data' => collect($stored), 'code' => 201];

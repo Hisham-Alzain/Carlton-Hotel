@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\PaymentMethod;
+use App\Enums\ReservationSource;
+use App\Enums\ReservationStatus;
 use App\Models\Guest;
 use App\Models\Reservation;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -18,11 +21,11 @@ class ReservationFactory extends Factory
         return [
             'guest_id'       => Guest::factory(),
             'booking_code'   => 'CARL-' . strtoupper($this->faker->unique()->lexify('????????')),
-            'source'         => Reservation::SOURCE_DIRECT,
+            'source'         => ReservationSource::DIRECT,
             'check_in'       => $checkIn->format('Y-m-d'),
             'check_out'      => $checkOut->format('Y-m-d'),
-            'status'         => Reservation::STATUS_PENDING,
-            'payment_method' => Reservation::PAYMENT_ON_ARRIVAL,
+            'status'         => ReservationStatus::PENDING,
+            'payment_method' => PaymentMethod::ON_ARRIVAL,
             'total_usd'      => $this->faker->randomFloat(2, 50, 500),
         ];
     }
@@ -30,30 +33,30 @@ class ReservationFactory extends Factory
     public function pendingVerification(): static
     {
         return $this->state(fn () => [
-            'status'         => Reservation::STATUS_PENDING_VERIFICATION,
+            'status'         => ReservationStatus::PENDING_VERIFICATION,
             'hold_expires_at'=> now()->addMinutes(5),
         ]);
     }
 
     public function confirmed(): static
     {
-        return $this->state(fn () => ['status' => Reservation::STATUS_CONFIRMED]);
+        return $this->state(fn () => ['status' => ReservationStatus::CONFIRMED]);
     }
 
     public function checkedIn(): static
     {
-        return $this->state(fn () => ['status' => Reservation::STATUS_CHECKED_IN]);
+        return $this->state(fn () => ['status' => ReservationStatus::CHECKED_IN]);
     }
 
     public function cancelled(): static
     {
-        return $this->state(fn () => ['status' => Reservation::STATUS_CANCELLED]);
+        return $this->state(fn () => ['status' => ReservationStatus::CANCELLED]);
     }
 
     public function expiredHold(): static
     {
         return $this->state(fn () => [
-            'status'         => Reservation::STATUS_PENDING_VERIFICATION,
+            'status'         => ReservationStatus::PENDING_VERIFICATION,
             'hold_expires_at'=> now()->subMinutes(1),
         ]);
     }

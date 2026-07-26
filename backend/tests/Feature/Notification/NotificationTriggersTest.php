@@ -3,6 +3,7 @@
 namespace Tests\Feature\Notification;
 
 use App\Contracts\FirebaseServiceInterface;
+use App\Enums\NotificationType;
 use App\Models\DeviceToken;
 use App\Models\EventInquiry;
 use App\Models\GuestNotification;
@@ -57,7 +58,7 @@ class NotificationTriggersTest extends TestCase
 
         $this->assertDatabaseHas('guest_notifications', [
             'guest_id' => $reservation->guest_id,
-            'type'     => GuestNotification::TYPE_ROOM_READY,
+            'type'     => NotificationType::ROOM_READY->value,
         ]);
         $this->assertCount(1, $fake->pushes);
         $this->assertEquals(['guest-tok'], $fake->pushes[0]['tokens']);
@@ -81,7 +82,7 @@ class NotificationTriggersTest extends TestCase
             ->postJson("/api/cms/reservations/{$reservation->uuid}/assign-room", ['room_uuid' => $room->uuid])
             ->assertOk();
 
-        $this->assertDatabaseHas('guest_notifications', ['type' => GuestNotification::TYPE_ROOM_READY]);
+        $this->assertDatabaseHas('guest_notifications', ['type' => NotificationType::ROOM_READY->value]);
         $this->assertCount(0, $fake->pushes);
     }
 
@@ -98,9 +99,9 @@ class NotificationTriggersTest extends TestCase
 
         $this->assertDatabaseHas('guest_notifications', [
             'department' => $inquiry->department,
-            'type'       => GuestNotification::TYPE_INQUIRY_ROUTED,
+            'type'       => NotificationType::INQUIRY_ROUTED->value,
         ]);
-        $notification = GuestNotification::where('type', GuestNotification::TYPE_INQUIRY_ROUTED)->first();
+        $notification = GuestNotification::where('type', NotificationType::INQUIRY_ROUTED->value)->first();
         $this->assertNull($notification->guest_id);
         $this->assertNotNull($notification->sent_at);
     }

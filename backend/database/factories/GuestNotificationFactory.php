@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\Department;
+use App\Enums\NotificationType;
 use App\Models\Guest;
 use App\Models\GuestNotification;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -14,19 +16,19 @@ class GuestNotificationFactory extends Factory
     {
         return [
             'guest_id' => Guest::factory(),
-            'type'     => GuestNotification::TYPE_WELCOME,
+            'type'     => NotificationType::WELCOME,
             'title'    => $this->faker->sentence(3),
             'body'     => $this->faker->sentence(10),
             'data'     => [],
         ];
     }
 
-    public function department(string $department = 'events'): static
+    public function department(Department $department = Department::EVENTS): static
     {
         return $this->state(fn () => [
             'guest_id'   => null,
             'department' => $department,
-            'type'       => GuestNotification::TYPE_INQUIRY_ROUTED,
+            'type'       => NotificationType::INQUIRY_ROUTED,
         ]);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Cms;
 
 use App\Base\BaseRequest;
+use App\Enums\RoomStatus;
 use Illuminate\Validation\Rule;
 
 class UpdateRoomRequest extends BaseRequest
@@ -14,7 +15,7 @@ class UpdateRoomRequest extends BaseRequest
             'room_type_uuid' => ['sometimes', 'string', 'exists:room_types,uuid'],
             'number'       => ['sometimes', 'string', 'max:10', Rule::unique('rooms', 'number')->ignore($room)],
             'floor'        => ['nullable', 'integer', 'min:0', 'max:200'],
-            'status'       => ['in:available,occupied,maintenance'],
+            'status'       => [Rule::enum(RoomStatus::class)],
             'is_active'    => ['boolean'],
         ];
     }

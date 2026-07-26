@@ -3,6 +3,7 @@
 namespace App\Actions\Booking;
 
 use App\Contracts\ChannelAdapterInterface;
+use App\Enums\ReservationStatus;
 use App\Exceptions\NoAvailabilityException;
 use App\Models\Guest;
 use App\Models\Reservation;
@@ -46,7 +47,7 @@ class CreateReservationAction
                 'external_channel'=> $data['external_channel']?? null,
                 'check_in'        => $data['check_in'],
                 'check_out'       => $data['check_out'],
-                'status'          => $data['status']          ?? Reservation::STATUS_PENDING,
+                'status'          => $data['status']          ?? ReservationStatus::PENDING,
                 'hold_expires_at' => $data['hold_expires_at'] ?? null,
                 'payment_method'  => $data['payment_method'],
                 'total_usd'       => $pricing['total_usd'],

@@ -2,6 +2,11 @@
 
 namespace App\Console\Commands\Postman;
 
+use App\Enums\CheckInApprovalStatus;
+use App\Enums\EventInquiryStatus;
+use App\Enums\ReservationStatus;
+use App\Enums\RoomStatus;
+use App\Enums\TicketStatus;
 use App\Models\CheckInApproval;
 use App\Models\Conversation;
 use App\Models\DiningVenue;
@@ -92,12 +97,12 @@ class RefreshPostmanEnvironment extends Command
         $ahmadReservation = Reservation::where('guest_id', $ahmad->id)->firstOrFail();
         $laylaReservation = Reservation::where('guest_id', $layla->id)->firstOrFail();
         $raniaReservation = Reservation::where('guest_id', $rania->id)->firstOrFail();
-        $cancelledReservation = Reservation::where('status', Reservation::STATUS_CANCELLED)->firstOrFail();
-        $pendingReservation = Reservation::where('status', Reservation::STATUS_PENDING)->first();
+        $cancelledReservation = Reservation::where('status', ReservationStatus::CANCELLED)->firstOrFail();
+        $pendingReservation = Reservation::where('status', ReservationStatus::PENDING)->first();
 
         $roomType = RoomType::where('name->en', 'Deluxe King')->firstOrFail();
         $standardQueen = RoomType::where('name->en', 'Standard Queen')->firstOrFail();
-        $room = Room::where('room_type_id', $standardQueen->id)->where('status', 'available')->firstOrFail();
+        $room = Room::where('room_type_id', $standardQueen->id)->where('status', RoomStatus::AVAILABLE)->firstOrFail();
 
         return [
             'staff_token' => $superAdminToken,
@@ -120,7 +125,7 @@ class RefreshPostmanEnvironment extends Command
             'page_slug' => Page::where('slug', 'about-us')->firstOrFail()->slug,
             'page_uuid' => Page::where('slug', 'about-us')->firstOrFail()->uuid,
             'promotion_uuid' => Promotion::firstOrFail()->uuid,
-            'event_inquiry_uuid' => EventInquiry::where('status', EventInquiry::STATUS_NEW)->firstOrFail()->uuid,
+            'event_inquiry_uuid' => EventInquiry::where('status', EventInquiryStatus::NEW)->firstOrFail()->uuid,
             'spa_service_uuid' => SpaService::firstOrFail()->uuid,
             'restaurant_table_uuid' => RestaurantTable::firstOrFail()->uuid,
             'pool_cabana_uuid' => PoolCabana::firstOrFail()->uuid,
@@ -130,9 +135,9 @@ class RefreshPostmanEnvironment extends Command
             'service_request_uuid' => ServiceRequest::firstOrFail()->uuid,
             'conversation_assigned_uuid' => Conversation::whereNotNull('assigned_user_id')->firstOrFail()->uuid,
             'conversation_unassigned_uuid' => Conversation::whereNull('assigned_user_id')->firstOrFail()->uuid,
-            'ticket_open_uuid' => Ticket::where('status', Ticket::STATUS_OPEN)->firstOrFail()->uuid,
-            'ticket_assigned_uuid' => Ticket::where('status', Ticket::STATUS_ASSIGNED)->firstOrFail()->uuid,
-            'check_in_approval_reservation_uuid' => CheckInApproval::where('status', CheckInApproval::STATUS_PENDING)->firstOrFail()->reservation->uuid,
+            'ticket_open_uuid' => Ticket::where('status', TicketStatus::OPEN)->firstOrFail()->uuid,
+            'ticket_assigned_uuid' => Ticket::where('status', TicketStatus::ASSIGNED)->firstOrFail()->uuid,
+            'check_in_approval_reservation_uuid' => CheckInApproval::where('status', CheckInApprovalStatus::PENDING)->firstOrFail()->reservation->uuid,
             'staff_target_uuid' => User::where('email', 'reception@carlton.demo')->firstOrFail()->uuid,
             'trainee_staff_uuid' => User::where('email', 'trainee@carlton.demo')->firstOrFail()->uuid,
             'media_uuid' => Media::first()?->uuid ?? '',

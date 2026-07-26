@@ -2,8 +2,8 @@
 
 namespace App\Listeners;
 
+use App\Enums\NotificationType;
 use App\Events\GuestConnected;
-use App\Models\GuestNotification;
 use App\Services\Notification\NotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
@@ -15,7 +15,7 @@ class SendWelcomeNotification implements ShouldQueue
     {
         $this->notifications->pushToGuest(
             $event->guest,
-            GuestNotification::TYPE_WELCOME,
+            NotificationType::WELCOME,
             __('custom.notifications.welcome_title'),
             __('custom.notifications.welcome_body'),
         );

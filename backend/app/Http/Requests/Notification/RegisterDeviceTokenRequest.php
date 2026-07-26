@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Notification;
 
 use App\Base\BaseRequest;
+use App\Enums\DevicePlatform;
+use Illuminate\Validation\Rule;
 
 class RegisterDeviceTokenRequest extends BaseRequest
 {
@@ -10,7 +12,7 @@ class RegisterDeviceTokenRequest extends BaseRequest
     {
         return [
             'token'    => ['required', 'string', 'max:500'],
-            'platform' => ['required', 'string', 'in:ios,android,web'],
+            'platform' => ['required', Rule::enum(DevicePlatform::class)],
         ];
     }
 }

@@ -1,8 +1,9 @@
 <?php
 namespace App\Actions\Auth;
 
+use App\Enums\OtpChannel;
+use App\Enums\OtpPurpose;
 use App\Exceptions\NotFoundException;
-use App\Models\OtpCode;
 use App\Models\Reservation;
 
 class LinkBookingCodeAction
@@ -36,9 +37,9 @@ class LinkBookingCodeAction
             ?? $reservation->guest?->email
             ?? $reservation->guest?->phone
             ?? throw new NotFoundException(__('custom.errors.booking_link_failed'));
-        $channel = str_starts_with($identifier, '+') ? OtpCode::CHANNEL_SMS : OtpCode::CHANNEL_EMAIL;
+        $channel = str_starts_with($identifier, '+') ? OtpChannel::SMS : OtpChannel::EMAIL;
 
-        $this->requestOtp->handle($identifier, $channel, OtpCode::PURPOSE_BOOKING_LINK);
+        $this->requestOtp->handle($identifier, $channel, OtpPurpose::BOOKING_LINK);
 
         // Mask the identifier
         $masked = strlen($identifier) > 4

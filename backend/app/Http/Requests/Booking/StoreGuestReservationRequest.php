@@ -3,7 +3,9 @@
 namespace App\Http\Requests\Booking;
 
 use App\Base\BaseRequest;
+use App\Enums\PaymentMethod;
 use App\Support\NormalizesPhone;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreGuestReservationRequest extends BaseRequest
@@ -34,7 +36,7 @@ class StoreGuestReservationRequest extends BaseRequest
             'phone'          => ['nullable', 'string'],
             'phone_country'  => ['nullable', 'string'],
             'email'          => ['nullable', 'email'],
-            'payment_method' => ['sometimes', 'in:cash,on_arrival'],
+            'payment_method' => ['sometimes', Rule::enum(PaymentMethod::class)],
             'promo_code'     => ['nullable', 'string'],
         ];
     }

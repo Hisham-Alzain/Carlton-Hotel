@@ -3,17 +3,18 @@
 namespace App\Http\Requests\Operations;
 
 use App\Base\BaseRequest;
-use App\Models\ServiceRequest;
-use App\Models\Ticket;
+use App\Enums\ServiceRequestStatus;
+use App\Enums\TicketStatus;
+use Illuminate\Validation\Rule;
 
 class UpdateRequestStatusRequest extends BaseRequest
 {
     public function rules(): array
     {
-        $statuses = $this->route('type') === 'tickets' ? Ticket::STATUSES : ServiceRequest::STATUSES;
+        $enum = $this->route('type') === 'tickets' ? TicketStatus::class : ServiceRequestStatus::class;
 
         return [
-            'status' => ['required', 'string', 'in:' . implode(',', $statuses)],
+            'status' => ['required', Rule::enum($enum)],
         ];
     }
 }

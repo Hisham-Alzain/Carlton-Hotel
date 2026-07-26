@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\RoomStatus;
 use App\Models\ReservationRoom;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
@@ -24,6 +25,7 @@ class Room extends Model
     ];
 
     protected $casts = [
+        'status'    => RoomStatus::class,
         'is_active' => 'boolean',
     ];
 

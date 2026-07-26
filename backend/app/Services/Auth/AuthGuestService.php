@@ -4,6 +4,8 @@ namespace App\Services\Auth;
 use App\Actions\Auth\LinkBookingCodeAction;
 use App\Actions\Auth\RequestOtpAction;
 use App\Actions\Auth\VerifyOtpAction;
+use App\Enums\OtpChannel;
+use App\Enums\OtpPurpose;
 use App\Models\Guest;
 
 class AuthGuestService
@@ -14,12 +16,12 @@ class AuthGuestService
         private readonly LinkBookingCodeAction $linkBookingCode,
     ) {}
 
-    public function requestOtp(string $identifier, string $channel, string $purpose): array
+    public function requestOtp(string $identifier, OtpChannel|string $channel, OtpPurpose|string $purpose): array
     {
         return $this->requestOtp->handle($identifier, $channel, $purpose);
     }
 
-    public function verifyOtp(string $identifier, string $code, string $purpose, ?string $bookingCode = null): array
+    public function verifyOtp(string $identifier, string $code, OtpPurpose|string $purpose, ?string $bookingCode = null): array
     {
         return $this->verifyOtp->handle($identifier, $code, $purpose, $bookingCode);
     }

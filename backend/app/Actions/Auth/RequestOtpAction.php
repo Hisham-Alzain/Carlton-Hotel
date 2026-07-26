@@ -2,6 +2,8 @@
 
 namespace App\Actions\Auth;
 
+use App\Enums\OtpChannel;
+use App\Enums\OtpPurpose;
 use App\Exceptions\TooManyRequestsException;
 use App\Models\OtpCode;
 use Illuminate\Support\Facades\DB;
@@ -12,17 +14,21 @@ class RequestOtpAction
 {
     public function __construct(private readonly OtpDispatcher $dispatcher) {}
 
-    public function handle(string $identifier, string $channel, string $purpose): array
+    public function handle(string $identifier, OtpChannel|string $channel, OtpPurpose|string $purpose): array
     {
+        // Public HTTP callers still pass raw strings; normalize once at the boundary.
+        $channel = $channel instanceof OtpChannel ? $channel : OtpChannel::from($channel);
+        $purpose = $purpose instanceof OtpPurpose ? $purpose : OtpPurpose::from($purpose);
+
         // Rate-limit: 1 per minute per identifier
-        $minuteKey = "otp:min:{$identifier}:{$purpose}";
+        $minuteKey = "otp:min:{$identifier}:{$purpose->value}";
         if (RateLimiter::tooManyAttempts($minuteKey, 1)) {
             throw new TooManyRequestsException(__('custom.errors.too_many_requests'));
         }
         RateLimiter::hit($minuteKey, 60);
 
         // Rate-limit: 5 per hour per identifier
-        $hourKey = "otp:hour:{$identifier}:{$purpose}";
+        $hourKey = "otp:hour:{$identifier}:{$purpose->value}";
         if (RateLimiter::tooManyAttempts($hourKey, 5)) {
             throw new TooManyRequestsException(__('custom.errors.too_many_requests'));
         }
@@ -51,7 +57,7 @@ class RequestOtpAction
             ]);
         });
 
-        $this->dispatcher->send($identifier, $channel, $code);
+        $this->dispatcher->send($identifier, $channel->value, $code);
 
         return [
             'data' => [

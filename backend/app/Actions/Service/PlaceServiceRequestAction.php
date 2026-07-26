@@ -2,6 +2,9 @@
 
 namespace App\Actions\Service;
 
+use App\Enums\Department;
+use App\Enums\ServiceRequestPriority;
+use App\Enums\ServiceRequestStatus;
 use App\Events\ServiceRequestPlaced;
 use App\Models\Guest;
 use App\Models\Reservation;
@@ -13,15 +16,13 @@ class PlaceServiceRequestAction
     public function handle(Guest $guest, Reservation $reservation, array $data): array
     {
         $request = DB::transaction(function () use ($guest, $reservation, $data) {
-            $department = ServiceRequest::TYPE_DEPARTMENTS[$data['type']] ?? ServiceRequest::DEPARTMENT_CONCIERGE;
-
             return ServiceRequest::create([
                 'guest_id'       => $guest->id,
                 'reservation_id' => $reservation->id,
                 'type'           => $data['type'],
-                'department'     => $department,
-                'status'         => ServiceRequest::STATUS_NEW,
-                'priority'       => $data['priority'] ?? ServiceRequest::PRIORITY_NORMAL,
+                'department'     => Department::forServiceType($data['type']),
+                'status'         => ServiceRequestStatus::NEW,
+                'priority'       => $data['priority'] ?? ServiceRequestPriority::NORMAL,
                 'notes'          => $data['notes'] ?? null,
             ]);
         });

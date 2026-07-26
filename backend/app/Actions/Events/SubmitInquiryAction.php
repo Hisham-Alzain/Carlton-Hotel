@@ -2,6 +2,8 @@
 
 namespace App\Actions\Events;
 
+use App\Enums\EventInquiryStatus;
+use App\Enums\EventType;
 use App\Events\InquirySubmitted;
 use App\Models\EventInquiry;
 use Illuminate\Support\Facades\DB;
@@ -11,9 +13,7 @@ class SubmitInquiryAction
     public function handle(array $data, ?int $guestId = null): array
     {
         return DB::transaction(function () use ($data, $guestId) {
-            $department = in_array($data['event_type'], EventInquiry::SALES_EVENT_TYPES)
-                ? EventInquiry::DEPARTMENT_SALES
-                : EventInquiry::DEPARTMENT_EVENTS;
+            $eventType = EventType::from($data['event_type']);
 
             $inquiry = EventInquiry::create([
                 'guest_id'        => $guestId,
@@ -22,13 +22,13 @@ class SubmitInquiryAction
                 'email'           => $data['email'],
                 'phone'           => $data['phone'] ?? null,
                 'company'         => $data['company'] ?? null,
-                'event_type'      => $data['event_type'],
+                'event_type'      => $eventType,
                 'event_date'      => $data['event_date'] ?? null,
                 'expected_guests' => $data['expected_guests'] ?? null,
                 'budget_usd'      => $data['budget_usd'] ?? null,
                 'notes'           => $data['notes'] ?? null,
-                'status'          => EventInquiry::STATUS_NEW,
-                'department'      => $department,
+                'status'          => EventInquiryStatus::NEW,
+                'department'      => $eventType->department(),
             ]);
 
             foreach ($data['requirements'] ?? [] as $req) {

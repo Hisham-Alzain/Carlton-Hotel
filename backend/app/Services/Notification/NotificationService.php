@@ -3,6 +3,8 @@
 namespace App\Services\Notification;
 
 use App\Contracts\FirebaseServiceInterface;
+use App\Enums\Department;
+use App\Enums\NotificationType;
 use App\Models\Guest;
 use App\Models\GuestNotification;
 
@@ -17,7 +19,7 @@ class NotificationService
      *
      * @param array<string, mixed> $data
      */
-    public function pushToGuest(Guest $guest, string $type, string $title, string $body, array $data = []): GuestNotification
+    public function pushToGuest(Guest $guest, NotificationType $type, string $title, string $body, array $data = []): GuestNotification
     {
         $notification = GuestNotification::create([
             'guest_id' => $guest->id,
@@ -45,7 +47,7 @@ class NotificationService
      *
      * @param array<string, mixed> $data
      */
-    public function notifyDepartment(string $department, string $type, string $title, string $body, array $data = []): GuestNotification
+    public function notifyDepartment(Department $department, NotificationType $type, string $title, string $body, array $data = []): GuestNotification
     {
         return GuestNotification::create([
             'department' => $department,

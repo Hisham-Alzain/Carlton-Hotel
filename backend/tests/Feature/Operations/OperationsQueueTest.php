@@ -3,6 +3,8 @@
 namespace Tests\Feature\Operations;
 
 use App\Contracts\FirebaseServiceInterface;
+use App\Enums\ServiceRequestStatus;
+use App\Enums\TicketStatus;
 use App\Models\ServiceRequest;
 use App\Models\Ticket;
 use App\Models\User;
@@ -82,8 +84,8 @@ class OperationsQueueTest extends TestCase
 
     public function test_queue_excludes_completed_and_resolved_items(): void
     {
-        ServiceRequest::factory()->create(['status' => ServiceRequest::STATUS_COMPLETED]);
-        Ticket::factory()->create(['status' => Ticket::STATUS_CLOSED]);
+        ServiceRequest::factory()->create(['status' => ServiceRequestStatus::COMPLETED]);
+        Ticket::factory()->create(['status' => TicketStatus::CLOSED]);
 
         $this->withToken($this->staffToken('service_requests.view', 'tickets.view'))
             ->getJson('/api/operations/queue')
@@ -145,22 +147,22 @@ class OperationsQueueTest extends TestCase
     public function test_updating_service_request_status_without_permission_is_forbidden(): void
     {
         $this->fakeFirebase();
-        $request = ServiceRequest::factory()->create(['status' => ServiceRequest::STATUS_NEW]);
+        $request = ServiceRequest::factory()->create(['status' => ServiceRequestStatus::NEW]);
 
         $this->withToken($this->staffToken('service_requests.view'))
-            ->patchJson("/api/operations/queue/service-requests/{$request->uuid}/status", ['status' => ServiceRequest::STATUS_IN_PROGRESS])
+            ->patchJson("/api/operations/queue/service-requests/{$request->uuid}/status", ['status' => ServiceRequestStatus::IN_PROGRESS->value])
             ->assertStatus(403);
     }
 
     public function test_updating_service_request_status_with_permission_succeeds(): void
     {
         $fake = $this->fakeFirebase();
-        $request = ServiceRequest::factory()->create(['status' => ServiceRequest::STATUS_NEW]);
+        $request = ServiceRequest::factory()->create(['status' => ServiceRequestStatus::NEW]);
 
         $this->withToken($this->staffToken('service_requests.update'))
-            ->patchJson("/api/operations/queue/service-requests/{$request->uuid}/status", ['status' => ServiceRequest::STATUS_IN_PROGRESS])
+            ->patchJson("/api/operations/queue/service-requests/{$request->uuid}/status", ['status' => ServiceRequestStatus::IN_PROGRESS->value])
             ->assertOk()
-            ->assertJsonPath('data.status', ServiceRequest::STATUS_IN_PROGRESS);
+            ->assertJsonPath('data.status', ServiceRequestStatus::IN_PROGRESS->value);
 
         $this->assertCount(1, $fake->mirrors);
     }
@@ -168,12 +170,12 @@ class OperationsQueueTest extends TestCase
     public function test_updating_ticket_status_requires_tickets_respond(): void
     {
         $this->fakeFirebase();
-        $ticket = Ticket::factory()->create(['status' => Ticket::STATUS_OPEN]);
+        $ticket = Ticket::factory()->create(['status' => TicketStatus::OPEN]);
 
         $this->withToken($this->staffToken('tickets.respond'))
-            ->patchJson("/api/operations/queue/tickets/{$ticket->uuid}/status", ['status' => Ticket::STATUS_RESOLVED])
+            ->patchJson("/api/operations/queue/tickets/{$ticket->uuid}/status", ['status' => TicketStatus::RESOLVED->value])
             ->assertOk()
-            ->assertJsonPath('data.status', Ticket::STATUS_RESOLVED);
+            ->assertJsonPath('data.status', TicketStatus::RESOLVED->value);
     }
 
     public function test_status_value_is_validated_against_the_items_own_enum(): void
@@ -190,7 +192,7 @@ class OperationsQueueTest extends TestCase
     {
         $this->fakeFirebase();
         $this->withToken($this->staffToken('service_requests.view'))
-            ->patchJson('/api/operations/queue/bogus-type/some-uuid/status', ['status' => ServiceRequest::STATUS_NEW])
+            ->patchJson('/api/operations/queue/bogus-type/some-uuid/status', ['status' => ServiceRequestStatus::NEW->value])
             ->assertStatus(404);
     }
 }

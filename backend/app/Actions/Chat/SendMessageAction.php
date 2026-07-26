@@ -2,6 +2,7 @@
 
 namespace App\Actions\Chat;
 
+use App\Enums\ConversationStatus;
 use App\Models\Conversation;
 use App\Models\Guest;
 use App\Models\Message;
@@ -29,7 +30,7 @@ class SendMessageAction
             Guest::whereKey($guest->id)->lockForUpdate()->first();
 
             return Conversation::where('guest_id', $guest->id)
-                ->where('status', Conversation::STATUS_OPEN)
+                ->where('status', ConversationStatus::OPEN)
                 ->first() ?? Conversation::create(['guest_id' => $guest->id]);
         });
     }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ConversationStatus;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,14 +14,14 @@ class Conversation extends Model
 {
     use HasFactory, HasUuid, LogsActivity;
 
-    const STATUS_OPEN   = 'open';
-    const STATUS_CLOSED = 'closed';
-
     protected $fillable = ['guest_id', 'assigned_user_id', 'status', 'last_message_at'];
 
     protected function casts(): array
     {
-        return ['last_message_at' => 'datetime'];
+        return [
+            'status'          => ConversationStatus::class,
+            'last_message_at' => 'datetime',
+        ];
     }
 
     public function guest(): BelongsTo         { return $this->belongsTo(Guest::class); }

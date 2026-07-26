@@ -4,6 +4,8 @@ namespace App\Services\Operations;
 
 use App\Actions\Operations\AssignRequestAction;
 use App\Actions\Operations\UpdateRequestStatusAction;
+use App\Enums\ServiceRequestStatus;
+use App\Enums\TicketStatus;
 use App\Exceptions\ForbiddenException;
 use App\Exceptions\NotFoundException;
 use App\Models\EventInquiry;
@@ -17,9 +19,6 @@ class OperationsQueueService
     // A queue shows unresolved work, not history — completed/cancelled and
     // resolved/closed items are excluded before the bound below is even
     // applied, so the cap only ever trims a genuinely large *active* backlog.
-    private const SERVICE_REQUEST_ACTIVE_STATUSES = [ServiceRequest::STATUS_NEW, ServiceRequest::STATUS_IN_PROGRESS];
-    private const TICKET_ACTIVE_STATUSES = [Ticket::STATUS_OPEN, Ticket::STATUS_ASSIGNED];
-
     // Bounded per-table fetch for the merged queue — a true cross-table merge
     // can't be paginated at the DB layer, so each side is capped rather than
     // pulled unbounded (see P10_TICKETS.md).
@@ -37,14 +36,14 @@ class OperationsQueueService
         if ($user->can('service_requests.view')) {
             $items = $items->concat(
                 ServiceRequest::with('assignedUser')
-                    ->whereIn('status', self::SERVICE_REQUEST_ACTIVE_STATUSES)
+                    ->whereIn('status', ServiceRequestStatus::active())
                     ->latest()->limit(self::MERGE_FETCH_LIMIT)->get()
             );
         }
         if ($user->can('tickets.view')) {
             $items = $items->concat(
                 Ticket::with('assignedUser')
-                    ->whereIn('status', self::TICKET_ACTIVE_STATUSES)
+                    ->whereIn('status', TicketStatus::active())
                     ->latest()->limit(self::MERGE_FETCH_LIMIT)->get()
             );
         }

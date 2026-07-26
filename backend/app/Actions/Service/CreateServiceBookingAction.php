@@ -2,6 +2,7 @@
 
 namespace App\Actions\Service;
 
+use App\Enums\ServiceBookingStatus;
 use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\ServiceBooking;
@@ -17,7 +18,7 @@ class CreateServiceBookingAction
             'bookable_type'  => $data['bookable_type'],
             'bookable_id'    => $data['bookable_id'],
             'scheduled_at'   => $data['scheduled_at'],
-            'status'         => ServiceBooking::STATUS_PENDING,
+            'status'         => ServiceBookingStatus::PENDING,
             'notes'          => $data['notes'] ?? null,
         ]));
 

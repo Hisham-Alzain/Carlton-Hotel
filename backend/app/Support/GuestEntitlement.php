@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\ReservationStatus;
 use App\Models\Guest;
 use App\Models\Reservation;
 
@@ -13,7 +14,7 @@ class GuestEntitlement
         $today = now()->startOfDay();
 
         return $guest->activeReservations()
-            ->whereIn('status', [Reservation::STATUS_CONFIRMED, Reservation::STATUS_CHECKED_IN])
+            ->whereIn('status', [ReservationStatus::CONFIRMED, ReservationStatus::CHECKED_IN])
             ->whereDate('check_out', '>=', $today)
             ->get();
     }
@@ -26,7 +27,7 @@ class GuestEntitlement
     public static function isCheckedIn(Guest $guest): bool
     {
         return self::bookedReservations($guest)
-            ->contains(fn (Reservation $r) => $r->status === Reservation::STATUS_CHECKED_IN);
+            ->contains(fn (Reservation $r) => $r->status === ReservationStatus::CHECKED_IN);
     }
 
     // The guest's current booked/checked-in reservation — server-resolved, never taken from client input.

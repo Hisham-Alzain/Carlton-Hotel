@@ -8,6 +8,10 @@ use App\Actions\Booking\ConfirmReservationAction;
 use App\Actions\Booking\CreateReservationAction;
 use App\Actions\Auth\RequestOtpAction;
 use App\Adapters\DirectAdapter;
+use App\Enums\OtpChannel;
+use App\Enums\OtpPurpose;
+use App\Enums\PaymentMethod;
+use App\Enums\ReservationStatus;
 use App\Exceptions\HoldExpiredException;
 use App\Exceptions\NotFoundException;
 use App\Models\Guest;
@@ -64,8 +68,8 @@ class ReservationService
             'room_type_id'  => $roomTypeId,
             'check_in'      => $data['check_in'],
             'check_out'     => $data['check_out'],
-            'payment_method'=> $data['payment_method'] ?? Reservation::PAYMENT_ON_ARRIVAL,
-            'status'        => Reservation::STATUS_PENDING_VERIFICATION,
+            'payment_method'=> $data['payment_method'] ?? PaymentMethod::ON_ARRIVAL,
+            'status'        => ReservationStatus::PENDING_VERIFICATION,
             'hold_expires_at' => $holdExpiry,
             'last_name'     => $data['last_name'],
         ], new DirectAdapter());
@@ -73,8 +77,8 @@ class ReservationService
         $reservation = $result['data'];
 
         // Send OTP — reuses P1 rules (1/min, 5/hr) with booking_verification purpose
-        $channel = $isPhone ? OtpCode::CHANNEL_SMS : OtpCode::CHANNEL_EMAIL;
-        $this->requestOtp->handle($identifier, $channel, OtpCode::PURPOSE_BOOKING_VERIFICATION);
+        $channel = $isPhone ? OtpChannel::SMS : OtpChannel::EMAIL;
+        $this->requestOtp->handle($identifier, $channel, OtpPurpose::BOOKING_VERIFICATION);
 
         $masked = strlen($identifier) > 4
             ? substr($identifier, 0, 4) . str_repeat('*', strlen($identifier) - 4)
@@ -98,7 +102,7 @@ class ReservationService
         }
 
         $token = DB::transaction(function () use ($reservation, $guest) {
-            $reservation->update(['status' => Reservation::STATUS_PENDING, 'hold_expires_at' => null]);
+            $reservation->update(['status' => ReservationStatus::PENDING, 'hold_expires_at' => null]);
             return $guest->createToken('guest')->plainTextToken;
         });
 

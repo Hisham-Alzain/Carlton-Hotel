@@ -5,6 +5,8 @@ namespace Tests\Feature\Booking;
 use App\Actions\Booking\CreateReservationAction;
 use App\Actions\Booking\ReleaseExpiredHoldsAction;
 use App\Adapters\DirectAdapter;
+use App\Enums\PaymentMethod;
+use App\Enums\ReservationStatus;
 use App\Exceptions\NoAvailabilityException;
 use App\Models\Guest;
 use App\Models\Reservation;
@@ -31,7 +33,7 @@ class ConcurrencyTest extends TestCase
             'room_type_id'  => $rt->id,
             'check_in'      => $checkIn,
             'check_out'     => $checkOut,
-            'payment_method'=> Reservation::PAYMENT_ON_ARRIVAL,
+            'payment_method'=> PaymentMethod::ON_ARRIVAL,
         ];
     }
 
@@ -90,13 +92,13 @@ class ConcurrencyTest extends TestCase
         // Run the release job
         $released = app(ReleaseExpiredHoldsAction::class)->handle();
         $this->assertEquals(1, $released);
-        $this->assertEquals(Reservation::STATUS_CANCELLED, $hold->fresh()->status);
+        $this->assertEquals(ReservationStatus::CANCELLED, $hold->fresh()->status);
 
         // Room is now bookable again
         $guest  = Guest::factory()->create();
         $result = app(CreateReservationAction::class)->handle($guest, $this->bookingData($rt), new DirectAdapter());
         $this->assertEquals(201, $result['code']);
-        $this->assertEquals(Reservation::STATUS_PENDING, $result['data']->status);
+        $this->assertEquals(ReservationStatus::PENDING, $result['data']->status);
     }
 
     public function test_second_room_makes_both_bookings_succeed(): void

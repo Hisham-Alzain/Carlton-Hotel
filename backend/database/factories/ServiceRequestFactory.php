@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\Department;
+use App\Enums\ServiceRequestPriority;
+use App\Enums\ServiceRequestStatus;
 use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\ServiceRequest;
@@ -17,9 +20,9 @@ class ServiceRequestFactory extends Factory
             'guest_id'       => Guest::factory(),
             'reservation_id' => Reservation::factory(),
             'type'           => 'room_service',
-            'department'     => ServiceRequest::DEPARTMENT_KITCHEN,
-            'status'         => ServiceRequest::STATUS_NEW,
-            'priority'       => ServiceRequest::PRIORITY_NORMAL,
+            'department'     => Department::KITCHEN,
+            'status'         => ServiceRequestStatus::NEW,
+            'priority'       => ServiceRequestPriority::NORMAL,
         ];
     }
 }

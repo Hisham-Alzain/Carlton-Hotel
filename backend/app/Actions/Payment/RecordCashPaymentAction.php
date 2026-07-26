@@ -3,6 +3,7 @@
 namespace App\Actions\Payment;
 
 use App\Contracts\PaymentGatewayInterface;
+use App\Enums\ReservationStatus;
 use App\Exceptions\PaymentFailedException;
 use App\Models\Payment;
 use App\Models\Reservation;
@@ -43,8 +44,8 @@ class RecordCashPaymentAction
 
             // Transition pending reservation to confirmed on payment
             if ($payable instanceof Reservation
-                && $payable->status === Reservation::STATUS_PENDING) {
-                $payable->update(['status' => Reservation::STATUS_CONFIRMED]);
+                && $payable->status === ReservationStatus::PENDING) {
+                $payable->update(['status' => ReservationStatus::CONFIRMED]);
             }
 
             return ['data' => $payment, 'code' => 200];

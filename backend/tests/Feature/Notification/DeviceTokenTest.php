@@ -3,6 +3,7 @@
 namespace Tests\Feature\Notification;
 
 use App\Contracts\FirebaseServiceInterface;
+use App\Enums\NotificationType;
 use App\Models\DeviceToken;
 use App\Models\Guest;
 use App\Models\GuestNotification;
@@ -67,7 +68,7 @@ class DeviceTokenTest extends TestCase
             ->postJson('/api/device-tokens', ['token' => 'shared-tok', 'platform' => 'ios'])
             ->assertCreated();
 
-        $this->assertDatabaseHas('guest_notifications', ['guest_id' => $guestB->id, 'type' => GuestNotification::TYPE_WELCOME]);
+        $this->assertDatabaseHas('guest_notifications', ['guest_id' => $guestB->id, 'type' => NotificationType::WELCOME->value]);
         $this->assertCount(1, $fake->pushes);
     }
 
@@ -80,7 +81,7 @@ class DeviceTokenTest extends TestCase
             ->postJson('/api/device-tokens', ['token' => 'first-tok', 'platform' => 'android'])
             ->assertCreated();
 
-        $this->assertDatabaseHas('guest_notifications', ['guest_id' => $guest->id, 'type' => GuestNotification::TYPE_WELCOME]);
+        $this->assertDatabaseHas('guest_notifications', ['guest_id' => $guest->id, 'type' => NotificationType::WELCOME->value]);
         $this->assertCount(1, $fake->pushes);
         $this->assertEquals(['first-tok'], $fake->pushes[0]['tokens']);
     }
@@ -93,7 +94,7 @@ class DeviceTokenTest extends TestCase
         $this->actingAs($guest, 'guests')->postJson('/api/device-tokens', ['token' => 'tok-a', 'platform' => 'android'])->assertCreated();
         $this->actingAs($guest, 'guests')->postJson('/api/device-tokens', ['token' => 'tok-b', 'platform' => 'ios'])->assertCreated();
 
-        $this->assertEquals(1, GuestNotification::where('guest_id', $guest->id)->where('type', GuestNotification::TYPE_WELCOME)->count());
+        $this->assertEquals(1, GuestNotification::where('guest_id', $guest->id)->where('type', NotificationType::WELCOME->value)->count());
         $this->assertCount(1, $fake->pushes);
     }
 

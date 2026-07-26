@@ -17,11 +17,11 @@ class OperationsQueueItemResource extends BaseResource
             'type'               => $isServiceRequest ? 'service_request' : 'ticket',
             'uuid'               => $item->uuid,
             'subject'            => $isServiceRequest ? $item->type : $item->subject,
-            'department'         => $item->department,
-            'status'             => $item->status,
+            'department'         => $item->department?->value,
+            'status'             => $item->status?->value,
             // priority is a string enum on ServiceRequest but an int scale on
             // Ticket — normalized so this field never changes type per row.
-            'priority'           => $isServiceRequest ? $item->priority : $item->priorityLabel(),
+            'priority'           => ($isServiceRequest ? $item->priority : $item->priorityLabel())?->value,
             'assigned_user_uuid' => $item->assignedUser?->uuid,
             'created_at'         => $item->created_at?->toIso8601String(),
         ];

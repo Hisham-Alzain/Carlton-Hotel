@@ -3,6 +3,7 @@
 namespace Tests\Feature\Chat;
 
 use App\Contracts\FirebaseServiceInterface;
+use App\Enums\ConversationStatus;
 use App\Models\Conversation;
 use App\Models\Guest;
 use App\Models\Message;
@@ -51,7 +52,7 @@ class ChatTest extends TestCase
             ->assertJsonPath('data.body', 'Hello, is my room ready?');
 
         $this->assertDatabaseCount('conversations', 1);
-        $this->assertDatabaseHas('conversations', ['guest_id' => $guest->id, 'status' => Conversation::STATUS_OPEN]);
+        $this->assertDatabaseHas('conversations', ['guest_id' => $guest->id, 'status' => ConversationStatus::OPEN->value]);
     }
 
     public function test_guest_sending_a_message_mirrors_to_firestore(): void

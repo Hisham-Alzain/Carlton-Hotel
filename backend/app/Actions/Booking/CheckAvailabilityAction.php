@@ -2,6 +2,7 @@
 
 namespace App\Actions\Booking;
 
+use App\Enums\ReservationStatus;
 use App\Models\Reservation;
 use App\Models\ReservationRoom;
 use App\Models\Room;
@@ -41,12 +42,12 @@ class CheckAvailabilityAction
                   ->whereDate('check_out', '>', $checkIn)
                   ->where(function ($q) {
                       $q->whereIn('status', [
-                            Reservation::STATUS_PENDING,
-                            Reservation::STATUS_CONFIRMED,
-                            Reservation::STATUS_CHECKED_IN,
+                            ReservationStatus::PENDING,
+                            ReservationStatus::CONFIRMED,
+                            ReservationStatus::CHECKED_IN,
                           ])
                         ->orWhere(function ($q) {
-                            $q->where('status', Reservation::STATUS_PENDING_VERIFICATION)
+                            $q->where('status', ReservationStatus::PENDING_VERIFICATION)
                               ->where('hold_expires_at', '>', now());
                         });
                   });

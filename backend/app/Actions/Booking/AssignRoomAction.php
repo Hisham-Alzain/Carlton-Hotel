@@ -2,6 +2,7 @@
 
 namespace App\Actions\Booking;
 
+use App\Enums\ReservationStatus;
 use App\Events\RoomAssigned;
 use App\Exceptions\ReservationStateException;
 use App\Exceptions\RoomAlreadyAssignedException;
@@ -13,7 +14,7 @@ class AssignRoomAction
 {
     public function handle(Reservation $reservation, Room $room): array
     {
-        if ($reservation->status !== Reservation::STATUS_CONFIRMED) {
+        if ($reservation->status !== ReservationStatus::CONFIRMED) {
             throw new ReservationStateException(__('custom.errors.reservation_state'));
         }
 
@@ -31,7 +32,7 @@ class AssignRoomAction
             ->whereNotNull('room_id')
             ->whereHas('reservation', function ($q) use ($reservation) {
                 $q->where('id', '!=', $reservation->id)
-                  ->whereIn('status', [Reservation::STATUS_CONFIRMED, Reservation::STATUS_CHECKED_IN])
+                  ->whereIn('status', [ReservationStatus::CONFIRMED, ReservationStatus::CHECKED_IN])
                   ->where('check_in', '<', $reservation->check_out)
                   ->where('check_out', '>', $reservation->check_in);
             })
@@ -43,7 +44,7 @@ class AssignRoomAction
 
         DB::transaction(function () use ($reservationRoom, $room, $reservation) {
             $reservationRoom->update(['room_id' => $room->id]);
-            $reservation->update(['status' => Reservation::STATUS_CHECKED_IN]);
+            $reservation->update(['status' => ReservationStatus::CHECKED_IN]);
         });
 
         // Fulfilled in P9: pushes the "room ready" notification to the guest.

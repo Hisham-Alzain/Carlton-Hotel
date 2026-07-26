@@ -2,8 +2,8 @@
 
 namespace App\Listeners;
 
+use App\Enums\NotificationType;
 use App\Events\RoomAssigned;
-use App\Models\GuestNotification;
 use App\Services\Notification\NotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
@@ -20,7 +20,7 @@ class SendRoomReadyNotification implements ShouldQueue
 
         $this->notifications->pushToGuest(
             $guest,
-            GuestNotification::TYPE_ROOM_READY,
+            NotificationType::ROOM_READY,
             __('custom.notifications.room_ready_title'),
             __('custom.notifications.room_ready_body'),
             ['reservation_uuid' => $event->reservation->uuid],

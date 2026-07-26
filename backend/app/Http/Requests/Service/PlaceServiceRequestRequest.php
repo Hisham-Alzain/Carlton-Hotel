@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Service;
 
 use App\Base\BaseRequest;
+use App\Enums\ServiceRequestPriority;
+use Illuminate\Validation\Rule;
 
 class PlaceServiceRequestRequest extends BaseRequest
 {
@@ -10,7 +12,7 @@ class PlaceServiceRequestRequest extends BaseRequest
     {
         return [
             'type'     => ['required', 'string', 'max:255'],
-            'priority' => ['nullable', 'string', 'in:low,normal,high'],
+            'priority' => ['nullable', Rule::enum(ServiceRequestPriority::class)],
             'notes'    => ['nullable', 'string', 'max:1000'],
         ];
     }

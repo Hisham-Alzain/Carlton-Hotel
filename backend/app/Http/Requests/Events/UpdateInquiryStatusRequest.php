@@ -3,13 +3,15 @@
 namespace App\Http\Requests\Events;
 
 use App\Base\BaseRequest;
+use App\Enums\EventInquiryStatus;
+use Illuminate\Validation\Rule;
 
 class UpdateInquiryStatusRequest extends BaseRequest
 {
     public function rules(): array
     {
         return [
-            'status' => ['required', 'string', 'in:in_review,quoted,confirmed,cancelled'],
+            'status' => ['required', Rule::enum(EventInquiryStatus::class)->only(EventInquiryStatus::staffAssignable())],
         ];
     }
 }

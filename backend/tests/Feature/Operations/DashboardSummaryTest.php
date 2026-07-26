@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Operations;
 
+use App\Enums\ServiceRequestStatus;
+use App\Enums\TicketStatus;
 use App\Models\EventInquiry;
 use App\Models\ServiceRequest;
 use App\Models\Ticket;
@@ -32,8 +34,8 @@ class DashboardSummaryTest extends TestCase
 
     public function test_summary_only_includes_blocks_the_caller_can_view(): void
     {
-        ServiceRequest::factory()->create(['status' => ServiceRequest::STATUS_NEW]);
-        Ticket::factory()->create(['status' => Ticket::STATUS_OPEN]);
+        ServiceRequest::factory()->create(['status' => ServiceRequestStatus::NEW]);
+        Ticket::factory()->create(['status' => TicketStatus::OPEN]);
         EventInquiry::factory()->create(['status' => 'new']);
 
         $response = $this->withToken($this->staffToken('service_requests.view'))
@@ -47,7 +49,7 @@ class DashboardSummaryTest extends TestCase
 
     public function test_tickets_view_unlocks_both_tickets_and_event_inquiry_blocks(): void
     {
-        Ticket::factory()->create(['status' => Ticket::STATUS_OPEN]);
+        Ticket::factory()->create(['status' => TicketStatus::OPEN]);
         EventInquiry::factory()->create(['status' => 'new']);
 
         $response = $this->withToken($this->staffToken('tickets.view'))

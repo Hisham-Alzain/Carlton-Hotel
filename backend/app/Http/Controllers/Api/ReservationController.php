@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\Auth\VerifyOtpAction;
 use App\Base\BaseController;
+use App\Enums\OtpPurpose;
+use App\Enums\ReservationStatus;
 use App\Exceptions\NotFoundException;
 use App\Http\Requests\Booking\StoreGuestReservationRequest;
 use App\Http\Requests\Booking\StoreReservationRequest;
@@ -72,7 +74,7 @@ class ReservationController extends BaseController
     {
         $reservation = Reservation::with('guest')
             ->where('uuid', $request->validated('reservation_uuid'))
-            ->where('status', Reservation::STATUS_PENDING_VERIFICATION)
+            ->where('status', ReservationStatus::PENDING_VERIFICATION)
             ->firstOrFail();
 
         $identifier = $request->validated('phone') ?? $request->validated('email');
@@ -87,7 +89,7 @@ class ReservationController extends BaseController
         $otpResult = $this->verifyOtp->handle(
             $identifier,
             $request->validated('otp_code'),
-            OtpCode::PURPOSE_BOOKING_VERIFICATION,
+            OtpPurpose::BOOKING_VERIFICATION,
         );
 
         $guest  = $otpResult['data']['guest'];

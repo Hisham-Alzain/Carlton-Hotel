@@ -2,7 +2,7 @@
 
 namespace App\Actions\Folio;
 
-use App\Models\Folio;
+use App\Enums\ReservationStatus;
 use App\Models\Reservation;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +17,7 @@ class ApproveFolioAction
             $folio  = $result['data'];
 
             $folio->update(['approved_by_guest_at' => now()]);
-            $reservation->update(['status' => Reservation::STATUS_CHECKED_OUT]);
+            $reservation->update(['status' => ReservationStatus::CHECKED_OUT]);
 
             return ['data' => $folio->fresh()->load('items'), 'code' => 200];
         });

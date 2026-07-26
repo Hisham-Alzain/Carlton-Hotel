@@ -1,6 +1,8 @@
 <?php
 namespace Database\Factories;
 
+use App\Enums\OtpChannel;
+use App\Enums\OtpPurpose;
 use App\Models\OtpCode;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -13,9 +15,9 @@ class OtpCodeFactory extends Factory
     {
         return [
             'identifier'  => '+9639' . $this->faker->numerify('########'),
-            'channel'     => OtpCode::CHANNEL_SMS,
+            'channel'     => OtpChannel::SMS,
             'code_hash'   => Hash::make('123456'),
-            'purpose'     => OtpCode::PURPOSE_LOGIN,
+            'purpose'     => OtpPurpose::LOGIN,
             'attempts'    => 0,
             'expires_at'  => now()->addMinutes(5),
             'consumed_at' => null,
@@ -40,7 +42,7 @@ class OtpCodeFactory extends Factory
     public function emailChannel(): static
     {
         return $this->state([
-            'channel'    => OtpCode::CHANNEL_EMAIL,
+            'channel'    => OtpChannel::EMAIL,
             'identifier' => $this->faker->safeEmail(),
         ]);
     }

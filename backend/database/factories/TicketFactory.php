@@ -2,6 +2,10 @@
 
 namespace Database\Factories;
 
+use App\Enums\Department;
+use App\Enums\TicketCategory;
+use App\Enums\TicketSource;
+use App\Enums\TicketStatus;
 use App\Models\Guest;
 use App\Models\Ticket;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -15,11 +19,11 @@ class TicketFactory extends Factory
         return [
             'guest_id'   => Guest::factory(),
             'subject'    => $this->faker->sentence(4),
-            'category'   => Ticket::CATEGORY_INQUIRY,
-            'status'     => Ticket::STATUS_OPEN,
+            'category'   => TicketCategory::INQUIRY,
+            'status'     => TicketStatus::OPEN,
             'priority'   => 2,
-            'department' => Ticket::DEPARTMENT_CONCIERGE,
-            'source'     => Ticket::SOURCE_CHATBOT,
+            'department' => Department::CONCIERGE,
+            'source'     => TicketSource::CHATBOT,
         ];
     }
 }

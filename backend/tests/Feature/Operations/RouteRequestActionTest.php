@@ -3,6 +3,8 @@
 namespace Tests\Feature\Operations;
 
 use App\Actions\Operations\RouteRequestAction;
+use App\Enums\Department;
+use App\Enums\TicketCategory;
 use App\Models\ServiceRequest;
 use App\Models\Ticket;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,7 +23,7 @@ class RouteRequestActionTest extends TestCase
 
         $result = app(RouteRequestAction::class)->handle($request);
 
-        $this->assertEquals(ServiceRequest::DEPARTMENT_HOUSEKEEPING, $result['data']->department);
+        $this->assertEquals(Department::HOUSEKEEPING, $result['data']->department);
     }
 
     public function test_unmapped_service_request_type_defaults_to_concierge(): void
@@ -30,24 +32,24 @@ class RouteRequestActionTest extends TestCase
 
         $result = app(RouteRequestAction::class)->handle($request);
 
-        $this->assertEquals(ServiceRequest::DEPARTMENT_CONCIERGE, $result['data']->department);
+        $this->assertEquals(Department::CONCIERGE, $result['data']->department);
     }
 
     public function test_routes_a_ticket_by_category(): void
     {
-        $ticket = Ticket::factory()->create(['category' => Ticket::CATEGORY_MAINTENANCE, 'department' => Ticket::DEPARTMENT_CONCIERGE]);
+        $ticket = Ticket::factory()->create(['category' => TicketCategory::MAINTENANCE, 'department' => Department::CONCIERGE]);
 
         $result = app(RouteRequestAction::class)->handle($ticket);
 
-        $this->assertEquals(Ticket::DEPARTMENT_HOUSEKEEPING, $result['data']->department);
+        $this->assertEquals(Department::HOUSEKEEPING, $result['data']->department);
     }
 
     public function test_unmapped_ticket_category_defaults_to_concierge(): void
     {
-        $ticket = Ticket::factory()->create(['category' => Ticket::CATEGORY_INQUIRY, 'department' => Ticket::DEPARTMENT_HOUSEKEEPING]);
+        $ticket = Ticket::factory()->create(['category' => TicketCategory::INQUIRY, 'department' => Department::HOUSEKEEPING]);
 
         $result = app(RouteRequestAction::class)->handle($ticket);
 
-        $this->assertEquals(Ticket::DEPARTMENT_CONCIERGE, $result['data']->department);
+        $this->assertEquals(Department::CONCIERGE, $result['data']->department);
     }
 }

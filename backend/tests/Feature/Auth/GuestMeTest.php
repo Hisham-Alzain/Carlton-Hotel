@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Enums\ReservationStatus;
 use App\Models\Guest;
 use App\Models\Reservation;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -85,7 +86,7 @@ class GuestMeTest extends TestCase
     public function test_pending_reservation_does_not_unlock_pre_arrival(): void
     {
         $guest = Guest::factory()->create();
-        Reservation::factory()->create(['guest_id' => $guest->id, 'status' => Reservation::STATUS_PENDING]);
+        Reservation::factory()->create(['guest_id' => $guest->id, 'status' => ReservationStatus::PENDING]);
 
         $this->actingGuest($guest)
              ->getJson('/api/auth/guest/me')

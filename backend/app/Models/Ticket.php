@@ -2,6 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\Department;
+use App\Enums\ServiceRequestPriority;
+use App\Enums\TicketCategory;
+use App\Enums\TicketSource;
+use App\Enums\TicketStatus;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,35 +17,16 @@ class Ticket extends Model
 {
     use HasFactory, HasUuid, LogsActivity;
 
-    const STATUS_OPEN     = 'open';
-    const STATUS_ASSIGNED = 'assigned';
-    const STATUS_RESOLVED = 'resolved';
-    const STATUS_CLOSED   = 'closed';
-
-    const STATUSES = [self::STATUS_OPEN, self::STATUS_ASSIGNED, self::STATUS_RESOLVED, self::STATUS_CLOSED];
-
-    const CATEGORY_INQUIRY      = 'inquiry';
-    const CATEGORY_COMPLAINT    = 'complaint';
-    const CATEGORY_BOOKING_HELP = 'booking_help';
-    const CATEGORY_MAINTENANCE  = 'maintenance';
-    const CATEGORY_OTHER        = 'other';
-
-    const SOURCE_CHATBOT = 'chatbot';
-
-    const DEPARTMENT_CONCIERGE    = 'concierge';
-    const DEPARTMENT_HOUSEKEEPING = 'housekeeping';
-    const DEPARTMENT_RECEPTION    = 'reception';
-
-    // category => department routing (mirrors ServiceRequest::TYPE_DEPARTMENTS)
-    const CATEGORY_DEPARTMENTS = [
-        self::CATEGORY_COMPLAINT   => self::DEPARTMENT_CONCIERGE,
-        self::CATEGORY_MAINTENANCE => self::DEPARTMENT_HOUSEKEEPING,
-        self::CATEGORY_BOOKING_HELP=> self::DEPARTMENT_RECEPTION,
-    ];
-
     protected $fillable = [
         'guest_id', 'chatbot_session_id', 'conversation_id', 'subject', 'category',
         'status', 'priority', 'department', 'source', 'assigned_user_id',
+    ];
+
+    protected $casts = [
+        'status'     => TicketStatus::class,
+        'category'   => TicketCategory::class,
+        'department' => Department::class,
+        'source'     => TicketSource::class,
     ];
 
     public function guest(): BelongsTo        { return $this->belongsTo(Guest::class); }
@@ -49,12 +35,8 @@ class Ticket extends Model
 
     // Normalizes the 1-3 int scale to ServiceRequest's low/normal/high vocabulary
     // so the merged ops queue exposes one consistent `priority` type for both.
-    public function priorityLabel(): string
+    public function priorityLabel(): ServiceRequestPriority
     {
-        return match (true) {
-            $this->priority <= 1 => 'low',
-            $this->priority >= 3 => 'high',
-            default => 'normal',
-        };
+        return ServiceRequestPriority::fromTicketScale((int) $this->priority);
     }
 }

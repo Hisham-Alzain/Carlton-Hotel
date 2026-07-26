@@ -3,7 +3,9 @@
 namespace App\Http\Requests\Events;
 
 use App\Base\BaseRequest;
+use App\Enums\EventType;
 use App\Support\NormalizesPhone;
+use Illuminate\Validation\Rule;
 
 class SubmitInquiryRequest extends BaseRequest
 {
@@ -24,7 +26,7 @@ class SubmitInquiryRequest extends BaseRequest
             'email'                  => ['required', 'email', 'max:255'],
             'phone'                  => ['nullable', 'string'],
             'company'                => ['nullable', 'string', 'max:255'],
-            'event_type'             => ['required', 'string', 'in:wedding,corporate,conference,gala,birthday,product_launch,other'],
+            'event_type'             => ['required', Rule::enum(EventType::class)],
             'event_date'             => ['nullable', 'date', 'after:today'],
             'expected_guests'        => ['nullable', 'integer', 'min:1'],
             'budget_usd'             => ['nullable', 'numeric', 'min:0'],

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Booking;
 
+use App\Enums\ReservationStatus;
 use App\Models\Reservation;
 use App\Models\ReservationRoom;
 use App\Models\Room;
@@ -57,11 +58,11 @@ class ReservationTest extends TestCase
 
     public function test_staff_can_confirm_pending_reservation(): void
     {
-        $r = Reservation::factory()->create(['status' => Reservation::STATUS_PENDING]);
+        $r = Reservation::factory()->create(['status' => ReservationStatus::PENDING]);
         $this->withToken($this->staffToken('reservations.create'))
             ->postJson("/api/cms/reservations/{$r->uuid}/confirm")
             ->assertOk()
-            ->assertJsonPath('data.status', Reservation::STATUS_CONFIRMED);
+            ->assertJsonPath('data.status', ReservationStatus::CONFIRMED->value);
     }
 
     public function test_staff_can_cancel_reservation(): void
@@ -71,7 +72,7 @@ class ReservationTest extends TestCase
             ->deleteJson("/api/cms/reservations/{$r->uuid}")
             ->assertStatus(204);
 
-        $this->assertEquals(Reservation::STATUS_CANCELLED, $r->fresh()->status);
+        $this->assertEquals(ReservationStatus::CANCELLED, $r->fresh()->status);
     }
 
     public function test_staff_can_assign_room_at_checkin(): void
@@ -84,7 +85,7 @@ class ReservationTest extends TestCase
         $this->withToken($this->staffToken('reservations.create'))
             ->postJson("/api/cms/reservations/{$r->uuid}/assign-room", ['room_uuid' => $room->uuid])
             ->assertOk()
-            ->assertJsonPath('data.status', Reservation::STATUS_CHECKED_IN);
+            ->assertJsonPath('data.status', ReservationStatus::CHECKED_IN->value);
     }
 
     public function test_staff_without_permission_gets_403(): void

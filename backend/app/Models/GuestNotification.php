@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\Department;
+use App\Enums\NotificationType;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,10 +14,6 @@ class GuestNotification extends Model
 {
     use HasFactory, HasUuid, LogsActivity;
 
-    const TYPE_WELCOME        = 'welcome';
-    const TYPE_ROOM_READY     = 'room_ready';
-    const TYPE_INQUIRY_ROUTED = 'inquiry_routed';
-
     protected $fillable = [
         'guest_id', 'department', 'type', 'title', 'body', 'data', 'sent_at', 'read_at',
     ];
@@ -23,9 +21,11 @@ class GuestNotification extends Model
     protected function casts(): array
     {
         return [
-            'data'    => 'array',
-            'sent_at' => 'datetime',
-            'read_at' => 'datetime',
+            'type'       => NotificationType::class,
+            'department' => Department::class,
+            'data'       => 'array',
+            'sent_at'    => 'datetime',
+            'read_at'    => 'datetime',
         ];
     }
 

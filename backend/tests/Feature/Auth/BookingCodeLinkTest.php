@@ -2,6 +2,8 @@
 namespace Tests\Feature\Auth;
 
 use App\Actions\Auth\OtpDispatcher;
+use App\Enums\OtpChannel;
+use App\Enums\OtpPurpose;
 use App\Models\Guest;
 use App\Models\OtpCode;
 use App\Models\Reservation;
@@ -61,9 +63,9 @@ class BookingCodeLinkTest extends TestCase
 
         OtpCode::create([
             'identifier'  => $phone,
-            'channel'     => OtpCode::CHANNEL_SMS,
+            'channel'     => OtpChannel::SMS,
             'code_hash'   => Hash::make('123456'),
-            'purpose'     => OtpCode::PURPOSE_BOOKING_LINK,
+            'purpose'     => OtpPurpose::BOOKING_LINK,
             'attempts'    => 0,
             'expires_at'  => now()->addMinutes(5),
             'consumed_at' => null,
@@ -73,7 +75,7 @@ class BookingCodeLinkTest extends TestCase
         $this->postJson('/api/auth/guest/verify-otp', [
             'phone'        => $phone,
             'code'         => '123456',
-            'purpose'      => OtpCode::PURPOSE_BOOKING_LINK,
+            'purpose'      => OtpPurpose::BOOKING_LINK,
             'booking_code' => $reservation->booking_code,
         ])->assertOk()
           ->assertJson(['success' => true])

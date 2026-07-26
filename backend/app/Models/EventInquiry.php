@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\Department;
+use App\Enums\EventInquiryStatus;
+use App\Enums\EventType;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,18 +16,6 @@ class EventInquiry extends Model
 {
     use HasFactory, HasUuid, LogsActivity;
 
-    const STATUS_NEW       = 'new';
-    const STATUS_IN_REVIEW = 'in_review';
-    const STATUS_QUOTED    = 'quoted';
-    const STATUS_CONFIRMED = 'confirmed';
-    const STATUS_CANCELLED = 'cancelled';
-
-    const DEPARTMENT_EVENTS = 'events';
-    const DEPARTMENT_SALES  = 'sales';
-
-    // Event types that route to the sales department
-    const SALES_EVENT_TYPES = ['corporate', 'conference', 'product_launch'];
-
     protected $fillable = [
         'guest_id', 'event_space_id', 'assigned_user_id',
         'name', 'email', 'phone', 'company',
@@ -33,6 +24,9 @@ class EventInquiry extends Model
     ];
 
     protected $casts = [
+        'status'     => EventInquiryStatus::class,
+        'department' => Department::class,
+        'event_type' => EventType::class,
         'event_date' => 'date',
         'budget_usd' => 'decimal:2',
     ];

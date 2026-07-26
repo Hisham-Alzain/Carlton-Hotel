@@ -22,11 +22,13 @@ class OperationsQueueMirror
         // Ticket — normalized to one type so consumers never see it flip.
         $priority = $item instanceof ServiceRequest ? $item->priority : $item->priorityLabel();
 
+        // Firestore takes a plain array — enum cases must be unwrapped to their
+        // backing strings here, unlike API resources which JSON-serialize them.
         $shared = [
             'uuid'               => $item->uuid,
-            'department'         => $item->department,
-            'status'             => $item->status,
-            'priority'           => $priority,
+            'department'         => $item->department?->value,
+            'status'             => $item->status?->value,
+            'priority'           => $priority?->value,
             'guest_uuid'         => $item->guest?->uuid,
             'assigned_user_uuid' => $item->assignedUser?->uuid,
             'created_at'         => $item->created_at->toIso8601String(),
@@ -34,6 +36,6 @@ class OperationsQueueMirror
 
         return $item instanceof ServiceRequest
             ? $shared + ['type' => $item->type]
-            : $shared + ['category' => $item->category];
+            : $shared + ['category' => $item->category?->value];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Operations;
 
+use App\Enums\Department;
 use App\Models\ServiceRequest;
 use App\Models\Ticket;
 
@@ -14,8 +15,8 @@ class RouteRequestAction
     public function handle(ServiceRequest|Ticket $item): array
     {
         $department = $item instanceof ServiceRequest
-            ? (ServiceRequest::TYPE_DEPARTMENTS[$item->type] ?? ServiceRequest::DEPARTMENT_CONCIERGE)
-            : (Ticket::CATEGORY_DEPARTMENTS[$item->category] ?? Ticket::DEPARTMENT_CONCIERGE);
+            ? Department::forServiceType($item->type)
+            : ($item->category?->department() ?? Department::CONCIERGE);
 
         $item->update(['department' => $department]);
 

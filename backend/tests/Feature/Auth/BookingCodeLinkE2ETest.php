@@ -2,6 +2,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Actions\Auth\OtpDispatcher;
+use App\Enums\OtpPurpose;
 use App\Models\Guest;
 use App\Models\OtpCode;
 use App\Models\Reservation;
@@ -60,14 +61,14 @@ class BookingCodeLinkE2ETest extends TestCase
         // Step 2: verify OTP with booking_code → guest created, reservation linked
         $rawCode = '654321';
         $otp = OtpCode::where('identifier', '+96399111222')
-            ->where('purpose', OtpCode::PURPOSE_BOOKING_LINK)
+            ->where('purpose', OtpPurpose::BOOKING_LINK)
             ->latest()->first();
         $otp->update(['code_hash' => Hash::make($rawCode)]);
 
         $step2 = $this->postJson('/api/auth/guest/verify-otp', [
             'phone'        => '+96399111222',
             'code'         => $rawCode,
-            'purpose'      => OtpCode::PURPOSE_BOOKING_LINK,
+            'purpose'      => OtpPurpose::BOOKING_LINK,
             'booking_code' => 'CARL-KMN12345',
         ]);
 
@@ -102,14 +103,14 @@ class BookingCodeLinkE2ETest extends TestCase
 
         $rawCode = '111222';
         $otp = OtpCode::where('identifier', '+96399333444')
-            ->where('purpose', OtpCode::PURPOSE_BOOKING_LINK)
+            ->where('purpose', OtpPurpose::BOOKING_LINK)
             ->latest()->first();
         $otp->update(['code_hash' => Hash::make($rawCode)]);
 
         $this->postJson('/api/auth/guest/verify-otp', [
             'phone'        => '+96399333444',
             'code'         => $rawCode,
-            'purpose'      => OtpCode::PURPOSE_BOOKING_LINK,
+            'purpose'      => OtpPurpose::BOOKING_LINK,
             'booking_code' => 'CARL-APP99900',
         ])->assertOk()->assertJsonStructure(['data' => ['guest', 'token']]);
 

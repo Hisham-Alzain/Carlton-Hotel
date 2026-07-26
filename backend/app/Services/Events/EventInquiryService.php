@@ -3,6 +3,7 @@
 namespace App\Services\Events;
 
 use App\Actions\Events\SubmitInquiryAction;
+use App\Enums\EventInquiryStatus;
 use App\Exceptions\InquiryStateException;
 use App\Models\EventInquiry;
 use App\Models\User;
@@ -28,17 +29,20 @@ class EventInquiryService
         return ['data' => $inquiry->load(['requirements', 'assignedUser', 'guest', 'eventSpace']), 'code' => 200];
     }
 
-    public function updateStatus(EventInquiry $inquiry, string $status): array
+    public function updateStatus(EventInquiry $inquiry, EventInquiryStatus|string $status): array
     {
-        $allowed = [
-            EventInquiry::STATUS_NEW       => [EventInquiry::STATUS_IN_REVIEW, EventInquiry::STATUS_CANCELLED],
-            EventInquiry::STATUS_IN_REVIEW => [EventInquiry::STATUS_QUOTED, EventInquiry::STATUS_CANCELLED],
-            EventInquiry::STATUS_QUOTED    => [EventInquiry::STATUS_CONFIRMED, EventInquiry::STATUS_CANCELLED],
-            EventInquiry::STATUS_CONFIRMED => [EventInquiry::STATUS_CANCELLED],
-            EventInquiry::STATUS_CANCELLED => [],
-        ];
+        $status = $status instanceof EventInquiryStatus ? $status : EventInquiryStatus::from($status);
 
-        if (!in_array($status, $allowed[$inquiry->status] ?? [])) {
+        // Enum cases cannot key a PHP array, so the transition table is a match.
+        $allowed = match ($inquiry->status) {
+            EventInquiryStatus::NEW       => [EventInquiryStatus::IN_REVIEW, EventInquiryStatus::CANCELLED],
+            EventInquiryStatus::IN_REVIEW => [EventInquiryStatus::QUOTED, EventInquiryStatus::CANCELLED],
+            EventInquiryStatus::QUOTED    => [EventInquiryStatus::CONFIRMED, EventInquiryStatus::CANCELLED],
+            EventInquiryStatus::CONFIRMED => [EventInquiryStatus::CANCELLED],
+            EventInquiryStatus::CANCELLED => [],
+        };
+
+        if (! in_array($status, $allowed, true)) {
             throw new InquiryStateException(__('custom.errors.inquiry_state'));
         }
 
@@ -50,8 +54,8 @@ class EventInquiryService
     {
         $inquiry->update([
             'assigned_user_id' => $user->id,
-            'status'           => $inquiry->status === EventInquiry::STATUS_NEW
-                ? EventInquiry::STATUS_IN_REVIEW
+            'status'           => $inquiry->status === EventInquiryStatus::NEW
+                ? EventInquiryStatus::IN_REVIEW
                 : $inquiry->status,
         ]);
         return ['data' => $inquiry->fresh()->load(['requirements', 'assignedUser']), 'code' => 200];

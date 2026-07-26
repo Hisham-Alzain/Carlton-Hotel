@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ModifierType;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,9 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 class PromoCode extends Model
 {
     use HasFactory, HasUuid, LogsActivity;
-
-    const TYPE_PERCENTAGE = 'percentage';
-    const TYPE_FLAT       = 'flat';
 
     protected $fillable = [
         'code',
@@ -25,6 +23,7 @@ class PromoCode extends Model
     ];
 
     protected $casts = [
+        'type'       => ModifierType::class,
         'expires_at' => 'datetime',
         'value'      => 'decimal:2',
         'is_active'  => 'boolean',

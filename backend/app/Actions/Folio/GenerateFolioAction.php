@@ -2,6 +2,8 @@
 
 namespace App\Actions\Folio;
 
+use App\Enums\FolioStatus;
+use App\Enums\ServiceBookingStatus;
 use App\Models\Folio;
 use App\Models\Reservation;
 use App\Models\ServiceBooking;
@@ -14,12 +16,12 @@ class GenerateFolioAction
         return DB::transaction(function () use ($reservation) {
             $folio = Folio::firstOrCreate(
                 ['reservation_id' => $reservation->id],
-                ['status' => Folio::STATUS_OPEN]
+                ['status' => FolioStatus::OPEN]
             );
 
             // Once settled, the folio is a closed record — regenerating would drift its total away
             // from the amount actually captured on the Payment. Return it unchanged.
-            if ($folio->status === Folio::STATUS_SETTLED) {
+            if ($folio->status === FolioStatus::SETTLED) {
                 return ['data' => $folio->load('items'), 'code' => 200];
             }
 
@@ -34,7 +36,7 @@ class GenerateFolioAction
             ]];
 
             $bookings = ServiceBooking::where('reservation_id', $reservation->id)
-                ->whereIn('status', [ServiceBooking::STATUS_CONFIRMED, ServiceBooking::STATUS_COMPLETED])
+                ->whereIn('status', [ServiceBookingStatus::CONFIRMED, ServiceBookingStatus::COMPLETED])
                 ->with('bookable')
                 ->get();
 

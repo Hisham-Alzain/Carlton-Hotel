@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\Booking;
 
+use App\Enums\OtpChannel;
+use App\Enums\OtpPurpose;
+use App\Enums\ReservationStatus;
 use App\Models\Guest;
 use App\Models\OtpCode;
 use App\Models\Reservation;
@@ -43,7 +46,7 @@ class GuestBookingTest extends TestCase
         ]);
 
         $res->assertStatus(201)
-            ->assertJsonPath('data.status', Reservation::STATUS_PENDING)
+            ->assertJsonPath('data.status', ReservationStatus::PENDING->value)
             ->assertJsonStructure(['data' => ['uuid', 'booking_code', 'total_usd']]);
 
         $this->assertStringStartsWith('CARL-', $res->json('data.booking_code'));
@@ -89,12 +92,12 @@ class GuestBookingTest extends TestCase
 
         // Reservation should be pending_verification
         $reservation = Reservation::where('uuid', $reservationUuid)->first();
-        $this->assertEquals(Reservation::STATUS_PENDING_VERIFICATION, $reservation->status);
+        $this->assertEquals(ReservationStatus::PENDING_VERIFICATION, $reservation->status);
         $this->assertNotNull($reservation->hold_expires_at);
 
         // Step 2: verifyGuestBooking
         $otp = OtpCode::where('identifier', 'john@example.com')
-            ->where('purpose', OtpCode::PURPOSE_BOOKING_VERIFICATION)
+            ->where('purpose', OtpPurpose::BOOKING_VERIFICATION)
             ->latest()->first();
         $rawCode = '123456';
         $otp->update(['code_hash' => Hash::make($rawCode)]);
@@ -107,9 +110,9 @@ class GuestBookingTest extends TestCase
 
         $step2->assertOk()
             ->assertJsonStructure(['data' => ['reservation', 'guest', 'token']])
-            ->assertJsonPath('data.reservation.status', Reservation::STATUS_PENDING);
+            ->assertJsonPath('data.reservation.status', ReservationStatus::PENDING->value);
 
-        $this->assertEquals(Reservation::STATUS_PENDING, $reservation->fresh()->status);
+        $this->assertEquals(ReservationStatus::PENDING, $reservation->fresh()->status);
     }
 
     public function test_verify_fails_if_hold_expired(): void
@@ -125,8 +128,8 @@ class GuestBookingTest extends TestCase
         // Create a valid OTP for the identifier
         $otp = OtpCode::create([
             'identifier'  => 'late@example.com',
-            'channel'     => OtpCode::CHANNEL_EMAIL,
-            'purpose'     => OtpCode::PURPOSE_BOOKING_VERIFICATION,
+            'channel'     => OtpChannel::EMAIL,
+            'purpose'     => OtpPurpose::BOOKING_VERIFICATION,
             'code_hash'   => Hash::make('999999'),
             'attempts'    => 0,
             'expires_at'  => now()->addMinutes(5),

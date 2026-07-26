@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\DevicePlatform;
 use App\Models\DeviceToken;
 use App\Models\Guest;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -15,7 +16,7 @@ class DeviceTokenFactory extends Factory
         return [
             'guest_id'     => Guest::factory(),
             'token'        => $this->faker->uuid() . ':' . $this->faker->uuid(),
-            'platform'     => DeviceToken::PLATFORM_ANDROID,
+            'platform'     => DevicePlatform::ANDROID,
             'last_used_at' => now(),
         ];
     }

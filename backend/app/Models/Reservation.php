@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentMethod;
+use App\Enums\ReservationSource;
+use App\Enums\ReservationStatus;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,19 +17,6 @@ class Reservation extends Model
 {
     use HasFactory, HasUuid, LogsActivity;
 
-    const STATUS_PENDING_VERIFICATION = 'pending_verification';
-    const STATUS_PENDING              = 'pending';
-    const STATUS_CONFIRMED            = 'confirmed';
-    const STATUS_CHECKED_IN           = 'checked_in';
-    const STATUS_CHECKED_OUT          = 'checked_out';
-    const STATUS_CANCELLED            = 'cancelled';
-
-    const SOURCE_DIRECT  = 'direct';
-    const SOURCE_WALK_IN = 'walk_in';
-
-    const PAYMENT_CASH       = 'cash';
-    const PAYMENT_ON_ARRIVAL = 'on_arrival';
-
     protected $fillable = [
         'guest_id', 'booking_code', 'source', 'external_ref', 'external_channel',
         'check_in', 'check_out', 'status', 'hold_expires_at', 'payment_method',
@@ -34,6 +24,9 @@ class Reservation extends Model
     ];
 
     protected $casts = [
+        'status'          => ReservationStatus::class,
+        'source'          => ReservationSource::class,
+        'payment_method'  => PaymentMethod::class,
         'check_in'        => 'date',
         'check_out'       => 'date',
         'hold_expires_at' => 'datetime',
@@ -48,7 +41,7 @@ class Reservation extends Model
 
     public function isHoldExpired(): bool
     {
-        return $this->status === self::STATUS_PENDING_VERIFICATION
+        return $this->status === ReservationStatus::PENDING_VERIFICATION
             && $this->hold_expires_at
             && $this->hold_expires_at->isPast();
     }

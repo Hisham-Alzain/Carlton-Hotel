@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ConversationStatus;
 use App\Models\Conversation;
 use App\Models\Guest;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -14,12 +15,12 @@ class ConversationFactory extends Factory
     {
         return [
             'guest_id' => Guest::factory(),
-            'status'   => Conversation::STATUS_OPEN,
+            'status'   => ConversationStatus::OPEN,
         ];
     }
 
     public function closed(): static
     {
-        return $this->state(fn () => ['status' => Conversation::STATUS_CLOSED]);
+        return $this->state(fn () => ['status' => ConversationStatus::CLOSED]);
     }
 }

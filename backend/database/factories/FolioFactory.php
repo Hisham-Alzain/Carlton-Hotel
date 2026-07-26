@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\FolioStatus;
 use App\Models\Folio;
 use App\Models\Reservation;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -14,7 +15,7 @@ class FolioFactory extends Factory
     {
         return [
             'reservation_id' => Reservation::factory(),
-            'status'         => Folio::STATUS_OPEN,
+            'status'         => FolioStatus::OPEN,
             'subtotal_usd'   => 0,
             'total_usd'      => 0,
         ];

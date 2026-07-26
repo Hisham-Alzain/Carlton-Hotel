@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Folio;
 
+use App\Enums\ReservationStatus;
+use App\Enums\ServiceBookingStatus;
 use App\Models\Guest;
 use App\Models\PoolCabana;
 use App\Models\Reservation;
@@ -49,7 +51,7 @@ class FolioTest extends TestCase
             'reservation_id' => $reservation->id,
             'bookable_type'  => 'pool_cabana',
             'bookable_id'    => $cabana->id,
-            'status'         => ServiceBooking::STATUS_CONFIRMED,
+            'status'         => ServiceBookingStatus::CONFIRMED,
         ]);
 
         // Restaurant table booking carries no charge — must be excluded
@@ -59,7 +61,7 @@ class FolioTest extends TestCase
             'reservation_id' => $reservation->id,
             'bookable_type'  => 'restaurant_table',
             'bookable_id'    => $table->id,
-            'status'         => ServiceBooking::STATUS_CONFIRMED,
+            'status'         => ServiceBookingStatus::CONFIRMED,
         ]);
 
         $staff = $this->makeStaff(['folios.view']);
@@ -81,7 +83,7 @@ class FolioTest extends TestCase
             'reservation_id' => $reservation->id,
             'bookable_type'  => 'pool_cabana',
             'bookable_id'    => $cabana->id,
-            'status'         => ServiceBooking::STATUS_CANCELLED,
+            'status'         => ServiceBookingStatus::CANCELLED,
         ]);
 
         $staff = $this->makeStaff(['folios.view']);
@@ -144,7 +146,7 @@ class FolioTest extends TestCase
             'reservation_id' => $reservation->id,
             'bookable_type'  => 'pool_cabana',
             'bookable_id'    => $cabana->id,
-            'status'         => ServiceBooking::STATUS_CONFIRMED,
+            'status'         => ServiceBookingStatus::CONFIRMED,
         ]);
 
         $this->actingAs($viewer, 'users')
@@ -183,7 +185,7 @@ class FolioTest extends TestCase
              ->assertOk()
              ->assertJsonStructure(['data' => ['approved_by_guest_at']]);
 
-        $this->assertEquals(Reservation::STATUS_CHECKED_OUT, $reservation->fresh()->status);
+        $this->assertEquals(ReservationStatus::CHECKED_OUT, $reservation->fresh()->status);
     }
 
     public function test_transport_request_creates_service_request(): void

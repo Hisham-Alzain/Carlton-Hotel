@@ -2,8 +2,8 @@
 
 namespace App\Listeners;
 
+use App\Enums\NotificationType;
 use App\Events\InquirySubmitted;
-use App\Models\GuestNotification;
 use App\Services\Notification\NotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
@@ -17,7 +17,7 @@ class NotifyDepartmentOnInquiry implements ShouldQueue
 
         $this->notifications->notifyDepartment(
             $inquiry->department,
-            GuestNotification::TYPE_INQUIRY_ROUTED,
+            NotificationType::INQUIRY_ROUTED,
             __('custom.notifications.inquiry_routed_title'),
             __('custom.notifications.inquiry_routed_body', ['name' => $inquiry->name]),
             ['inquiry_uuid' => $inquiry->uuid],

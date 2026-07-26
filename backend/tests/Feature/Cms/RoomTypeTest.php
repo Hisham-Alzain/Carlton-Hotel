@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\Cms;
 
+use App\Enums\BedType;
+use App\Enums\RoomView;
+use App\Models\Amenity;
 use App\Models\RoomType;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -37,11 +40,13 @@ class RoomTypeTest extends TestCase
         return array_merge([
             'name'           => ['en' => 'Deluxe Suite', 'ar' => 'جناح ديلوكس'],
             'description'    => ['en' => 'Spacious suite', 'ar' => 'جناح واسع'],
-            'amenities'      => ['WiFi', 'Pool'],
+            'view_type'      => RoomView::CITY->value,
+            'bed_types'      => [BedType::KING->value, BedType::EXTRA->value],
             'base_occupancy' => 2,
             'max_occupancy'  => 4,
             'size_sqm'       => 45.5,
             'base_price_usd' => 200.00,
+            'cancellation_hours' => 48,
             'is_active'      => true,
         ], $overrides);
     }
@@ -203,6 +208,108 @@ class RoomTypeTest extends TestCase
 
         $this->assertCount(1, $res->json('data.images'));
         $this->assertNotEmpty($res->json('data.images.0.url'));
+    }
+
+    // ── Mobile fields: view, beds, cancellation, amenities ────────────────
+
+    public function test_create_persists_view_bed_types_and_cancellation_window(): void
+    {
+        $res = $this->withToken($this->editorToken())
+            ->postJson('/api/cms/room-types', $this->payload())
+            ->assertStatus(201);
+
+        $this->assertSame(RoomView::CITY->value, $res->json('data.view_type'));
+        $this->assertSame([BedType::KING->value, BedType::EXTRA->value], $res->json('data.bed_types'));
+        $this->assertSame(48, $res->json('data.cancellation_hours'));
+    }
+
+    public function test_create_rejects_unknown_bed_type(): void
+    {
+        $this->withToken($this->editorToken())
+            ->postJson('/api/cms/room-types', $this->payload(['bed_types' => ['bunk']]))
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'validation_failed');
+    }
+
+    public function test_admin_can_attach_amenities_and_flag_highlights(): void
+    {
+        $amenities = Amenity::factory()->count(6)->create();
+
+        $res = $this->withToken($this->editorToken())
+            ->postJson('/api/cms/room-types', $this->payload([
+                'amenities' => $amenities->values()->map(fn ($a, $i) => [
+                    'uuid'         => $a->uuid,
+                    'is_highlight' => $i < 2,
+                    'sort_order'   => $i,
+                ])->all(),
+            ]))
+            ->assertStatus(201);
+
+        $this->assertCount(6, $res->json('data.amenities'));
+        // Two flagged highlights, topped up to four from the head of the list.
+        $highlights = $res->json('data.highlights');
+        $this->assertCount(4, $highlights);
+        $this->assertSame($amenities[0]->uuid, $highlights[0]['uuid']);
+        $this->assertSame($amenities[1]->uuid, $highlights[1]['uuid']);
+    }
+
+    public function test_highlights_fall_back_to_first_four_when_none_flagged(): void
+    {
+        $amenities = Amenity::factory()->count(5)->create();
+        $roomType  = RoomType::factory()->create();
+        $roomType->amenityList()->attach(
+            $amenities->values()->mapWithKeys(fn ($a, $i) => [
+                $a->id => ['is_highlight' => false, 'sort_order' => $i],
+            ])->all(),
+        );
+
+        $res = $this->getJson("/api/public/room-types/{$roomType->uuid}")->assertOk();
+
+        $this->assertCount(4, $res->json('data.highlights'));
+        $this->assertSame($amenities[0]->uuid, $res->json('data.highlights.0.uuid'));
+    }
+
+    public function test_update_without_amenities_key_leaves_pivot_untouched(): void
+    {
+        $amenities = Amenity::factory()->count(3)->create();
+        $roomType  = RoomType::factory()->create();
+        $roomType->amenityList()->attach($amenities->pluck('id')->all());
+
+        $res = $this->withToken($this->editorToken())
+            ->putJson("/api/cms/room-types/{$roomType->uuid}", ['base_price_usd' => 999])
+            ->assertOk();
+
+        $this->assertCount(3, $res->json('data.amenities'));
+    }
+
+    public function test_update_with_empty_amenities_clears_pivot(): void
+    {
+        $amenities = Amenity::factory()->count(3)->create();
+        $roomType  = RoomType::factory()->create();
+        $roomType->amenityList()->attach($amenities->pluck('id')->all());
+
+        $res = $this->withToken($this->editorToken())
+            ->putJson("/api/cms/room-types/{$roomType->uuid}", ['amenities' => []])
+            ->assertOk();
+
+        $this->assertCount(0, $res->json('data.amenities'));
+        $this->assertDatabaseCount('amenity_room_type', 0);
+    }
+
+    public function test_banner_is_the_first_image_by_sort_order(): void
+    {
+        Storage::fake('public');
+        $roomType = RoomType::factory()->create();
+        $token    = $this->editorToken();
+
+        $this->withToken($token)->postJson("/api/cms/room-types/{$roomType->uuid}/images", [
+            'image' => UploadedFile::fake()->image('cover.jpg'),
+        ])->assertStatus(201);
+
+        $res = $this->getJson("/api/public/room-types/{$roomType->uuid}")->assertOk();
+
+        $this->assertNotEmpty($res->json('data.banner'));
+        $this->assertSame($res->json('data.images.0.url'), $res->json('data.banner'));
     }
 
     // ── Validation ────────────────────────────────────────────────────────

@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\AmenityController as AdminAmenityController;
 use App\Http\Controllers\Admin\CheckInApprovalController;
+use App\Http\Controllers\Api\AmenityController as ApiAmenityController;
 use App\Http\Controllers\Admin\ConversationController as AdminConversationController;
 use App\Http\Controllers\Admin\FolioController as AdminFolioController;
 use App\Http\Controllers\Api\ConversationController as ApiConversationController;
@@ -89,6 +91,7 @@ Route::prefix('public')->group(function () {
     Route::get('/dining-venues/{diningVenue}',[ApiDiningVenueController::class, 'show']);
     Route::get('/event-spaces',               [ApiEventSpaceController::class,  'index']);
     Route::get('/event-spaces/{eventSpace}',  [ApiEventSpaceController::class,  'show']);
+    Route::get('/amenities',              [ApiAmenityController::class,    'index']);
     Route::get('/pages/{slug}',           [ApiPageController::class,       'show']);
     Route::get('/promotions',             [ApiPromotionController::class,  'index']);
     Route::get('/promotions/{promotion}', [ApiPromotionController::class,  'show']);
@@ -146,6 +149,13 @@ Route::middleware(['auth:users', 'permission:cms.edit'])->prefix('cms')->group(f
     Route::delete('/event-spaces/{eventSpace}',                   [AdminEventSpaceController::class, 'destroy']);
     Route::post  ('/event-spaces/{eventSpace}/images',            [MediaController::class, 'storeEventSpace']);
     Route::delete('/event-spaces/{eventSpace}/images/{media}',    [MediaController::class, 'destroyEventSpace']);
+
+    // Amenities (in-room amenity catalog joined to room types)
+    Route::get   ('/amenities',                                   [AdminAmenityController::class, 'index']);
+    Route::post  ('/amenities',                                   [AdminAmenityController::class, 'store']);
+    Route::get   ('/amenities/{amenity}',                         [AdminAmenityController::class, 'show']);
+    Route::put   ('/amenities/{amenity}',                         [AdminAmenityController::class, 'update']);
+    Route::delete('/amenities/{amenity}',                         [AdminAmenityController::class, 'destroy']);
 
     // Pages
     Route::get   ('/pages',                                       [AdminPageController::class, 'index']);

@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Enums\BedType;
+use App\Enums\RoomView;
 use App\Models\DiningVenue;
 use App\Models\EventSpace;
 use App\Models\Facility;
@@ -30,15 +32,20 @@ class CmsContentSeeder extends Seeder
     {
         $types = [
             ['en' => 'Standard Queen', 'ar' => 'غرفة كوين ستاندرد', 'occ' => [2, 2], 'size' => 24, 'price' => 90,
-                'desc' => 'A comfortable queen room with city views, perfect for solo travelers and couples.', 'floors' => [1, 2]],
+                'desc' => 'A comfortable queen room with city views, perfect for solo travelers and couples.', 'floors' => [1, 2],
+                'view' => RoomView::CITY, 'beds' => [BedType::QUEEN], 'cancel' => 24],
             ['en' => 'Deluxe King', 'ar' => 'غرفة ديلوكس كينغ', 'occ' => [2, 3], 'size' => 32, 'price' => 150,
-                'desc' => 'Spacious king room with a seating area and premium amenities.', 'floors' => [3, 4]],
+                'desc' => 'Spacious king room with a seating area and premium amenities.', 'floors' => [3, 4],
+                'view' => RoomView::CITY, 'beds' => [BedType::KING], 'cancel' => 48],
             ['en' => 'Executive Suite', 'ar' => 'جناح تنفيذي', 'occ' => [2, 4], 'size' => 55, 'price' => 280,
-                'desc' => 'A separate living area, executive lounge access, and panoramic views.', 'floors' => [5, 6]],
+                'desc' => 'A separate living area, executive lounge access, and panoramic views.', 'floors' => [5, 6],
+                'view' => RoomView::MOUNTAIN, 'beds' => [BedType::KING, BedType::EXTRA], 'cancel' => 48],
             ['en' => 'Family Room', 'ar' => 'غرفة عائلية', 'occ' => [4, 6], 'size' => 48, 'price' => 220,
-                'desc' => 'Two queen beds and extra space, ideal for families.', 'floors' => [8, 9]],
+                'desc' => 'Two queen beds and extra space, ideal for families.', 'floors' => [8, 9],
+                'view' => RoomView::GARDEN, 'beds' => [BedType::QUEEN, BedType::TWIN], 'cancel' => 72],
             ['en' => 'Presidential Suite', 'ar' => 'الجناح الرئاسي', 'occ' => [2, 4], 'size' => 95, 'price' => 550,
-                'desc' => 'The hotel\'s finest suite — private terrace, dining room, and butler service.', 'floors' => [10]],
+                'desc' => 'The hotel\'s finest suite — private terrace, dining room, and butler service.', 'floors' => [10],
+                'view' => RoomView::POOL, 'beds' => [BedType::KING, BedType::SINGLE], 'cancel' => 96],
         ];
 
         foreach ($types as $i => $t) {
@@ -46,10 +53,13 @@ class CmsContentSeeder extends Seeder
                 'name' => ['en' => $t['en'], 'ar' => $t['ar']],
                 'description' => ['en' => $t['desc'], 'ar' => $t['desc']],
                 'amenities' => ['WiFi', 'Air Conditioning', 'Mini Bar', 'Flat-screen TV', 'Safe'],
+                'view_type' => $t['view'],
+                'bed_types' => array_map(fn (BedType $b) => $b->value, $t['beds']),
                 'base_occupancy' => $t['occ'][0],
                 'max_occupancy' => $t['occ'][1],
                 'size_sqm' => $t['size'],
                 'base_price_usd' => $t['price'],
+                'cancellation_hours' => $t['cancel'],
                 'is_active' => true,
                 'sort_order' => $i,
             ]);

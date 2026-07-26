@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             StaffSeeder::class,
             GuestSeeder::class,
             CmsContentSeeder::class,
+            AmenitySeeder::class,
             BookingSeeder::class,
             EventInquirySeeder::class,
             ServiceCatalogSeeder::class,

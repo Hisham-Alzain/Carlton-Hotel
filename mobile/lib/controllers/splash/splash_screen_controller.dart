@@ -8,7 +8,7 @@ import 'package:get/get.dart';
 
 class SplashScreenController extends GetxController
     with GetTickerProviderStateMixin {
-  static const Color _nativeSplashColor = Color(0xFF14454C);
+  static const Color _nativeSplashColor = AppColors.midnightTeal;
 
   late final AnimationController animationController;
   late final Animation<double> rotationAnimation;
@@ -56,11 +56,11 @@ class SplashScreenController extends GetxController
     );
     gradientCenterAnimation = ColorTween(
       begin: _nativeSplashColor,
-      end: AppColors.tealGlow,
+      end: AppColors.oceanTeal,
     ).animate(backgroundCurve);
     gradientEdgeAnimation = ColorTween(
       begin: _nativeSplashColor,
-      end: AppColors.tealDeep,
+      end: AppColors.abyssTeal,
     ).animate(backgroundCurve);
 
     bottomMarkOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(

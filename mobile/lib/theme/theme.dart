@@ -11,7 +11,7 @@ class Themes {
       // The color of the spinning arrow/arc
       primary: AppColors.primary,
     ),
-    scaffoldBackgroundColor: AppColors.background,
+    scaffoldBackgroundColor: AppColors.ghostWhite,
 
     fontFamily: _mainFontFamily,
     textTheme: const TextTheme(
@@ -104,7 +104,7 @@ class Themes {
       style: TextButton.styleFrom(
         foregroundColor: AppColors.primary,
         textStyle: const TextStyle(
-          fontFamily: _mainFontFamily,
+          fontFamily: 'DM Sans',
           fontSize: 14,
           fontWeight: FontWeight.w500,
           letterSpacing: 0.1,
@@ -114,12 +114,12 @@ class Themes {
 
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: AppColors.primaryButtonBg,
+        backgroundColor: AppColors.primary90,
         foregroundColor: Colors.white,
         disabledForegroundColor: Colors.grey,
         elevation: 0,
         textStyle: const TextStyle(
-          fontFamily: _mainFontFamily,
+          fontFamily: 'DM Sans',
           fontSize: 15,
           fontWeight: FontWeight.w700,
         ),
@@ -127,21 +127,17 @@ class Themes {
       ),
     ),
 
-    // Create Account (and every outlined button) gets the same soft drop
-    // shadow Figma applies across this button family (Sign in / Browse
-    // services): offset (0,4), blur 4, color #D4D4D4.
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         backgroundColor: Colors.transparent,
-        foregroundColor: AppColors.outlinedButtonText,
+        foregroundColor: AppColors.pineTeal,
         disabledForegroundColor: Colors.grey,
         elevation: 0,
-        shadowColor: const Color(0xFFD4D4D4),
+        shadowColor: AppColors.mistGrey,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: const BorderSide(color: Colors.white, width: 0.8),
         textStyle: const TextStyle(
-          //TODO:change font family
-          fontFamily: _mainFontFamily,
+          fontFamily: 'DM Sans',
           fontSize: 15,
           fontWeight: FontWeight.w500,
         ),
@@ -150,14 +146,14 @@ class Themes {
 
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.neutralButtonBg,
-        foregroundColor: AppColors.neutralButtonText,
-        disabledBackgroundColor: AppColors.neutralButtonBg,
+        backgroundColor: AppColors.platinumGrey90,
+        foregroundColor: AppColors.nearBlack,
+        disabledBackgroundColor: AppColors.platinumGrey90,
         disabledForegroundColor: Colors.grey,
-        shadowColor: const Color(0xFFD4D4D4),
+        shadowColor: AppColors.mistGrey,
         elevation: 2,
         textStyle: const TextStyle(
-          fontFamily: _mainFontFamily,
+          fontFamily: 'DM Sans',
           fontSize: 15,
           fontWeight: FontWeight.w600,
         ),
@@ -170,15 +166,15 @@ class Themes {
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         selectedBackgroundColor: AppColors.cream,
-        selectedForegroundColor: AppColors.ink,
+        selectedForegroundColor: AppColors.espressoInk,
         side: const BorderSide(color: Colors.white, width: 1.5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         padding: EdgeInsets.zero,
         minimumSize: const Size(0, 40),
         elevation: 0,
         textStyle: const TextStyle(
-          fontFamily: _mainFontFamily,
-          fontSize: 14,
+          fontFamily: 'DM Sans',
+          fontSize: 10,
           fontWeight: FontWeight.w500,
           letterSpacing: 0.1,
         ),
@@ -193,9 +189,9 @@ class Themes {
     progressIndicatorTheme: ProgressIndicatorThemeData(
       color: AppColors.primary,
       // borderRadius: BorderRadius.circular(),
-      circularTrackColor: AppColors.progressTrack,
+      circularTrackColor: AppColors.iceBlue,
       refreshBackgroundColor: Colors.white,
-      linearTrackColor: AppColors.progressTrack,
+      linearTrackColor: AppColors.iceBlue,
     ),
 
     dialogTheme: const DialogThemeData(
@@ -213,8 +209,8 @@ class Themes {
     ),
 
     appBarTheme: AppBarTheme(
-      backgroundColor: AppColors.background,
-      surfaceTintColor: AppColors.background,
+      backgroundColor: AppColors.ghostWhite,
+      surfaceTintColor: AppColors.ghostWhite,
       scrolledUnderElevation: 0,
       elevation: 0,
       iconTheme: const IconThemeData(color: Colors.white),
@@ -260,10 +256,11 @@ class Themes {
     ),
 
     tabBarTheme: TabBarThemeData(
-      dividerColor: AppColors.progressTrack,
+      dividerColor: AppColors.iceBlue,
       labelColor: AppColors.primary,
       unselectedLabelColor: AppColors.primary,
       indicatorColor: AppColors.primary,
+      labelPadding: const EdgeInsets.all(10),
       labelStyle: const TextStyle(
         fontFamily: _mainFontFamily,
         fontSize: 14,
@@ -277,17 +274,17 @@ class Themes {
       indicator: const UnderlineTabIndicator(
         borderSide: BorderSide(color: AppColors.primary, width: 2.5),
       ),
-      indicatorSize: TabBarIndicatorSize.label,
+      indicatorSize: TabBarIndicatorSize.tab,
     ),
 
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       type: BottomNavigationBarType.fixed,
       showUnselectedLabels: true,
       showSelectedLabels: true,
-      backgroundColor: AppColors.bottomNavBg,
+      backgroundColor: AppColors.snowGrey,
       elevation: 0,
       selectedItemColor: AppColors.primary,
-      unselectedItemColor: AppColors.navLabel,
+      unselectedItemColor: AppColors.inkBlack,
       selectedLabelStyle: const TextStyle(
         fontFamily: _mainFontFamily,
         fontSize: 9,
@@ -334,35 +331,33 @@ class Themes {
     checkboxTheme: CheckboxThemeData(
       fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
         if (states.contains(WidgetState.selected)) {
-          // return AppColors.primaryColor; // Color when checked
+          return AppColors.primary; // Color when checked
         }
         return Colors.transparent; // Transparent when unchecked
       }),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       checkColor: const WidgetStatePropertyAll(Colors.white),
-      side: const BorderSide(
-        // color:
-      ),
+      side: const BorderSide(color: AppColors.black10, width: 1),
     ),
 
     chipTheme: ChipThemeData(
-      backgroundColor: AppColors.cardBg,
+      backgroundColor: AppColors.primary08,
       selectedColor: AppColors.primary,
       showCheckmark: false,
       labelStyle: const TextStyle(
         fontFamily: _mainFontFamily,
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-        color: AppColors.textPrimary,
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: AppColors.oliveTaupe,
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppColors.cardBorder),
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.white, width: 1),
       ),
     ),
 
     dividerTheme: DividerThemeData(
-      // color:
+      color: AppColors.primary,
       indent: 10,
       endIndent: 10,
       thickness: 1,
@@ -382,16 +377,20 @@ class Themes {
     ),
 
     cardTheme: CardThemeData(
-      shape: BoxBorder.all(color: AppColors.cardBorder),
-      color: AppColors.cardBg,
+      shape: BoxBorder.all(color: AppColors.linenGrey),
+      color: AppColors.featherGrey,
       elevation: 0,
       margin: EdgeInsets.zero,
-      shadowColor: AppColors.cardShadow,
+      shadowColor: AppColors.silverShadow25,
     ),
 
     radioTheme: RadioThemeData(
-      // fillColor: WidgetStatePropertyAll()
+      fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        if (states.contains(WidgetState.selected)) return AppColors.primary;
+        return AppColors.pearlGrey;
+      }),
     ),
+
     datePickerTheme: DatePickerThemeData(),
 
     searchBarTheme: SearchBarThemeData(
@@ -418,19 +417,26 @@ class Themes {
       ),
     ),
 
-    popupMenuTheme: PopupMenuThemeData(color: Colors.white),
+    popupMenuTheme: PopupMenuThemeData(
+      iconColor: AppColors.taupeBrown,
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
 
     bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: Colors.white,
-      // dragHandleColor:
+      backgroundColor: AppColors.white,
       showDragHandle: true,
-      modalBackgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadiusGeometry.circular(35),
+      modalBackgroundColor: AppColors.white,
+      // Top corners only — the bottom two are off-screen.
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       // constraints: BoxConstraints(maxHeight: 500),
-      dragHandleSize: Size(32, 4),
+      dragHandleSize: Size(36, 4),
+      dragHandleColor: AppColors.smokeGrey,
     ),
+
     sliderTheme: SliderThemeData(
       // activeTrackColor:
       // inactiveTrackColor:

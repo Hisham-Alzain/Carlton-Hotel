@@ -5,16 +5,16 @@ enum ServiceRequestStatus {
   inProgress(
     label: 'In Progress',
     iconPath: 'assets/icons/orangeclock.svg',
-    textColor: AppColors.gold,
-    bgColor: AppColors.statusProgressBg,
-    iconBgColor: AppColors.statusProgressIconBg,
+    textColor: AppColors.antiqueGold,
+    bgColor: AppColors.antiqueGold09,
+    iconBgColor: AppColors.antiqueGold08,
   ),
   confirmed(
     label: 'Confirmed',
     iconPath: 'assets/icons/greenclock.svg',
-    textColor: AppColors.statusConfirmedText,
-    bgColor: AppColors.statusConfirmedBg,
-    iconBgColor: AppColors.statusConfirmedIconBg,
+    textColor: AppColors.successGreen,
+    bgColor: AppColors.successGreen09,
+    iconBgColor: AppColors.successGreen08,
   );
 
   const ServiceRequestStatus({

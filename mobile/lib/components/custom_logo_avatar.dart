@@ -17,7 +17,7 @@ class CustomLogoAvatar extends StatelessWidget {
         height: 60,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: AppColors.primaryTileBg,
+          color: AppColors.primary06,
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white, width: 1),
         ),

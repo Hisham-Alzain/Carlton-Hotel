@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/models/home_models.dart';
 import 'package:flutter/widgets.dart';
@@ -83,6 +84,10 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   void bookNow() => CustomSnackbars.showInfo(message: 'Booking coming soon');
 
   void explore() => CustomSnackbars.showInfo(message: 'Explore coming soon');
+
+  /// Tapping a room card opens its full-screen details page.
+  void openRoomDetails(RoomItem item) => Get.find<BookingFlowController>()
+      .openRoomDetailsScreen(DemoData.roomDetailsFor(item));
 
   void discoverAll(String section) =>
       CustomSnackbars.showInfo(message: '$section — coming soon');

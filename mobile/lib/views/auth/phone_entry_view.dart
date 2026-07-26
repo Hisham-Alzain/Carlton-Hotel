@@ -26,19 +26,33 @@ class PhoneEntryView extends GetView<PhoneEntryController> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 20,
               children: [
+                CustomTextField(
+                  controller: controller.emailController,
+                  textInputType: TextInputType.emailAddress,
+                  label: 'Email Address',
+                  hintText: 'your@email.com',
+                  validator: (p0) =>
+                      CustomValidation().validateRequiredField(p0) ??
+                      CustomValidation().validateEmail(p0),
+                ),
                 Row(
                   spacing: 10,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    CustomCountryCodePicker(onCodeChanged: (p0) {}),
+                    CustomCountryCodePicker(phone: controller.phone),
                     Flexible(
                       child: CustomTextField(
-                        controller: controller.phoneController,
+                        controller: controller.phone.controller,
+                        inputFormatters: [controller.phone.formatter],
                         textInputType: TextInputType.phone,
+                        textDirection: TextDirection.ltr,
                         label: 'Phone Number',
                         hintText: 'Phone number',
                         validator: (p0) =>
-                            CustomValidation().validateRequiredField(p0),
+                            CustomValidation().validatePhoneNumber(
+                              p0,
+                              dialCode: controller.phone.dialCode,
+                            ),
                       ),
                     ),
                   ],
@@ -47,7 +61,7 @@ class PhoneEntryView extends GetView<PhoneEntryController> {
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: CustomFilledButton(
                     width: 350,
-                    backgroundColor: AppColors.teal,
+                    backgroundColor: AppColors.lagoonTeal,
                     isLoading: controller.isSubmitting,
                     onPressed: controller.submit,
                     child: Text(AppTranslations.sendCodeButtonLabel),

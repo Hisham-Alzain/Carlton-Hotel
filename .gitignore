@@ -1,4 +1,7 @@
 /.claude
+/.agents
+/.codex-swarm
+/AGENTS.codex-swarm.md
 ARCHITECTURE.md
 LOG_REPORT.md
 P0_TICKETS.md

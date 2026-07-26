@@ -1,0 +1,95 @@
+:root {
+  color-scheme: light;
+
+  --carlton-deep-teal: #08414c;
+  --carlton-deep-teal-900: #06333b;
+  --carlton-deep-teal-800: #0b4f5d;
+  --carlton-deep-teal-tint: #9cb3b8;
+  --carlton-bright-teal: #2e8799;
+  --carlton-bright-teal-tint: #4393a3;
+  --carlton-gold: #c0a060;
+  --carlton-gold-tint: #e6d9bf;
+  --carlton-taupe: #b2987d;
+  --carlton-taupe-tint: #e0d6cb;
+  --carlton-sand: #d9caad;
+  --carlton-sand-tint: #f0eade;
+  --carlton-soft-gray: #aab1b2;
+  --carlton-gray-tint: #b2b9ba;
+
+  --color-page: #f7f5f0;
+  --color-surface: #ffffff;
+  --color-surface-raised: #fbfaf7;
+  --color-surface-muted: #f0eade;
+  --color-surface-teal: #0a4652;
+  --color-border: #e5ded2;
+  --color-border-strong: #d5c8b3;
+  --color-text-strong: #102f35;
+  --color-text: #38545a;
+  --color-text-muted: #7a8b8e;
+  --color-text-inverse: #f8f5ec;
+  --color-link: var(--carlton-deep-teal);
+  --color-focus: rgba(46, 135, 153, 0.35);
+
+  --color-success: #268765;
+  --color-success-bg: #e8f4ef;
+  --color-warning: #b7791f;
+  --color-warning-bg: #fbf0d9;
+  --color-danger: #b44545;
+  --color-danger-bg: #f7e7e5;
+  --color-info: #2e8799;
+  --color-info-bg: #e6f2f4;
+  --color-critical: #c75c3a;
+  --color-critical-bg: #f9e9e2;
+
+  --font-display: "The Seasons", "Cormorant Garamond", "Georgia", serif;
+  --font-ui: "Cabinet Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --font-arabic-display: "Al Qabas", "Tajawal", "Noto Sans Arabic", serif;
+  --font-arabic: "Tajawal", "Noto Sans Arabic", "Segoe UI", sans-serif;
+
+  --font-size-2xs: 0.6875rem;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-md: 0.875rem;
+  --font-size-lg: 1rem;
+  --font-size-xl: 1.125rem;
+  --font-size-2xl: 1.375rem;
+  --font-size-3xl: 1.75rem;
+
+  --line-height-tight: 1.2;
+  --line-height-ui: 1.45;
+  --line-height-body: 1.6;
+
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --radius-admin: 8px;
+  --radius-control: 8px;
+  --radius-pill: 999px;
+
+  --shadow-border: 0 0 0 1px var(--color-border);
+  --shadow-raised: 0 12px 30px rgba(16, 47, 53, 0.08);
+  --shadow-overlay: 0 22px 70px rgba(16, 47, 53, 0.22);
+
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --layout-sidebar-width: 17.5rem;
+  --layout-sidebar-collapsed-width: 4.75rem;
+  --layout-header-height: 4rem;
+  --layout-content-max: 96rem;
+}
+
+[dir="rtl"] {
+  --font-ui: var(--font-arabic);
+  --font-display: var(--font-arabic-display);
+}

@@ -1,3 +1,4 @@
+import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:get/get.dart';
 
@@ -10,20 +11,30 @@ class CustomValidation {
   }
 
   String? validateEmail(String? value) {
-    if (value!.isNotEmpty && !value.isEmail) {
+    final text = value ?? '';
+    if (text.isEmpty) {
+      return AppTranslations.pleaseEnterEmailAddress;
+    } else if (!text.isEmail) {
       return AppTranslations.invalidEmail;
     }
     return null;
   }
 
-  String? validatePhoneNumber(String? value) {
-    if (value!.isEmpty) {
-      return AppTranslations.requiredField;
-    }
-    // else if (!value.startsWith('+963')) {
-    //   return 'Number should begin with +963';
-    // }
-    else if (!value.isNum || value.length < 9) {
+  /// Validates a field whose text carries its dial code as a prefix (see
+  /// [PhoneFieldState]) — the code is stripped before the digits are checked,
+  /// so `+963` on its own reads as empty rather than as a valid number.
+  String? validatePhoneNumber(
+    String? value, {
+    String dialCode = kDefaultDialCode,
+  }) {
+    final text = value ?? '';
+    final national =
+        (text.startsWith(dialCode) ? text.substring(dialCode.length) : text)
+            .trim();
+
+    if (national.isEmpty) {
+      return AppTranslations.pleaseEnterPhoneNumber;
+    } else if (!national.isNumericOnly || national.length < 9) {
       return AppTranslations.invalidNumber;
     }
     return null;

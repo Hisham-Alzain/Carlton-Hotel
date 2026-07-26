@@ -67,7 +67,10 @@ Note: many keys in `local.dart` (e.g. `auth.joinCartXForTheBestDeals`, `fileServ
 
 ### Other conventions
 
-- `customWidgets/custom_*.dart` — shared UI kit (buttons, cards, dialogs, snackbars, scaffold, image loader). Check here before writing a new low-level widget.
+- Widgets currently live in two folders — check both before adding a new one:
+  - `customWidgets/custom_*.dart` — buttons, text fields, containers, dialogs, snackbars, scaffold, image loader, validation.
+  - `components/` — cards (`components/cards/`), app bar, bottom nav, avatar, chips, badges, request tile, active-stay section.
+  - The split isn't a settled rule yet — most `components/` widgets take plain params just like `customWidgets/` ones; only the cards (`CustomListingCard` etc.) are actually parameterized by a domain model (`List<CardMeta>`). Treat `components/` as "recently moved out of `customWidgets/`," not as a principled boundary — check both folders for an existing widget before adding a new one, and don't assume a file's folder tells you why it's there.
 - `models/api/api_response.dart`, `api_exception.dart`, `paginated_meta.dart` — response envelope types shared by all API calls.
 - `mixins/paginated_controller_mixin.dart` — mix into a controller for infinite-scroll list screens; implement `fetchPage()` and it manages `items`/`loading`/`loadingMore`/`hasMore`/scroll-triggered loading.
 - `constants/storage_keys.dart` — single source of truth for `GetStorage` key names; add new persisted keys here rather than inlining strings.

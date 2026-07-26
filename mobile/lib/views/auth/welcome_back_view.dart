@@ -19,16 +19,16 @@ class WelcomeBackView extends GetView<WelcomeBackController> {
           height: 64,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppColors.gold,
+            color: AppColors.antiqueGold,
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.tealRing, width: 1.5),
+            border: Border.all(color: AppColors.slateTeal, width: 1.5),
           ),
           child: const Icon(Icons.check, color: Colors.white, size: 28),
         ),
         title: AppTranslations.welcomeBackTitle,
         subtitle: AppTranslations.welcomeBackSubtitle,
         titleColor: Colors.white,
-        subtitleColor: AppColors.textOnDark,
+        subtitleColor: AppColors.snowGrey75,
       ),
     );
   }

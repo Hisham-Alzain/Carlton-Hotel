@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 31.9958 25.9839" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="ChipSVG" clip-path="url(#clip0_0_92)">
+<path id="Vector" d="M27.9905 0.49969H4.00533C2.07353 0.49969 0.507498 2.06572 0.507498 3.99752V21.9864C0.507498 23.9182 2.07353 25.4842 4.00533 25.4842H27.9905C29.9223 25.4842 31.4883 23.9182 31.4883 21.9864V3.99752C31.4883 2.06572 29.9223 0.49969 27.9905 0.49969Z" fill="white" fill-opacity="0.15" stroke="white" stroke-opacity="0.3" stroke-width="0.999381"/>
+<path id="Vector_2" d="M25.9917 6.99567H6.00409C5.45215 6.99567 5.00471 7.4431 5.00471 7.99505V17.9889C5.00471 18.5408 5.45215 18.9882 6.00409 18.9882H25.9917C26.5437 18.9882 26.9911 18.5408 26.9911 17.9889V7.99505C26.9911 7.4431 26.5437 6.99567 25.9917 6.99567Z" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.5" stroke-width="0.999381"/>
+<path id="Vector_3" d="M15.9979 6.99567V18.9882" stroke="white" stroke-opacity="0.4" stroke-width="0.999381"/>
+<path id="Vector_4" d="M5.00471 12.992H26.9911" stroke="white" stroke-opacity="0.4" stroke-width="0.999381"/>
+</g>
+<defs>
+<clipPath id="clip0_0_92">
+<rect width="31.9958" height="25.9839" fill="white"/>
+</clipPath>
+</defs>
+</svg>

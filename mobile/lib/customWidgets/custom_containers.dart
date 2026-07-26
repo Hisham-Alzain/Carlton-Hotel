@@ -3,72 +3,6 @@ import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class CustomCard extends StatelessWidget {
-  final double? height;
-  final double? width;
-  final EdgeInsetsGeometry? padding;
-  final Color? color;
-  final Color? borderColor;
-  final double borderWidth;
-  final double? borderRadius;
-  final VoidCallback? onTap;
-  final Widget child;
-
-  const CustomCard({
-    this.height,
-    this.width,
-    this.padding,
-    this.color,
-    this.borderColor,
-    this.borderWidth = 1,
-    this.borderRadius,
-    this.onTap,
-    required this.child,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cardTheme = Theme.of(context).cardTheme;
-    final radius = BorderRadius.circular(
-      borderRadius ??
-          (cardTheme.shape as RoundedRectangleBorder?)?.borderRadius
-              .resolve(Directionality.of(context))
-              .topLeft
-              .x ??
-          16,
-    );
-    final resolvedBorderColor =
-        borderColor ?? (cardTheme.shape as RoundedRectangleBorder?)?.side.color;
-
-    return SizedBox(
-      height: height,
-      width: width,
-      child: Material(
-        color: color ?? cardTheme.color,
-        borderRadius: radius,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
-            decoration: resolvedBorderColor != null
-                ? BoxDecoration(
-                    border: Border.all(
-                      color: resolvedBorderColor,
-                      width: borderWidth,
-                    ),
-                    borderRadius: radius,
-                  )
-                : null,
-            padding: padding ?? const EdgeInsets.all(16),
-            child: child,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class ButtonsContainer extends StatelessWidget {
   final double? height;
   final double? width;
@@ -94,9 +28,9 @@ class ButtonsContainer extends StatelessWidget {
       width: width,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cardBg,
+        color: AppColors.featherGrey,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: AppColors.linenGrey),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -112,6 +46,48 @@ class ButtonsContainer extends StatelessWidget {
           child,
         ],
       ),
+    );
+  }
+}
+
+/// A rounded, solid-filled container used all over the app for status pills,
+/// price badges, chips and summary strips.
+///
+/// It only covers the plain `Container(padding + BoxDecoration(color,
+/// borderRadius))` shape — anything that also needs a border, gradient or
+/// shadow should stay a bespoke `Container`.
+class PillContainer extends StatelessWidget {
+  final double? height;
+  final double? width;
+  final Widget child;
+  final Color backgroundColor;
+  final EdgeInsetsGeometry padding;
+  final double radius;
+  final BoxBorder? border;
+
+  const PillContainer({
+    this.height,
+    this.width,
+    required this.child,
+    required this.backgroundColor,
+    this.padding = const EdgeInsets.all(10),
+    this.radius = 6,
+    this.border,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      width: width,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(radius),
+        border: border,
+      ),
+      child: child,
     );
   }
 }
@@ -157,7 +133,7 @@ class SectionContainer extends StatelessWidget {
               if (title != null)
                 Text(
                   title!,
-                  style: textStyle.titleLarge?.copyWith(
+                  style: textStyle.titleMedium?.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w500,
                   ),

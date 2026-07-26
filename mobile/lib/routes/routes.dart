@@ -4,9 +4,17 @@ import 'package:carlton/views/auth/find_booking_view.dart';
 import 'package:carlton/views/auth/otp_verify_view.dart';
 import 'package:carlton/views/auth/phone_entry_view.dart';
 import 'package:carlton/views/auth/reservation_choice_view.dart';
+import 'package:carlton/views/book/add_ons_view.dart';
+import 'package:carlton/views/book/booking_confirmed_view.dart';
+import 'package:carlton/views/book/choose_room_view.dart';
+import 'package:carlton/views/book/guest_details_view.dart';
+import 'package:carlton/views/book/payment_view.dart';
+import 'package:carlton/views/book/review_booking_view.dart';
+import 'package:carlton/views/book/room_details_view.dart';
 import 'package:carlton/views/home/ai_concierge_view.dart';
 import 'package:carlton/views/main/main_view.dart';
 import 'package:carlton/views/auth/sign_in_view.dart';
+import 'package:carlton/views/services/service_category_detail_view.dart';
 import 'package:carlton/views/splash_screen/splash_screen_view.dart';
 import 'package:carlton/views/auth/welcome_back_view.dart';
 import 'package:get/get.dart';
@@ -22,6 +30,16 @@ abstract class Routes {
   static const reservationChoice = '/reservation-choice';
   static const findBooking = '/find-booking';
   static const aiConcierge = '/ai-concierge';
+  static const serviceCategory = '/services/category';
+
+  // Booking flow (5 steps, sharing one permanent BookingFlowController).
+  static const roomDetails = '/booking/room-details';
+  static const chooseRoom = '/booking/rooms';
+  static const addOns = '/booking/add-ons';
+  static const guestDetails = '/booking/guest';
+  static const payment = '/booking/payment';
+  static const reviewBooking = '/booking/review';
+  static const bookingConfirmed = '/booking/confirmed';
 }
 
 abstract class Pages {
@@ -75,6 +93,20 @@ abstract class Pages {
       name: Routes.aiConcierge,
       page: () => const AiConciergeView(),
       binding: AiConciergeBinding(),
+    ),
+    GetPage(
+      name: Routes.serviceCategory,
+      page: () => const ServiceCategoryDetailView(),
+    ),
+    GetPage(name: Routes.roomDetails, page: () => const RoomDetailsView()),
+    GetPage(name: Routes.chooseRoom, page: () => const ChooseRoomView()),
+    GetPage(name: Routes.addOns, page: () => const AddOnsView()),
+    GetPage(name: Routes.guestDetails, page: () => const GuestDetailsView()),
+    GetPage(name: Routes.payment, page: () => const PaymentView()),
+    GetPage(name: Routes.reviewBooking, page: () => const ReviewBookingView()),
+    GetPage(
+      name: Routes.bookingConfirmed,
+      page: () => const BookingConfirmedView(),
     ),
   ];
 }

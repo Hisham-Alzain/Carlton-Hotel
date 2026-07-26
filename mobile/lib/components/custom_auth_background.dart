@@ -33,7 +33,7 @@ class CustomAuthBackground extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [AppColors.scrimTop, AppColors.scrimBottom],
+              colors: [AppColors.duskScrim83, AppColors.nightScrim90],
             ),
           ),
         ),
@@ -88,6 +88,7 @@ class CustomAuthBackground extends StatelessWidget {
                     subtitle!,
                     textAlign: TextAlign.center,
                     style: textStyle.titleSmall?.copyWith(
+                      fontFamily: 'DM Sans',
                       fontWeight: FontWeight.w400,
                       color: Colors.white,
                     ),

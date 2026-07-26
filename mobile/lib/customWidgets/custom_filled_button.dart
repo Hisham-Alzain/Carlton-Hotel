@@ -12,6 +12,7 @@ class CustomFilledButton extends StatelessWidget {
   final double? elevation;
   final bool isLoading;
 
+  //TODO: check if able to send custom text style
   const CustomFilledButton({
     this.height,
     this.width,
@@ -29,8 +30,13 @@ class CustomFilledButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).filledButtonTheme.style;
+    // `fixedSize` is ignored by ButtonStyleButton when the width is infinite,
+    // so a `width: double.infinity` caller has to be stretched explicitly. A
+    // null width still means "size to the child" — some call sites put two of
+    // these side by side in a Row, where an infinite width would overflow.
+    final stretch = width == double.infinity;
 
-    return FilledButton(
+    final button = FilledButton(
       style: theme?.copyWith(
         fixedSize: WidgetStatePropertyAll(
           Size(width ?? double.infinity, height ?? 50),
@@ -42,7 +48,7 @@ class CustomFilledButton extends StatelessWidget {
         elevation: WidgetStatePropertyAll(elevation),
       ),
       onPressed: isLoading ? null : onPressed,
-      //TODO: make this a custom indicator using the lgog
+      //TODO: make this a custom indicator using the icon
       child: isLoading
           ? const SizedBox(
               height: 18,
@@ -54,5 +60,7 @@ class CustomFilledButton extends StatelessWidget {
             )
           : child,
     );
+
+    return stretch ? SizedBox(width: double.infinity, child: button) : button;
   }
 }

@@ -41,14 +41,14 @@ class CustomListingCard extends StatelessWidget {
                 width: 12,
                 height: 12,
                 colorFilter: const ColorFilter.mode(
-                  AppColors.textMuted,
+                  AppColors.taupeBrown,
                   BlendMode.srcIn,
                 ),
               ),
               Text(
                 m.text,
                 style: textStyle.labelMedium?.copyWith(
-                  color: AppColors.textMuted,
+                  color: AppColors.taupeBrown,
                   fontWeight: FontWeight.w300,
                 ),
               ),
@@ -86,7 +86,7 @@ class CustomListingCard extends StatelessWidget {
                   Text(
                     subtitle,
                     style: textStyle.labelSmall?.copyWith(
-                      color: AppColors.textMuted,
+                      color: AppColors.taupeBrown,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -102,7 +102,7 @@ class CustomListingCard extends StatelessWidget {
                     Text.rich(
                       TextSpan(
                         style: textStyle.labelMedium?.copyWith(
-                          color: AppColors.textMuted,
+                          color: AppColors.taupeBrown,
                           fontWeight: FontWeight.w500,
                         ),
                         children: [

@@ -29,6 +29,7 @@ return [
         'folio_generated'         => 'Folio generated.',
         'folio_settled'           => 'Folio settled.',
         'folio_approved'          => 'Checkout approved.',
+        'profile_updated'         => 'Profile updated.',
         'review_submitted'        => 'Thank you for your review.',
         'review_moderated'        => 'Review updated.',
     ],
@@ -61,6 +62,7 @@ return [
         'inquiry_state'            => 'This status transition is not allowed.',
         'no_active_reservation'    => 'This action requires an active reservation.',
         'no_table_available'       => 'No table is available for that time and party size.',
+        'verified_contact_immutable' => 'This contact detail is already verified. Verify the new one with a code to change it.',
     ],
     'auth'       => [
         'otp_sent'       => 'A verification code has been sent.',

@@ -3,6 +3,7 @@ namespace App\Services\Auth;
 
 use App\Actions\Auth\LinkBookingCodeAction;
 use App\Actions\Auth\RequestOtpAction;
+use App\Actions\Auth\UpdateGuestProfileAction;
 use App\Actions\Auth\VerifyOtpAction;
 use App\Enums\OtpChannel;
 use App\Enums\OtpPurpose;
@@ -14,6 +15,7 @@ class AuthGuestService
         private readonly RequestOtpAction     $requestOtp,
         private readonly VerifyOtpAction      $verifyOtp,
         private readonly LinkBookingCodeAction $linkBookingCode,
+        private readonly UpdateGuestProfileAction $updateProfile,
     ) {}
 
     public function requestOtp(string $identifier, OtpChannel|string $channel, OtpPurpose|string $purpose): array
@@ -35,5 +37,10 @@ class AuthGuestService
     {
         $guest->load('activeReservations');
         return ['data' => $guest, 'code' => 200];
+    }
+
+    public function updateProfile(Guest $guest, array $data): array
+    {
+        return $this->updateProfile->handle($guest, $data);
     }
 }

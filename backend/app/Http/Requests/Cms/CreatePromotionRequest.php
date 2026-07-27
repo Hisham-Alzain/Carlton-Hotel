@@ -13,6 +13,8 @@ class CreatePromotionRequest extends BaseRequest
             'title.ar'       => ['required', 'string', 'max:255'],
             'description.en' => ['required', 'string'],
             'description.ar' => ['required', 'string'],
+            'secondary_description.en' => ['nullable', 'string'],
+            'secondary_description.ar' => ['nullable', 'string'],
             'terms.en'       => ['nullable', 'string'],
             'terms.ar'       => ['nullable', 'string'],
             'valid_from'     => ['nullable', 'date'],

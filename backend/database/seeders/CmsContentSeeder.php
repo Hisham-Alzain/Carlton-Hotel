@@ -209,15 +209,19 @@ class CmsContentSeeder extends Seeder
     private function promotions(): void
     {
         $promos = [
-            ['en' => 'Early Bird Booking', 'ar' => 'حجز مبكر', 'desc' => 'Book 30 days ahead and save 15% on any room type.'],
-            ['en' => 'Honeymoon Package', 'ar' => 'باقة شهر العسل', 'desc' => 'Complimentary suite upgrade and a bottle of wine for newlyweds.'],
-            ['en' => 'Long Stay Discount', 'ar' => 'خصم الإقامة الطويلة', 'desc' => 'Stay 7 nights or more and save 20%.'],
+            ['en' => 'Early Bird Booking', 'ar' => 'حجز مبكر', 'desc' => 'Book 30 days ahead and save 15% on any room type.',
+                'desc2' => 'Applies to every room type, all year round.', 'desc2_ar' => 'ينطبق على جميع أنواع الغرف طوال العام.'],
+            ['en' => 'Honeymoon Package', 'ar' => 'باقة شهر العسل', 'desc' => 'Complimentary suite upgrade and a bottle of wine for newlyweds.',
+                'desc2' => 'Includes late checkout and breakfast in bed.', 'desc2_ar' => 'يشمل تسجيل مغادرة متأخر وفطور في الغرفة.'],
+            ['en' => 'Long Stay Discount', 'ar' => 'خصم الإقامة الطويلة', 'desc' => 'Stay 7 nights or more and save 20%.',
+                'desc2' => 'The discount applies automatically at checkout.', 'desc2_ar' => 'يُطبَّق الخصم تلقائياً عند المغادرة.'],
         ];
 
         foreach ($promos as $i => $p) {
             $promo = Promotion::create([
                 'title' => ['en' => $p['en'], 'ar' => $p['ar']],
                 'description' => ['en' => $p['desc'], 'ar' => $p['desc']],
+                'secondary_description' => ['en' => $p['desc2'], 'ar' => $p['desc2_ar']],
                 'terms' => ['en' => 'Subject to availability. Cannot be combined with other offers.', 'ar' => 'حسب التوفر.'],
                 'valid_from' => now()->toDateString(),
                 'valid_until' => now()->addMonths(3)->toDateString(),

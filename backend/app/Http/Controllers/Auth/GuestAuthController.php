@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 use App\Base\BaseController;
 use App\Http\Requests\Auth\LinkBookingCodeRequest;
 use App\Http\Requests\Auth\RequestOtpRequest;
+use App\Http\Requests\Auth\UpdateGuestProfileRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Resources\GuestResource;
 use App\Services\Auth\AuthGuestService;
@@ -54,5 +55,13 @@ class GuestAuthController extends BaseController
     {
         $result = $this->service->me($request->user('guests'));
         return $this->success(new GuestResource($result['data']), 'custom.messages.success', 200, $request);
+    }
+
+    // Completes the profile after OTP sign-in (first/last name, plus whichever
+    // of phone/email the guest did not sign in with).
+    public function updateProfile(UpdateGuestProfileRequest $request): JsonResponse
+    {
+        $result = $this->service->updateProfile($request->user('guests'), $request->validated());
+        return $this->success(new GuestResource($result['data']), 'custom.messages.profile_updated', 200, $request);
     }
 }

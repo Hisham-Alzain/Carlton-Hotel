@@ -13,11 +13,12 @@ class Promotion extends Model
 {
     use HasFactory, HasUuid, HasTranslations, LogsActivity;
 
-    protected $translatable = ['title', 'description', 'terms'];
+    protected $translatable = ['title', 'description', 'secondary_description', 'terms'];
 
     protected $fillable = [
         'title',
         'description',
+        'secondary_description',
         'terms',
         'valid_from',
         'valid_until',

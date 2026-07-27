@@ -13,6 +13,8 @@ class UpdatePromotionRequest extends BaseRequest
             'title.ar'       => ['sometimes', 'required', 'string', 'max:255'],
             'description.en' => ['sometimes', 'required', 'string'],
             'description.ar' => ['sometimes', 'required', 'string'],
+            'secondary_description.en' => ['nullable', 'string'],
+            'secondary_description.ar' => ['nullable', 'string'],
             'terms.en'       => ['nullable', 'string'],
             'terms.ar'       => ['nullable', 'string'],
             'valid_from'     => ['nullable', 'date'],

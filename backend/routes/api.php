@@ -257,6 +257,9 @@ Route::middleware('auth:guests')
 // past-stay payload.
 // ──────────────────────────────────────────────────────────────────────
 Route::middleware('auth:guests')->prefix('stays')->group(function () {
+    // Cheap entitlement probe the app can poll on resume: is this token's guest
+    // checked in? Declared before /{reservation} so "status" is never a UUID.
+    Route::get('/status',   [StayController::class, 'status']);
     Route::get('/active',   [StayController::class, 'active']);
     Route::get('/upcoming', [StayController::class, 'upcoming']);
     Route::get('/past',     [StayController::class, 'past']);

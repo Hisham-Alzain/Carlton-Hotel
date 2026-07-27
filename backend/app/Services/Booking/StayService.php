@@ -5,6 +5,7 @@ namespace App\Services\Booking;
 use App\Enums\ReservationStatus;
 use App\Models\Guest;
 use App\Models\Reservation;
+use App\Support\GuestEntitlement;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -18,6 +19,37 @@ class StayService
 {
     protected array $with = ['rooms.roomType', 'rooms.room', 'folio'];
     protected int $perPage = 15;
+
+    /**
+     * "Is the bearer of this token in the hotel right now?"
+     *
+     * Resolved from the token's guest via GuestEntitlement — the same source
+     * of truth the `has_booking` / `is_checked_in` middleware use, so the app
+     * can never disagree with the gate that will reject its next request.
+     */
+    public function checkInStatus(Guest $guest): array
+    {
+        $booked = GuestEntitlement::bookedReservations($guest);
+
+        // One extra query for the whole set, so the resource never lazy-loads.
+        if ($booked->isNotEmpty()) {
+            $booked->load('rooms.room');
+        }
+
+        $checkedIn = $booked->first(
+            fn (Reservation $r) => $r->status === ReservationStatus::CHECKED_IN,
+        );
+
+        return [
+            'data' => [
+                'has_booking'   => $booked->isNotEmpty(),
+                'is_checked_in' => $checkedIn !== null,
+                // The in-progress stay when there is one, else the latest booking.
+                'reservation'   => $checkedIn ?? $booked->sortByDesc('check_in')->first(),
+            ],
+            'code' => 200,
+        ];
+    }
 
     /** At most one: the stay the guest is currently in. */
     public function active(Guest $guest): array

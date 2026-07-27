@@ -303,6 +303,71 @@ class StayTest extends TestCase
         $this->assertStringStartsWith('%PDF', $res->getContent());
     }
 
+    // ── Check-in status ───────────────────────────────────────────────────
+
+    public function test_status_reports_checked_in_with_the_room_number(): void
+    {
+        $guest = Guest::factory()->create();
+        $this->stayFor($guest, 'checkedIn', assignRoom: true, attributes: [
+            'check_in'      => now()->subDay()->toDateString(),
+            'check_out'     => now()->addDays(3)->toDateString(),
+            'checked_in_at' => now()->subDay()->setTime(14, 30),
+        ]);
+
+        $this->actingAs($guest, 'guests')
+            ->getJson('/api/stays/status')
+            ->assertOk()
+            ->assertJsonPath('data.is_checked_in', true)
+            ->assertJsonPath('data.has_booking', true)
+            ->assertJsonPath('data.reservation.room_number', '812')
+            ->assertJsonPath('data.reservation.status', 'checked_in')
+            ->assertJsonPath('data.reservation.nights_remaining', 3);
+    }
+
+    public function test_status_reports_booked_but_not_checked_in(): void
+    {
+        $guest = Guest::factory()->create();
+        $this->stayFor($guest, 'confirmed', attributes: [
+            'check_in'  => now()->addDays(2)->toDateString(),
+            'check_out' => now()->addDays(5)->toDateString(),
+        ]);
+
+        $this->actingAs($guest, 'guests')
+            ->getJson('/api/stays/status')
+            ->assertOk()
+            ->assertJsonPath('data.is_checked_in', false)
+            ->assertJsonPath('data.has_booking', true)
+            ->assertJsonPath('data.reservation.checked_in_at', null)
+            ->assertJsonPath('data.reservation.room_number', null);
+    }
+
+    public function test_status_is_an_empty_state_for_a_guest_with_no_booking(): void
+    {
+        $this->actingAs(Guest::factory()->create(), 'guests')
+            ->getJson('/api/stays/status')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.is_checked_in', false)
+            ->assertJsonPath('data.has_booking', false)
+            ->assertJsonPath('data.reservation', null);
+    }
+
+    public function test_status_ignores_another_guests_stay(): void
+    {
+        $this->stayFor(Guest::factory()->create(), 'checkedIn', assignRoom: true);
+
+        $this->actingAs(Guest::factory()->create(), 'guests')
+            ->getJson('/api/stays/status')
+            ->assertOk()
+            ->assertJsonPath('data.is_checked_in', false)
+            ->assertJsonPath('data.reservation', null);
+    }
+
+    public function test_status_requires_authentication(): void
+    {
+        $this->getJson('/api/stays/status')->assertStatus(401);
+    }
+
     // ── Do not disturb ────────────────────────────────────────────────────
 
     public function test_guest_can_toggle_do_not_disturb(): void

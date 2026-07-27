@@ -17,7 +17,7 @@ flutter test test/some_test.dart       # run a single test file
 flutter build apk / ios / windows      # platform builds
 ```
 
-There is currently no `test/` directory — no tests exist yet in this project.
+`test/` holds two targeted tests (`booking_pricing_test.dart`, `service_request_ui_test.dart`) — pricing math and one widget flow. There is no broad test suite; don't assume a change is covered.
 
 ## Architecture
 

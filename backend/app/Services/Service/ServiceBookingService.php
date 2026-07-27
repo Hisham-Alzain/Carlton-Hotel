@@ -3,14 +3,29 @@
 namespace App\Services\Service;
 
 use App\Actions\Service\CreateServiceBookingAction;
+use App\Actions\Service\ReserveTableAction;
 use App\Exceptions\NotFoundException;
+use App\Models\DiningVenue;
 use App\Models\Guest;
+use App\Models\Reservation;
 use App\Support\GuestEntitlement;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 class ServiceBookingService
 {
-    public function __construct(private readonly CreateServiceBookingAction $action) {}
+    public function __construct(
+        private readonly CreateServiceBookingAction $action,
+        private readonly ReserveTableAction         $reserveTable,
+    ) {}
+
+    /**
+     * Restaurant table booking. Unlike create(), the guest names a venue and a
+     * party size — the action picks the table.
+     */
+    public function reserveTable(Guest $guest, Reservation $reservation, DiningVenue $venue, array $data): array
+    {
+        return $this->reserveTable->handle($guest, $reservation, $venue, $data);
+    }
 
     public function create(Guest $guest, array $data): array
     {

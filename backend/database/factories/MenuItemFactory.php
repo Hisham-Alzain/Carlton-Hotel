@@ -17,7 +17,13 @@ class MenuItemFactory extends Factory
             'name'             => ['en' => $this->faker->words(3, true), 'ar' => 'صنف'],
             'description'      => ['en' => $this->faker->sentence(), 'ar' => 'وصف'],
             'price_usd'        => $this->faker->randomFloat(2, 5, 60),
+            'is_vegan'         => false,
             'is_active'        => true,
         ];
+    }
+
+    public function vegan(): static
+    {
+        return $this->state(['is_vegan' => true]);
     }
 }

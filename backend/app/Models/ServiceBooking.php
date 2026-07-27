@@ -16,12 +16,13 @@ class ServiceBooking extends Model
 
     protected $fillable = [
         'guest_id', 'reservation_id', 'bookable_type', 'bookable_id',
-        'scheduled_at', 'status', 'notes',
+        'scheduled_at', 'guest_count', 'status', 'notes',
     ];
 
     protected $casts = [
         'status'       => ServiceBookingStatus::class,
         'scheduled_at' => 'datetime',
+        'guest_count'  => 'integer',
     ];
 
     public function guest(): BelongsTo       { return $this->belongsTo(Guest::class); }

@@ -68,36 +68,56 @@ class ServiceCatalogSeeder extends Seeder
         }
     }
 
+    /**
+     * Menus are per-restaurant. Every active venue gets the same four category
+     * types the mobile filter chips expect (breakfast / starters / main /
+     * dessert), each keyed by a stable slug.
+     */
     private function menu(): void
     {
         $menu = [
-            'Starters' => [
-                ['en' => 'Hummus with Pita', 'price' => 8],
-                ['en' => 'Fattoush Salad', 'price' => 9],
-                ['en' => 'Stuffed Grape Leaves', 'price' => 10],
-            ],
-            'Main Courses' => [
-                ['en' => 'Grilled Kebab Platter', 'price' => 22],
-                ['en' => 'Chicken Shawarma', 'price' => 16],
-                ['en' => 'Seafood Mezze', 'price' => 28],
-            ],
-            'Desserts' => [
-                ['en' => 'Baklava', 'price' => 7],
-                ['en' => 'Kunafa', 'price' => 9],
-                ['en' => 'Rice Pudding', 'price' => 6],
-            ],
+            ['slug' => 'breakfast', 'en' => 'Breakfast', 'ar' => 'فطور', 'items' => [
+                ['en' => 'Carlton Full Breakfast', 'ar' => 'فطور كارلتون الكامل', 'price' => 14, 'vegan' => false],
+                ['en' => 'Labneh & Za\'atar Plate',  'ar' => 'طبق لبنة وزعتر',     'price' => 9,  'vegan' => true],
+                ['en' => 'Fresh Fruit Bowl',         'ar' => 'سلطة فواكه طازجة',   'price' => 7,  'vegan' => true],
+            ]],
+            ['slug' => 'starters', 'en' => 'Starters', 'ar' => 'مقبلات', 'items' => [
+                ['en' => 'Hummus with Pita',     'ar' => 'حمص مع الخبز',   'price' => 8,  'vegan' => true],
+                ['en' => 'Fattoush Salad',       'ar' => 'سلطة فتوش',      'price' => 9,  'vegan' => true],
+                ['en' => 'Stuffed Grape Leaves', 'ar' => 'ورق عنب محشي',   'price' => 10, 'vegan' => true],
+            ]],
+            ['slug' => 'main', 'en' => 'Main Courses', 'ar' => 'أطباق رئيسية', 'items' => [
+                ['en' => 'Grilled Kebab Platter', 'ar' => 'صحن كباب مشوي',    'price' => 22, 'vegan' => false],
+                ['en' => 'Chicken Shawarma',      'ar' => 'شاورما دجاج',       'price' => 16, 'vegan' => false],
+                ['en' => 'Vegetable Maqluba',     'ar' => 'مقلوبة خضار',       'price' => 18, 'vegan' => true],
+            ]],
+            ['slug' => 'dessert', 'en' => 'Desserts', 'ar' => 'حلويات', 'items' => [
+                ['en' => 'Baklava',      'ar' => 'بقلاوة',      'price' => 7, 'vegan' => false],
+                ['en' => 'Kunafa',       'ar' => 'كنافة',       'price' => 9, 'vegan' => false],
+                ['en' => 'Rice Pudding', 'ar' => 'رز بحليب',    'price' => 6, 'vegan' => true],
+            ]],
         ];
 
-        foreach (array_values($menu) as $i => $items) {
-            $categoryName = array_keys($menu)[$i];
-            $category = MenuCategory::create(['name' => ['en' => $categoryName, 'ar' => $categoryName], 'sort_order' => $i, 'is_active' => true]);
-            foreach ($items as $item) {
-                MenuItem::create([
-                    'menu_category_id' => $category->id,
-                    'name' => ['en' => $item['en'], 'ar' => $item['en']],
-                    'description' => ['en' => 'A house specialty.', 'ar' => 'من تخصصات المطعم.'],
-                    'price_usd' => $item['price'], 'is_active' => true,
+        foreach (DiningVenue::where('is_active', true)->get() as $venue) {
+            foreach ($menu as $i => $c) {
+                $category = MenuCategory::create([
+                    'dining_venue_id' => $venue->id,
+                    'slug'            => $c['slug'],
+                    'name'            => ['en' => $c['en'], 'ar' => $c['ar']],
+                    'sort_order'      => $i,
+                    'is_active'       => true,
                 ]);
+
+                foreach ($c['items'] as $item) {
+                    MenuItem::create([
+                        'menu_category_id' => $category->id,
+                        'name'        => ['en' => $item['en'], 'ar' => $item['ar']],
+                        'description' => ['en' => 'A house specialty.', 'ar' => 'من تخصصات المطعم.'],
+                        'price_usd'   => $item['price'],
+                        'is_vegan'    => $item['vegan'],
+                        'is_active'   => true,
+                    ]);
+                }
             }
         }
     }

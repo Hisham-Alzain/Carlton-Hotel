@@ -15,6 +15,7 @@ class StoreMenuItemRequest extends BaseRequest
             'description.en'     => ['nullable', 'string'],
             'description.ar'     => ['nullable', 'string'],
             'price_usd'          => ['required', 'numeric', 'min:0'],
+            'is_vegan'           => ['nullable', 'boolean'],
             'is_active'          => ['nullable', 'boolean'],
         ];
     }

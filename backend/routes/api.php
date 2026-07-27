@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\CheckInApprovalController;
 use App\Http\Controllers\Admin\HomeSliderController as AdminHomeSliderController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Api\HomeSliderController as ApiHomeSliderController;
+use App\Http\Controllers\Api\MenuController as ApiMenuController;
+use App\Http\Controllers\Api\TableReservationController;
 use App\Http\Controllers\Api\AmenityController as ApiAmenityController;
 use App\Http\Controllers\Api\ReviewController as ApiReviewController;
 use App\Http\Controllers\Admin\ConversationController as AdminConversationController;
@@ -94,6 +96,9 @@ Route::prefix('public')->group(function () {
     Route::get('/facilities/{facility}',  [ApiFacilityController::class,   'show']);
     Route::get('/dining-venues',              [ApiDiningVenueController::class, 'index']);
     Route::get('/dining-venues/{diningVenue}',[ApiDiningVenueController::class, 'show']);
+    // Restaurant menu: filter chips + items, optionally narrowed by ?type=<slug>
+    Route::get('/dining-venues/{diningVenue}/menu-categories', [ApiMenuController::class, 'categories']);
+    Route::get('/dining-venues/{diningVenue}/menu',            [ApiMenuController::class, 'index']);
     Route::get('/event-spaces',               [ApiEventSpaceController::class,  'index']);
     Route::get('/event-spaces/{eventSpace}',  [ApiEventSpaceController::class,  'show']);
     Route::get('/amenities',              [ApiAmenityController::class,    'index']);
@@ -275,6 +280,9 @@ Route::middleware('auth:users')->group(function () {
 Route::middleware(['auth:guests', 'has_booking'])->group(function () {
     Route::post('/service-bookings',     [ServiceBookingController::class, 'store']);
     Route::post('/pre-arrival/documents',[PreArrivalController::class, 'submitDocuments']);
+    // Table reservation — same tier as any other service booking (ARCHITECTURE
+    // §3.7): the backend picks the table from venue + party size + slot.
+    Route::post('/dining-venues/{diningVenue}/table-reservations', [TableReservationController::class, 'store']);
 });
 
 Route::middleware(['auth:guests', 'is_checked_in'])->prefix('service-requests')->group(function () {
@@ -294,6 +302,8 @@ Route::middleware(['auth:users', 'permission:cms.edit'])->prefix('cms')->group(f
     Route::apiResource('transfers', TransferController::class);
     Route::apiResource('menu-categories', MenuCategoryController::class)->parameters(['menu-categories' => 'menuCategory']);
     Route::apiResource('menu-items', MenuItemController::class)->parameters(['menu-items' => 'menuItem']);
+    Route::post  ('/menu-items/{menuItem}/images',         [MediaController::class, 'storeMenuItem']);
+    Route::delete('/menu-items/{menuItem}/images/{media}', [MediaController::class, 'destroyMenuItem']);
 });
 
 // P7 — Pre-arrival check-in approvals (reservations.create — same tier as assign-room)

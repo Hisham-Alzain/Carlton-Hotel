@@ -19,6 +19,7 @@ class ServiceBookingResource extends BaseResource
                     : $this->bookable->table_number,
             ]),
             'scheduled_at'  => $this->scheduled_at,
+            'guest_count'   => $this->guest_count,
             'status'        => $this->status,
             'notes'         => $this->notes,
         ];

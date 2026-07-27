@@ -60,6 +60,7 @@ return [
         'payment_failed'           => 'Payment could not be processed.',
         'inquiry_state'            => 'This status transition is not allowed.',
         'no_active_reservation'    => 'This action requires an active reservation.',
+        'no_table_available'       => 'No table is available for that time and party size.',
     ],
     'auth'       => [
         'otp_sent'       => 'A verification code has been sent.',

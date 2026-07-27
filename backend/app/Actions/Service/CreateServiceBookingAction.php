@@ -18,6 +18,7 @@ class CreateServiceBookingAction
             'bookable_type'  => $data['bookable_type'],
             'bookable_id'    => $data['bookable_id'],
             'scheduled_at'   => $data['scheduled_at'],
+            'guest_count'    => $data['guest_count'] ?? null,
             'status'         => ServiceBookingStatus::PENDING,
             'notes'          => $data['notes'] ?? null,
         ]));

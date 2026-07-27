@@ -10,6 +10,7 @@ use App\Models\EventSpace;
 use App\Models\Facility;
 use App\Models\HomeSlider;
 use App\Models\Media;
+use App\Models\MenuItem;
 use App\Models\Promotion;
 use App\Models\Room;
 use App\Models\RoomType;
@@ -85,6 +86,16 @@ class MediaController extends BaseController
     }
 
     public function destroyEventSpace(Request $request, EventSpace $eventSpace, Media $media): JsonResponse
+    {
+        return $this->delete($request, $media);
+    }
+
+    public function storeMenuItem(UploadMediaRequest $request, MenuItem $menuItem): JsonResponse
+    {
+        return $this->upload($request, $menuItem);
+    }
+
+    public function destroyMenuItem(Request $request, MenuItem $menuItem, Media $media): JsonResponse
     {
         return $this->delete($request, $media);
     }

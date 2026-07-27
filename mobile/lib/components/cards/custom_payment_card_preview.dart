@@ -4,31 +4,31 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// The gradient credit-card visual that heads the Payment card form. Purely
-/// decorative — mirrors [name] / [expiry] as the user types. Matched to Figma:
-/// a 160px 155° teal→primary gradient with a chip, masked number, and
-/// cardholder / expiry labels, plus two faint decorative circles.
+/// decorative — mirrors [cardholderName] / [cardExpiry] as the user types.
+/// Matched to Figma: a 160px 155° teal→primary gradient with a chip, masked
+/// number, and cardholder / expiry labels, plus two faint decorative circles.
 class CustomPaymentCardPreview extends StatelessWidget {
-  final String name;
-  final String expiry;
-  final String number;
+  final String cardholderName;
+  final String cardExpiry;
+  final String cardNumber;
 
   const CustomPaymentCardPreview({
-    this.name = '',
-    this.expiry = '',
-    this.number = '',
+    this.cardholderName = '',
+    this.cardExpiry = '',
+    this.cardNumber = '',
     super.key,
   });
 
   /// 16 slots grouped in fours: typed digits fill in, the rest stay as dots so
   /// the number appears on the card as the guest writes it.
   String get _displayNumber {
-    final digits = number.replaceAll(RegExp(r'\D'), '');
-    final buf = StringBuffer();
-    for (var i = 0; i < 16; i++) {
-      buf.write(i < digits.length ? digits[i] : '•');
-      if (i % 4 == 3 && i != 15) buf.write('  ');
+    final digits = cardNumber.replaceAll(RegExp(r'\D'), '');
+    final maskedNumber = StringBuffer();
+    for (var slot = 0; slot < 16; slot++) {
+      maskedNumber.write(slot < digits.length ? digits[slot] : '•');
+      if (slot % 4 == 3 && slot != 15) maskedNumber.write('  ');
     }
-    return buf.toString();
+    return maskedNumber.toString();
   }
 
   @override
@@ -85,9 +85,14 @@ class CustomPaymentCardPreview extends StatelessWidget {
                   children: [
                     _field(
                       'Cardholder',
-                      name.isEmpty ? 'YOUR NAME' : name.toUpperCase(),
+                      cardholderName.isEmpty
+                          ? 'YOUR NAME'
+                          : cardholderName.toUpperCase(),
                     ),
-                    _field('Expires', expiry.isEmpty ? 'MM/YY' : expiry),
+                    _field(
+                      'Expires',
+                      cardExpiry.isEmpty ? 'MM/YY' : cardExpiry,
+                    ),
                   ],
                 ),
               ],
@@ -98,10 +103,13 @@ class CustomPaymentCardPreview extends StatelessWidget {
     );
   }
 
-  Widget _circle(double size, int color) => Container(
+  Widget _circle(double size, int argbColorValue) => Container(
     width: size,
     height: size,
-    decoration: BoxDecoration(color: Color(color), shape: BoxShape.circle),
+    decoration: BoxDecoration(
+      color: Color(argbColorValue),
+      shape: BoxShape.circle,
+    ),
   );
 
   Widget _field(String label, String value) {

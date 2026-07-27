@@ -6,7 +6,6 @@ import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/models/booking_models.dart';
-import 'package:carlton/routes/routes.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

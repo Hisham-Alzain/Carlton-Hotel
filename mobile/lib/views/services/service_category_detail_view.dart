@@ -15,12 +15,12 @@ class ServiceCategoryDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final args = Get.arguments;
-    if (args is! ServiceDetailCategory) {
+    final categoryArgument = Get.arguments;
+    if (categoryArgument is! ServiceDetailCategory) {
       WidgetsBinding.instance.addPostFrameCallback((_) => Get.back());
       return const CustomScaffold(body: SizedBox.shrink());
     }
-    final category = args;
+    final category = categoryArgument;
     final controller = Get.find<ServicesController>();
 
     return CustomScaffold(
@@ -34,15 +34,10 @@ class ServiceCategoryDetailView extends StatelessWidget {
               width: 52,
               height: 52,
               radius: 14,
-              backgroundColor: AppColors.primary07,
-              child: Opacity(
-                opacity: 0.8,
-                child: CustomImage(
-                  path: category.imagePath,
-                  width: 38,
-                  height: 36,
-                  fit: BoxFit.cover,
-                ),
+              backgroundColor: AppColors.pearlCream,
+              child: CustomImage(
+                source: category.imagePath,
+                fit: BoxFit.contain,
               ),
             ),
             Column(
@@ -86,7 +81,7 @@ class ServiceCategoryDetailView extends StatelessWidget {
                     iconPath: option.iconPath,
                     title: option.title,
                     description: option.description,
-                    eta: option.eta,
+                    etaLabel: option.eta,
                     onTap: () => controller.openServiceRequest(option),
                   );
                 },

@@ -19,7 +19,7 @@ class CancelReservationSheet extends StatelessWidget {
     final dates = [
       stay.checkInLabel,
       stay.checkOutLabel,
-    ].where((e) => e != null).join(' – ');
+    ].where((dateLabel) => dateLabel != null).join(' – ');
 
     return Column(
       mainAxisSize: MainAxisSize.min,

@@ -1,9 +1,9 @@
-import 'package:carlton/constants/error_codes.dart';
 import 'package:carlton/customWidgets/custom_dialogs.dart';
-import 'package:carlton/l10n/app_translations.dart';
-import 'package:carlton/models/api/api_exception.dart';
+import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
+import '../../../models/api/api_exception.dart';
+import '../../../constants/error_codes.dart';
 
 /// Centralizes UI feedback for API calls: loading dialogs, progress dialogs,
 /// success dialogs, and error dialogs mapped from [ApiException].
@@ -11,12 +11,16 @@ import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 /// Kept separate from the transport layer so the network code stays testable
 /// and so dialog behavior can be swapped wholesale (e.g. snackbars instead).
 class ApiDialogHandler {
-  bool _dialogOpened = false;
+  /// Number of loading/progress dialogs this handler currently believes are
+  /// open. A counter, not a bool: two overlapping `showLoading: true`
+  /// requests would otherwise have the first one to finish clear the flag,
+  /// stranding the second's dialog on screen forever.
+  int _openDialogs = 0;
 
   // ── Loading / progress ────────────────────────────────────────────────
 
   void showLoading() {
-    _dialogOpened = true;
+    _openDialogs++;
     CustomDialogs.showLoadingDialog();
   }
 
@@ -25,7 +29,7 @@ class ApiDialogHandler {
     required RxDouble progress,
     CancelToken? cancelToken,
   }) {
-    _dialogOpened = true;
+    _openDialogs++;
     CustomDialogs.showProgressDialog(
       title: title,
       progress: progress,
@@ -33,97 +37,101 @@ class ApiDialogHandler {
     );
   }
 
+  /// Closes one loading/progress dialog.
+  ///
+  /// `Get.back()` pops whatever route is topmost, and GetX models snackbars
+  /// as routes too — so if an earlier error's snackbar is still on screen it
+  /// would be popped instead, leaving the loader stranded underneath. Close
+  /// any open snackbar first so the dialog is genuinely the top route.
   void dismiss() {
-    if (_dialogOpened && (Get.isDialogOpen ?? false)) {
-      _dialogOpened = false;
-      Get.back();
+    if (_openDialogs <= 0) return;
+    if (!(Get.isDialogOpen ?? false)) {
+      _openDialogs = 0;
+      return;
     }
+    if (Get.isSnackbarOpen) Get.closeAllSnackbars();
+    _openDialogs--;
+    Get.back();
   }
 
   // ── Success ───────────────────────────────────────────────────────────
 
   Future<void> showSuccess([String? message]) async =>
-      CustomDialogs.showSuccessDialog(text: message);
+      CustomDialogs.showSuccessDialog(message: message);
 
   // ── Error ─────────────────────────────────────────────────────────────
 
-  /// Default error dialog dispatcher. Maps [ApiException] to the right
-  /// CustomDialogs call based on `errorCode`. Cancelled and unauthorized
-  /// errors are silent here (unauthorized is handled by the interceptor's
-  /// session-expired flow).
-  void showError(ApiException e) {
-    if (e.isCancelled || e.isAuthError) return;
+  /// Maps [ApiException] to the right user-facing feedback — a snackbar for
+  /// transient, self-explanatory failures (validation, rate limit, offline,
+  /// timeout) and a dialog for anything needing acknowledgement (server
+  /// errors, unmapped codes) or when [forceDialog] is set (e.g. checkout
+  /// failures).
+  ///
+  /// This is the single error-display path for the app. `ApiService`'s
+  /// `_request` calls it automatically when `showErrorDialog: true` (the
+  /// default); call sites that pass `showErrorDialog: false` because they
+  /// need to run other logic first (revert an optimistic update, set an
+  /// inline `errorMessage`, etc.) call
+  /// `ApiService.find.dialogs.showError(res.error!)` themselves instead.
+  void showError(ApiException e, {bool forceDialog = false}) {
+    // Silent by contract, regardless of forceDialog: a cancelled request is
+    // user-initiated (usually a controller disposing), and a globally handled
+    // 401 is already being reported by the session-expired teardown.
+    if (e.isCancelled || e.handledGlobally) return;
+
+    if (forceDialog) {
+      CustomDialogs.showErrorDialog(message: e.message);
+      return;
+    }
 
     switch (e.errorCode) {
-      case ErrorCodes.noInternetConnection:
-        CustomDialogs.showErrorDialog(
-          errorTitle: AppTranslations.checkInternetConnection,
-        );
-        break;
-
-      case ErrorCodes.requestTimeout:
-        CustomDialogs.showErrorDialog(
-          errorTitle: AppTranslations.requestTimeout,
-        );
-        break;
-
-      case ErrorCodes.forbidden:
-        CustomDialogs.showErrorDialog(
-          errorTitle: AppTranslations.forbiddenRequest,
-          message: e.message.isNotEmpty ? e.message : null,
-        );
-        break;
-
-      case ErrorCodes.notFound:
-      case ErrorCodes.routeNotFound:
-        CustomDialogs.showErrorDialog(
-          errorTitle: AppTranslations.resourceNotFound,
-          message: e.message.isNotEmpty ? e.message : null,
-        );
-        break;
-
       case ErrorCodes.validationFailed:
-        // Validation errors are typically rendered inline on form fields.
-        // Fall back to a generic dialog showing the first field error so
-        // callers that don't read `validationErrors` still get feedback.
+        // No screen renders field-level errors inline yet, so surface the
+        // first server-side rule as a snackbar rather than staying silent.
         final firstField = e.validationErrors.values.isNotEmpty
             ? e.validationErrors.values.first
             : null;
-        final firstMessage = firstField != null && firstField.isNotEmpty
-            ? firstField.first
-            : e.message;
-        CustomDialogs.showErrorDialog(message: firstMessage);
-        break;
+        CustomSnackbars.showWarning(
+          message: (firstField != null && firstField.isNotEmpty)
+              ? firstField.first
+              : e.message,
+        );
+
+      case ErrorCodes.unauthorized:
+        // Reaching here means the request carried NO token (the
+        // handledGlobally guard above already returned for dead sessions),
+        // so this is ordinary user error on a pre-auth endpoint — a wrong or
+        // expired OTP code, a bad login. Show the server's message ("Invalid
+        // OTP"). This case used to `break` unconditionally on the assumption
+        // that onUnauthorized covered it, which is why a wrong OTP produced
+        // no feedback at all.
+        CustomDialogs.showErrorDialog(message: e.message);
+
+      case ErrorCodes.outOfStock:
+        CustomSnackbars.showWarning(message: e.message);
 
       case ErrorCodes.tooManyRequests:
-        CustomDialogs.showErrorDialog(
-          errorTitle: AppTranslations.tooManyRequests,
-        );
-        break;
+        final wait = e.retryAfter != null ? ' (${e.retryAfter}s)' : '';
+        CustomSnackbars.showWarning(message: '${e.message}$wait');
 
-      case ErrorCodes.serviceUnavailable:
-        CustomDialogs.showErrorDialog(
-          errorTitle: AppTranslations.serviceUnavailable,
-        );
-        break;
+      case ErrorCodes.noInternetConnection:
+        CustomSnackbars.showError(message: e.message);
+
+      case ErrorCodes.requestTimeout:
+        CustomSnackbars.showError(message: e.message);
 
       case ErrorCodes.serverError:
-      case ErrorCodes.databaseError:
-      case ErrorCodes.externalServiceFailed:
-        CustomDialogs.showErrorDialog(
-          errorTitle: AppTranslations.serverError,
-          message: e.requestId != null
-              ? '${AppTranslations.requestId}: ${e.requestId}'
-              : null,
-        );
-        break;
+      case ErrorCodes.serviceUnavailable:
+        // Server errors shown as dialogs — they usually need acknowledgement.
+        CustomDialogs.showErrorDialog(message: e.message);
 
       default:
-        CustomDialogs.showErrorDialog(
-          message: e.message.isNotEmpty
-              ? e.message
-              : AppTranslations.unknownError,
-        );
+        // Unmapped or unknown error codes get a dialog rather than a
+        // two-second snackbar: these are exactly the errors the user has no
+        // context for, so they need to be read and acknowledged rather than
+        // flashed. The cases above keep snackbars because they're transient
+        // and self-explanatory.
+        CustomDialogs.showErrorDialog(message: e.message);
     }
   }
 }

@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:carlton/l10n/app_translations.dart';
-import 'package:carlton/services/api/interceptors/retry_interceptor.dart';
-import 'package:carlton/services/api/ui/api_dialog_handler.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
+import '../interceptors/retry_interceptor.dart';
+import '../ui/api_dialog_handler.dart';
 
 /// Handles binary file downloads. These calls bypass the JSON envelope —
 /// they return raw bytes / files and throw `DioException` (not

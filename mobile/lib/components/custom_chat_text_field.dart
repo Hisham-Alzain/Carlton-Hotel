@@ -27,13 +27,13 @@ class CustomChatTextField extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    final theme = Get.theme;
+    final TextTheme textStyle = Get.textTheme;
 
-    final inputStyle = theme.textTheme.bodyLarge?.copyWith(
+    final inputStyle = textStyle.bodyLarge?.copyWith(
       color: AppColors.espressoInk,
       fontWeight: FontWeight.w400,
     );
-    final hintStyle = theme.textTheme.bodyLarge?.copyWith(
+    final hintStyle = textStyle.bodyLarge?.copyWith(
       color: AppColors.espressoInk50,
       fontWeight: FontWeight.w400,
     );

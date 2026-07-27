@@ -136,7 +136,7 @@ class CustomActiveStayCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Flexible(flex: 2, child: _photo(stay.imagePath!)),
+                  Flexible(flex: 2, child: _photo()),
                 ],
               ),
             ),
@@ -184,10 +184,10 @@ class CustomActiveStayCard extends StatelessWidget {
     );
   }
 
-  Widget _photo(String path) => Stack(
+  Widget _photo() => Stack(
     fit: StackFit.expand,
     children: [
-      CustomImage(path: 'assets/images/stay_room.png', fit: BoxFit.cover),
+      CustomImage(source: 'assets/images/stay_room.png', fit: BoxFit.cover),
       const DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -200,12 +200,13 @@ class CustomActiveStayCard extends StatelessWidget {
     ],
   );
 
-  Widget _dateBox(String label, String value) {
+  Widget _dateBox(String label, String formattedDate) {
     final TextTheme textStyle = Get.textTheme;
 
-    final parts = value.split(', ');
-    final primary = parts.isNotEmpty ? parts.first : value;
-    final year = parts.length > 1 ? parts[1] : '';
+    // "Aug 21, 2025" -> dayAndMonth "Aug 21", year "2025".
+    final dateParts = formattedDate.split(', ');
+    final dayAndMonth = dateParts.isNotEmpty ? dateParts.first : formattedDate;
+    final year = dateParts.length > 1 ? dateParts[1] : '';
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -228,7 +229,7 @@ class CustomActiveStayCard extends StatelessWidget {
           ),
 
           Text(
-            primary,
+            dayAndMonth,
             style: textStyle.labelLarge?.copyWith(
               fontFamily: 'DM Sans',
               fontWeight: FontWeight.w600,

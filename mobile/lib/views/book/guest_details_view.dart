@@ -15,7 +15,7 @@ class GuestDetailsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.find<BookingFlowController>();
+    final controller = Get.find<BookingFlowController>();
     return CustomScaffold(
       appBar: AppBar(
         title: Text('Guest Details'),
@@ -36,7 +36,7 @@ class GuestDetailsView extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(10),
         child: Form(
-          key: c.guestFormKey,
+          key: controller.guestFormKey,
           child: Column(
             spacing: 10,
             children: [
@@ -57,69 +57,71 @@ class GuestDetailsView extends StatelessWidget {
                 children: [
                   Expanded(
                     child: CustomTextField(
-                      controller: c.firstNameCtrl,
+                      controller: controller.firstNameCtrl,
                       textInputType: TextInputType.name,
-                      label: 'First Name',
+                      captionLabel: 'First Name',
                       labelColor: AppColors.inkBlack,
                       hintText: 'Ahmed',
                       fillColor: AppColors.whisperGrey,
-                      validator: (p0) =>
-                          CustomValidation().validateRequiredField(p0),
+                      validator: (enteredFirstName) => CustomValidation()
+                          .validateRequiredField(enteredFirstName),
                     ),
                   ),
                   Expanded(
                     child: CustomTextField(
-                      controller: c.lastNameCtrl,
+                      controller: controller.lastNameCtrl,
                       textInputType: TextInputType.name,
-                      label: 'Last Name',
+                      captionLabel: 'Last Name',
                       labelColor: AppColors.inkBlack,
                       hintText: 'Al-Rashid',
                       fillColor: AppColors.whisperGrey,
-                      validator: (p0) =>
-                          CustomValidation().validateRequiredField(p0),
+                      validator: (enteredLastName) => CustomValidation()
+                          .validateRequiredField(enteredLastName),
                     ),
                   ),
                 ],
               ),
               CustomTextField(
-                controller: c.emailCtrl,
+                controller: controller.emailCtrl,
                 textInputType: TextInputType.emailAddress,
-                label: 'Email Address *',
+                captionLabel: 'Email Address *',
                 labelColor: AppColors.inkBlack,
                 hintText: 'your@email.com',
                 fillColor: AppColors.whisperGrey,
-                validator: (p0) => CustomValidation().validateEmail(p0),
+                validator: (enteredEmail) =>
+                    CustomValidation().validateEmail(enteredEmail),
               ),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 10,
                 children: [
                   CustomCountryCodePicker(
-                    phone: c.phone,
+                    phoneField: controller.phone,
                     fillColor: AppColors.whisperGrey,
                   ),
                   Expanded(
                     child: CustomTextField(
-                      controller: c.phone.controller,
-                      inputFormatters: [c.phone.formatter],
+                      controller: controller.phone.controller,
+                      inputFormatters: [controller.phone.formatter],
                       textInputType: TextInputType.phone,
                       textDirection: TextDirection.ltr,
-                      label: 'Phone Number*',
+                      captionLabel: 'Phone Number*',
                       labelColor: AppColors.inkBlack,
                       hintText: 'Phone number',
                       fillColor: AppColors.whisperGrey,
-                      validator: (p0) => CustomValidation().validatePhoneNumber(
-                        p0,
-                        dialCode: c.phone.dialCode,
-                      ),
+                      validator: (enteredPhoneNumber) =>
+                          CustomValidation().validatePhoneNumber(
+                            enteredPhoneNumber,
+                            dialCode: controller.phone.dialCode,
+                          ),
                     ),
                   ),
                 ],
               ),
               CustomTextField(
-                controller: c.specialRequestsCtrl,
+                controller: controller.specialRequestsCtrl,
                 textInputType: TextInputType.multiline,
-                label: 'Special Requests',
+                captionLabel: 'Special Requests',
                 labelColor: AppColors.inkBlack,
                 hintText:
                     'Any dietary needs, room preferences, or special occasions…',
@@ -129,7 +131,7 @@ class GuestDetailsView extends StatelessWidget {
               CustomFilledButton(
                 width: double.infinity,
                 backgroundColor: AppColors.lagoonTeal,
-                onPressed: c.continueFromGuest,
+                onPressed: controller.continueFromGuest,
                 child: const Text('Continue'),
               ),
             ],

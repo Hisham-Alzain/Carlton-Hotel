@@ -19,7 +19,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 class PaymentView extends StatelessWidget {
   const PaymentView({super.key});
 
-  static const _icons = {
+  static const _methodIconPaths = {
     PaymentMethod.card: 'assets/icons/pay_card.svg',
     PaymentMethod.applePay: 'assets/icons/pay_apple.svg',
     PaymentMethod.googlePay: 'assets/icons/pay_google.svg',
@@ -46,7 +46,7 @@ class PaymentView extends StatelessWidget {
         ],
       ),
       body: GetBuilder<BookingFlowController>(
-        builder: (c) {
+        builder: (controller) {
           final TextTheme textStyle = Get.textTheme;
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -65,10 +65,10 @@ class PaymentView extends StatelessWidget {
                     dotColor: AppColors.iceBlue,
                   ),
                 ),
-                BookingSummaryHeader(controller: c),
+                BookingSummaryHeader(controller: controller),
                 // CustomPromoBox(
-                //   controller: c.promoCtrl,
-                //   onApply: c.applyPromo,
+                //   promoCodeController: controller.promoCtrl,
+                //   onApply: controller.applyPromo,
                 // ),
                 Text(
                   'Payment Method',
@@ -78,21 +78,26 @@ class PaymentView extends StatelessWidget {
                   ),
                 ),
                 ...PaymentMethod.values.map(
-                  (m) => CustomSelectableCard(
-                    title: m.label,
-                    subtitle: m.subtitle,
-                    control: SelectableControl.radio,
-                    selected: c.paymentMethod == m,
-                    onTap: () => c.selectPaymentMethod(m),
-                    leading: _leadingIcon(_icons[m]!, c.paymentMethod == m),
+                  (method) => CustomSelectableCard(
+                    title: method.label,
+                    subtitle: method.subtitle,
+                    controlType: SelectableControl.radio,
+                    selected: controller.paymentMethod == method,
+                    onTap: () => controller.selectPaymentMethod(method),
+                    leading: _leadingIcon(
+                      _methodIconPaths[method]!,
+                      controller.paymentMethod == method,
+                    ),
                   ),
                 ),
-                _methodBody(c),
+                _methodBody(controller),
                 CustomFilledButton(
-                  backgroundColor: c.canReviewBooking
+                  backgroundColor: controller.canReviewBooking
                       ? AppColors.lagoonTeal
                       : AppColors.pearlGrey,
-                  onPressed: c.canReviewBooking ? c.reviewBooking : null,
+                  onPressed: controller.canReviewBooking
+                      ? controller.reviewBooking
+                      : null,
                   child: const Text('Continue'),
                 ),
               ],
@@ -114,19 +119,19 @@ class PaymentView extends StatelessWidget {
     child: SvgPicture.asset(assetPath, width: 20, height: 20),
   );
 
-  static Widget _methodBody(BookingFlowController c) {
-    switch (c.paymentMethod) {
+  static Widget _methodBody(BookingFlowController controller) {
+    switch (controller.paymentMethod) {
       case PaymentMethod.card:
         return CustomCardForm(
-          numberCtrl: c.cardNumberCtrl,
-          expiryCtrl: c.cardExpiryCtrl,
-          cvvCtrl: c.cardCvvCtrl,
-          nameCtrl: c.cardNameCtrl,
-          onChanged: c.onPaymentFieldChanged,
+          cardNumberController: controller.cardNumberCtrl,
+          expiryController: controller.cardExpiryCtrl,
+          cvvController: controller.cardCvvCtrl,
+          cardholderNameController: controller.cardNameCtrl,
+          onChanged: controller.onPaymentFieldChanged,
         );
       case PaymentMethod.applePay:
         return const CustomWalletPanel(
-          glyphPath: 'assets/icons/pay_apple.svg',
+          iconPath: 'assets/icons/pay_apple.svg',
           badgeColor: AppColors.white10,
           tintGlyphWhite: true,
           title: 'Apple Pay',
@@ -136,12 +141,12 @@ class PaymentView extends StatelessWidget {
             'Authorized with Face ID or Touch ID',
             'No card details shared with Apple Pay',
           ],
-          footer:
+          footerNote:
               "You'll be redirected to Apple Pay to complete authorization.",
         );
       case PaymentMethod.googlePay:
         return const CustomWalletPanel(
-          glyphPath: 'assets/icons/google.svg',
+          iconPath: 'assets/icons/google.svg',
           badgeColor: AppColors.white,
           tintGlyphWhite: false,
           title: 'Google Pay',
@@ -151,7 +156,7 @@ class PaymentView extends StatelessWidget {
             "Protected by Google's security systems",
             'Instant payment confirmation',
           ],
-          footer:
+          footerNote:
               "You'll be redirected to Google Pay to complete authorization.",
         );
       case PaymentMethod.payAtHotel:

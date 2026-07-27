@@ -18,7 +18,7 @@ class CustomSelectableCard extends StatelessWidget {
   final String? subtitle;
   final bool selected;
   final VoidCallback onTap;
-  final SelectableControl control;
+  final SelectableControl controlType;
   final Widget? leading;
 
   /// SVG glyph the card renders in its built-in rounded badge, used when no
@@ -33,7 +33,7 @@ class CustomSelectableCard extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.subtitle,
-    this.control = SelectableControl.checkbox,
+    this.controlType = SelectableControl.checkbox,
     this.leading,
     this.iconPath,
     this.iconColor = AppColors.primary,
@@ -101,7 +101,7 @@ class CustomSelectableCard extends StatelessWidget {
                   ),
                 ),
               ],
-              _Control(control: control, selected: selected),
+              _Control(controlType: controlType, selected: selected),
             ],
           ),
         ),
@@ -110,7 +110,7 @@ class CustomSelectableCard extends StatelessWidget {
   }
 
   /// The [iconPath] glyph wrapped in the card's rounded icon badge.
-  Widget _iconBadge(String path) => Container(
+  Widget _iconBadge(String iconPath) => Container(
     width: 40,
     height: 40,
     alignment: Alignment.center,
@@ -119,7 +119,7 @@ class CustomSelectableCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
     ),
     child: SvgPicture.asset(
-      path,
+      iconPath,
       width: 16,
       height: 16,
       colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
@@ -130,14 +130,14 @@ class CustomSelectableCard extends StatelessWidget {
 /// Custom (non-Material) checkbox / radio driven purely by [selected]; the tap
 /// is handled by the enclosing card's InkWell, so this is display-only.
 class _Control extends StatelessWidget {
-  final SelectableControl control;
+  final SelectableControl controlType;
   final bool selected;
 
-  const _Control({required this.control, required this.selected});
+  const _Control({required this.controlType, required this.selected});
 
   @override
   Widget build(BuildContext context) {
-    if (control == SelectableControl.radio) {
+    if (controlType == SelectableControl.radio) {
       return Container(
         width: 20,
         height: 20,

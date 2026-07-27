@@ -27,20 +27,20 @@ class CustomImageCarousel extends StatefulWidget {
 
 class _CustomImageCarouselState extends State<CustomImageCarousel> {
   final _controller = CarouselSliderController();
-  late int _current = _clamp(widget.index);
+  late int _currentPage = _clampPage(widget.index);
 
-  int _clamp(int i) =>
-      widget.images.isEmpty ? 0 : i.clamp(0, widget.images.length - 1);
+  int _clampPage(int page) =>
+      widget.images.isEmpty ? 0 : page.clamp(0, widget.images.length - 1);
 
   @override
-  void didUpdateWidget(CustomImageCarousel old) {
-    super.didUpdateWidget(old);
+  void didUpdateWidget(CustomImageCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
     // The owner moved the index externally (e.g. a reset) — follow it. Guarded
     // so the onPageChanged -> onIndexChanged -> rebuild round-trip is a no-op.
-    final target = _clamp(widget.index);
-    if (target != _current && widget.images.isNotEmpty) {
-      _current = target;
-      _controller.animateToPage(target);
+    final targetPage = _clampPage(widget.index);
+    if (targetPage != _currentPage && widget.images.isNotEmpty) {
+      _currentPage = targetPage;
+      _controller.animateToPage(targetPage);
     }
   }
 
@@ -60,17 +60,17 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
             options: CarouselOptions(
               height: widget.height,
               viewportFraction: 1,
-              initialPage: _current,
+              initialPage: _currentPage,
               enableInfiniteScroll: hasMany,
-              onPageChanged: (i, _) {
-                setState(() => _current = i);
-                widget.onIndexChanged(i);
+              onPageChanged: (newPage, _) {
+                setState(() => _currentPage = newPage);
+                widget.onIndexChanged(newPage);
               },
             ),
             items: images
                 .map(
-                  (path) => CustomImage(
-                    path: path,
+                  (imagePath) => CustomImage(
+                    source: imagePath,
                     width: double.infinity,
                     height: widget.height,
                     fit: BoxFit.cover,
@@ -100,7 +100,7 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
               bottom: 14,
               left: 0,
               right: 0,
-              child: _dots(images.length, _current),
+              child: _dots(images.length, _currentPage),
             ),
           ],
         ],
@@ -125,16 +125,16 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
     );
   }
 
-  Widget _dots(int count, int active) => Row(
+  Widget _dots(int dotCount, int activeIndex) => Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: List.generate(
-      count,
-      (i) => Container(
+      dotCount,
+      (dotIndex) => Container(
         margin: const EdgeInsets.symmetric(horizontal: 3),
-        width: i == active ? 18 : 6,
+        width: dotIndex == activeIndex ? 18 : 6,
         height: 6,
         decoration: BoxDecoration(
-          color: i == active ? Colors.white : AppColors.white50,
+          color: dotIndex == activeIndex ? Colors.white : AppColors.white50,
           borderRadius: BorderRadius.circular(3),
         ),
       ),

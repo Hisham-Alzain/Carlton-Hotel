@@ -17,10 +17,24 @@ class ErrorInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    final apiException = _toApiException(err);
+    var apiException = _toApiException(err);
 
-    if (apiException.isAuthError) {
+    // Only a request that actually carried a session token can represent a
+    // session going stale. Pre-auth endpoints (login, OTP verify) also
+    // return `unauthorized` for ordinary user error (wrong/expired code) —
+    // firing the global logout+redirect for those would rip the user off
+    // the OTP screen on every wrong-code entry instead of letting it show
+    // an inline error.
+    final hadToken =
+        (err.requestOptions.headers['Authorization'] as String?)?.isNotEmpty ==
+        true;
+    if (apiException.isAuthError && hadToken) {
       onUnauthorized();
+      // Mark it so the display layer stays silent: onUnauthorized's teardown
+      // already shows the session-expired dialog and redirects. Without this
+      // flag the display layer can't tell a dead session from a wrong OTP,
+      // which is why it used to show nothing for either.
+      apiException = apiException.asHandledGlobally();
     }
 
     handler.next(
@@ -78,10 +92,14 @@ class ErrorInterceptor extends Interceptor {
     }
 
     // ── HTTP error without a parseable body ───────────────────────────────
+    // e.g. a proxy-generated 502 with an HTML body. Derive the message from
+    // the status code so the user gets something meaningful instead of a
+    // blanket "Something Went Wrong!".
     if (response != null) {
+      final status = response.statusCode ?? 0;
       return ApiException(
-        statusCode: response.statusCode ?? 0,
-        message: AppTranslations.unknownError,
+        statusCode: status,
+        message: ApiException.defaultMessage(ErrorCodes.unknown, status),
         errorCode: ErrorCodes.unknown,
       );
     }

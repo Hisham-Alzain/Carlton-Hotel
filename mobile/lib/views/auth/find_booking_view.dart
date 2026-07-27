@@ -28,17 +28,17 @@ class FindBookingView extends GetView<FindBookingController> {
                   controller: controller.codeController,
                   textInputType: TextInputType.text,
                   hintText: AppTranslations.reservationCodeHint,
-                  label: AppTranslations.reservationCodeLabel,
-                  validator: (p0) =>
-                      CustomValidation().validateRequiredField(p0),
+                  captionLabel: AppTranslations.reservationCodeLabel,
+                  validator: (enteredReservationCode) => CustomValidation()
+                      .validateRequiredField(enteredReservationCode),
                 ),
                 CustomTextField(
                   controller: controller.lastNameController,
                   textInputType: TextInputType.name,
                   hintText: AppTranslations.lastNameHint,
-                  label: AppTranslations.lastNameLabel,
-                  validator: (p0) =>
-                      CustomValidation().validateRequiredField(p0),
+                  captionLabel: AppTranslations.lastNameLabel,
+                  validator: (enteredLastName) =>
+                      CustomValidation().validateRequiredField(enteredLastName),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),

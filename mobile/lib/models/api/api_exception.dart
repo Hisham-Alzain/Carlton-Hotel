@@ -1,4 +1,5 @@
 import '../../constants/error_codes.dart';
+import '../../l10n/app_translations.dart';
 
 /// Thrown by [ApiService] when the backend returns a non-2xx response,
 /// or when a network/client-side error occurs.
@@ -41,6 +42,17 @@ class ApiException implements Exception {
   /// header on 429 responses, or from `context['retry_after']`.
   final int? retryAfter;
 
+  /// True when a global handler already owns this error's UI, so the display
+  /// layer must stay silent to avoid double-reporting.
+  ///
+  /// Only set for 401s on requests that actually carried a token: those mean
+  /// the session died, and `ApiService.onUnauthorized` +
+  /// `MiddlewareService.validateSession` already clear the session, show the
+  /// session-expired dialog and redirect. A 401 *without* a token is ordinary
+  /// user error on a pre-auth endpoint (a wrong OTP code, a bad login) and
+  /// must show its message normally.
+  final bool handledGlobally;
+
   ApiException({
     required this.statusCode,
     required this.message,
@@ -49,9 +61,57 @@ class ApiException implements Exception {
     this.validationErrors = const {},
     this.requestId,
     this.retryAfter,
+    this.handledGlobally = false,
   });
 
-  /// Builds an [ApiException] from a parsed JSON envelope.
+  /// Returns a copy with [handledGlobally] set — used by `ErrorInterceptor`
+  /// once it has decided whether to fire the global unauthorized hook.
+  ApiException asHandledGlobally() => ApiException(
+    statusCode: statusCode,
+    message: message,
+    errorCode: errorCode,
+    context: context,
+    validationErrors: validationErrors,
+    requestId: requestId,
+    retryAfter: retryAfter,
+    handledGlobally: true,
+  );
+
+  /// User-facing fallback when the envelope carries no usable `message` —
+  /// some error envelopes (429 among them) send only `error_code`, and a
+  /// proxy-generated 502 may send no envelope at all. Resolves by
+  /// `error_code` first, then by raw HTTP status, so an entirely unmapped
+  /// response still produces something the user can read rather than a bare
+  /// "Something Went Wrong!".
+  ///
+  /// Public so `ErrorInterceptor` can use it for bodiless HTTP errors.
+  static String defaultMessage(String errorCode, [int statusCode = 0]) {
+    final byCode = switch (errorCode) {
+      ErrorCodes.tooManyRequests => AppTranslations.tooManyRequests,
+      ErrorCodes.serviceUnavailable => AppTranslations.serviceUnavailable,
+      ErrorCodes.serverError || ErrorCodes.databaseError =>
+        AppTranslations.serverError,
+      ErrorCodes.forbidden => AppTranslations.forbiddenRequest,
+      ErrorCodes.notFound || ErrorCodes.routeNotFound =>
+        AppTranslations.resourceNotFound,
+      ErrorCodes.requestTimeout => AppTranslations.requestTimeout,
+      ErrorCodes.noInternetConnection =>
+        AppTranslations.checkInternetConnection,
+      _ => null,
+    };
+    if (byCode != null) return byCode;
+
+    return switch (statusCode) {
+      403 => AppTranslations.forbiddenRequest,
+      404 => AppTranslations.resourceNotFound,
+      408 => AppTranslations.requestTimeout,
+      429 => AppTranslations.tooManyRequests,
+      503 => AppTranslations.serviceUnavailable,
+      >= 500 && < 600 => AppTranslations.serverError,
+      _ => AppTranslations.unknownError,
+    };
+  }
+
   factory ApiException.fromResponse(
     int statusCode,
     Map<String, dynamic> json, {
@@ -72,10 +132,15 @@ class ApiException implements Exception {
       (json['context'] as Map?) ?? const {},
     );
 
+    final errorCode = json['error_code']?.toString() ?? ErrorCodes.unknown;
+    final rawMessage = json['message']?.toString();
+
     return ApiException(
       statusCode: statusCode,
-      message: json['message']?.toString() ?? 'Unknown error',
-      errorCode: json['error_code']?.toString() ?? ErrorCodes.unknown,
+      message: (rawMessage == null || rawMessage.isEmpty)
+          ? defaultMessage(errorCode, statusCode)
+          : rawMessage,
+      errorCode: errorCode,
       context: context,
       validationErrors: validationErrors,
       requestId: json['request_id']?.toString() ?? requestIdHeader,

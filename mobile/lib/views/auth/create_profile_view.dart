@@ -30,17 +30,17 @@ class CreateProfileView extends GetView<CreateProfileController> {
                   controller: controller.firstNameController,
                   textInputType: TextInputType.name,
                   hintText: AppTranslations.firstNameHint,
-                  label: AppTranslations.firstNameLabel,
-                  validator: (p0) =>
-                      CustomValidation().validateRequiredField(p0),
+                  captionLabel: AppTranslations.firstNameLabel,
+                  validator: (enteredFirstName) => CustomValidation()
+                      .validateRequiredField(enteredFirstName),
                 ),
                 CustomTextField(
                   controller: controller.lastNameController,
                   textInputType: TextInputType.name,
                   hintText: AppTranslations.lastNameHint,
-                  label: AppTranslations.lastNameLabel,
-                  validator: (p0) =>
-                      CustomValidation().validateRequiredField(p0),
+                  captionLabel: AppTranslations.lastNameLabel,
+                  validator: (enteredLastName) =>
+                      CustomValidation().validateRequiredField(enteredLastName),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),

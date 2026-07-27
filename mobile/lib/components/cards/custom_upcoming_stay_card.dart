@@ -52,7 +52,7 @@ class CustomUpcomingStayCard extends StatelessWidget {
               children: [
                 if (stay.imagePath != null)
                   CustomImage(
-                    path: 'assets/images/stay_room.png',
+                    source: 'assets/images/stay_room.png',
                     fit: BoxFit.cover,
                   ),
                 const DecoratedBox(
@@ -128,14 +128,14 @@ class CustomUpcomingStayCard extends StatelessWidget {
                     Expanded(
                       child: _DateContainer(
                         label: 'Check-in',
-                        value: stay.checkInLabel ?? '',
+                        formattedDate: stay.checkInLabel ?? '',
                       ),
                     ),
 
                     Expanded(
                       child: _DateContainer(
                         label: 'Check-out',
-                        value: stay.checkOutLabel ?? '',
+                        formattedDate: stay.checkOutLabel ?? '',
                       ),
                     ),
                   ],
@@ -180,9 +180,9 @@ class CustomUpcomingStayCard extends StatelessWidget {
 
 class _DateContainer extends StatelessWidget {
   final String label;
-  final String value;
+  final String formattedDate;
 
-  const _DateContainer({required this.label, required this.value});
+  const _DateContainer({required this.label, required this.formattedDate});
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +203,7 @@ class _DateContainer extends StatelessWidget {
           ),
 
           Text(
-            value,
+            formattedDate,
             style: textStyle.labelMedium?.copyWith(
               fontWeight: FontWeight.w500,
               color: AppColors.inkBlack,

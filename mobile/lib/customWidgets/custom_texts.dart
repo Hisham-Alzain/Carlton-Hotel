@@ -7,10 +7,11 @@ class RowTextComponent extends StatelessWidget {
   final IconData? icon;
   final double? iconSize;
   final Color? iconColor;
-  final String? path;
+  final String? iconPath;
 
-  /// Pre-styled widget shown in place of the [icon]/[path] glyph — e.g. an icon
-  /// wrapped in a PillContainer badge. Takes precedence over [icon]/[path].
+  /// Pre-styled widget shown in place of the [icon]/[iconPath] glyph — e.g. an
+  /// icon wrapped in a PillContainer badge. Takes precedence over
+  /// [icon]/[iconPath].
   final Widget? leading;
   final TextStyle? textStyle;
   final TextStyle? titleStyle;
@@ -25,7 +26,7 @@ class RowTextComponent extends StatelessWidget {
     this.icon,
     this.iconSize,
     this.iconColor,
-    this.path,
+    this.iconPath,
     this.leading,
     this.textStyle,
     this.titleStyle,
@@ -46,9 +47,9 @@ class RowTextComponent extends StatelessWidget {
           leading!
         else if (icon != null)
           Icon(icon, size: iconSize, color: iconColor)
-        else if (path != null)
+        else if (iconPath != null)
           SvgPicture.asset(
-            path!,
+            iconPath!,
             colorFilter: iconColor != null
                 ? ColorFilter.mode(iconColor!, BlendMode.srcIn)
                 : null,
@@ -72,7 +73,7 @@ class InvertedRowTextComponent extends StatelessWidget {
   final IconData? icon;
   final double? iconSize;
   final Color? iconColor;
-  final String? path;
+  final String? iconPath;
   final TextStyle? textStyle;
   final TextStyle? titleStyle;
   final MainAxisAlignment? mainAxisAlignment;
@@ -86,7 +87,7 @@ class InvertedRowTextComponent extends StatelessWidget {
     this.icon,
     this.iconSize,
     this.iconColor,
-    this.path,
+    this.iconPath,
     this.textStyle,
     this.titleStyle,
     this.mainAxisAlignment,
@@ -109,9 +110,9 @@ class InvertedRowTextComponent extends StatelessWidget {
             : Text(text, style: textStyle),
         if (icon != null)
           Icon(icon, size: iconSize)
-        else if (path != null)
+        else if (iconPath != null)
           SvgPicture.asset(
-            path!,
+            iconPath!,
             colorFilter: iconColor != null
                 ? ColorFilter.mode(iconColor!, BlendMode.srcIn)
                 : null,
@@ -127,7 +128,7 @@ class ColumnTextComponent extends StatelessWidget {
   final String? title;
   final IconData? icon;
   final double? iconSize;
-  final String? path;
+  final String? iconPath;
   final TextStyle? textStyle;
   final TextStyle? titleStyle;
   final double? spacing;
@@ -137,7 +138,7 @@ class ColumnTextComponent extends StatelessWidget {
     this.title,
     this.icon,
     this.iconSize,
-    this.path,
+    this.iconPath,
     this.textStyle,
     this.titleStyle,
     this.spacing,
@@ -153,9 +154,9 @@ class ColumnTextComponent extends StatelessWidget {
           children: [
             if (icon != null)
               Icon(icon, size: iconSize)
-            else if (path != null)
+            else if (iconPath != null)
               SvgPicture.asset(
-                path.toString(),
+                iconPath.toString(),
                 // colorFilter: ColorFilter.mode(
                 //   AppColors.primaryColor,
                 //   BlendMode.srcIn,

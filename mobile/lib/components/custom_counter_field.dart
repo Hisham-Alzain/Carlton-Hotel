@@ -1,35 +1,36 @@
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Title/subtitle row with a −/+ stepper, used for the Adults / Children guest
 /// counts on Plan Your Stay. Controlled: it renders [value] and reports the
-/// requested value through [onChanged], clamping to [min]..[max] itself so
-/// callers never receive an out-of-range value. The − button greys out at [min]
-/// and + at [max]. Styling is from Figma (white card, 12px radius, 32px round
-/// buttons — teal +, grey −, primary 18px count).
+/// requested value through [onChanged], clamping to [minCount]..[maxCount]
+/// itself so callers never receive an out-of-range value. The − button greys out
+/// at [minCount] and + at [maxCount]. Styling is from Figma (white card, 12px
+/// radius, 32px round buttons — teal +, grey −, primary 18px count).
 class CustomCounterField extends StatelessWidget {
   final String title;
   final String? subtitle;
   final int value;
   final ValueChanged<int> onChanged;
-  final int min;
-  final int max;
+  final int minCount;
+  final int maxCount;
 
   const CustomCounterField({
     required this.title,
     required this.value,
     required this.onChanged,
     this.subtitle,
-    this.min = 0,
-    this.max = 99,
+    this.minCount = 0,
+    this.maxCount = 99,
     super.key,
-  }) : assert(min <= max);
+  }) : assert(minCount <= maxCount);
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final canDecrement = value > min;
-    final canIncrement = value < max;
+    final TextTheme textStyle = Get.textTheme;
+    final canDecrement = value > minCount;
+    final canIncrement = value < maxCount;
 
     return Card(
       color: AppColors.white,
@@ -51,7 +52,7 @@ class CustomCounterField extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: textTheme.bodyMedium?.copyWith(
+                  style: textStyle.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: AppColors.inkBlack,
                   ),
@@ -59,7 +60,7 @@ class CustomCounterField extends StatelessWidget {
                 if (subtitle != null) ...[
                   Text(
                     subtitle!,
-                    style: textTheme.labelMedium?.copyWith(
+                    style: textStyle.labelMedium?.copyWith(
                       fontFamily: 'DM Sans',
                       color: AppColors.taupeBrown,
                     ),
@@ -77,7 +78,7 @@ class CustomCounterField extends StatelessWidget {
                   ),
                   child: IconButton(
                     onPressed: canDecrement
-                        ? () => onChanged((value - 1).clamp(min, max))
+                        ? () => onChanged((value - 1).clamp(minCount, maxCount))
                         : null,
                     icon: Icon(
                       Icons.remove,
@@ -91,7 +92,7 @@ class CustomCounterField extends StatelessWidget {
                 Text(
                   '$value',
                   textAlign: TextAlign.center,
-                  style: textTheme.titleMedium?.copyWith(
+                  style: textStyle.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
                   ),
@@ -100,15 +101,19 @@ class CustomCounterField extends StatelessWidget {
                 Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: canIncrement ? AppColors.primary : AppColors.whisperGrey,
+                    color: canIncrement
+                        ? AppColors.primary
+                        : AppColors.whisperGrey,
                   ),
                   child: IconButton(
                     onPressed: canIncrement
-                        ? () => onChanged((value + 1).clamp(min, max))
+                        ? () => onChanged((value + 1).clamp(minCount, maxCount))
                         : null,
                     icon: Icon(
                       Icons.add,
-                      color: canIncrement ? AppColors.white : AppColors.pearlGrey,
+                      color: canIncrement
+                          ? AppColors.white
+                          : AppColors.pearlGrey,
                     ),
                   ),
                 ),

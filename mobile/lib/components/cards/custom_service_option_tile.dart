@@ -10,21 +10,21 @@ class CustomServiceOptionTile extends StatelessWidget {
   final String iconPath;
   final String title;
   final String description;
-  final String eta;
+  final String etaLabel;
   final VoidCallback onTap;
 
   const CustomServiceOptionTile({
     required this.iconPath,
     required this.title,
     required this.description,
-    required this.eta,
+    required this.etaLabel,
     required this.onTap,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = Get.textTheme;
+    final TextTheme textStyle = Get.textTheme;
 
     return InkWell(
       onTap: onTap,
@@ -78,7 +78,7 @@ class CustomServiceOptionTile extends StatelessWidget {
                       radius: 3,
                       padding: const EdgeInsets.all(10),
                       child: Text(
-                        eta,
+                        etaLabel,
                         style: textStyle.labelSmall?.copyWith(
                           color: AppColors.walnutGold,
                         ),

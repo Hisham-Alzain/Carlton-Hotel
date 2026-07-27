@@ -35,9 +35,9 @@ class AddOnsView extends StatelessWidget {
         ],
       ),
       body: GetBuilder<BookingFlowController>(
-        builder: (c) {
+        builder: (controller) {
           final TextTheme textStyle = Get.textTheme;
-          final room = c.selectedRoom;
+          final room = controller.selectedRoom;
           return Padding(
             padding: const EdgeInsets.all(10),
             child: Column(
@@ -70,7 +70,7 @@ class AddOnsView extends StatelessWidget {
                                 CustomAddOnSummaryTile(
                                   imagePath: room.images.first,
                                   roomName: room.name,
-                                  detail: c.roomDetailSummary,
+                                  subtitle: controller.roomDetailSummary,
                                 ),
                               Text(
                                 'Enhance Your Stay',
@@ -86,18 +86,20 @@ class AddOnsView extends StatelessWidget {
                       SliverPadding(
                         padding: const EdgeInsets.all(10),
                         sliver: SliverList.builder(
-                          itemCount: c.addOns.length,
-                          itemBuilder: (_, i) {
-                            final a = c.addOns[i];
+                          itemCount: controller.addOns.length,
+                          itemBuilder: (_, index) {
+                            final addOn = controller.addOns[index];
                             return Padding(
                               padding: const EdgeInsets.all(10),
                               child: CustomSelectableCard(
-                                title: a.title,
-                                subtitle: a.subtitle,
-                                trailingText: '+\$${a.price}',
-                                selected: c.selectedAddOnIds.contains(a.id),
-                                onTap: () => c.toggleAddOn(a.id),
-                                iconPath: a.iconPath,
+                                title: addOn.title,
+                                subtitle: addOn.subtitle,
+                                trailingText: '+\$${addOn.price}',
+                                selected: controller.selectedAddOnIds.contains(
+                                  addOn.id,
+                                ),
+                                onTap: () => controller.toggleAddOn(addOn.id),
+                                iconPath: addOn.iconPath,
                               ),
                             );
                           },
@@ -132,8 +134,8 @@ class AddOnsView extends StatelessWidget {
                   CustomFilledButton(
                     width: double.infinity,
                     backgroundColor: AppColors.lagoonTeal,
-                    onPressed: c.continueFromAddOns,
-                    child: Text(c.addOnsCtaLabel),
+                    onPressed: controller.continueFromAddOns,
+                    child: Text(controller.addOnsCtaLabel),
                   ),
                 ],
               ],

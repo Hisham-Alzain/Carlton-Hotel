@@ -48,25 +48,26 @@ class SignInView extends GetView<SignInController> {
                         controller: controller.emailController,
                         textInputType: TextInputType.emailAddress,
                         hintText: AppTranslations.emailAddressHint,
-                        label: AppTranslations.emailAddressLabel,
-                        validator: (p0) => CustomValidation().validateEmail(p0),
+                        captionLabel: AppTranslations.emailAddressLabel,
+                        validator: (enteredEmail) =>
+                            CustomValidation().validateEmail(enteredEmail),
                       )
                     : Row(
                         spacing: 10,
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          CustomCountryCodePicker(phone: controller.phone),
+                          CustomCountryCodePicker(phoneField: controller.phone),
                           Flexible(
                             child: CustomTextField(
                               controller: controller.phone.controller,
                               inputFormatters: [controller.phone.formatter],
                               textInputType: TextInputType.phone,
                               textDirection: TextDirection.ltr,
-                              label: 'Phone Number',
+                              captionLabel: 'Phone Number',
                               hintText: 'Phone number',
-                              validator: (p0) =>
+                              validator: (enteredPhoneNumber) =>
                                   CustomValidation().validatePhoneNumber(
-                                    p0,
+                                    enteredPhoneNumber,
                                     dialCode: controller.phone.dialCode,
                                   ),
                             ),

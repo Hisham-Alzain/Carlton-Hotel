@@ -34,17 +34,17 @@ class RoomDetailsContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
     final controller = Get.find<BookingFlowController>();
-    final total = room.pricePerNight * controller.nights;
+    final stayTotal = room.pricePerNight * controller.nights;
 
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GetBuilder<BookingFlowController>(
-            builder: (c) => CustomImageCarousel(
+            builder: (carouselController) => CustomImageCarousel(
               images: room.images,
-              index: c.roomImageIndex,
-              onIndexChanged: c.setRoomImage,
+              index: carouselController.roomImageIndex,
+              onIndexChanged: carouselController.setRoomImage,
               height: 220,
               // topRight: CustomCircleIconButton(
               //   iconPath: 'assets/icons/close.svg',
@@ -106,7 +106,7 @@ class RoomDetailsContent extends StatelessWidget {
                   child: CustomPriceSummaryRow(
                     title:
                         'Total for ${controller.nights} night${controller.nights == 1 ? '' : 's'}',
-                    value: '\$$total',
+                    value: '\$$stayTotal',
                     titleStyle: textStyle.labelMedium?.copyWith(
                       fontFamily: 'DM Sans',
                       color: AppColors.inkBlack,
@@ -139,16 +139,16 @@ class RoomDetailsContent extends StatelessWidget {
   }) => Column(
     spacing: 10,
     children: List.generate((items.length + 1) ~/ 2, (row) {
-      final i = row * 2;
+      final leftIndex = row * 2;
       return Padding(
         padding: EdgeInsets.only(bottom: runSpacing),
         child: Row(
           spacing: 10,
           children: [
-            Expanded(child: tileBuilder(items[i])),
+            Expanded(child: tileBuilder(items[leftIndex])),
             Expanded(
-              child: i + 1 < items.length
-                  ? tileBuilder(items[i + 1])
+              child: leftIndex + 1 < items.length
+                  ? tileBuilder(items[leftIndex + 1])
                   : const SizedBox.shrink(),
             ),
           ],
@@ -157,7 +157,7 @@ class RoomDetailsContent extends StatelessWidget {
     }),
   );
 
-  Widget _highlightTile(IconLabel item) {
+  Widget _highlightTile(IconLabel highlight) {
     final TextTheme textStyle = Get.textTheme;
     return PillContainer(
       height: _tileHeight,
@@ -166,8 +166,8 @@ class RoomDetailsContent extends StatelessWidget {
       backgroundColor: AppColors.pearlCream65,
       border: Border.all(color: Colors.white),
       child: RowTextComponent(
-        leading: _iconBadge(item.iconPath),
-        text: item.label,
+        leading: _iconBadge(highlight.iconPath),
+        text: highlight.label,
         textStyle: _tileTextStyle(textStyle),
         spacing: 10,
         expandText: true,
@@ -206,13 +206,13 @@ class RoomDetailsContent extends StatelessWidget {
     ),
   );
 
-  Widget _amenityTile(IconLabel item) {
+  Widget _amenityTile(IconLabel amenity) {
     final TextTheme textStyle = Get.textTheme;
     return SizedBox(
       height: _tileHeight,
       child: RowTextComponent(
-        leading: _circleIconBadge(item.iconPath),
-        text: item.label,
+        leading: _circleIconBadge(amenity.iconPath),
+        text: amenity.label,
         textStyle: _tileTextStyle(textStyle),
         spacing: 10,
         expandText: true,
@@ -223,7 +223,7 @@ class RoomDetailsContent extends StatelessWidget {
   Widget _meta(String iconPath, String text) {
     final TextTheme textStyle = Get.textTheme;
     return RowTextComponent(
-      path: iconPath,
+      iconPath: iconPath,
       iconColor: AppColors.graphite,
       text: text,
       textStyle: textStyle.labelMedium?.copyWith(

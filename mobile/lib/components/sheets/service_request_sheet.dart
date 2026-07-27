@@ -35,7 +35,7 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = Get.textTheme;
+    final TextTheme textStyle = Get.textTheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

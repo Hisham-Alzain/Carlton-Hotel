@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 class CustomProgressIndicator extends StatelessWidget {
-  final double? value;
+  /// Completed fraction, 0..1. Null renders the indeterminate animation.
+  final double? progress;
 
-  const CustomProgressIndicator({super.key, this.value});
+  const CustomProgressIndicator({super.key, this.progress});
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +14,7 @@ class CustomProgressIndicator extends StatelessWidget {
         height: 10,
         width: 30,
         child: LinearProgressIndicator(
-          value: value,
+          value: progress,
           // color: AppColors.primaryColor,
           // backgroundColor: AppColors.grey3,
         ),
@@ -23,9 +24,10 @@ class CustomProgressIndicator extends StatelessWidget {
 }
 
 class CustomIndicator extends StatelessWidget {
-  final double? value;
+  /// Completed fraction, 0..1. Null renders the indeterminate animation.
+  final double? progress;
 
-  const CustomIndicator({super.key, this.value});
+  const CustomIndicator({super.key, this.progress});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,7 @@ class CustomIndicator extends StatelessWidget {
       height: 5,
       width: 150,
       child: LinearProgressIndicator(
-        value: value,
+        value: progress,
         // color: AppColors.primaryColor,
       ),
     );

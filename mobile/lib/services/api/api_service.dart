@@ -1,7 +1,11 @@
 import 'dart:io';
+import 'package:carlton/constants/error_codes.dart';
+import 'package:carlton/constants/storage_keys.dart';
 import 'package:carlton/models/api/api_response.dart';
-import 'package:carlton/services/api/upload_download/file_download.dart';
-import 'package:carlton/services/api/upload_download/file_upload.dart';
+import 'package:carlton/services/api/upload_donwload/file_download.dart';
+import 'package:carlton/services/api/upload_donwload/file_upload.dart';
+import 'package:carlton/services/get_storage_service.dart';
+import 'package:carlton/services/settings_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
@@ -12,34 +16,50 @@ import 'ui/api_dialog_handler.dart';
 
 /// Public API surface for backend calls.
 ///
-/// All methods return the **unwrapped `data` field** from the standard
-/// envelope and throw [ApiException] on any non-2xx response or network
-/// error. By default, error dialogs are shown automatically — pass
-/// `showErrorDialog: false` if you want to handle errors silently (e.g. when
-/// you're showing inline form errors instead).
+/// **These methods never throw.** Every call returns an [ApiResponse] whose
+/// `data` holds the **unwrapped `data` field** from the standard envelope on
+/// success, and is null on failure. Callers guard on `statusCode` and read
+/// `data!` inside the guard — no try/catch anywhere:
+///
+/// ```dart
+/// final response = await ApiService.find.post<Map<String, dynamic>>(
+///   path: '/user/auth/login',
+///   data: {'phone': phone},
+///   showLoading: true,
+/// );
+/// if (response.statusCode != 200) return;
+/// final user = User.fromJson(response.data!);
+/// ```
+///
+/// By default (`showErrorDialog: true`) the failure is already on screen by
+/// the time the call returns — [ApiDialogHandler.showError] maps the
+/// `errorCode` to the right snackbar or dialog; see that method for the full
+/// mapping. Pass `showErrorDialog: false` when the caller needs to run other
+/// logic first (revert an optimistic update, set an inline `errorMessage`)
+/// and report afterwards with `dialogs.showError(response.error!)`, or to
+/// stay fully silent for best-effort/background calls.
+///
+/// [ApiResponse.error] carries the full [ApiException] when a caller needs
+/// to branch — `error!.isValidation`, `error!.validationErrors`,
+/// `error!.errorCode`. Cancelled requests (a disposed controller cancelling
+/// its token) return a failure response and show no UI at all.
 ///
 /// Loading dialogs are opt-in via `showLoading: true`.
-///
-/// Example:
-/// ```dart
-/// try {
-///   final user = await ApiService.find.post<Map<String, dynamic>>(
-///     path: '/auth/login',
-///     data: {'email': email, 'password': password},
-///     showLoading: true,
-///   );
-///   // success path
-/// } on ApiException catch (e) {
-///   if (e.isValidation) applyFieldErrors(e.validationErrors);
-///   // other branches: error dialog was already shown by default
-/// }
-/// ```
 class ApiService extends GetxService {
-  static const String baseUrl = '';
+  /// Backend host root. Set at compile time via:
+  ///   flutter run --dart-define=API_HOST=http://10.0.2.2:8000        (Android emulator, no adb reverse)
+  ///   flutter run --dart-define=API_HOST=http://192.168.1.X:8000      (physical device over LAN)
+  ///   flutter build apk --dart-define=API_HOST=https://api.offershi.com (production)
+  /// Default is loopback, which works on BOTH physical devices and emulators
+  /// as long as the adb tunnel is up:  adb reverse tcp:8000 tcp:8000
+  /// (re-run that after replugging the USB cable).
+  static const String host = String.fromEnvironment(
+    'API_HOST',
+    defaultValue: 'https://api.offershi.com/',
+  );
 
-  /// Base URL for file/image storage. Referenced by [CustomImage] to build
-  /// asset URLs; set per-environment like [baseUrl].
-  static const String storageBaseUrl = '';
+  static const String baseUrl = '$host/api';
+  static const String storageBaseUrl = '$host/storage/';
   static const int apiTimeOutSeconds = 30;
 
   static ApiService get find => Get.find<ApiService>();
@@ -50,19 +70,24 @@ class ApiService extends GetxService {
   late final FileDownloader _downloader;
   InternetConnectionChecker? _connectivityChecker;
 
-  // ── Hooks: override these in tests or wire to your app state ───────────
+  // ── App-state hooks (self-wired) ───────────────────────────────────────
+  //
+  // These read SecureStorageService/SettingsService/MiddlewareService lazily
+  // (only when a request actually runs), so it's safe for ApiService to
+  // depend on them here even though it's constructed before
+  // SecureStorageService.init() resolves in main.dart — by the time any of
+  // these fire, startup has finished.
 
-  /// Returns the current auth token, or null/empty when none.
-  /// Default returns null — wire to your storage layer.
-  String? Function() tokenProvider = () => null;
+  /// Current auth token from secure storage, or null/empty when none.
+  String? _token() => StorageService.getString(StorageKeys.token);
 
-  /// Returns the current locale code (e.g. 'ar', 'en').
-  /// Default returns 'en' — wire to your SettingsService.
-  String Function() localeProvider = () => 'en';
+  /// Current locale code (e.g. 'ar', 'en') from [SettingsService].
+  String _locale() => Get.find<SettingsService>().locale.value.languageCode;
 
-  /// Called when a 401 / unauthorized response is received.
-  /// Default is a no-op — wire to your logout / route-to-login flow.
-  void Function() onUnauthorized = () {};
+  /// Fired once on a 401 / revoked token: clears the local session and
+  /// bounces the user to sign-in.
+  /// TODO
+  void _handleUnauthorized() {}
 
   @override
   void onInit() {
@@ -77,9 +102,9 @@ class ApiService extends GetxService {
     dio = ApiClient.build(
       baseUrl: baseUrl,
       timeout: const Duration(seconds: apiTimeOutSeconds),
-      getToken: () => tokenProvider(),
-      getLocale: () => localeProvider(),
-      onUnauthorized: () => onUnauthorized(),
+      getToken: _token,
+      getLocale: _locale,
+      onUnauthorized: _handleUnauthorized,
       connectivityChecker: _connectivityChecker,
     );
 
@@ -172,7 +197,7 @@ class ApiService extends GetxService {
   // Multipart uploads (delegated)
   // ══════════════════════════════════════════════════════════════════════
 
-  Future<T> postWithFiles<T>({
+  Future<ApiResponse<T>> postWithFiles<T>({
     required String path,
     Map<String, dynamic>? fields,
     Map<String, ({List<File> files, String mime})>? files,
@@ -231,21 +256,38 @@ class ApiService extends GetxService {
   }) async {
     if (showLoading) dialogs.showLoading();
 
+    // The loading dialog must be dismissed *before* any error UI is shown,
+    // which is why this inner try/finally exists instead of one finally
+    // wrapping the whole method: dialogs.dismiss() pops the top route, so
+    // dismissing after showError popped the error dialog/snackbar that had
+    // just been pushed — the error never appeared and the loader stayed up.
+    final Response<dynamic> response;
     try {
-      final response = await request();
-      return _unwrap<T>(response);
-    } on DioException catch (e) {
-      final apiErr = e.error;
-      if (apiErr is ApiException) {
-        if (showErrorDialog) dialogs.showError(apiErr);
-        throw apiErr;
+      try {
+        response = await request();
+      } finally {
+        if (showLoading) dialogs.dismiss();
       }
-      // Defensive fallback — ErrorInterceptor should always attach an
-      // ApiException, but in case it doesn't, wrap and rethrow.
-      rethrow;
-    } finally {
-      if (showLoading) dialogs.dismiss();
+    } on DioException catch (e) {
+      final apiErr = e.error is ApiException
+          ? e.error as ApiException
+          // Defensive fallback — ErrorInterceptor should always attach an
+          // ApiException, but never let a raw DioException escape to a
+          // caller that (by contract) isn't catching anything.
+          : ApiException.client(
+              errorCode: ErrorCodes.unknown,
+              message: ApiException.defaultMessage(
+                ErrorCodes.unknown,
+                e.response?.statusCode ?? 0,
+              ),
+              statusCode: e.response?.statusCode ?? 0,
+            );
+
+      if (showErrorDialog) dialogs.showError(apiErr);
+      return ApiResponse<T>.failure(apiErr);
     }
+
+    return _unwrap<T>(response);
   }
 
   ApiResponse<T> _unwrap<T>(Response<dynamic> response) {
@@ -253,7 +295,7 @@ class ApiService extends GetxService {
     final statusCode = response.statusCode ?? 200;
 
     if (body == null) {
-      return ApiResponse.raw(statusCode: statusCode, data: null as T);
+      return ApiResponse.raw(statusCode: statusCode, data: null);
     }
 
     if (body is Map<String, dynamic> && body.containsKey('data')) {

@@ -123,10 +123,10 @@ class CustomHomeContainer extends StatelessWidget {
   List<InlineSpan> _titleSpans(String title) {
     final spans = <InlineSpan>[];
     final pattern = RegExp(r'\*(.+?)\*');
-    var index = 0;
+    var charOffset = 0;
     for (final match in pattern.allMatches(title)) {
-      if (match.start > index) {
-        spans.add(TextSpan(text: title.substring(index, match.start)));
+      if (match.start > charOffset) {
+        spans.add(TextSpan(text: title.substring(charOffset, match.start)));
       }
       spans.add(
         TextSpan(
@@ -137,27 +137,27 @@ class CustomHomeContainer extends StatelessWidget {
           ),
         ),
       );
-      index = match.end;
+      charOffset = match.end;
     }
-    if (index < title.length) {
-      spans.add(TextSpan(text: title.substring(index)));
+    if (charOffset < title.length) {
+      spans.add(TextSpan(text: title.substring(charOffset)));
     }
     return spans;
   }
 
   Widget _background() {
-    final vc = videoController;
-    if (vc != null && videoReady) {
+    final heroVideoController = videoController;
+    if (heroVideoController != null && videoReady) {
       return FittedBox(
         fit: BoxFit.cover,
         child: SizedBox(
-          width: vc.value.size.width,
-          height: vc.value.size.height,
-          child: VideoPlayer(vc),
+          width: heroVideoController.value.size.width,
+          height: heroVideoController.value.size.height,
+          child: VideoPlayer(heroVideoController),
         ),
       );
     }
-    return CustomImage(path: imagePath, fit: BoxFit.cover);
+    return CustomImage(source: imagePath, fit: BoxFit.cover);
   }
 
   /// Soft light glow sitting behind the CTAs so the dark photo fades into a

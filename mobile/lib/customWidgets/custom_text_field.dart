@@ -9,18 +9,21 @@ import 'package:get/get.dart';
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final TextInputType textInputType;
-  final bool obsecureText;
+  final bool obscureText;
   final double? height;
   final double? width;
   final Color? prefixIconColor;
   final IconData? prefixIcon;
   final String? prefixIconPath;
   final String? Function(String?)? validator;
-  final String? labelText;
-  final String? label;
 
-  /// Colour of [label]. Defaults to white for the dark auth backgrounds; pass a
-  /// dark colour (e.g. on light forms like Guest Details) so it stays legible.
+  /// Uppercase caption rendered *above* the field. Not the in-field floating
+  /// label — this widget doesn't use one.
+  final String? captionLabel;
+
+  /// Colour of [captionLabel]. Defaults to white for the dark auth backgrounds;
+  /// pass a dark colour (e.g. on light forms like Guest Details) so it stays
+  /// legible.
   final Color? labelColor;
   final Widget? suffixIcon;
   final String? hintText;
@@ -38,13 +41,12 @@ class CustomTextField extends StatelessWidget {
   const CustomTextField({
     required this.controller,
     required this.textInputType,
-    this.obsecureText = false,
+    this.obscureText = false,
     this.height,
     this.width,
     this.fillColor,
     this.borderColor,
-    this.labelText,
-    this.label,
+    this.captionLabel,
     this.labelColor,
     this.prefixIconColor,
     this.prefixIcon,
@@ -63,40 +65,40 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Get.theme;
+    final TextTheme textStyle = Get.textTheme;
 
-    final labelStyle = theme.textTheme.labelMedium?.copyWith(
+    final labelStyle = textStyle.labelMedium?.copyWith(
       fontFamily: 'DM Sans',
       color: labelColor ?? Colors.white,
       fontWeight: FontWeight.w900,
     );
-    final inputStyle = theme.textTheme.bodyLarge?.copyWith(
+    final inputStyle = textStyle.bodyLarge?.copyWith(
       color: AppColors.espressoInk,
       fontWeight: FontWeight.w400,
     );
-    final hintStyle = theme.textTheme.bodyLarge?.copyWith(
+    final hintStyle = textStyle.bodyLarge?.copyWith(
       color: AppColors.espressoInk50,
       fontWeight: FontWeight.w400,
     );
-    final errorStyle = theme.textTheme.bodySmall?.copyWith(
+    final errorStyle = textStyle.bodySmall?.copyWith(
       color: AppColors.salmonRed,
     );
 
-    final fill = fillColor ?? AppColors.cream;
-    final resting = borderColor ?? fill;
+    final resolvedFillColor = fillColor ?? AppColors.cream;
+    final restingBorderColor = borderColor ?? resolvedFillColor;
 
-    OutlineInputBorder border(Color color) => OutlineInputBorder(
+    OutlineInputBorder border(Color borderColor) => OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(width: 2, color: color),
+      borderSide: BorderSide(width: 2, color: borderColor),
     );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (label != null)
+        if (captionLabel != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: Text(label!.toUpperCase(), style: labelStyle),
+            child: Text(captionLabel!.toUpperCase(), style: labelStyle),
           ),
         SizedBox(
           height: height,
@@ -104,7 +106,7 @@ class CustomTextField extends StatelessWidget {
           child: TextFormField(
             controller: controller,
             keyboardType: textInputType,
-            obscureText: obsecureText,
+            obscureText: obscureText,
             cursorColor: AppColors.antiqueGold,
             style: inputStyle,
             validator: validator,
@@ -121,16 +123,15 @@ class CustomTextField extends StatelessWidget {
               filled: true,
               counterText: '',
               alignLabelWithHint: true,
-              //labelText: ,
               labelStyle: labelStyle,
-              fillColor: fill,
+              fillColor: resolvedFillColor,
               hintText: hintText,
               hintStyle: hintStyle,
               errorStyle: errorStyle,
               prefixIcon: _buildPrefixIcon(),
               suffixIcon: suffixIcon,
-              border: border(resting),
-              enabledBorder: border(resting),
+              border: border(restingBorderColor),
+              enabledBorder: border(restingBorderColor),
               focusedBorder: border(AppColors.antiqueGold),
               errorBorder: border(AppColors.salmonRed),
               focusedErrorBorder: border(AppColors.salmonRed),
@@ -143,7 +144,7 @@ class CustomTextField extends StatelessWidget {
               expandText: true,
             ),
             cursorErrorColor: AppColors.salmonRed,
-            maxLines: obsecureText == true ? 1 : (maxLines ?? 1),
+            maxLines: obscureText == true ? 1 : (maxLines ?? 1),
           ),
         ),
       ],

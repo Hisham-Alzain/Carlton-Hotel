@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 
 class CustomRequestCard extends StatelessWidget {
   final String title;
-  final String detail;
+  final String subtitle;
 
   final String iconPath;
   final Color iconBackgroundColor;
@@ -20,7 +20,7 @@ class CustomRequestCard extends StatelessWidget {
 
   const CustomRequestCard({
     required this.title,
-    required this.detail,
+    required this.subtitle,
     required this.iconPath,
     required this.iconBackgroundColor,
     required this.statusLabel,
@@ -68,7 +68,7 @@ class CustomRequestCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    detail,
+                    subtitle,
                     maxLines: 2,
                     style: textStyle.labelMedium?.copyWith(
                       color: AppColors.taupeBrown,

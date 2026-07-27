@@ -6,27 +6,27 @@ import 'package:pinput/pinput.dart';
 
 class CustomPinput extends StatelessWidget {
   final TextEditingController controller;
-  final int length;
+  final int digitCount;
   final String? Function(String?)? validator;
   final void Function(String)? onComplete;
 
   const CustomPinput({
     super.key,
     required this.controller,
-    required this.length,
+    required this.digitCount,
     required this.validator,
     this.onComplete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Get.theme;
+    final TextTheme textStyle = Get.textTheme;
 
-    final errorStyle = theme.textTheme.bodySmall?.copyWith(
+    final errorStyle = textStyle.bodySmall?.copyWith(
       color: AppColors.salmonRed,
     );
 
-    final inputStyle = theme.textTheme.bodyLarge?.copyWith(
+    final inputStyle = textStyle.bodyLarge?.copyWith(
       color: AppColors.espressoInk,
       fontWeight: FontWeight.w400,
     );
@@ -43,7 +43,7 @@ class CustomPinput extends StatelessWidget {
 
     return Pinput(
       controller: controller,
-      length: length,
+      length: digitCount,
       defaultPinTheme: defaultPinTheme,
       errorPinTheme: defaultPinTheme.copyDecorationWith(
         border: Border.all(color: AppColors.salmonRed, width: 1.5),

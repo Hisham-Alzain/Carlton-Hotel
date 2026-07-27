@@ -78,18 +78,20 @@ class CustomBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.of(context);
-    final textStyle = Get.textTheme;
+    final mediaQuery = MediaQuery.of(context);
+    final TextTheme textStyle = Get.textTheme;
     final hasHeader = title != null || subtitle != null || showClose;
 
     return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: media.size.height * heightFactor),
+      constraints: BoxConstraints(
+        maxHeight: mediaQuery.size.height * heightFactor,
+      ),
       child: Padding(
         // `viewInsets.bottom` is the keyboard, `viewPadding.bottom` is the
         // Android nav/gesture bar. It has to be viewPadding rather than
         // padding: the latter collapses to 0 the moment the keyboard opens.
         padding: EdgeInsets.only(
-          bottom: media.viewInsets.bottom + media.viewPadding.bottom,
+          bottom: mediaQuery.viewInsets.bottom + mediaQuery.viewPadding.bottom,
         ),
         child: Column(
           spacing: 10,

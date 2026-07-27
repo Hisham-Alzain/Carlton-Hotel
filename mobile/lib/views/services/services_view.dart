@@ -53,7 +53,7 @@ class _ActiveStayServices extends StatelessWidget {
         spacing: 20,
         children: [
           CustomStayCard(
-            room: DemoData.room,
+            roomName: DemoData.room,
             checkedInTime: DemoData.checkedInTime,
             nightsRemaining: DemoData.nightsRemaining,
             imagePath: DemoData.stayImagePath,
@@ -77,7 +77,7 @@ class _ActiveStayServices extends StatelessWidget {
                 onTap: () => controller.openServiceCategory(
                   controller.services[index].title,
                 ),
-                child: CustomServiceCard(item: controller.services[index]),
+                child: CustomServiceCard(service: controller.services[index]),
               ),
             ),
             _QuickRequests(controller: controller),
@@ -98,7 +98,7 @@ class _ActiveStayServices extends StatelessWidget {
                   ...controller.activeRequests.map(
                     (request) => CustomRequestCard(
                       title: request.title,
-                      detail: request.detail,
+                      subtitle: request.detail,
                       iconPath: request.status.iconPath,
                       iconBackgroundColor: request.status.iconBgColor,
                       statusLabel: request.status.label,

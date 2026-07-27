@@ -3,18 +3,18 @@ import 'package:carlton/l10n/app_translations.dart';
 import 'package:get/get.dart';
 
 class CustomValidation {
-  String? validateRequiredField(String? value) {
-    if (value!.isEmpty) {
+  String? validateRequiredField(String? fieldText) {
+    if (fieldText!.isEmpty) {
       return AppTranslations.requiredField;
     }
     return null;
   }
 
-  String? validateEmail(String? value) {
-    final text = value ?? '';
-    if (text.isEmpty) {
+  String? validateEmail(String? fieldText) {
+    final enteredEmail = fieldText ?? '';
+    if (enteredEmail.isEmpty) {
       return AppTranslations.pleaseEnterEmailAddress;
-    } else if (!text.isEmail) {
+    } else if (!enteredEmail.isEmail) {
       return AppTranslations.invalidEmail;
     }
     return null;
@@ -24,66 +24,68 @@ class CustomValidation {
   /// [PhoneFieldState]) — the code is stripped before the digits are checked,
   /// so `+963` on its own reads as empty rather than as a valid number.
   String? validatePhoneNumber(
-    String? value, {
+    String? fieldText, {
     String dialCode = kDefaultDialCode,
   }) {
-    final text = value ?? '';
-    final national =
-        (text.startsWith(dialCode) ? text.substring(dialCode.length) : text)
+    final enteredPhone = fieldText ?? '';
+    final nationalDigits =
+        (enteredPhone.startsWith(dialCode)
+                ? enteredPhone.substring(dialCode.length)
+                : enteredPhone)
             .trim();
 
-    if (national.isEmpty) {
+    if (nationalDigits.isEmpty) {
       return AppTranslations.pleaseEnterPhoneNumber;
-    } else if (!national.isNumericOnly || national.length < 9) {
+    } else if (!nationalDigits.isNumericOnly || nationalDigits.length < 9) {
       return AppTranslations.invalidNumber;
     }
     return null;
   }
 
-  String? validatePassword(String? value) {
+  String? validatePassword(String? fieldText) {
     // 1. Check if the field is empty
-    if (value == null || value.isEmpty) {
+    if (fieldText == null || fieldText.isEmpty) {
       return AppTranslations.requiredField;
     }
 
     // 2. Check for minimum length
-    if (value.length < 8) {
+    if (fieldText.length < 8) {
       return AppTranslations.invalidPasswordLength;
     }
 
     // 3. Check for at least one letter
-    if (!value.contains(RegExp(r'[a-zA-Z]'))) {
+    if (!fieldText.contains(RegExp(r'[a-zA-Z]'))) {
       return AppTranslations.invalidPasswordChar;
     }
 
     // 4. Check for at least one number
-    if (!value.contains(RegExp(r'[0-9]'))) {
+    if (!fieldText.contains(RegExp(r'[0-9]'))) {
       return AppTranslations.invalidPasswordNumber;
     }
 
     return null; // Password is valid
   }
 
-  String? validateConfirmPassword(String? value, String? value2) {
-    if (value!.isEmpty) {
+  String? validateConfirmPassword(String? fieldText, String? originalPassword) {
+    if (fieldText!.isEmpty) {
       return AppTranslations.requiredField;
-    } else if (value != value2) {
+    } else if (fieldText != originalPassword) {
       return AppTranslations.invalidConfirmPassword;
     }
     return null;
   }
 
-  String? validateNumberField(String? value) {
-    if (value!.isEmpty) {
+  String? validateNumberField(String? fieldText) {
+    if (fieldText!.isEmpty) {
       return AppTranslations.requiredField;
-    } else if (!value.isNumericOnly) {
+    } else if (!fieldText.isNumericOnly) {
       return AppTranslations.numberField;
     }
     return null;
   }
 
-  String? validateRequiredDropDown(dynamic value) {
-    if (value == null) {
+  String? validateRequiredDropDown(dynamic selectedItem) {
+    if (selectedItem == null) {
       return AppTranslations.requiredField;
     }
     return null;

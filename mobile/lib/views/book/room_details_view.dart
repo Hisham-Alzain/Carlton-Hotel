@@ -1,6 +1,4 @@
 import 'package:carlton/components/room_details_content.dart';
-import 'package:carlton/controllers/booking/booking_flow_controller.dart';
-import 'package:carlton/customWidgets/custom_elevated_button.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/models/booking_models.dart';
@@ -16,13 +14,13 @@ class RoomDetailsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final args = Get.arguments;
-    if (args is! RoomOption) {
+    final roomArgument = Get.arguments;
+    if (roomArgument is! RoomOption) {
       WidgetsBinding.instance.addPostFrameCallback((_) => Get.back());
       return const Scaffold(backgroundColor: AppColors.white);
     }
-    final room = args;
-    final controller = Get.find<BookingFlowController>();
+    final room = roomArgument;
+    // final controller = Get.find<BookingFlowController>();
 
     return CustomScaffold(
       //TODO: check what to add in title

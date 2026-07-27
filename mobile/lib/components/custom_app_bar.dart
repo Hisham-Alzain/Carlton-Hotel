@@ -13,11 +13,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Get.textTheme;
+    final TextTheme textStyle = Get.textTheme;
 
     return AppBar(
       title: currentIndex == 0
-          ? _LogoTitle(textTheme: textTheme)
+          ? _LogoTitle(textStyle: textStyle)
           : Text(_tabTitles[currentIndex]),
       actions: [CustomLogoAvatar(onTap: () => Get.toNamed(Routes.aiConcierge))],
       iconTheme: const IconThemeData(color: AppColors.primary),
@@ -29,9 +29,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _LogoTitle extends StatelessWidget {
-  final TextTheme textTheme;
+  final TextTheme textStyle;
 
-  const _LogoTitle({required this.textTheme});
+  const _LogoTitle({required this.textStyle});
 
   @override
   Widget build(BuildContext context) {
@@ -39,14 +39,14 @@ class _LogoTitle extends StatelessWidget {
       children: [
         Text(
           'CARLTON',
-          style: textTheme.titleLarge?.copyWith(
+          style: textStyle.titleLarge?.copyWith(
             fontFamily: 'The Seasons',
             fontWeight: FontWeight.w400,
           ),
         ),
         Text(
           'HOTEL',
-          style: textTheme.labelSmall?.copyWith(
+          style: textStyle.labelSmall?.copyWith(
             fontFamily: 'Cabinet Grotesk',
             fontWeight: FontWeight.w400,
           ),

@@ -62,10 +62,10 @@ class PhoneFieldState {
 
   void dispose() => controller.dispose();
 
-  void _setText(String value) {
+  void _setText(String text) {
     controller.value = TextEditingValue(
-      text: value,
-      selection: TextSelection.collapsed(offset: value.length),
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }
@@ -75,16 +75,16 @@ class PhoneFieldState {
 /// dropped, and the caret is clamped past it so backspacing at the boundary is
 /// a no-op.
 class DialCodePrefixFormatter extends TextInputFormatter {
-  final PhoneFieldState phone;
+  final PhoneFieldState phoneField;
 
-  DialCodePrefixFormatter(this.phone);
+  DialCodePrefixFormatter(this.phoneField);
 
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final prefix = phone.dialCode;
+    final prefix = phoneField.dialCode;
 
     // The edit chewed into the dial code — true for "+96", "+9", "+", "" and
     // nothing else. Refuse it outright: treating the leftover code digits as a
@@ -102,22 +102,22 @@ class DialCodePrefixFormatter extends TextInputFormatter {
     }
 
     // Whatever survives after the prefix, minus anything that isn't a digit.
-    final rest = newValue.text.startsWith(prefix)
+    final afterPrefix = newValue.text.startsWith(prefix)
         ? newValue.text.substring(prefix.length)
         : newValue.text;
-    final digits = rest.replaceAll(RegExp(r'\D'), '');
-    final text = '$prefix$digits';
+    final nationalDigits = afterPrefix.replaceAll(RegExp(r'\D'), '');
+    final rebuiltText = '$prefix$nationalDigits';
 
     // Clamp both ends of the selection so it can never sit inside the prefix.
-    int clamp(int offset) => offset < prefix.length
+    int clampCaret(int caretOffset) => caretOffset < prefix.length
         ? prefix.length
-        : (offset > text.length ? text.length : offset);
+        : (caretOffset > rebuiltText.length ? rebuiltText.length : caretOffset);
 
     return TextEditingValue(
-      text: text,
+      text: rebuiltText,
       selection: TextSelection(
-        baseOffset: clamp(newValue.selection.baseOffset),
-        extentOffset: clamp(newValue.selection.extentOffset),
+        baseOffset: clampCaret(newValue.selection.baseOffset),
+        extentOffset: clampCaret(newValue.selection.extentOffset),
       ),
       composing: TextRange.empty,
     );
@@ -125,7 +125,7 @@ class DialCodePrefixFormatter extends TextInputFormatter {
 }
 
 class CustomCountryCodePicker extends StatelessWidget {
-  final PhoneFieldState phone;
+  final PhoneFieldState phoneField;
 
   /// Optional extra hook for callers that need the raw [CountryCode].
   final void Function(CountryCode)? onCodeChanged;
@@ -135,7 +135,7 @@ class CustomCountryCodePicker extends StatelessWidget {
   final Color? fillColor;
 
   const CustomCountryCodePicker({
-    required this.phone,
+    required this.phoneField,
     this.onCodeChanged,
     this.fillColor,
     super.key,
@@ -143,43 +143,43 @@ class CustomCountryCodePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Get.theme;
-    final fill = fillColor ?? AppColors.cream;
+    final TextTheme textStyle = Get.textTheme;
+    final resolvedFillColor = fillColor ?? AppColors.cream;
 
-    // final labelStyle = theme.textTheme.labelSmall?.copyWith(
+    // final labelStyle = textStyle.labelSmall?.copyWith(
     //   fontFamily: 'JetJetBrainsMono',
     //   color: AppColors.beige,
     // );
-    final inputStyle = theme.textTheme.bodyLarge?.copyWith(
+    final inputStyle = textStyle.bodyLarge?.copyWith(
       color: AppColors.espressoInk,
       fontWeight: FontWeight.w400,
     );
 
-    final hintStyle = theme.textTheme.bodyLarge?.copyWith(
+    final hintStyle = textStyle.bodyLarge?.copyWith(
       color: AppColors.espressoInk50,
       fontWeight: FontWeight.w400,
     );
-    // final errorStyle = theme.textTheme.bodySmall?.copyWith(
+    // final errorStyle = textStyle.bodySmall?.copyWith(
     //   color: AppColors.red,
     // );
 
-    OutlineInputBorder border(Color color) => OutlineInputBorder(
+    OutlineInputBorder border(Color borderColor) => OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(width: 2, color: color),
+      borderSide: BorderSide(width: 2, color: borderColor),
     );
 
     return CountryCodePicker(
       onChanged: (code) {
-        phone.select(code);
+        phoneField.select(code);
         onCodeChanged?.call(code);
       },
       onInit: (code) {
-        phone.seed(code);
+        phoneField.seed(code);
         if (code != null) onCodeChanged?.call(code);
       },
       // Not a constant: the picker re-fires onInit on every mount, so this has
       // to be the field's remembered country or toggling away and back resets it.
-      initialSelection: phone.countryCode,
+      initialSelection: phoneField.countryCode,
       favorite: const [kDefaultCountryCode],
       countryFilter: allCountryCodesExcept('IL'),
       builder: (CountryCode? code) => Container(
@@ -187,7 +187,7 @@ class CustomCountryCodePicker extends StatelessWidget {
         // width: 90,
         height: 60,
         decoration: BoxDecoration(
-          color: fill,
+          color: resolvedFillColor,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -195,7 +195,7 @@ class CustomCountryCodePicker extends StatelessWidget {
           spacing: 10,
           children: [
             const Icon(Icons.phone_outlined, color: AppColors.mediumGrey),
-            Text(code?.dialCode ?? phone.dialCode, style: hintStyle),
+            Text(code?.dialCode ?? phoneField.dialCode, style: hintStyle),
             const Icon(
               Icons.keyboard_arrow_down_rounded,
               color: AppColors.mediumGrey,
@@ -203,18 +203,18 @@ class CustomCountryCodePicker extends StatelessWidget {
           ],
         ),
       ),
-      dialogBackgroundColor: fill,
+      dialogBackgroundColor: resolvedFillColor,
       barrierColor: Colors.transparent,
       dialogItemPadding: const EdgeInsetsGeometry.all(10),
       dialogTextStyle: inputStyle,
       searchStyle: inputStyle,
       searchDecoration: InputDecoration(
-        border: border(fill),
+        border: border(resolvedFillColor),
         enabledBorder: border(AppColors.antiqueGold),
         focusedBorder: border(AppColors.antiqueGold),
         errorBorder: border(AppColors.salmonRed),
         hint: Text(AppTranslations.search, style: hintStyle),
-        fillColor: fill,
+        fillColor: resolvedFillColor,
         filled: true,
         iconColor: AppColors.antiqueGold,
       ),
@@ -226,7 +226,7 @@ class CustomCountryCodePicker extends StatelessWidget {
 
   List<String> allCountryCodesExcept(String excludedCode) {
     return codes
-        .map((c) => c['code'] as String)
+        .map((country) => country['code'] as String)
         .where((code) => code != excludedCode)
         .toList();
   }

@@ -14,7 +14,7 @@ class CustomSegmentedButton extends StatelessWidget {
   final Color? foregroundColor;
   final Color? selectedBackgroundColor;
   final Color? selectedForegroundColor;
-  final BorderSide? side;
+  final BorderSide? unselectedBorderSide;
   final OutlinedBorder? shape;
 
   /// Wraps the row in a padded, rounded track behind the segments.
@@ -30,7 +30,7 @@ class CustomSegmentedButton extends StatelessWidget {
     this.foregroundColor,
     this.selectedBackgroundColor,
     this.selectedForegroundColor,
-    this.side,
+    this.unselectedBorderSide,
     this.shape,
     this.trackColor,
     super.key,
@@ -46,7 +46,7 @@ class CustomSegmentedButton extends StatelessWidget {
        foregroundColor = AppColors.ashGrey,
        selectedBackgroundColor = Colors.white,
        selectedForegroundColor = AppColors.primary,
-       side = BorderSide.none,
+       unselectedBorderSide = BorderSide.none,
        shape = const RoundedRectangleBorder(
          borderRadius: BorderRadius.all(Radius.circular(10)),
        ),
@@ -57,13 +57,13 @@ class CustomSegmentedButton extends StatelessWidget {
     final button = SegmentedButton<int>(
       segments: List.generate(
         segments.length,
-        (i) => ButtonSegment(
-          value: i,
+        (segmentIndex) => ButtonSegment(
+          value: segmentIndex,
           label: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text(segments[i].label),
+            child: Text(segments[segmentIndex].label),
           ),
-          icon: _icon(segments[i]),
+          icon: _icon(segments[segmentIndex]),
         ),
       ),
       selected: {selectedIndex},
@@ -76,7 +76,7 @@ class CustomSegmentedButton extends StatelessWidget {
         foregroundColor: foregroundColor,
         selectedBackgroundColor: selectedBackgroundColor,
         selectedForegroundColor: selectedForegroundColor,
-        side: side,
+        side: unselectedBorderSide,
         shape: shape,
         minimumSize: Size(0, trackColor != null ? height - 8 : height),
       ),

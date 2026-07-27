@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CustomStayCard extends StatelessWidget {
-  final String room;
+  final String roomName;
   final String checkedInTime;
   final int nightsRemaining;
   final String imagePath;
 
   const CustomStayCard({
-    required this.room,
+    required this.roomName,
     required this.checkedInTime,
     required this.nightsRemaining,
     required this.imagePath,
@@ -50,10 +50,10 @@ class CustomStayCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: RowTextComponent(
-                      path: 'assets/icons/bed.svg',
+                      iconPath: 'assets/icons/bed.svg',
                       iconSize: 20,
                       spacing: 10,
-                      text: room,
+                      text: roomName,
                       textStyle: textStyle.labelMedium?.copyWith(
                         color: AppColors.espressoBrown,
                         fontWeight: FontWeight.w700,
@@ -79,7 +79,7 @@ class CustomStayCard extends StatelessWidget {
               ),
             ),
             child: CustomImage(
-              path: imagePath,
+              source: imagePath,
               fit: BoxFit.cover,
               height: double.infinity,
             ),

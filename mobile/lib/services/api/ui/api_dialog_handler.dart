@@ -43,7 +43,7 @@ class ApiDialogHandler {
   // ── Success ───────────────────────────────────────────────────────────
 
   Future<void> showSuccess([String? message]) async =>
-      CustomDialogs.showSuccessDialog(text: message);
+      CustomDialogs.showSuccessDialog(message: message);
 
   // ── Error ─────────────────────────────────────────────────────────────
 

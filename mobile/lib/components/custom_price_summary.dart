@@ -73,12 +73,12 @@ class CustomPriceSummary extends StatelessWidget {
   final String? title;
 
   /// Ordered `(title, value)` line items.
-  final List<(String, String)> items;
+  final List<(String, String)> lineItems;
   final String? totalLabel;
   final String? totalValue;
 
   const CustomPriceSummary({
-    required this.items,
+    required this.lineItems,
     this.title,
     this.totalLabel,
     this.totalValue,
@@ -104,8 +104,9 @@ class CustomPriceSummary extends StatelessWidget {
               ),
             ),
 
-          ...items.map(
-            (item) => CustomPriceSummaryRow(title: item.$1, value: item.$2),
+          ...lineItems.map(
+            (lineItem) =>
+                CustomPriceSummaryRow(title: lineItem.$1, value: lineItem.$2),
           ),
 
           if (hasTotal) ...[

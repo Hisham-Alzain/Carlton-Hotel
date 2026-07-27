@@ -31,11 +31,19 @@ class ServiceCategoryDetailView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             PillContainer(
-              width: 50,
-              height: 50,
+              width: 52,
+              height: 52,
               radius: 14,
-              backgroundColor: AppColors.pearlCream,
-              child: CustomImage(path: category.imagePath, fit: BoxFit.contain),
+              backgroundColor: AppColors.primary07,
+              child: Opacity(
+                opacity: 0.8,
+                child: CustomImage(
+                  path: category.imagePath,
+                  width: 38,
+                  height: 36,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,9 +75,11 @@ class ServiceCategoryDetailView extends StatelessWidget {
           spacing: 20,
           children: [
             Expanded(
-              child: ListView.builder(
+              child: ListView.separated(
                 padding: EdgeInsets.zero,
                 itemCount: category.options.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final option = category.options[index];
                   return CustomServiceOptionTile(

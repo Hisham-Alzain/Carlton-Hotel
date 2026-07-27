@@ -103,7 +103,8 @@ class HomeView extends GetView<HomeController> {
                 controller.restaurants[index].location,
               ),
             ],
-            onTap: controller.explore,
+            onTap: () =>
+                controller.openRestaurant(controller.restaurants[index]),
           ),
         ),
       ),

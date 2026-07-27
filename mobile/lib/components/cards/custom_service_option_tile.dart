@@ -28,14 +28,14 @@ class CustomServiceOptionTile extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       child: Card(
-        margin: const EdgeInsets.all(10),
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadiusGeometry.circular(14),
+          borderRadius: BorderRadiusGeometry.circular(12),
           side: BorderSide(color: AppColors.black06),
         ),
-        color: AppColors.white,
+        color: AppColors.white39,
         elevation: 1,
         child: Padding(
           padding: const EdgeInsets.all(10),
@@ -43,8 +43,8 @@ class CustomServiceOptionTile extends StatelessWidget {
             spacing: 20,
             children: [
               SvgPicture.asset(
-                height: 30,
-                width: 30,
+                height: 32,
+                width: 32,
                 iconPath,
                 colorFilter: const ColorFilter.mode(
                   AppColors.antiqueGold,

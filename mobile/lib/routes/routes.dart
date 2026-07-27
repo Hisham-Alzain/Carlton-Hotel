@@ -14,6 +14,8 @@ import 'package:carlton/views/book/room_details_view.dart';
 import 'package:carlton/views/home/ai_concierge_view.dart';
 import 'package:carlton/views/main/main_view.dart';
 import 'package:carlton/views/auth/sign_in_view.dart';
+import 'package:carlton/views/account/preferences_view.dart';
+import 'package:carlton/views/dining/restaurant_detail_view.dart';
 import 'package:carlton/views/services/service_category_detail_view.dart';
 import 'package:carlton/views/splash_screen/splash_screen_view.dart';
 import 'package:carlton/views/auth/welcome_back_view.dart';
@@ -31,6 +33,8 @@ abstract class Routes {
   static const findBooking = '/find-booking';
   static const aiConcierge = '/ai-concierge';
   static const serviceCategory = '/services/category';
+  static const preferences = '/account/preferences';
+  static const restaurantDetail = '/dining/restaurant';
 
   // Booking flow (5 steps, sharing one permanent BookingFlowController).
   static const roomDetails = '/booking/room-details';
@@ -99,6 +103,16 @@ abstract class Pages {
       page: () => const ServiceCategoryDetailView(),
     ),
     GetPage(name: Routes.roomDetails, page: () => const RoomDetailsView()),
+    GetPage(
+      name: Routes.preferences,
+      page: () => const PreferencesView(),
+      binding: PreferencesBinding(),
+    ),
+    GetPage(
+      name: Routes.restaurantDetail,
+      page: () => const RestaurantDetailView(),
+      binding: RestaurantBinding(),
+    ),
     GetPage(name: Routes.chooseRoom, page: () => const ChooseRoomView()),
     GetPage(name: Routes.addOns, page: () => const AddOnsView()),
     GetPage(name: Routes.guestDetails, page: () => const GuestDetailsView()),

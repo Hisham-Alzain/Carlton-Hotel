@@ -1,3 +1,6 @@
+import 'package:carlton/controllers/account/account_controller.dart';
+import 'package:carlton/controllers/account/preferences_controller.dart';
+import 'package:carlton/controllers/dining/restaurant_controller.dart';
 import 'package:carlton/controllers/auth/create_profile_controller.dart';
 import 'package:carlton/controllers/stays/stays_controller.dart';
 import 'package:carlton/controllers/booking/find_booking_controller.dart';
@@ -29,6 +32,21 @@ class MainBinding implements Bindings {
     Get.lazyPut(() => HomeController(), fenix: true);
     Get.lazyPut(() => ServicesController(), fenix: true);
     Get.lazyPut(() => StaysController(), fenix: true);
+    Get.lazyPut(() => AccountController(), fenix: true);
+  }
+}
+
+class PreferencesBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => PreferencesController());
+  }
+}
+
+class RestaurantBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => RestaurantController());
   }
 }
 

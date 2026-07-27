@@ -28,6 +28,7 @@ abstract class AppColors {
   static const Color steelTeal70 = Color(0xB334727F); // @ 70%
   static const Color surfTeal50 = Color(0x80347F87); // @ 50%
   static const Color lagoonTeal = Color(0xFF2F7D8E);
+  static const Color dustyTeal = Color(0xFF498693);
   static const Color mistTeal = Color(0xFF93C2CD);
 
   // ── Gold / brown / sand ──
@@ -128,6 +129,7 @@ abstract class AppColors {
 
   // ── Green ──
   static const Color forestGreen = Color(0xFF19541C);
+  static const Color oliveDark = Color(0xFF2E3A2C);
   static const Color successGreen = Color(0xFF4CAF50);
   static const Color successGreen09 = Color(0x174CAF50); // @ 9%
   static const Color successGreen08 = Color(0x144CAF50); // @ 8%

@@ -21,15 +21,15 @@ class ServicesView extends GetView<ServicesController> {
       body: GetBuilder<ServicesController>(
         builder: (controller) {
           switch (controller.homeState) {
-            // Guest with a current stay: their room + full room-service catalog.
+            // Not signed in: services are gated behind sign-in.
             case ServicesHomeState.guestBrowse:
-              return _ActiveStayServices(controller: controller);
+              return const _GuestBrowse();
             // Signed in, no booking: invite them to book.
             case ServicesHomeState.exploreAndBook:
               return const _ExploreAndBook();
-            // Not signed in: services are gated behind sign-in.
+            // Guest with a current stay: their room + full room-service catalog.
             case ServicesHomeState.activeStay:
-              return const _GuestBrowse();
+              return _ActiveStayServices(controller: controller);
           }
         },
       ),

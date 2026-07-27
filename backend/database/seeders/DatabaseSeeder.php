@@ -27,6 +27,10 @@ class DatabaseSeeder extends Seeder
             ServiceCatalogSeeder::class,
             GuestServiceCatalogSeeder::class,
             GuestActivitySeeder::class,
+            // Last: overlays the Flutter demo content (mobile/lib/constants/
+            // demo_data.dart) and its artwork on top of the generic CMS rows,
+            // deliberately overwriting the stock menu every venue was given.
+            MobileDemoSeeder::class,
         ]);
     }
 }

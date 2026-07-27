@@ -263,7 +263,29 @@ Show `masked_contact` so the guest knows where to look.
 | `phone_country` | ISO 3166-1 alpha-2 (e.g. `SY`). |
 | `phone_verified` / `email_verified` | `false` = contact not yet OTP-verified. |
 | `preferred_locale` | `en` or `ar`. Mirror into app locale on first login. |
-| `first_name` / `last_name` | Null until profile filled (P12). |
+| `first_name` / `last_name` | Null until the profile is completed — see below. |
+
+### PUT /api/auth/guest/profile
+
+**Purpose:** Complete or edit the profile after OTP sign-in ("create profile" screen).
+
+**Who can call:** Tier-2 (any guest token).
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `first_name` | string | optional | Max 255 |
+| `last_name` | string | optional | Max 255 |
+| `phone` | string | optional | Normalized to E.164 server-side; send local format if you like |
+| `email` | string | optional | Lower-cased server-side |
+| `preferred_locale` | string | optional | `en` or `ar` |
+
+Send only the fields you are changing — omitted fields are left alone.
+
+**You may fill in a phone or email the guest does not have yet** (the usual case: signed in by phone, now adding an email). **You may not replace one that is already verified** — that would move the login identifier without proving ownership of the new one. Route the guest back through `request-otp` / `verify-otp` for that.
+
+**Response `data`:** the full guest object (same shape as `GET /api/auth/guest/me`).
+
+**Failure `error_code`s:** `verified_contact_immutable` (409), `validation_failed` (422 — includes a phone that could not be parsed, or an email/phone already taken by another guest).
 
 ---
 
@@ -273,15 +295,63 @@ All read-only, no token required. Same content the website shows — pulled by t
 
 | Type | List | Show |
 |---|---|---|
+| Home sliders | `GET /public/home-sliders` | — |
 | Room types | `GET /public/room-types` | `GET /public/room-types/{uuid}` |
 | Rooms | `GET /public/rooms` | `GET /public/rooms/{uuid}` |
+| Amenities | `GET /public/amenities` | — |
 | Facilities | `GET /public/facilities` | `GET /public/facilities/{uuid}` |
 | Dining venues | `GET /public/dining-venues` | `GET /public/dining-venues/{uuid}` |
 | Event spaces | `GET /public/event-spaces` | `GET /public/event-spaces/{uuid}` |
 | Pages | — | `GET /public/pages/{slug}` |
-| Promotions | `GET /public/promotions` | `GET /public/promotions/{uuid}` |
+| Promotions (offers) | `GET /public/promotions` | `GET /public/promotions/{uuid}` |
+| Service catalog | `GET /public/service-catalog` | — |
+| Reviews | `GET /public/reviews/{type}/{uuid}` | — |
 
-List endpoints are paginated (`data.items` + `data.meta`, 15/page). Every type except `Page` carries an `images: [{uuid, url, file_name, sort_order}]` array. Room type/facility/dining/event-space/promotion names, descriptions, etc. are all `{en, ar}` objects. `RoomType.amenities` is a plain string array; `EventSpace.amenities` is a **translatable string** (`{en, ar}`) — don't share parsing logic between them.
+List endpoints are paginated (`data.items` + `data.meta`, 15/page) unless noted. Every type except `Page` carries an `images: [{uuid, url, file_name, sort_order}]` array. Names, descriptions, etc. are all `{en, ar}` objects — pick the key matching your locale. `EventSpace.amenities` is a **translatable string** (`{en, ar}`), unlike the room-type amenity objects below — don't share parsing logic between them.
+
+### Home screen mapping
+
+| Home section | Endpoint | Fields |
+|---|---|---|
+| Hero slider | `GET /public/home-sliders` | `photo`, `header_text`, `location`, `description_text` |
+| Rooms | `GET /public/room-types` | `name`, `banner`, `view_type`, `size_sqm`, `bed_types`, `base_price_usd` |
+| Restaurants | `GET /public/dining-venues` | `banner`, `name`, `cuisine_type`, `hours`, `location` |
+| Offers | `GET /public/promotions` | `title`, `description`, `banner`, `secondary_description` |
+
+`banner` is the first image by `sort_order`, or `null` when nothing is uploaded. The full `images` array is still available for galleries.
+
+### Room details — `GET /public/room-types/{uuid}`
+
+| Field | Notes |
+|---|---|
+| `images` | Gallery |
+| `banner` | First image |
+| `name` / `description` | `{en, ar}` |
+| `base_price_usd` | Nightly rate |
+| `size_sqm` | Room area |
+| `view_type` | `city`, `garden`, `pool`, `courtyard`, `mountain`, `interior`, or `null` |
+| `bed_types` | Array of `king`, `queen`, `double`, `twin`, `single`, `extra` |
+| `rating` / `rating_count` | From published guest reviews; `rating` is `null` until the first one |
+| `highlights` | Exactly 4 amenities for the card — flagged ones first, topped up from the head of the list |
+| `amenities` | Full list: `[{uuid, slug, name, icon, sort_order}]` |
+| `cancellation_hours` | Hours before check-in that cancellation is still free |
+
+`icon` on an amenity is a stable key (`balcony`, `jacuzzi`, `desk`, `tv`, `safe`, `coffee`) — map it to your own icon set, it is never a URL.
+
+### Restaurant details
+
+- `GET /public/dining-venues/{uuid}` — about (`description`), `hours`, `location`, `cuisine_type`, `rating`, `rating_count`, `images` (gallery).
+- `GET /public/dining-venues/{uuid}/menu-categories` — the filter chips: `[{uuid, slug, name, sort_order}]`. Un-paginated.
+- `GET /public/dining-venues/{uuid}/menu?type={slug}` — paginated menu items. Omit `type` for the whole menu.
+
+Menu item shape: `{ uuid, type, name, description, price_usd, is_vegan, photo }` where `type` is the category slug (`breakfast`, `starters`, `main`, `dessert`).
+
+### Reviews
+
+- `GET /public/reviews/{type}/{uuid}` — published reviews, newest first, paginated. `{type}` is `room_type` or `dining_venue`.
+- `POST /api/reviews/{type}/{uuid}` — tier-2. Body `{ "rating": 1-5, "comment"?: string }`. Submitting again **edits** your existing review rather than adding a second one (201 the first time, 200 after).
+
+Review shape: `{ uuid, rating, comment, is_verified_stay, created_at, author: { first_name, last_name } }`. `is_verified_stay` is derived server-side from your reservation history — you cannot set it.
 
 ---
 
@@ -393,6 +463,29 @@ Same as the website (public, tier-1) — see request/response shapes in `API_GUI
 
 ---
 
+### POST /api/dining-venues/{uuid}/table-reservations
+
+**Purpose:** Reserve a table at a restaurant. Use this instead of `POST /api/service-bookings` for dining — the guest picks a party size, not a table.
+
+**Who can call:** Tier-3a (`has_booking`).
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `date` | string | ✅ | `Y-m-d`, today or later |
+| `time` | string | ✅ | `H:i` (24h) |
+| `guest_count` | integer | ✅ | 1–20 |
+| `special_request` | string | optional | Max 1000 — lands in the booking's `notes` |
+
+The backend assigns the smallest table that seats the party and is free for a two-hour seating window. You never send a table uuid.
+
+**Response `data`** (HTTP 201): a service booking with `bookable_type: "restaurant_table"`, the assigned table as `bookable.label`, plus `guest_count`.
+
+**Failure `error_code`s:** `no_availability` (409, nothing free for that slot/party size), `no_active_reservation` (403), `not_found` (404, inactive venue), `validation_failed` (422).
+
+---
+
 ### POST /api/pre-arrival/documents
 
 **Purpose:** Upload identity documents for e-check-in.
@@ -427,19 +520,154 @@ Submitting documents (re)opens a `pending` check-in approval on the reservation 
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `type` | string | ✅ | Free-form; `room_service` and `housekeeping` route to specific departments, anything else routes to `concierge` |
+| `service_item_uuid` | string | see note | The catalog item the guest tapped — from `GET /public/service-catalog` |
+| `type` | string | see note | Legacy free-string path. `room_service`/`housekeeping`/`laundry`/`maintenance` route to specific departments, anything else to `concierge` |
 | `priority` | string | optional | `low`, `normal` (default), `high` |
-| `notes` | string | optional | Max 1000 |
+| `notes` | string | optional | Max 1000 — this is the "special instructions" field |
+
+Send **either** `service_item_uuid` (preferred) **or** `type`. When an item is sent, `type` and `department` are derived from its category and ignored if you also send them.
 
 **Response `data`** (HTTP 201):
 ```json
-{ "uuid": "...", "type": "room_service", "department": "kitchen", "status": "new", "priority": "normal", "notes": "...", "created_at": "..." }
+{ "uuid": "...", "type": "room_service", "department": "kitchen", "status": "new",
+  "priority": "normal", "notes": "...", "created_at": "...",
+  "category_code": "room_service",
+  "service_item": { "uuid": "...", "name": {"en": "Carlton Breakfast", "ar": "..."},
+                    "description": {"en": "...", "ar": "..."},
+                    "expected_minutes": 30, "price_usd": "18.00" } }
 ```
-`status`: `new`, `in_progress`, `completed`, `cancelled`.
+`status`: `new`, `in_progress`, `completed`, `cancelled`. `service_item` and `category_code` are `null` for legacy free-string requests.
+
+**Billing:** an item with a non-null `price_usd` is charged to your folio when it is generated. Items with `price_usd: null` are complimentary. Cancelled requests are never charged.
 
 **`GET`** returns your own requests only, paginated, newest first.
 
-**Failure `error_code`s:** `no_active_reservation` (403, booked but not checked in yet — or not booked at all), `validation_failed` (422).
+**Failure `error_code`s:** `no_active_reservation` (403, booked but not checked in yet — or not booked at all), `validation_failed` (422 — neither field sent, or an unknown/inactive item uuid).
+
+---
+
+## Module: Service Catalog
+
+### GET /public/service-catalog
+
+**Purpose:** The services screen — eight categories, each with its microservices.
+
+**Who can call:** Tier-1 (public). Un-paginated; `data` is a plain array ordered by `sort_order`.
+
+```json
+[{
+  "uuid": "...", "code": "room_service", "kind": "catalog",
+  "name": {"en": "Room Service", "ar": "..."},
+  "description": {"en": "...", "ar": "..."},
+  "icon": "room_service", "link_target": null, "default_item_uuid": null,
+  "department": "kitchen", "sort_order": 0, "is_active": true,
+  "items": [{ "uuid": "...", "name": {"en": "Carlton Breakfast", "ar": "..."},
+              "description": {"en": "Full breakfast selection with fresh juice", "ar": "..."},
+              "expected_minutes": 30, "price_usd": "18.00" }]
+}]
+```
+
+**Switch on `kind` — one screen algorithm covers all eight categories:**
+
+| `kind` | Categories | What the app does |
+|---|---|---|
+| `catalog` | Room Service, House Keeping, Laundry | Show `items`, then `POST /api/service-requests` with the chosen `service_item_uuid` |
+| `direct` | Concierge, Transport, Maintenance | `items` is empty. Open a notes sheet and post `default_item_uuid` straight away |
+| `link` | Restaurant | Navigate by `link_target` (`dining`) to the dining venue screens. No request row |
+| `toggle` | Do Not Disturb | Render a switch bound to `PATCH /api/stays/active/dnd` |
+
+`expected_minutes` is an integer — format and localize it yourself ("~30 min" / "٣٠ دقيقة"). `null` means no time is promised. Adding a category server-side needs no app release, so treat an unknown `kind` as "hide".
+
+---
+
+## Module: Stays
+
+Read projections over your reservations for the three stay screens. All three
+reads are **tier-2** (`auth:guests` only) — having no active stay is an empty
+state, not an error, so don't treat a `null`/`[]` payload as a failure.
+
+### GET /api/stays/active
+
+`data` is a single object, or `null` when you are not currently checked in.
+
+| Field | Notes |
+|---|---|
+| `room_number` | e.g. `"812"` — assigned at check-in, so non-null here |
+| `room_name` | `{en, ar}` room type name |
+| `checked_in_at` | ISO 8601. **`null` for stays that predate this feature** — fall back to `check_in` |
+| `check_in` / `check_out` | Dates |
+| `nights` / `nights_remaining` | `nights_remaining` floors at 0 |
+| `dnd` | `{enabled, until}` |
+| `folio_total_usd` | `null` until staff generate the folio |
+
+### GET /api/stays/upcoming
+
+`data` is an array (you may hold several future bookings), soonest first. `pending_verification` holds are excluded.
+
+| Field | Notes |
+|---|---|
+| `booking_code` | The "reservation code" |
+| `room_number` | ⚠ **usually `null`** — rooms are assigned at check-in. Render `room_name` pre-arrival |
+| `room_name` | `{en, ar}` |
+| `price_usd` | Reservation total |
+| `check_in` / `check_out` / `nights` | |
+| `is_cancellable` | Whether `DELETE /api/reservations/{uuid}` will succeed |
+
+### GET /api/stays/past
+
+Paginated (`data.items` + `data.meta`), most recent checkout first. Includes cancelled stays.
+
+| Field | Notes |
+|---|---|
+| `room_name` | `{en, ar}` |
+| `total_nights` | |
+| `check_in` / `check_out` / `checked_out_at` | `checked_out_at` is `null` for older stays |
+| `total_charge_usd` | The folio total when one exists (frozen at settlement), else the reservation total |
+| `status` | ⚠ raw `checked_out` or `cancelled` — there is **no** `complete` status. Label `checked_out` as "Completed" client-side |
+| `has_receipt` | `false` when nothing was ever billed (e.g. a cancelled stay) |
+| `room_type_uuid` | Powers **Book again** |
+
+### Checkout, cancel, book again
+
+These reuse endpoints you already have — there are no new ones:
+
+| Action | Endpoint |
+|---|---|
+| Check out of the active stay | `POST /api/folio/approve` (approves the bill *and* flips the stay to `checked_out`) |
+| Cancel an upcoming stay | `DELETE /api/reservations/{uuid}` |
+| Book again | Deep-link your own booking flow with `room_type_uuid`, then `GET /public/availability` → `GET /public/quote` → `POST /api/reservations` |
+
+Book again is deliberately client-side: a new booking needs fresh dates, current availability and current price, none of which the server can infer from a past stay.
+
+### GET /api/stays/{uuid}/receipt
+
+The bill for any stay of yours that has a folio — including past ones. Read-only; it never recalculates the folio.
+
+```json
+{ "reservation": { "uuid", "booking_code", "check_in", "check_out", "nights", "guest_name" },
+  "folio": { "uuid", "status", "subtotal_usd", "total_usd", "approved_by_guest_at", "settled_at" },
+  "items": [{ "description", "amount_usd", "source_type" }],
+  "payments": [{ "method", "amount_usd", "status", "created_at" }],
+  "balance_due_usd": 0 }
+```
+
+⚠ `items[].description` is a plain string, not `{en, ar}` — line items render as recorded regardless of locale.
+
+### GET /api/stays/{uuid}/receipt/pdf
+
+Returns raw `application/pdf` with `Content-Disposition: attachment` — **the one endpoint that does not use the JSON envelope.** Errors still return the normal error envelope. Labels follow `Accept-Language`; Arabic renders correctly (shaped, RTL).
+
+**Failure `error_code`s (both receipt endpoints):** `not_found` (404 — no folio, or not your stay; someone else's stay always 404s, never 403).
+
+### PATCH /api/stays/active/dnd
+
+**Who can call:** Tier-3b (`is_checked_in`) — do-not-disturb needs a stay in progress.
+
+Body `{ "enabled": bool, "until"?: ISO 8601 }`. Enabling without `until` defaults to the end of the current hotel day. Returns `{ "enabled", "until" }`.
+
+DND is stored as an expiry, not a flag, so a toggle the guest forgets clears itself. It does **not** create a service request.
+
+**Failure `error_code`s:** `no_active_reservation` (403), `validation_failed` (422).
 
 ---
 
@@ -518,9 +746,3 @@ Live delivery mirrors to Firestore (`chats` collection, one doc per message keye
 ## Coming in P11 — AI chatbot
 
 `POST /chatbot/message` — public (tier-1) or authenticated.
-
----
-
-## Coming in P12 — Profile editing
-
-Update `first_name`, `last_name`, `preferred_locale`; change password; device management.

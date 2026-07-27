@@ -610,6 +610,48 @@
                         "description": "Links Omar's cancelled demo reservation (booking_code CARL-DEMO0004) via second factor."
                     },
                     "response": []
+                },
+                {
+                    "name": "Guest — Update Profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{layla_guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/guest/profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "guest",
+                                "profile"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"first_name\": \"Layla\",\n    \"last_name\": \"Haddad\",\n    \"email\": \"layla.haddad@example.com\",\n    \"preferred_locale\": \"en\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Completes the profile after OTP sign-in. Filling in a contact you do not have yet is allowed; replacing an already-verified phone/email returns 409 verified_contact_immutable."
+                    },
+                    "response": []
                 }
             ]
         },
@@ -971,6 +1013,162 @@
                                 "{{page_slug}}"
                             ]
                         }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Home Sliders",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/public/home-sliders",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "public",
+                                "home-sliders"
+                            ]
+                        },
+                        "description": "Hero carousel for the mobile home screen: photo, header_text, location, description_text."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Amenities",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/public/amenities",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "public",
+                                "amenities"
+                            ]
+                        },
+                        "description": "In-room amenity catalog. `icon` is a stable key to map to your own icon set, never a URL."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Service Catalog",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/public/service-catalog",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "public",
+                                "service-catalog"
+                            ]
+                        },
+                        "description": "The eight guest services with their microservices. Switch on `kind`: catalog (item picker), direct (post default_item_uuid), link (navigate to link_target), toggle (DND switch). Un-paginated."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Restaurant — Menu Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/public/dining-venues/{{dining_venue_uuid}}/menu-categories",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "public",
+                                "dining-venues",
+                                "{{dining_venue_uuid}}",
+                                "menu-categories"
+                            ]
+                        },
+                        "description": "Filter chips for a restaurant menu. Send `slug` back as ?type=."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Restaurant — Menu",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/public/dining-venues/{{dining_venue_uuid}}/menu?type=starters",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "public",
+                                "dining-venues",
+                                "{{dining_venue_uuid}}",
+                                "menu"
+                            ],
+                            "query": [
+                                {
+                                    "key": "type",
+                                    "value": "starters"
+                                }
+                            ]
+                        },
+                        "description": "Menu items: photo, price, name, description, is_vegan, type. Drop the `type` query param for the whole menu."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Reviews — Room Type",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/public/reviews/room_type/{{room_type_uuid}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "public",
+                                "reviews",
+                                "room_type",
+                                "{{room_type_uuid}}"
+                            ]
+                        },
+                        "description": "Published reviews for a room type, newest first. {type} is room_type or dining_venue."
                     },
                     "response": []
                 }
@@ -1842,6 +2040,130 @@
                                 "service-requests"
                             ]
                         }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Request a Catalog Service",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/service-requests",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "service-requests"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"service_item_uuid\": \"{{service_item_uuid}}\",\n    \"notes\": \"No nuts please\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "The catalog path: send the tapped item plus optional special instructions. `type` and `department` are derived from the item category. Priced items are charged to the folio. Tier-3b (is_checked_in)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Reserve a Restaurant Table",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/dining-venues/{{dining_venue_uuid}}/table-reservations",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "dining-venues",
+                                "{{dining_venue_uuid}}",
+                                "table-reservations"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"date\": \"2026-08-01\",\n    \"time\": \"19:30\",\n    \"guest_count\": 2,\n    \"special_request\": \"Window seat please\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "The backend assigns the smallest table that seats the party and is free for a two-hour seating. 409 no_availability when nothing fits. Tier-3a (has_booking)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Submit a Review",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/reviews/room_type/{{room_type_uuid}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "reviews",
+                                "room_type",
+                                "{{room_type_uuid}}"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"rating\": 5,\n    \"comment\": \"Spotless and quiet.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "One review per guest per subject — resubmitting edits it in place (201 first time, 200 after). is_verified_stay is derived server-side."
                     },
                     "response": []
                 }
@@ -3020,6 +3342,144 @@
                             "response": []
                         }
                     ]
+                },
+                {
+                    "name": "Service Categories — List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/service-categories",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "service-categories"
+                            ]
+                        },
+                        "description": "Admin view of the eight guest service categories."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Service Categories — Create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/service-categories",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "service-categories"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"spa\",\n    \"name\": {\n        \"en\": \"Spa\",\n        \"ar\": \"سبا\"\n    },\n    \"description\": {\n        \"en\": \"Treatments and massage.\",\n        \"ar\": \"علاجات ومساج.\"\n    },\n    \"kind\": \"catalog\",\n    \"department\": \"concierge\",\n    \"icon\": \"spa\",\n    \"sort_order\": 8\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "kind: catalog | direct | link | toggle. `department` is required for catalog/direct; `link_target` for link."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Service Items — List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/service-items",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "service-items"
+                            ]
+                        },
+                        "description": "Microservices across all categories."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Service Items — Create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/service-items",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "service-items"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"service_category_uuid\": \"{{service_category_uuid}}\",\n    \"name\": {\n        \"en\": \"Hot Stone Therapy\",\n        \"ar\": \"علاج الأحجار الساخنة\"\n    },\n    \"description\": {\n        \"en\": \"Ninety minutes of deep heat.\",\n        \"ar\": \"تسعون دقيقة من الحرارة العميقة.\"\n    },\n    \"expected_minutes\": 90,\n    \"price_usd\": 110\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "price_usd null = complimentary; a value is billed to the folio. expected_minutes is an integer the client localizes."
+                    },
+                    "response": []
                 }
             ],
             "description": "cms.edit — only super_admin holds this permission among the seeded accounts, so use {{staff_token}}."
@@ -5197,6 +5657,215 @@
                             "response": []
                         }
                     ]
+                },
+                {
+                    "name": "Amenities — List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/amenities",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "amenities"
+                            ]
+                        },
+                        "description": "In-room amenity catalog."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Amenities — Create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/amenities",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "amenities"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": {\n        \"en\": \"Smart TV\",\n        \"ar\": \"تلفاز ذكي\"\n    },\n    \"icon\": \"tv\",\n    \"sort_order\": 3\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "slug is derived from name.en when omitted."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Home Sliders — List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/home-sliders",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "home-sliders"
+                            ]
+                        },
+                        "description": "Home screen hero slides."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Home Sliders — Create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/home-sliders",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "home-sliders"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"header_text\": {\n        \"en\": \"Timeless Damascus Hospitality\",\n        \"ar\": \"ضيافة دمشقية خالدة\"\n    },\n    \"location\": {\n        \"en\": \"Damascus, Syria\",\n        \"ar\": \"دمشق، سوريا\"\n    },\n    \"description_text\": {\n        \"en\": \"A landmark address in the heart of the city.\",\n        \"ar\": \"عنوان مميز في قلب المدينة.\"\n    },\n    \"sort_order\": 0\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Upload the photo separately via POST /cms/home-sliders/{uuid}/images."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Reviews — List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/reviews",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reviews"
+                            ]
+                        },
+                        "description": "All guest reviews. Add ?is_published=0 to see only hidden ones."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Reviews — Unpublish",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/reviews/{{review_uuid}}/publish",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reviews",
+                                "{{review_uuid}}",
+                                "publish"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"is_published\": false\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Hides the review publicly and removes it from the rating aggregate in the same write."
+                    },
+                    "response": []
                 }
             ],
             "description": "cms.edit — only super_admin holds this permission among the seeded accounts, so use {{staff_token}}. The public read shapes (Module 04) mirror these exactly."
@@ -6024,6 +6693,196 @@
                 }
             ],
             "description": "Assign/status permission differs by {type} (service-requests vs tickets) — see the role-specific examples above. GET routes just need service_requests.view|tickets.view, which {{staff_token}} (super_admin) always has."
+        },
+        {
+            "name": "17 - Stays (Guest)",
+            "item": [
+                {
+                    "name": "Active Stay",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stays/active",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stays",
+                                "active"
+                            ]
+                        },
+                        "description": "The stay in progress, or data:null when there is none — an empty state, not an error. Carries room_number, checked_in_at, nights_remaining and the DND flag."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Upcoming Stays",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stays/upcoming",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stays",
+                                "upcoming"
+                            ]
+                        },
+                        "description": "Future bookings, soonest first. room_number is usually null (rooms are assigned at check-in) — render room_name instead."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Past Stays",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stays/past",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stays",
+                                "past"
+                            ]
+                        },
+                        "description": "Checked-out and cancelled stays, paginated. status is raw checked_out/cancelled — label it client-side. room_type_uuid powers \"book again\"."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Receipt (JSON)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stays/{{ahmad_reservation_uuid}}/receipt",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stays",
+                                "{{ahmad_reservation_uuid}}",
+                                "receipt"
+                            ]
+                        },
+                        "description": "Folio, line items and payments for any stay of yours that was billed. Read-only — never recalculates. 404 when there is no folio or the stay is not yours."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Receipt (PDF)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stays/{{ahmad_reservation_uuid}}/receipt/pdf",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stays",
+                                "{{ahmad_reservation_uuid}}",
+                                "receipt",
+                                "pdf"
+                            ]
+                        },
+                        "description": "Raw application/pdf — the one endpoint that skips the JSON envelope. Labels follow Accept-Language; Arabic renders shaped and RTL."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Set Do Not Disturb",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stays/active/dnd",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stays",
+                                "active",
+                                "dnd"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"enabled\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Omit `until` to default to the end of the current hotel day. Stored as an expiry so a forgotten toggle clears itself. Tier-3b (is_checked_in)."
+                    },
+                    "response": []
+                }
+            ]
         }
     ]
 }

@@ -1,7 +1,8 @@
 # Carlton API — Postman Collection
 
 Everything a frontend developer needs to explore and test the live API: a full
-Postman collection (155 requests across every module through P10) plus a
+Postman collection (118 requests across every module through P10, plus the
+mobile-app surface: home content, service catalog, stays and receipts) plus a
 pre-populated environment pointing at a freshly-seeded local database.
 
 ## Setup
@@ -129,3 +130,10 @@ level documentation of every request/response shape, error code, and
 permission requirement. Requests prefixed `⚠️` or `❌` are intentionally
 destructive or intentionally-failing demonstrations; read their
 description before running them in a session you care about preserving.
+
+Five environment variables are left blank because the seeder does not pin a
+single row for them — `amenity_uuid`, `home_slider_uuid`,
+`service_category_uuid`, `service_item_uuid` and `review_uuid`. Fill them from
+the matching list request (`GET /public/amenities`,
+`GET /public/service-catalog`, `GET /cms/reviews`, …) before running the
+requests that reference them.

@@ -8,9 +8,11 @@ use App\Actions\Booking\ConfirmReservationAction;
 use App\Actions\Booking\CreateReservationAction;
 use App\Actions\Auth\RequestOtpAction;
 use App\Adapters\DirectAdapter;
+use App\Adapters\WalkInAdapter;
 use App\Enums\OtpChannel;
 use App\Enums\OtpPurpose;
 use App\Enums\PaymentMethod;
+use App\Enums\ReservationSource;
 use App\Enums\ReservationStatus;
 use App\Exceptions\HoldExpiredException;
 use App\Exceptions\NotFoundException;
@@ -133,6 +135,70 @@ class ReservationService
     {
         $data = Reservation::with($this->with)->orderByDesc('created_at')->paginate(15);
         return ['data' => $data, 'code' => 200];
+    }
+
+    /**
+     * Reception creating a booking for a guest at the desk or on the phone.
+     *
+     * Skips the OTP the public flow requires — staff hold `reservations.create`
+     * and have the guest in front of them — so the reservation is live
+     * immediately (confirmed by default) with no hold to expire. Room inventory,
+     * pricing and promo handling are the same CreateReservationAction the guest
+     * paths use; only the identity resolution and the channel differ.
+     */
+    public function adminStore(array $data): array
+    {
+        $guest      = $this->resolveGuestForStaffBooking($data);
+        $roomTypeId = RoomType::where('uuid', $data['room_type_uuid'])->value('id');
+
+        return $this->create->handle($guest, [
+            'room_type_id'   => $roomTypeId,
+            'check_in'       => $data['check_in'],
+            'check_out'      => $data['check_out'],
+            'payment_method' => $data['payment_method'],
+            'promo_code'     => $data['promo_code'] ?? null,
+            'status'         => isset($data['status'])
+                ? ReservationStatus::from($data['status'])
+                : ReservationStatus::CONFIRMED,
+            'source'         => isset($data['source'])
+                ? ReservationSource::from($data['source'])
+                : null,
+        ], new WalkInAdapter());
+    }
+
+    /**
+     * An existing guest by uuid, otherwise the one already on file under the
+     * given phone/email, otherwise a new unverified record.
+     *
+     * A guest created here has no verified contact — they never proved they own
+     * the number. They claim the booking in the app through
+     * POST /auth/guest/link-booking-code, which is what does the verifying.
+     */
+    private function resolveGuestForStaffBooking(array $data): Guest
+    {
+        if (! empty($data['guest_uuid'])) {
+            return Guest::where('uuid', $data['guest_uuid'])
+                ->firstOr(fn () => throw new NotFoundException());
+        }
+
+        $guest = null;
+
+        if (! empty($data['phone'])) {
+            $guest = Guest::byPhone($data['phone'])->first();
+        }
+
+        if (! $guest && ! empty($data['email'])) {
+            $guest = Guest::byEmail($data['email'])->first();
+        }
+
+        return $guest ?? Guest::create(array_filter([
+            'phone'         => $data['phone']         ?? null,
+            'phone_country' => $data['phone_country'] ?? null,
+            'email'         => $data['email']         ?? null,
+            'first_name'    => $data['first_name'],
+            'last_name'     => $data['last_name'],
+            'name'          => trim($data['first_name'] . ' ' . $data['last_name']),
+        ]));
     }
 
     public function confirm(Reservation $reservation): array

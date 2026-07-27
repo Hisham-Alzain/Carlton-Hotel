@@ -1487,6 +1487,78 @@
             "name": "05 - Booking (Admin)",
             "item": [
                 {
+                    "name": "Create booking — front desk (new guest)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"first_name\": \"Nour\",\n  \"last_name\": \"Haddad\",\n  \"phone\": \"+963955123456\",\n  \"room_type_uuid\": \"{{room_type_uuid}}\",\n  \"check_in\": \"2026-09-05\",\n  \"check_out\": \"2026-09-08\",\n  \"payment_method\": \"on_arrival\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/cms/reservations",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reservations"
+                            ]
+                        },
+                        "description": "Reception booking for a guest at the desk. No OTP — the guest is created unverified and claims the booking later via /auth/guest/link-booking-code. Defaults to status=confirmed, source=walk_in."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create booking — front desk (existing guest, pending)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"guest_uuid\": \"{{guest_uuid}}\",\n  \"room_type_uuid\": \"{{room_type_uuid}}\",\n  \"check_in\": \"2026-09-05\",\n  \"check_out\": \"2026-09-08\",\n  \"payment_method\": \"on_arrival\",\n  \"promo_code\": \"CARLTON10\",\n  \"status\": \"pending\",\n  \"source\": \"direct\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/cms/reservations",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reservations"
+                            ]
+                        },
+                        "description": "Phone booking for a guest already on file, left pending until the deposit lands."
+                    },
+                    "response": []
+                },
+                {
                     "name": "List reservations",
                     "request": {
                         "method": "GET",

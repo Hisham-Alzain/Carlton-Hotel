@@ -286,6 +286,8 @@ Route::middleware('auth:users')->prefix('cms/reservations')->group(function () {
         Route::get   ('/{reservation}', [AdminReservationController::class, 'show']);
     });
     Route::middleware('permission:reservations.create')->group(function () {
+        // Front-desk booking — reception creating a reservation for a guest.
+        Route::post  ('/',                          [AdminReservationController::class, 'store']);
         Route::post  ('/{reservation}/confirm',     [AdminReservationController::class, 'confirm']);
         Route::post  ('/{reservation}/assign-room', [AdminReservationController::class, 'assignRoom']);
     });

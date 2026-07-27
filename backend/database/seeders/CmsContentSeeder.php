@@ -145,7 +145,10 @@ class CmsContentSeeder extends Seeder
     private function diningVenues(): void
     {
         $venues = [
-            ['en' => 'Al Sham Restaurant', 'ar' => 'مطعم الشام', 'cuisine' => 'Levantine', 'hours' => '7:00 AM – 11:00 PM'],
+            // Deliberately not "Al Sham" — MobileDemoSeeder seeds the app's own
+            // "Al-Sham Restaurant", and two near-identical names in one list
+            // make the seeded API confusing to read.
+            ['en' => 'Barada Brasserie', 'ar' => 'مطعم بردى', 'cuisine' => 'Levantine', 'hours' => '7:00 AM – 11:00 PM'],
             ['en' => 'Damascus Rooftop Lounge', 'ar' => 'روف دمشق', 'cuisine' => 'International', 'hours' => '5:00 PM – 1:00 AM'],
             ['en' => 'Poolside Café', 'ar' => 'مقهى المسبح', 'cuisine' => 'Light bites & grill', 'hours' => '10:00 AM – 6:00 PM'],
         ];

@@ -14,6 +14,7 @@ use App\Models\MenuCategory;
 use App\Models\MenuItem;
 use App\Models\PromoCode;
 use App\Models\Promotion;
+use App\Models\RestaurantTable;
 use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomType;
@@ -333,11 +334,30 @@ class MobileDemoSeeder extends Seeder
             );
 
             $this->attachAssetImages($venue, array_merge([$v['image']], $v['gallery']));
+            $this->tables($venue);
 
             $seeded->push($venue);
         }
 
         return $seeded;
+    }
+
+    /**
+     * Bookable tables for the "Reserve a Table" screen. ServiceCatalogSeeder
+     * only covers the venues that existed when it ran, so these venues — created
+     * afterwards — would otherwise have nothing to reserve. Capacities span the
+     * 1–8 guests the reservation stepper offers.
+     */
+    private function tables(DiningVenue $venue): void
+    {
+        $initial = strtoupper(substr($venue->getTranslation('name', 'en'), 0, 1));
+
+        foreach ([2, 2, 4, 4, 6, 8] as $i => $capacity) {
+            RestaurantTable::updateOrCreate(
+                ['dining_venue_id' => $venue->id, 'table_number' => $initial . '-' . ($i + 1)],
+                ['capacity' => $capacity, 'is_active' => true],
+            );
+        }
     }
 
     /**

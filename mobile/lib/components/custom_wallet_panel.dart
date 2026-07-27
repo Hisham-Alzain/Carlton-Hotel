@@ -5,22 +5,22 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class CustomWalletPanel extends StatelessWidget {
-  final String glyphPath;
+  final String iconPath;
   final Color badgeColor;
   final bool tintGlyphWhite;
   final String title;
   final String subtitle;
   final List<String> bullets;
-  final String footer;
+  final String footerNote;
 
   const CustomWalletPanel({
-    required this.glyphPath,
+    required this.iconPath,
     required this.badgeColor,
     required this.tintGlyphWhite,
     required this.title,
     required this.subtitle,
     required this.bullets,
-    required this.footer,
+    required this.footerNote,
     super.key,
   });
 
@@ -53,7 +53,7 @@ class CustomWalletPanel extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: SvgPicture.asset(
-                    glyphPath,
+                    iconPath,
                     width: 30,
                     height: 30,
                     colorFilter: tintGlyphWhite
@@ -90,7 +90,7 @@ class CustomWalletPanel extends StatelessWidget {
               spacing: 10,
               children: [
                 ...bullets.map(
-                  (b) => Row(
+                  (bulletLine) => Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 10,
                     children: [
@@ -107,7 +107,7 @@ class CustomWalletPanel extends StatelessWidget {
                       ),
                       Flexible(
                         child: Text(
-                          b,
+                          bulletLine,
                           style: textStyle.labelMedium?.copyWith(
                             fontFamily: 'DM Sans',
                             color: AppColors.inkBlack,
@@ -123,7 +123,7 @@ class CustomWalletPanel extends StatelessWidget {
                   backgroundColor: AppColors.whisperGrey,
                   radius: 8,
                   child: Text(
-                    footer,
+                    footerNote,
                     style: textStyle.labelSmall?.copyWith(
                       fontFamily: 'DM Sans',
                       color: AppColors.dimGrey,

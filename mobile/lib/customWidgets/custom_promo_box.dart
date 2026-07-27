@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CustomPromoBox extends StatelessWidget {
-  final TextEditingController controller;
+  final TextEditingController promoCodeController;
   final VoidCallback onApply;
 
   const CustomPromoBox({
-    required this.controller,
+    required this.promoCodeController,
     required this.onApply,
     super.key,
   });
@@ -41,7 +41,7 @@ class CustomPromoBox extends StatelessWidget {
             children: [
               Expanded(
                 child: CustomTextField(
-                  controller: controller,
+                  controller: promoCodeController,
                   textInputType: TextInputType.text,
                   hintText: 'Enter promo code',
                   fillColor: AppColors.whisperGrey,

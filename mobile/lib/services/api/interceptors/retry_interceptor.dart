@@ -6,10 +6,11 @@ import 'package:dio/dio.dart';
 /// Retries:
 /// - Connection / receive timeouts
 /// - Connection errors (network-level)
-/// - HTTP 503 (Service Unavailable)
-/// - HTTP 429 (Too Many Requests) — honors `Retry-After` header
+/// - HTTP 503 (Service Unavailable) — honors `Retry-After`, capped at
+///   [maxDelay]
 ///
-/// Never retries 4xx other than 429, never retries cancelled requests.
+/// Never retries 4xx (including 429 — see [_isRetryable]), never retries
+/// cancelled requests.
 class RetryInterceptor extends Interceptor {
   final Dio dio;
   final int maxRetries;
@@ -59,17 +60,27 @@ class RetryInterceptor extends Interceptor {
         e.type == DioExceptionType.connectionError) {
       return true;
     }
-    final status = e.response?.statusCode;
-    return status == 503 || status == 429;
+    // 429 is deliberately NOT retried. Rate limiting is a decision the
+    // server has already made, and Retry-After is routinely 60s+ — retrying
+    // twice would hold the loading dialog for two minutes before the user
+    // saw anything, which reads as the app having silently hung. Surface it
+    // immediately instead; ApiDialogHandler shows the wait via retryAfter.
+    return e.response?.statusCode == 503;
   }
 
+  /// Upper bound on a single backoff sleep. A server is free to ask for a
+  /// 300-second Retry-After; blocking an in-flight request (and its loading
+  /// dialog) that long is never the right client behavior.
+  static const Duration maxDelay = Duration(seconds: 5);
+
   Duration _delayFor(int attempt, DioException err) {
-    // Honor Retry-After header on 429 / 503 if present.
+    // Honor the Retry-After header on 503 if present, capped.
     final retryAfter = err.response?.headers.value('retry-after');
     if (retryAfter != null) {
       final seconds = int.tryParse(retryAfter);
       if (seconds != null && seconds > 0) {
-        return Duration(seconds: seconds);
+        final requested = Duration(seconds: seconds);
+        return requested > maxDelay ? maxDelay : requested;
       }
     }
     return Duration(seconds: pow(2, attempt).toInt());

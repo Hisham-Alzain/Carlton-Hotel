@@ -95,7 +95,6 @@ class PillContainer extends StatelessWidget {
 class SectionContainer extends StatelessWidget {
   final double? height;
   final double? width;
-  final int? sectionIndex;
   final String? title;
   final String? buttonText;
   final IconData? icon;
@@ -106,7 +105,6 @@ class SectionContainer extends StatelessWidget {
   const SectionContainer({
     this.height,
     this.width,
-    this.sectionIndex,
     this.title,
     this.buttonText = 'Discover All',
     this.icon = Icons.arrow_forward,
@@ -118,7 +116,7 @@ class SectionContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = Get.textTheme;
+    final TextTheme textStyle = Get.textTheme;
     return Container(
       height: height,
       width: width,

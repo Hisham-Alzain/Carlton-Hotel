@@ -17,7 +17,7 @@ class ReceiptSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = Get.textTheme;
+    final TextTheme textStyle = Get.textTheme;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -44,7 +44,9 @@ class ReceiptSheet extends StatelessWidget {
           ),
         ),
         CustomPriceSummary(
-          items: receipt.lines.map((l) => (l.label, l.amount)).toList(),
+          lineItems: receipt.lines
+              .map((line) => (line.label, line.amount))
+              .toList(),
           totalLabel: 'Total Charged',
           totalValue: receipt.total,
         ),

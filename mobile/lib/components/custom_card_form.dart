@@ -7,17 +7,17 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class CustomCardForm extends StatelessWidget {
-  final TextEditingController numberCtrl;
-  final TextEditingController expiryCtrl;
-  final TextEditingController cvvCtrl;
-  final TextEditingController nameCtrl;
+  final TextEditingController cardNumberController;
+  final TextEditingController expiryController;
+  final TextEditingController cvvController;
+  final TextEditingController cardholderNameController;
   final VoidCallback onChanged;
 
   const CustomCardForm({
-    required this.numberCtrl,
-    required this.expiryCtrl,
-    required this.cvvCtrl,
-    required this.nameCtrl,
+    required this.cardNumberController,
+    required this.expiryController,
+    required this.cvvController,
+    required this.cardholderNameController,
     required this.onChanged,
     super.key,
   });
@@ -43,9 +43,9 @@ class CustomCardForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CustomPaymentCardPreview(
-            name: nameCtrl.text,
-            expiry: expiryCtrl.text,
-            number: numberCtrl.text,
+            cardholderName: cardholderNameController.text,
+            cardExpiry: expiryController.text,
+            cardNumber: cardNumberController.text,
           ),
           Padding(
             padding: const EdgeInsets.all(10),
@@ -54,9 +54,9 @@ class CustomCardForm extends StatelessWidget {
               spacing: 10,
               children: [
                 CustomTextField(
-                  controller: numberCtrl,
+                  controller: cardNumberController,
                   textInputType: TextInputType.number,
-                  label: 'Card Number',
+                  captionLabel: 'Card Number',
                   labelColor: AppColors.inkBlack,
                   hintText: '1234 5678 9012 3456',
                   fillColor: AppColors.whisperGrey,
@@ -69,9 +69,9 @@ class CustomCardForm extends StatelessWidget {
                   children: [
                     Expanded(
                       child: CustomTextField(
-                        controller: expiryCtrl,
+                        controller: expiryController,
                         textInputType: TextInputType.datetime,
-                        label: 'Expiry Date',
+                        captionLabel: 'Expiry Date',
                         labelColor: AppColors.inkBlack,
                         hintText: 'MM/YY',
                         fillColor: AppColors.whisperGrey,
@@ -82,9 +82,9 @@ class CustomCardForm extends StatelessWidget {
                     ),
                     Expanded(
                       child: CustomTextField(
-                        controller: cvvCtrl,
+                        controller: cvvController,
                         textInputType: TextInputType.number,
-                        label: 'CVV / CVC',
+                        captionLabel: 'CVV / CVC',
                         labelColor: AppColors.inkBlack,
                         hintText: '•••',
                         fillColor: AppColors.whisperGrey,
@@ -95,9 +95,9 @@ class CustomCardForm extends StatelessWidget {
                   ],
                 ),
                 CustomTextField(
-                  controller: nameCtrl,
+                  controller: cardholderNameController,
                   textInputType: TextInputType.name,
-                  label: 'Name on Card',
+                  captionLabel: 'Name on Card',
                   labelColor: AppColors.inkBlack,
                   hintText: 'Ahmed Al-Rashid',
                   fillColor: AppColors.whisperGrey,

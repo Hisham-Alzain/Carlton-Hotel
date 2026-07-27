@@ -21,7 +21,7 @@ class BookView extends StatelessWidget {
     final TextTheme textStyle = Get.textTheme;
 
     return GetBuilder<BookingFlowController>(
-      builder: (c) => Padding(
+      builder: (controller) => Padding(
         padding: const EdgeInsets.all(10),
         child: SingleChildScrollView(
           child: Column(
@@ -52,9 +52,9 @@ class BookView extends StatelessWidget {
                   Expanded(
                     child: CustomDateBox(
                       label: 'Check-in',
-                      value: c.rangeStart == null
+                      value: controller.rangeStart == null
                           ? 'Select'
-                          : c.rangeStart!.formatDatePicker(),
+                          : controller.rangeStart!.formatDatePicker(),
                       selected: true,
                     ),
                   ),
@@ -62,39 +62,39 @@ class BookView extends StatelessWidget {
                   Expanded(
                     child: CustomDateBox(
                       label: 'Check-out',
-                      value: c.rangeEnd == null
+                      value: controller.rangeEnd == null
                           ? 'Select'
-                          : c.rangeEnd!.formatDatePicker(),
+                          : controller.rangeEnd!.formatDatePicker(),
                     ),
                   ),
                 ],
               ),
 
               CustomDateRangeCalendar(
-                firstDay: c.firstDay,
-                lastDay: c.lastDay,
-                focusedDay: c.focusedDay,
-                rangeStart: c.rangeStart,
-                rangeEnd: c.rangeEnd,
-                onRangeSelected: c.onRangeSelected,
-                onPageChanged: c.onPageChanged,
+                firstDay: controller.firstDay,
+                lastDay: controller.lastDay,
+                focusedDay: controller.focusedDay,
+                rangeStart: controller.rangeStart,
+                rangeEnd: controller.rangeEnd,
+                onRangeSelected: controller.onRangeSelected,
+                onPageChanged: controller.onPageChanged,
               ),
 
               CustomCounterField(
                 title: 'Adults',
                 subtitle: 'Ages 18+',
-                value: c.adults,
-                min: 1,
-                max: 10,
-                onChanged: c.setAdults,
+                value: controller.adults,
+                minCount: 1,
+                maxCount: 10,
+                onChanged: controller.setAdults,
               ),
 
               CustomCounterField(
                 title: 'Children',
                 subtitle: 'Ages 0–17',
-                value: c.children,
-                max: 10,
-                onChanged: c.setChildren,
+                value: controller.children,
+                maxCount: 10,
+                onChanged: controller.setChildren,
               ),
 
               PillContainer(
@@ -105,7 +105,7 @@ class BookView extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        c.dateSummary,
+                        controller.dateSummary,
                         style: textStyle.labelMedium?.copyWith(
                           fontFamily: 'DM Sans',
                           color: AppColors.inkBlack,
@@ -114,7 +114,7 @@ class BookView extends StatelessWidget {
                     ),
 
                     Text(
-                      c.guestSummary,
+                      controller.guestSummary,
                       style: textStyle.labelMedium?.copyWith(
                         color: AppColors.walnutGold,
                       ),
@@ -126,8 +126,10 @@ class BookView extends StatelessWidget {
               CustomFilledButton(
                 width: double.infinity,
                 backgroundColor: AppColors.lagoonTeal,
-                onPressed: c.searchRooms,
-                child: Text(c.roomPreselected ? 'Continue' : 'Search Rooms'),
+                onPressed: controller.searchRooms,
+                child: Text(
+                  controller.roomPreselected ? 'Continue' : 'Search Rooms',
+                ),
               ),
             ],
           ),

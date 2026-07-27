@@ -30,14 +30,14 @@ class CustomListingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
-    final items = meta
+    final metaChips = meta
         .map(
-          (m) => Row(
+          (metaEntry) => Row(
             mainAxisSize: MainAxisSize.min,
             spacing: 10,
             children: [
               SvgPicture.asset(
-                m.iconPath,
+                metaEntry.iconPath,
                 width: 12,
                 height: 12,
                 colorFilter: const ColorFilter.mode(
@@ -46,7 +46,7 @@ class CustomListingCard extends StatelessWidget {
                 ),
               ),
               Text(
-                m.text,
+                metaEntry.text,
                 style: textStyle.labelMedium?.copyWith(
                   color: AppColors.taupeBrown,
                   fontWeight: FontWeight.w300,
@@ -65,7 +65,7 @@ class CustomListingCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CustomImage(
-              path: imagePath,
+              source: imagePath,
               width: width,
               height: 200,
               fit: BoxFit.cover,
@@ -91,12 +91,12 @@ class CustomListingCard extends StatelessWidget {
                     ),
                   ),
                   metaInRow
-                      ? Wrap(spacing: 10, runSpacing: 10, children: items)
+                      ? Wrap(spacing: 10, runSpacing: 10, children: metaChips)
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           spacing: 10,
-                          children: items,
+                          children: metaChips,
                         ),
                   if (priceAmount != null)
                     Text.rich(

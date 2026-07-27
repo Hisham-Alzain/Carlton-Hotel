@@ -29,7 +29,7 @@ class CustomRoomResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
 
-    final total = room.pricePerNight * (nights == 0 ? 1 : nights);
+    final stayTotal = room.pricePerNight * (nights == 0 ? 1 : nights);
     return InkWell(
       onTap: onTap,
       child: Card(
@@ -47,7 +47,7 @@ class CustomRoomResultCard extends StatelessWidget {
             Stack(
               children: [
                 CustomImage(
-                  path: room.images.first,
+                  source: room.images.first,
                   width: double.infinity,
                   height: 150,
                   fit: BoxFit.cover,
@@ -163,7 +163,7 @@ class CustomRoomResultCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '\$$total',
+                            '\$$stayTotal',
                             style: textStyle.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.primary,
@@ -190,7 +190,7 @@ class CustomRoomResultCard extends StatelessWidget {
   Widget _meta(String iconPath, String text) {
     final TextTheme textStyle = Get.textTheme;
     return RowTextComponent(
-      path: iconPath,
+      iconPath: iconPath,
       iconColor: AppColors.graphite,
       text: text,
       textStyle: textStyle.labelSmall?.copyWith(

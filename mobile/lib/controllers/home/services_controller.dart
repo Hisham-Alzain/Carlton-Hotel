@@ -82,6 +82,15 @@ class ServicesController extends GetxController
   /// its title against [DemoData.serviceCategories]. Categories without demo
   /// detail data fall back to the coming-soon snackbar.
   void openServiceCategory(String categoryName) {
+    // The Restaurant tile opens the dining flow rather than a service-request
+    // list. Matched against the bound tile constant, not a loose prefix.
+    if (categoryName == DemoData.restaurantServiceTitle) {
+      Get.toNamed(
+        Routes.restaurantDetail,
+        arguments: DemoData.restaurants.first,
+      );
+      return;
+    }
     final category = DemoData.serviceCategoryByName(categoryName);
     if (category == null) {
       CustomSnackbars.showInfo(message: '$categoryName coming soon');

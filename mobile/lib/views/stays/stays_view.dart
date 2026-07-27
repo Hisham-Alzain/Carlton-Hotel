@@ -16,10 +16,10 @@ class StaysView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<StaysController>(
-      builder: (c) => Column(
+      builder: (controller) => Column(
         children: [
           TabBar(
-            controller: c.tabController,
+            controller: controller.tabController,
             tabs: const [
               Tab(text: 'Active'),
               Tab(text: 'Upcoming'),
@@ -29,11 +29,11 @@ class StaysView extends StatelessWidget {
           //TODO: do not pass controller excplictely when wireing up apis
           Expanded(
             child: TabBarView(
-              controller: c.tabController,
+              controller: controller.tabController,
               children: [
-                _ActiveTab(controller: c),
-                _UpcomingTab(controller: c),
-                _PastTab(controller: c),
+                _ActiveTab(controller: controller),
+                _UpcomingTab(controller: controller),
+                _PastTab(controller: controller),
               ],
             ),
           ),
@@ -49,8 +49,8 @@ class _ActiveTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = controller.active;
-    if (active == null) {
+    final activeStay = controller.active;
+    if (activeStay == null) {
       return const _Empty(
         title: 'No active stay',
         subtitle: 'Your current stay will appear here during check-in.',
@@ -60,7 +60,7 @@ class _ActiveTab extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       children: [
         CustomActiveStayCard(
-          stay: active,
+          stay: activeStay,
           onRequestService: controller.requestService,
           onExpressCheckout: controller.expressCheckout,
         ),
@@ -79,15 +79,15 @@ class _UpcomingTab extends StatelessWidget {
       return _Empty(
         title: 'No upcoming stays',
         subtitle: 'Book your next stay and it will show up here.',
-        actionLabel: 'Book a Stay',
-        onAction: controller.startBooking,
+        primaryLabel: 'Book a Stay',
+        onPrimary: controller.startBooking,
       );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(20),
       itemCount: controller.upcoming.length,
-      itemBuilder: (_, i) {
-        final stay = controller.upcoming[i];
+      itemBuilder: (_, index) {
+        final stay = controller.upcoming[index];
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -124,8 +124,8 @@ class _PastTab extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.all(20),
       itemCount: controller.past.length,
-      itemBuilder: (_, i) {
-        final stay = controller.past[i];
+      itemBuilder: (_, index) {
+        final stay = controller.past[index];
         return CustomPastStayCard(
           stay: stay,
           onViewReceipt: () => controller.showReceipt(stay),
@@ -139,14 +139,14 @@ class _PastTab extends StatelessWidget {
 class _Empty extends StatelessWidget {
   final String title;
   final String subtitle;
-  final String? actionLabel;
-  final VoidCallback? onAction;
+  final String? primaryLabel;
+  final VoidCallback? onPrimary;
 
   const _Empty({
     required this.title,
     required this.subtitle,
-    this.actionLabel,
-    this.onAction,
+    this.primaryLabel,
+    this.onPrimary,
   });
 
   @override
@@ -159,8 +159,8 @@ class _Empty extends StatelessWidget {
       ),
       title: title,
       subtitle: subtitle,
-      primaryLabel: actionLabel,
-      onPrimary: onAction,
+      primaryLabel: primaryLabel,
+      onPrimary: onPrimary,
     );
   }
 }

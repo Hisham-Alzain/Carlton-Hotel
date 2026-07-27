@@ -16,8 +16,7 @@ class BookingSummaryHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
-    final c = controller;
-    final room = c.selectedRoom!;
+    final room = controller.selectedRoom!;
 
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -41,7 +40,7 @@ class BookingSummaryHeader extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                CustomImage(path: room.images.first, fit: BoxFit.cover),
+                CustomImage(source: room.images.first, fit: BoxFit.cover),
                 DecoratedBox(
                   decoration: BoxDecoration(
                     color: AppColors.slateTeal.withValues(alpha: 0.8),
@@ -63,7 +62,7 @@ class BookingSummaryHeader extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${c.dateRange} · ${c.nights} nights',
+                          '${controller.dateRange} · ${controller.nights} nights',
                           style: textStyle.labelMedium?.copyWith(
                             fontFamily: 'DM Sans',
                             color: AppColors.white73,
@@ -111,7 +110,7 @@ class BookingSummaryHeader extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '\$${c.grandTotal}',
+                      '\$${controller.grandTotal}',
                       style: textStyle.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.primary,

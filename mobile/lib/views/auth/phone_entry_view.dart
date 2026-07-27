@@ -29,28 +29,28 @@ class PhoneEntryView extends GetView<PhoneEntryController> {
                 CustomTextField(
                   controller: controller.emailController,
                   textInputType: TextInputType.emailAddress,
-                  label: 'Email Address',
+                  captionLabel: 'Email Address',
                   hintText: 'your@email.com',
-                  validator: (p0) =>
-                      CustomValidation().validateRequiredField(p0) ??
-                      CustomValidation().validateEmail(p0),
+                  validator: (enteredEmail) =>
+                      CustomValidation().validateRequiredField(enteredEmail) ??
+                      CustomValidation().validateEmail(enteredEmail),
                 ),
                 Row(
                   spacing: 10,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    CustomCountryCodePicker(phone: controller.phone),
+                    CustomCountryCodePicker(phoneField: controller.phone),
                     Flexible(
                       child: CustomTextField(
                         controller: controller.phone.controller,
                         inputFormatters: [controller.phone.formatter],
                         textInputType: TextInputType.phone,
                         textDirection: TextDirection.ltr,
-                        label: 'Phone Number',
+                        captionLabel: 'Phone Number',
                         hintText: 'Phone number',
-                        validator: (p0) =>
+                        validator: (enteredPhoneNumber) =>
                             CustomValidation().validatePhoneNumber(
-                              p0,
+                              enteredPhoneNumber,
                               dialCode: controller.phone.dialCode,
                             ),
                       ),

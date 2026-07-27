@@ -1,10 +1,14 @@
 import 'dart:math';
 
 import 'package:carlton/models/booking_models.dart';
+import 'package:carlton/models/chat_message.dart';
 import 'package:carlton/models/home_models.dart';
+import 'package:carlton/models/menu_item.dart';
+import 'package:carlton/models/preference_option.dart';
 import 'package:carlton/models/service_item.dart';
 import 'package:carlton/models/service_models.dart';
 import 'package:carlton/models/service_request.dart';
+import 'package:flutter/material.dart';
 
 /// Every hardcoded demo value in the app lives here, so wiring the real
 /// backend later is a single-file hunt. Nothing in this file should survive
@@ -110,6 +114,249 @@ abstract class DemoData {
     ),
   ];
 
+  // ── Dining (Figma restaurant menu / info / reserve) ────────────────────
+  static const restaurantTagline = 'Fine Syrian & Mediterranean Dining';
+  static const restaurantOpenNow = true;
+
+  /// The Services-hub tile that opens the dining flow instead of a
+  /// service-request list. Bound to both the tile and the routing check so the
+  /// two can't drift.
+  static const restaurantServiceTitle = 'Restaurant Res.';
+  static const restaurantAbout =
+      'Experience the finest Syrian and Mediterranean cuisine in an atmosphere '
+      'of refined elegance. Al-Sham blends traditional Damascene flavors with '
+      'modern culinary techniques, served in a beautifully appointed dining '
+      'room with hand-painted ceilings and soft candlelight.';
+  static const restaurantRating = 4.9;
+  static const restaurantReviews = 124;
+  static const restaurantGallery = <String>[
+    'assets/images/gallery1.png',
+    'assets/images/gallery2.png',
+    'assets/images/gallery3.png',
+    'assets/images/gallery4.png',
+  ];
+  static const reserveTimeSlots = <String>[
+    '12:30 PM',
+    '1:00 PM',
+    '7:00 PM',
+    '7:30 PM',
+    '8:00 PM',
+    '8:30 PM',
+    '9:00 PM',
+  ];
+  static const restaurantMenu = <MenuCategory>[
+    MenuCategory(
+      name: 'Breakfast',
+      items: [
+        MenuItem(
+          name: 'Ful Medames',
+          description:
+              'Slow-cooked fava beans, olive oil, lemon, cumin, '
+              'fresh herbs',
+          price: '\$5',
+          imagePath: 'assets/images/food_ful.png',
+          tag: 'vegan',
+        ),
+        MenuItem(
+          name: 'Continental Spread',
+          description:
+              'Pastries, seasonal fruits, yoghurt, honey, Arabic '
+              'coffee',
+          price: '\$15',
+          imagePath: 'assets/images/food_spread.png',
+        ),
+        MenuItem(
+          name: 'Garden Fresh Omelette',
+          description: 'Eggs, bell peppers, Vegs, cheese, served with toast',
+          price: '\$8',
+          imagePath: 'assets/images/food_omelette.png',
+        ),
+      ],
+    ),
+    MenuCategory(
+      name: 'Starters',
+      items: [
+        MenuItem(
+          name: 'Hummus Beiruti',
+          description: 'Chickpea purée, tahini, garlic and parsley.',
+          price: '\$6',
+          imagePath: 'assets/images/food_ful.png',
+          tag: 'vegan',
+        ),
+        MenuItem(
+          name: 'Fattoush',
+          description: 'Crisp greens, sumac and toasted pita.',
+          price: '\$7',
+          imagePath: 'assets/images/food_omelette.png',
+        ),
+      ],
+    ),
+    MenuCategory(
+      name: 'Mains',
+      items: [
+        MenuItem(
+          name: 'Lamb Shish',
+          description: 'Chargrilled lamb skewers, rice and grilled tomato.',
+          price: '\$22',
+          imagePath: 'assets/images/food_spread.png',
+        ),
+        MenuItem(
+          name: 'Sea Bass Sayadieh',
+          description: 'Spiced rice, caramelised onions and pine nuts.',
+          price: '\$26',
+          imagePath: 'assets/images/food_omelette.png',
+        ),
+      ],
+    ),
+    MenuCategory(
+      name: 'Desserts',
+      items: [
+        MenuItem(
+          name: 'Knafeh Nabulsieh',
+          description: 'Warm cheese pastry, semolina and rose syrup.',
+          price: '\$9',
+          imagePath: 'assets/images/food_spread.png',
+        ),
+      ],
+    ),
+    MenuCategory(
+      name: 'Beverages',
+      items: [
+        MenuItem(
+          name: 'Mint Lemonade',
+          description: 'Fresh lemon, mint and a touch of honey.',
+          price: '\$4',
+          imagePath: 'assets/images/food_ful.png',
+          tag: 'vegan',
+        ),
+      ],
+    ),
+  ];
+
+  // ── Customer Service (Figma "Customer Service" chat) ───────────────────
+  static const csAgentName = 'Lara K.';
+  static const csAgentRole = 'Guest Relations';
+  static const csAgentInitial = 'L';
+  static const csPhone = '+963111234567';
+  static const csQuickReplies = <String>[
+    'Billing inquiry',
+    'Room issue',
+    'Special request',
+    'Feedback',
+  ];
+  static List<ChatMessage> customerServiceThread() => [
+    const ChatMessage(
+      sender: ChatSender.agent,
+      text:
+          'Good afternoon, Ahmed! This is Lara from Carlton Hotel Guest '
+          'Relations. How may I help you today?',
+      time: '3:24 PM',
+    ),
+  ];
+
+  // ── Account (Figma Account screen) ─────────────────────────────────────
+  static const userName = 'Yazan VX';
+  static const userEmail = 'yazanvx412q@example.com';
+
+  // ── Preferences (Figma Preferences + option-picker sheets) ─────────────
+  // Bed / mattress / pillow use the exported Figma glyphs (assets/icons);
+  // language / currency use Material icons.
+  static const bedOptions = <PreferenceOption>[
+    PreferenceOption(
+      id: 'king',
+      label: 'King Bed',
+      iconAsset: 'assets/icons/kingbed.svg',
+    ),
+    PreferenceOption(
+      id: 'queen',
+      label: 'Queen Bed',
+      iconAsset: 'assets/icons/queenbed.svg',
+    ),
+    PreferenceOption(
+      id: 'double',
+      label: 'Double Bed',
+      iconAsset: 'assets/icons/doublebed.svg',
+    ),
+    PreferenceOption(
+      id: 'twin',
+      label: 'Twin Beds',
+      iconAsset: 'assets/icons/twinbeds.svg',
+    ),
+    PreferenceOption(
+      id: 'single',
+      label: 'Single Bed',
+      iconAsset: 'assets/icons/singlebed.svg',
+    ),
+    PreferenceOption(
+      id: 'extra',
+      label: 'Extra Bed',
+      iconAsset: 'assets/icons/extrabed.svg',
+    ),
+  ];
+
+  static const pillowOptions = <PreferenceOption>[
+    PreferenceOption(
+      id: 'soft',
+      label: 'Soft',
+      iconAsset: 'assets/icons/softpillow.svg',
+    ),
+    PreferenceOption(
+      id: 'firm',
+      label: 'Firm',
+      iconAsset: 'assets/icons/firmpillow.svg',
+    ),
+    PreferenceOption(
+      id: 'feather',
+      label: 'Feather',
+      iconAsset: 'assets/icons/featherpillow.svg',
+    ),
+  ];
+
+  static const mattressOptions = <PreferenceOption>[
+    PreferenceOption(
+      id: 'soft',
+      label: 'Soft Mattress',
+      iconAsset: 'assets/icons/softmattress.svg',
+    ),
+    PreferenceOption(
+      id: 'medium',
+      label: 'Medium Mattress',
+      iconAsset: 'assets/icons/mediummattress.svg',
+    ),
+    PreferenceOption(
+      id: 'firm',
+      label: 'Firm Mattress',
+      iconAsset: 'assets/icons/firmmattress.svg',
+    ),
+    PreferenceOption(
+      id: 'foam',
+      label: 'Memory Foam Mattress',
+      iconAsset: 'assets/icons/memoryfoammattress.svg',
+    ),
+    PreferenceOption(
+      id: 'orthopedic',
+      label: 'Orthopedic Mattress',
+      iconAsset: 'assets/icons/orthopedicmattress.svg',
+    ),
+    PreferenceOption(
+      id: 'hotel',
+      label: 'Hotel Standard Mattress',
+      iconAsset: 'assets/icons/hotelstandardmattress.svg',
+    ),
+  ];
+
+  static const languageOptions = <PreferenceOption>[
+    PreferenceOption(id: 'en', label: 'English', icon: Icons.language),
+    PreferenceOption(id: 'ar', label: 'العربية', icon: Icons.language),
+  ];
+
+  // Mirrors the currencies SettingsService actually supports (usd/syp); the
+  // picker delegates to it, so an option it can't set would silently revert.
+  static const currencyOptions = <PreferenceOption>[
+    PreferenceOption(id: 'usd', label: 'USD', icon: Icons.attach_money),
+    PreferenceOption(id: 'syp', label: 'SYP', icon: Icons.payments_outlined),
+  ];
+
   // ── Current stay (Services stay card, Figma 2073:133) ──────────────────
   static const room = 'Room 812';
   static const stayRoomName = 'Grand Damascus Suite';
@@ -160,7 +407,7 @@ abstract class DemoData {
       imageOpacity: 1,
     ),
     ServiceItem(
-      title: 'Restaurant Res.',
+      title: restaurantServiceTitle,
       subtitle: 'Always available',
       imagePath: 'assets/images/tile_restaurant.png',
       imageWidth: 88,
@@ -210,6 +457,32 @@ abstract class DemoData {
           title: 'Late Night Menu',
           description: 'Light bites available until 2 AM',
           eta: 'ETA: 20–30 min',
+        ),
+      ],
+    ),
+    ServiceDetailCategory(
+      key: 'laundry',
+      name: 'Laundry',
+      subtitle: 'Laundry Service',
+      imagePath: 'assets/images/tile_laundry.png',
+      options: [
+        ServiceOption(
+          iconPath: 'assets/icons/svc_laundry_express.svg',
+          title: 'Express Laundry',
+          description: 'Fast cleaning for items you need today.',
+          eta: 'ETA: 3 hr',
+        ),
+        ServiceOption(
+          iconPath: 'assets/icons/svc_laundry_dry_cleaning.svg',
+          title: 'Dry Cleaning',
+          description: 'Suits, dresses, and delicates',
+          eta: 'ETA: 24 hr',
+        ),
+        ServiceOption(
+          iconPath: 'assets/icons/svc_laundry_pressing.svg',
+          title: 'Pressing Service',
+          description: 'Quick pressing for a crisp finish.',
+          eta: 'ETA: 1 hr',
         ),
       ],
     ),

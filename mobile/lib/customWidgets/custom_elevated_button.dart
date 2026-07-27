@@ -25,10 +25,10 @@ class CustomElevatedButton extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).elevatedButtonTheme.style;
+    final buttonStyle = Theme.of(context).elevatedButtonTheme.style;
 
     return ElevatedButton(
-      style: theme?.copyWith(
+      style: buttonStyle?.copyWith(
         fixedSize: WidgetStatePropertyAll(
           Size(width ?? double.infinity, height ?? 50),
         ),

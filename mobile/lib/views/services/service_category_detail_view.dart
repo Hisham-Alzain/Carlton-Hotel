@@ -15,12 +15,12 @@ class ServiceCategoryDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final args = Get.arguments;
-    if (args is! ServiceDetailCategory) {
+    final categoryArgument = Get.arguments;
+    if (categoryArgument is! ServiceDetailCategory) {
       WidgetsBinding.instance.addPostFrameCallback((_) => Get.back());
       return const CustomScaffold(body: SizedBox.shrink());
     }
-    final category = args;
+    final category = categoryArgument;
     final controller = Get.find<ServicesController>();
 
     return CustomScaffold(
@@ -31,11 +31,14 @@ class ServiceCategoryDetailView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             PillContainer(
-              width: 50,
-              height: 50,
+              width: 52,
+              height: 52,
               radius: 14,
               backgroundColor: AppColors.pearlCream,
-              child: CustomImage(path: category.imagePath, fit: BoxFit.contain),
+              child: CustomImage(
+                source: category.imagePath,
+                fit: BoxFit.contain,
+              ),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,16 +70,18 @@ class ServiceCategoryDetailView extends StatelessWidget {
           spacing: 20,
           children: [
             Expanded(
-              child: ListView.builder(
+              child: ListView.separated(
                 padding: EdgeInsets.zero,
                 itemCount: category.options.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final option = category.options[index];
                   return CustomServiceOptionTile(
                     iconPath: option.iconPath,
                     title: option.title,
                     description: option.description,
-                    eta: option.eta,
+                    etaLabel: option.eta,
                     onTap: () => controller.openServiceRequest(option),
                   );
                 },

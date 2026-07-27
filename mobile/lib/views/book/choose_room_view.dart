@@ -32,7 +32,7 @@ class ChooseRoomView extends StatelessWidget {
         ],
       ),
       body: GetBuilder<BookingFlowController>(
-        builder: (c) {
+        builder: (controller) {
           final TextTheme textStyle = Get.textTheme;
           return CustomScrollView(
             slivers: [
@@ -61,7 +61,7 @@ class ChooseRoomView extends StatelessWidget {
                           children: [
                             Flexible(
                               child: Text(
-                                c.dateSummary,
+                                controller.dateSummary,
                                 style: textStyle.labelMedium?.copyWith(
                                   fontFamily: 'DM Sans',
                                   color: AppColors.inkBlack,
@@ -69,7 +69,7 @@ class ChooseRoomView extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              c.guestSummary,
+                              controller.guestSummary,
                               style: textStyle.labelMedium?.copyWith(
                                 fontFamily: 'Plus Jakarta Sans',
                                 color: AppColors.walnutGold,
@@ -85,14 +85,14 @@ class ChooseRoomView extends StatelessWidget {
               SliverPadding(
                 padding: const EdgeInsets.all(10),
                 sliver: SliverList.builder(
-                  itemCount: c.rooms.length,
-                  itemBuilder: (_, i) {
-                    final room = c.rooms[i];
+                  itemCount: controller.rooms.length,
+                  itemBuilder: (_, index) {
+                    final room = controller.rooms[index];
                     return CustomRoomResultCard(
                       room: room,
-                      nights: c.nights,
-                      onSelect: () => c.selectRoom(room),
-                      onTap: () => c.openRoomDetails(room),
+                      nights: controller.nights,
+                      onSelect: () => controller.selectRoom(room),
+                      onTap: () => controller.openRoomDetails(room),
                     );
                   },
                 ),

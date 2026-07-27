@@ -10,32 +10,32 @@ class CustomServiceOptionTile extends StatelessWidget {
   final String iconPath;
   final String title;
   final String description;
-  final String eta;
+  final String etaLabel;
   final VoidCallback onTap;
 
   const CustomServiceOptionTile({
     required this.iconPath,
     required this.title,
     required this.description,
-    required this.eta,
+    required this.etaLabel,
     required this.onTap,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = Get.textTheme;
+    final TextTheme textStyle = Get.textTheme;
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       child: Card(
-        margin: const EdgeInsets.all(10),
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadiusGeometry.circular(14),
+          borderRadius: BorderRadiusGeometry.circular(12),
           side: BorderSide(color: AppColors.black06),
         ),
-        color: AppColors.white,
+        color: AppColors.white39,
         elevation: 1,
         child: Padding(
           padding: const EdgeInsets.all(10),
@@ -43,8 +43,8 @@ class CustomServiceOptionTile extends StatelessWidget {
             spacing: 20,
             children: [
               SvgPicture.asset(
-                height: 30,
-                width: 30,
+                height: 32,
+                width: 32,
                 iconPath,
                 colorFilter: const ColorFilter.mode(
                   AppColors.antiqueGold,
@@ -78,7 +78,7 @@ class CustomServiceOptionTile extends StatelessWidget {
                       radius: 3,
                       padding: const EdgeInsets.all(10),
                       child: Text(
-                        eta,
+                        etaLabel,
                         style: textStyle.labelSmall?.copyWith(
                           color: AppColors.walnutGold,
                         ),

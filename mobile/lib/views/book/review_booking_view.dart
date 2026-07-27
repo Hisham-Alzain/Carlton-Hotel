@@ -14,13 +14,13 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 class ReviewBookingView extends StatelessWidget {
   const ReviewBookingView({super.key});
 
-  static const _icons = {
+  static const _methodIconPaths = {
     PaymentMethod.applePay: 'assets/icons/pay_apple.svg',
     PaymentMethod.googlePay: 'assets/icons/pay_google.svg',
   };
 
-  Widget _breakdown(BookingFlowController c) {
-    final room = c.selectedRoom!;
+  Widget _breakdown(BookingFlowController controller) {
+    final room = controller.selectedRoom!;
     return Padding(
       padding: const EdgeInsets.all(10),
       child: Column(
@@ -28,30 +28,33 @@ class ReviewBookingView extends StatelessWidget {
         spacing: 10,
         children: [
           CustomPriceSummaryRow(
-            title: '${room.name} · ${c.nights} nights',
-            value: '\$${c.roomTotal}',
+            title: '${room.name} · ${controller.nights} nights',
+            value: '\$${controller.roomTotal}',
           ),
-          ...c.selectedAddOnIds.map(
+          ...controller.selectedAddOnIds.map(
             (id) => CustomPriceSummaryRow(
-              title: c.addOns.firstWhere((a) => a.id == id).title,
-              value: '\$${c.addOns.firstWhere((a) => a.id == id).price}',
+              title: controller.addOns
+                  .firstWhere((addOn) => addOn.id == id)
+                  .title,
+              value:
+                  '\$${controller.addOns.firstWhere((addOn) => addOn.id == id).price}',
             ),
           ),
           CustomPriceSummaryRow(
             title: 'Taxes & fees (15%)',
-            value: '\$${c.taxes}',
+            value: '\$${controller.taxes}',
           ),
-          if (c.promoApplied)
+          if (controller.promoApplied)
             CustomPriceSummaryRow(
-              title: 'Promo ${c.promoCtrl.text} (-10%)',
-              value: '-\$${c.promoDiscount}',
+              title: 'Promo ${controller.promoCtrl.text} (-10%)',
+              value: '-\$${controller.promoDiscount}',
               titleColor: AppColors.successGreen,
               valueColor: AppColors.successGreen,
             ),
           const Divider(),
           CustomPriceSummaryRow(
             title: 'Total',
-            value: '\$${c.grandTotal}',
+            value: '\$${controller.grandTotal}',
             isTotal: true,
           ),
         ],
@@ -79,7 +82,7 @@ class ReviewBookingView extends StatelessWidget {
         ],
       ),
       body: GetBuilder<BookingFlowController>(
-        builder: (c) {
+        builder: (controller) {
           final TextTheme textStyle = Get.textTheme;
           return Padding(
             padding: const EdgeInsets.all(20),
@@ -97,7 +100,7 @@ class ReviewBookingView extends StatelessWidget {
                     dotColor: AppColors.iceBlue,
                   ),
                 ),
-                BookingSummaryHeader(controller: c),
+                BookingSummaryHeader(controller: controller),
 
                 Container(
                   decoration: BoxDecoration(
@@ -105,7 +108,7 @@ class ReviewBookingView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.black06, width: 1),
                   ),
-                  child: _breakdown(c),
+                  child: _breakdown(controller),
                 ),
 
                 Container(
@@ -129,10 +132,10 @@ class ReviewBookingView extends StatelessWidget {
                       ),
                       _infoRow(
                         'Guest',
-                        '${c.firstNameCtrl.text} ${c.lastNameCtrl.text}',
+                        '${controller.firstNameCtrl.text} ${controller.lastNameCtrl.text}',
                       ),
-                      _infoRow('Email', c.emailCtrl.text),
-                      _infoRow('Payment', c.paymentMethodDisplay),
+                      _infoRow('Email', controller.emailCtrl.text),
+                      _infoRow('Payment', controller.paymentMethodDisplay),
                     ],
                   ),
                 ),
@@ -140,29 +143,31 @@ class ReviewBookingView extends StatelessWidget {
                 CustomFilledButton(
                   width: double.infinity,
                   backgroundColor:
-                      c.paymentMethod == PaymentMethod.applePay ||
-                          c.paymentMethod == PaymentMethod.googlePay
+                      controller.paymentMethod == PaymentMethod.applePay ||
+                          controller.paymentMethod == PaymentMethod.googlePay
                       ? AppColors.inkBlack
                       : AppColors.lagoonTeal,
-                  onPressed: c.confirmBooking,
+                  onPressed: controller.confirmBooking,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     spacing: 10,
                     children: [
-                      if (_icons[c.paymentMethod] case final glyph?)
+                      if (_methodIconPaths[controller.paymentMethod]
+                          case final iconPath?)
                         SvgPicture.asset(
-                          glyph,
+                          iconPath,
                           width: 16,
                           height: 16,
                           // Apple mark is white; the Google "G" keeps its colours.
-                          colorFilter: c.paymentMethod == PaymentMethod.applePay
+                          colorFilter:
+                              controller.paymentMethod == PaymentMethod.applePay
                               ? const ColorFilter.mode(
                                   AppColors.white,
                                   BlendMode.srcIn,
                                 )
                               : null,
                         ),
-                      Text(c.confirmCtaLabel),
+                      Text(controller.confirmCtaLabel),
                     ],
                   ),
                 ),

@@ -56,7 +56,7 @@ class CustomDialogs {
     bool showIcon = true,
     bool preventBack = false, // ← new
   }) {
-    final color = accentColor ?? _kDefaultColors[type]!;
+    final resolvedAccentColor = accentColor ?? _kDefaultColors[type]!;
 
     return Get.dialog<T>(
       PopScope(
@@ -68,8 +68,8 @@ class CustomDialogs {
               tween: Tween(begin: 0.95, end: 1.0),
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOutCubic,
-              builder: (_, value, child) =>
-                  Transform.scale(scale: value, child: child),
+              builder: (_, scaleFactor, child) =>
+                  Transform.scale(scale: scaleFactor, child: child),
               child: Material(
                 // color: AppColors.backgroundColor,
                 borderRadius: BorderRadius.circular(0),
@@ -84,14 +84,15 @@ class CustomDialogs {
                       spacing: 10,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (showIcon) _buildIconBadge(icon, type, color),
+                        if (showIcon)
+                          _buildIconBadge(icon, type, resolvedAccentColor),
                         Text(
                           title,
                           textAlign: TextAlign.center,
                           style: Get.textTheme.titleMedium?.copyWith(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: color,
+                            color: resolvedAccentColor,
                           ),
                         ),
                         if (message != null)
@@ -103,7 +104,7 @@ class CustomDialogs {
                         ?body,
                         if (showActions)
                           _buildActions(
-                            color: color,
+                            accentColor: resolvedAccentColor,
                             confirmationText: confirmationText,
                             cancellationText: cancellationText,
                             onConfirm: onConfirm,
@@ -124,32 +125,42 @@ class CustomDialogs {
 
   // ── Private helpers ─────────────────────────────────────────────────────────
 
-  static Widget _buildIconBadge(dynamic icon, AppDialogType type, Color color) {
+  static Widget _buildIconBadge(
+    dynamic icon,
+    AppDialogType type,
+    Color accentColor,
+  ) {
     return Container(
       width: 50,
       height: 50,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: accentColor.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       ),
-      child: Center(child: _buildIcon(icon, type, color)),
+      child: Center(child: _buildIcon(icon, type, accentColor)),
     );
   }
 
-  static Widget _buildIcon(dynamic icon, AppDialogType type, Color color) {
-    if (icon is IconData) return Icon(icon, color: color, size: 30);
+  /// [icon] is either an [IconData] or an SVG asset path; falling back to the
+  /// dialog type's default glyph when it is neither.
+  static Widget _buildIcon(
+    dynamic icon,
+    AppDialogType type,
+    Color accentColor,
+  ) {
+    if (icon is IconData) return Icon(icon, color: accentColor, size: 30);
     if (icon is String) {
       return SvgPicture.asset(
         icon,
-        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+        colorFilter: ColorFilter.mode(accentColor, BlendMode.srcIn),
         width: 30,
       );
     }
-    return Icon(_kDefaultIcons[type]!, color: color, size: 30);
+    return Icon(_kDefaultIcons[type]!, color: accentColor, size: 30);
   }
 
   static Widget _buildActions({
-    required Color color,
+    required Color accentColor,
     String? confirmationText,
     String? cancellationText,
     VoidCallback? onConfirm,
@@ -162,7 +173,7 @@ class CustomDialogs {
         Flexible(
           child: CustomElevatedButton(
             width: Get.width / 2,
-            backgroundColor: color,
+            backgroundColor: accentColor,
             foregroundColor: Colors.white,
             onPressed: () {
               _close();
@@ -242,43 +253,43 @@ class CustomDialogs {
     String? errorTitle,
     String? message,
     dynamic icon,
-    Color? color,
+    Color? accentColor,
   }) {
     _showDialog(
       type: AppDialogType.error,
       title: errorTitle ?? AppTranslations.error,
       message: message,
       icon: icon,
-      accentColor: color,
+      accentColor: accentColor,
       confirmationText: AppTranslations.cancel,
       barrierDismissible: true,
     );
   }
 
   static Future<void> showSuccessDialog({
-    String? text,
+    String? message,
     Duration duration = const Duration(seconds: 2),
     dynamic icon,
-    Color? color,
+    Color? accentColor,
   }) async {
     _showDialog(
       type: AppDialogType.success,
       title: AppTranslations.success,
-      message: text,
+      message: message,
       icon: icon,
-      accentColor: color,
+      accentColor: accentColor,
       showActions: false,
     );
     await Future.delayed(duration);
     _close();
   }
 
-  static void showSessionExpiredDialog({Color? color}) {
+  static void showSessionExpiredDialog({Color? accentColor}) {
     _showDialog(
       type: AppDialogType.warning,
       title: AppTranslations.sessionExpired,
       message: AppTranslations.pleaseLoginAgain,
-      accentColor: color,
+      accentColor: accentColor,
       confirmationText: AppTranslations.submit,
       barrierDismissible: false,
     );
@@ -287,17 +298,17 @@ class CustomDialogs {
   static void showConfirmationDialog({
     AppDialogType? type,
     required String title,
-    required String text,
+    required String message,
     VoidCallback? onPressed,
     dynamic icon,
-    Color? color,
+    Color? accentColor,
   }) {
     _showDialog(
       type: type ?? AppDialogType.confirmation,
       title: title,
-      message: text,
+      message: message,
       icon: icon,
-      accentColor: color,
+      accentColor: accentColor,
       onConfirm: onPressed,
       onCancel: () {},
       confirmationText: AppTranslations.yes,
@@ -310,25 +321,27 @@ class CustomDialogs {
     required String hintText,
     required void Function(String? reason) onConfirm,
     dynamic icon,
-    Color? color,
+    Color? accentColor,
   }) {
-    final controller = TextEditingController();
+    final reasonController = TextEditingController();
     _showDialog(
       type: AppDialogType.destructive,
       title: title,
       icon: icon ?? Icons.delete,
-      accentColor: color,
+      accentColor: accentColor,
       onCancel: () {},
       onConfirm: () => onConfirm(
-        controller.text.trim().isEmpty ? null : controller.text.trim(),
+        reasonController.text.trim().isEmpty
+            ? null
+            : reasonController.text.trim(),
       ),
 
       body: Padding(
         padding: const EdgeInsets.all(10),
         child: CustomTextField(
-          controller: controller,
+          controller: reasonController,
           textInputType: TextInputType.multiline,
-          obsecureText: false,
+          obscureText: false,
           prefixIcon: Icons.edit_note,
           hintText: hintText,
           maxLines: 3,

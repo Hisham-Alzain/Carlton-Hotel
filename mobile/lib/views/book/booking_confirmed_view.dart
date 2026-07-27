@@ -26,12 +26,12 @@ class BookingConfirmedView extends StatelessWidget {
   Widget build(BuildContext context) {
     //TODO:move to controller
     final TextTheme textStyle = Get.textTheme;
-    final c = Get.find<BookingFlowController>();
-    final code = c.confirmationCode ?? '';
-    final email = c.emailCtrl.text.trim();
-    final room = c.selectedRoom;
+    final controller = Get.find<BookingFlowController>();
+    final code = controller.confirmationCode ?? '';
+    final email = controller.emailCtrl.text.trim();
+    final room = controller.selectedRoom;
 
-    final base = textStyle.labelMedium?.copyWith(
+    final bodyStyle = textStyle.labelMedium?.copyWith(
       fontFamily: 'DM Sans',
       color: AppColors.graphite,
     );
@@ -66,7 +66,10 @@ class BookingConfirmedView extends StatelessWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        CustomImage(path: room.images.first, fit: BoxFit.cover),
+                        CustomImage(
+                          source: room.images.first,
+                          fit: BoxFit.cover,
+                        ),
                         DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -123,7 +126,7 @@ class BookingConfirmedView extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          c.dateRange,
+                          controller.dateRange,
                           style: textStyle.labelMedium?.copyWith(
                             fontFamily: 'DM Sans',
                             color: AppColors.slateGrey,
@@ -167,7 +170,7 @@ class BookingConfirmedView extends StatelessWidget {
                         ),
                         Text.rich(
                           TextSpan(
-                            style: base,
+                            style: bodyStyle,
                             children: [
                               const TextSpan(
                                 text: 'A confirmation has been sent to ',
@@ -190,7 +193,7 @@ class BookingConfirmedView extends StatelessWidget {
                           width: double.infinity,
                           height: 50,
                           backgroundColor: AppColors.lagoonTeal,
-                          onPressed: c.viewMyStays,
+                          onPressed: controller.viewMyStays,
                           child: const Text('View My Stays'),
                         ),
                       ],

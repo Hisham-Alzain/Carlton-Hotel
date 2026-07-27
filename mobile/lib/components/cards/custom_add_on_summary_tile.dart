@@ -9,12 +9,12 @@ import 'package:get/get.dart';
 class CustomAddOnSummaryTile extends StatelessWidget {
   final String imagePath;
   final String roomName;
-  final String detail; // "Aug 21 – Aug 24 · $280/night"
+  final String subtitle; // "Aug 21 – Aug 24 · $280/night"
 
   const CustomAddOnSummaryTile({
     required this.imagePath,
     required this.roomName,
-    required this.detail,
+    required this.subtitle,
     super.key,
   });
 
@@ -29,7 +29,7 @@ class CustomAddOnSummaryTile extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: CustomImage(
-              path: imagePath,
+              source: imagePath,
               width: 50,
               height: 50,
               fit: BoxFit.cover,
@@ -48,7 +48,7 @@ class CustomAddOnSummaryTile extends StatelessWidget {
                 ),
               ),
               Text(
-                detail,
+                subtitle,
                 style: textStyle.labelSmall?.copyWith(
                   fontFamily: 'DM Sans',
                   color: AppColors.taupeBrown,

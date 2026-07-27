@@ -27,41 +27,42 @@ class CustomInfoBanner extends StatelessWidget {
     super.key,
   });
 
-  ({Color bg, Color icon, String iconPath}) get _style => switch (tone) {
-    InfoBannerTone.info => (
-      bg: AppColors.white10,
-      icon: AppColors.inkBlack,
-      iconPath: 'assets/icons/info.svg',
-    ),
+  ({Color backgroundColor, Color iconColor, String iconPath}) get _style =>
+      switch (tone) {
+        InfoBannerTone.info => (
+          backgroundColor: AppColors.white10,
+          iconColor: AppColors.inkBlack,
+          iconPath: 'assets/icons/info.svg',
+        ),
 
-    InfoBannerTone.warning => (
-      bg: AppColors.antiqueGold08,
-      icon: AppColors.antiqueGold,
-      iconPath: 'assets/icons/warning.svg',
-    ),
+        InfoBannerTone.warning => (
+          backgroundColor: AppColors.antiqueGold08,
+          iconColor: AppColors.antiqueGold,
+          iconPath: 'assets/icons/warning.svg',
+        ),
 
-    InfoBannerTone.success => (
-      bg: AppColors.successGreen09,
-      icon: AppColors.successGreen,
-      iconPath: 'assets/icons/check.svg',
-    ),
+        InfoBannerTone.success => (
+          backgroundColor: AppColors.successGreen09,
+          iconColor: AppColors.successGreen,
+          iconPath: 'assets/icons/check.svg',
+        ),
 
-    InfoBannerTone.danger => (
-      bg: AppColors.crimsonRed08,
-      icon: AppColors.brickRed,
-      iconPath: 'assets/icons/warning.svg',
-    ),
-  };
+        InfoBannerTone.danger => (
+          backgroundColor: AppColors.crimsonRed08,
+          iconColor: AppColors.brickRed,
+          iconPath: 'assets/icons/warning.svg',
+        ),
+      };
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textstyle = Get.textTheme;
+    final TextTheme textStyle = Get.textTheme;
 
-    final s = _style;
+    final toneStyle = _style;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: s.bg,
+        color: toneStyle.backgroundColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.white48, width: 1),
         boxShadow: [
@@ -76,14 +77,14 @@ class CustomInfoBanner extends StatelessWidget {
         spacing: 10,
         children: [
           SvgPicture.asset(
-            iconPath ?? s.iconPath,
+            iconPath ?? toneStyle.iconPath,
 
-            colorFilter: ColorFilter.mode(s.icon, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(toneStyle.iconColor, BlendMode.srcIn),
           ),
           Flexible(
             child: Text(
               message,
-              style: textstyle.labelMedium?.copyWith(
+              style: textStyle.labelMedium?.copyWith(
                 fontFamily: 'DM Sans',
                 color: AppColors.inkBlack,
               ),

@@ -1,6 +1,7 @@
 import 'package:carlton/services/settings_service.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class CustomChatTextField extends StatelessWidget {
@@ -26,13 +27,13 @@ class CustomChatTextField extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    final theme = Get.theme;
+    final TextTheme textStyle = Get.textTheme;
 
-    final inputStyle = theme.textTheme.bodyLarge?.copyWith(
+    final inputStyle = textStyle.bodyLarge?.copyWith(
       color: AppColors.espressoInk,
       fontWeight: FontWeight.w400,
     );
-    final hintStyle = theme.textTheme.bodyLarge?.copyWith(
+    final hintStyle = textStyle.bodyLarge?.copyWith(
       color: AppColors.espressoInk50,
       fontWeight: FontWeight.w400,
     );
@@ -64,25 +65,39 @@ class CustomChatTextField extends StatelessWidget {
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // IconButton(
-              //   icon: const Icon(Icons.mic_none),
-              //   color: AppColors.espressoInk50,
-              //   onPressed: onMicTap,
-              // ),
+              GestureDetector(
+                onTap: onMicTap,
+                child: SvgPicture.asset(
+                  'assets/icons/mic.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.mediumGrey,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
               GestureDetector(
                 onTap: onSendTap,
                 child: Container(
                   margin: const EdgeInsets.all(10),
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: canSend ? AppColors.primary : AppColors.silverGrey,
+                    color: canSend
+                        ? AppColors.lagoonTeal
+                        : AppColors.silverGrey,
                   ),
-                  child: const Icon(
-                    Icons.arrow_upward,
-                    color: Colors.white,
-                    size: 24,
+                  child: SvgPicture.asset(
+                    'assets/icons/send_arrow.svg',
+                    width: 20,
+                    height: 20,
+                    colorFilter: const ColorFilter.mode(
+                      Colors.white,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
               ),

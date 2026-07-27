@@ -21,15 +21,15 @@ class ServicesView extends GetView<ServicesController> {
       body: GetBuilder<ServicesController>(
         builder: (controller) {
           switch (controller.homeState) {
-            // Guest with a current stay: their room + full room-service catalog.
+            // Not signed in: services are gated behind sign-in.
             case ServicesHomeState.guestBrowse:
-              return _ActiveStayServices(controller: controller);
+              return const _GuestBrowse();
             // Signed in, no booking: invite them to book.
             case ServicesHomeState.exploreAndBook:
               return const _ExploreAndBook();
-            // Not signed in: services are gated behind sign-in.
+            // Guest with a current stay: their room + full room-service catalog.
             case ServicesHomeState.activeStay:
-              return const _GuestBrowse();
+              return _ActiveStayServices(controller: controller);
           }
         },
       ),
@@ -53,7 +53,7 @@ class _ActiveStayServices extends StatelessWidget {
         spacing: 20,
         children: [
           CustomStayCard(
-            room: DemoData.room,
+            roomName: DemoData.room,
             checkedInTime: DemoData.checkedInTime,
             nightsRemaining: DemoData.nightsRemaining,
             imagePath: DemoData.stayImagePath,
@@ -77,7 +77,7 @@ class _ActiveStayServices extends StatelessWidget {
                 onTap: () => controller.openServiceCategory(
                   controller.services[index].title,
                 ),
-                child: CustomServiceCard(item: controller.services[index]),
+                child: CustomServiceCard(service: controller.services[index]),
               ),
             ),
             _QuickRequests(controller: controller),
@@ -98,7 +98,7 @@ class _ActiveStayServices extends StatelessWidget {
                   ...controller.activeRequests.map(
                     (request) => CustomRequestCard(
                       title: request.title,
-                      detail: request.detail,
+                      subtitle: request.detail,
                       iconPath: request.status.iconPath,
                       iconBackgroundColor: request.status.iconBgColor,
                       statusLabel: request.status.label,

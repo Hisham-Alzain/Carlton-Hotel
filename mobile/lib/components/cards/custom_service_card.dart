@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CustomServiceCard extends StatelessWidget {
-  final ServiceItem item;
+  final ServiceItem service;
 
-  const CustomServiceCard({super.key, required this.item});
+  const CustomServiceCard({super.key, required this.service});
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +28,9 @@ class CustomServiceCard extends StatelessWidget {
             end: 0,
             bottom: 0,
             child: CustomImage(
-              path: item.imagePath,
-              width: item.imageWidth,
-              height: item.imageHeight,
+              source: service.imagePath,
+              width: service.imageWidth,
+              height: service.imageHeight,
               fit: BoxFit.contain,
             ),
           ),
@@ -42,7 +42,7 @@ class CustomServiceCard extends StatelessWidget {
               spacing: 2,
               children: [
                 Text(
-                  item.title,
+                  service.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: textStyle.labelLarge?.copyWith(
@@ -51,7 +51,7 @@ class CustomServiceCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  item.subtitle,
+                  service.subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: textStyle.labelMedium?.copyWith(

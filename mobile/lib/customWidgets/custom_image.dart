@@ -9,7 +9,9 @@ import 'package:shimmer/shimmer.dart';
 
 //TODO: do not use local assets here use fluttet=r default image widget
 class CustomImage extends StatelessWidget {
-  final String path;
+  /// Either a bundled asset path (`assets/…`), an absolute URL (`http…`), or a
+  /// storage-relative path that [url] expands against the API storage host.
+  final String source;
   final double? height;
   final double? width;
   final BoxFit? fit;
@@ -17,7 +19,7 @@ class CustomImage extends StatelessWidget {
   final double? iconSize;
 
   const CustomImage({
-    required this.path,
+    required this.source,
     this.height,
     this.width,
     this.fit,
@@ -26,30 +28,33 @@ class CustomImage extends StatelessWidget {
     super.key,
   });
 
-  String get url =>
-      path.startsWith('http') ? path : '${ApiService.storageBaseUrl}$path';
+  String get url => source.startsWith('http')
+      ? source
+      : '${ApiService.storageBaseUrl}$source';
 
-  bool get _isAsset => path.startsWith('assets/');
+  bool get _isAsset => source.startsWith('assets/');
 
   // A cache dimension is only meaningful for a finite, positive size. Callers may
   // pass width/height as double.infinity ("fill available"), which must not reach
   // .round() — Infinity.toInt() throws UnsupportedError.
-  static int? _cacheDim(double? logical, double dpr) {
-    if (logical == null || !logical.isFinite || logical <= 0) return null;
-    return (logical * dpr).round();
+  static int? _cacheDim(double? logicalSize, double devicePixelRatio) {
+    if (logicalSize == null || !logicalSize.isFinite || logicalSize <= 0) {
+      return null;
+    }
+    return (logicalSize * devicePixelRatio).round();
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isAsset) return _buildAsset(context);
-    if (path.endsWith('.svg')) return _buildSvg();
+    if (source.endsWith('.svg')) return _buildSvg();
     return _buildRaster(context);
   }
 
   Widget _buildAsset(BuildContext context) {
-    if (path.endsWith('.svg')) {
+    if (source.endsWith('.svg')) {
       return SvgPicture.asset(
-        path,
+        source,
         height: height,
         width: width,
         fit: fit ?? BoxFit.cover,
@@ -62,14 +67,14 @@ class CustomImage extends StatelessWidget {
     // (2MB+ heroes) — without a cacheWidth they decode at native pixel size.
     // Cap at the displayed width (or the screen width for full-bleed images)
     // times the device pixel ratio: identical on screen, a fraction of the RAM.
-    final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0;
+    final devicePixelRatio = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0;
     final targetWidth = width ?? MediaQuery.maybeSizeOf(context)?.width;
     return Image.asset(
-      path,
+      source,
       height: height,
       width: width,
       fit: fit,
-      cacheWidth: _cacheDim(targetWidth, dpr),
+      cacheWidth: _cacheDim(targetWidth, devicePixelRatio),
     );
   }
 
@@ -87,18 +92,18 @@ class CustomImage extends StatelessWidget {
   }
 
   Widget _buildRaster(BuildContext context) {
-    final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0;
+    final devicePixelRatio = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0;
     return CachedNetworkImage(
       imageUrl: url,
       cacheManager: MyCacheManager(),
       height: height,
       width: width,
       fit: fit ?? BoxFit.cover,
-      memCacheWidth: _cacheDim(width, dpr),
-      memCacheHeight: _cacheDim(height, dpr),
+      memCacheWidth: _cacheDim(width, devicePixelRatio),
+      memCacheHeight: _cacheDim(height, devicePixelRatio),
       placeholder: (_, _) => _shimmer(),
-      errorWidget: (_, url, error) {
-        if (!kReleaseMode) log('Image Error [$url]: $error');
+      errorWidget: (_, failedUrl, error) {
+        if (!kReleaseMode) log('Image Error [$failedUrl]: $error');
         return _error();
       },
     );

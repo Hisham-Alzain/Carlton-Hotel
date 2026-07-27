@@ -44,7 +44,13 @@ class AssignRoomAction
 
         DB::transaction(function () use ($reservationRoom, $room, $reservation) {
             $reservationRoom->update(['room_id' => $room->id]);
-            $reservation->update(['status' => ReservationStatus::CHECKED_IN]);
+            $reservation->update([
+                'status' => ReservationStatus::CHECKED_IN,
+                // Mobile's "check-in time" — check_in is only a DATE. Keep the
+                // first stamp on re-assignment so the guest's arrival time is
+                // not rewritten by a room move.
+                'checked_in_at' => $reservation->checked_in_at ?? now(),
+            ]);
         });
 
         // Fulfilled in P9: pushes the "room ready" notification to the guest.

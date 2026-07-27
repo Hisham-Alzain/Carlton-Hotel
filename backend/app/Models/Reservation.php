@@ -19,7 +19,8 @@ class Reservation extends Model
 
     protected $fillable = [
         'guest_id', 'booking_code', 'source', 'external_ref', 'external_channel',
-        'check_in', 'check_out', 'status', 'hold_expires_at', 'payment_method',
+        'check_in', 'check_out', 'checked_in_at', 'checked_out_at', 'dnd_until',
+        'status', 'hold_expires_at', 'payment_method',
         'total_usd', 'promo_code_id', 'last_name', 'phone',
     ];
 
@@ -29,6 +30,9 @@ class Reservation extends Model
         'payment_method'  => PaymentMethod::class,
         'check_in'        => 'date',
         'check_out'       => 'date',
+        'checked_in_at'   => 'datetime',
+        'checked_out_at'  => 'datetime',
+        'dnd_until'       => 'datetime',
         'hold_expires_at' => 'datetime',
         'total_usd'       => 'decimal:2',
     ];
@@ -49,6 +53,23 @@ class Reservation extends Model
     public function nights(): int
     {
         return (int) $this->check_in->diffInDays($this->check_out);
+    }
+
+    /** Nights left to sleep, floored at zero on or after the checkout date. */
+    public function nightsRemaining(): int
+    {
+        return (int) max(0, now()->startOfDay()->diffInDays($this->check_out, false));
+    }
+
+    /** Do-not-disturb is on while the expiry is still in the future. */
+    public function isDndActive(): bool
+    {
+        return $this->dnd_until !== null && $this->dnd_until->isFuture();
+    }
+
+    public function folio(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Folio::class);
     }
 
     // OTP contact for booking-code linking: prefer linked guest, fall back to stub columns

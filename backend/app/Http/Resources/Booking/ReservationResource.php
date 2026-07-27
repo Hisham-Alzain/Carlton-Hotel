@@ -15,6 +15,13 @@ class ReservationResource extends BaseResource
             'status'         => $this->status,
             'check_in'       => $this->check_in?->toDateString(),
             'check_out'      => $this->check_out?->toDateString(),
+            'checked_in_at'  => $this->checked_in_at?->toIso8601String(),
+            'checked_out_at' => $this->checked_out_at?->toIso8601String(),
+            // Surfaced for staff too, so housekeeping can see the flag the guest set.
+            'dnd'            => [
+                'enabled' => $this->isDndActive(),
+                'until'   => $this->dnd_until?->toIso8601String(),
+            ],
             'nights'         => $this->nights(),
             'source'         => $this->source,
             'payment_method' => $this->payment_method,

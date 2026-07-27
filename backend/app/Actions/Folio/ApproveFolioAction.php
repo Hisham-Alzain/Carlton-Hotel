@@ -17,7 +17,10 @@ class ApproveFolioAction
             $folio  = $result['data'];
 
             $folio->update(['approved_by_guest_at' => now()]);
-            $reservation->update(['status' => ReservationStatus::CHECKED_OUT]);
+            $reservation->update([
+                'status'         => ReservationStatus::CHECKED_OUT,
+                'checked_out_at' => now(),
+            ]);
 
             return ['data' => $folio->fresh()->load('items'), 'code' => 200];
         });

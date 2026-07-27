@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ServiceCategoryController as AdminServiceCategory
 use App\Http\Controllers\Admin\ServiceItemController as AdminServiceItemController;
 use App\Http\Controllers\Api\MenuController as ApiMenuController;
 use App\Http\Controllers\Api\ServiceCatalogController;
+use App\Http\Controllers\Api\StayController;
 use App\Http\Controllers\Api\TableReservationController;
 use App\Http\Controllers\Api\AmenityController as ApiAmenityController;
 use App\Http\Controllers\Api\ReviewController as ApiReviewController;
@@ -237,6 +238,27 @@ Route::post('/reservations/guest/verify', [ReservationController::class, 'verify
 // guest's reservation history inside SubmitReviewAction, not gated at the route.
 Route::middleware('auth:guests')
     ->post('/reviews/{type}/{uuid}', [ApiReviewController::class, 'store']);
+
+// ──────────────────────────────────────────────────────────────────────
+// Stays — read projections over reservations for the mobile stay screens.
+// Plain auth:guests on the three reads: "no active stay" is an empty state,
+// not a 403. Checkout reuses POST /folio/approve (it already approves the bill
+// and flips the reservation to checked_out); cancelling an upcoming stay reuses
+// DELETE /reservations/{reservation}; "book again" is a client deep-link into
+// the existing quote + POST /reservations flow, seeded by room_type_uuid on the
+// past-stay payload.
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware('auth:guests')->prefix('stays')->group(function () {
+    Route::get('/active',   [StayController::class, 'active']);
+    Route::get('/upcoming', [StayController::class, 'upcoming']);
+    Route::get('/past',     [StayController::class, 'past']);
+    Route::get('/{reservation}/receipt',     [StayController::class, 'receipt']);
+    Route::get('/{reservation}/receipt/pdf', [StayController::class, 'receiptPdf']);
+});
+
+// DND needs an in-progress stay, so it keeps the in-room tier.
+Route::middleware(['auth:guests', 'is_checked_in'])
+    ->patch('/stays/active/dnd', [StayController::class, 'setDnd']);
 
 // Authenticated guest — one-step booking + self-service
 Route::middleware('auth:guests')->prefix('reservations')->group(function () {

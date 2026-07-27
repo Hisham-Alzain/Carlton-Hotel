@@ -17,6 +17,11 @@ class ServiceRequestResource extends BaseResource
             'priority'   => $this->priority,
             'notes'      => $this->notes,
             'created_at' => $this->created_at?->toIso8601String(),
+            // Null for legacy free-string requests placed outside the catalog.
+            'service_item' => $this->whenLoaded('serviceItem', fn () => $this->serviceItem
+                ? new ServiceItemResource($this->serviceItem)
+                : null),
+            'category_code' => $this->whenLoaded('serviceItem', fn () => $this->serviceItem?->category?->code),
         ];
     }
 }

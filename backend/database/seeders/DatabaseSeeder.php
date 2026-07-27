@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             BookingSeeder::class,
             EventInquirySeeder::class,
             ServiceCatalogSeeder::class,
+            GuestServiceCatalogSeeder::class,
             GuestActivitySeeder::class,
         ]);
     }

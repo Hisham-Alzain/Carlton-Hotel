@@ -16,7 +16,7 @@ class ServiceRequest extends Model
     use HasFactory, HasUuid, LogsActivity;
 
     protected $fillable = [
-        'guest_id', 'reservation_id', 'type', 'department',
+        'guest_id', 'reservation_id', 'service_item_id', 'type', 'department',
         'status', 'priority', 'assigned_user_id', 'notes',
     ];
 
@@ -29,4 +29,7 @@ class ServiceRequest extends Model
     public function guest(): BelongsTo       { return $this->belongsTo(Guest::class); }
     public function reservation(): BelongsTo { return $this->belongsTo(Reservation::class); }
     public function assignedUser(): BelongsTo { return $this->belongsTo(User::class, 'assigned_user_id'); }
+
+    /** Null for legacy free-string requests placed outside the catalog. */
+    public function serviceItem(): BelongsTo { return $this->belongsTo(ServiceItem::class); }
 }

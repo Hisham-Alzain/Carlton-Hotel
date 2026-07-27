@@ -5,7 +5,10 @@ use App\Http\Controllers\Admin\CheckInApprovalController;
 use App\Http\Controllers\Admin\HomeSliderController as AdminHomeSliderController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Api\HomeSliderController as ApiHomeSliderController;
+use App\Http\Controllers\Admin\ServiceCategoryController as AdminServiceCategoryController;
+use App\Http\Controllers\Admin\ServiceItemController as AdminServiceItemController;
 use App\Http\Controllers\Api\MenuController as ApiMenuController;
+use App\Http\Controllers\Api\ServiceCatalogController;
 use App\Http\Controllers\Api\TableReservationController;
 use App\Http\Controllers\Api\AmenityController as ApiAmenityController;
 use App\Http\Controllers\Api\ReviewController as ApiReviewController;
@@ -103,6 +106,9 @@ Route::prefix('public')->group(function () {
     Route::get('/event-spaces',               [ApiEventSpaceController::class,  'index']);
     Route::get('/event-spaces/{eventSpace}',  [ApiEventSpaceController::class,  'show']);
     Route::get('/amenities',              [ApiAmenityController::class,    'index']);
+    // Guest service menu: 8 categories with their microservices. `kind` tells
+    // the client how to render each one — see ServiceCategoryKind.
+    Route::get('/service-catalog',        [ServiceCatalogController::class, 'index']);
     // {type} is a ReviewableType value (room_type|dining_venue) — see ReviewService.
     Route::get('/reviews/{type}/{uuid}',  [ApiReviewController::class,     'index']);
     Route::get('/pages/{slug}',           [ApiPageController::class,       'show']);
@@ -301,6 +307,8 @@ Route::middleware(['auth:users', 'permission:cms.edit'])->prefix('cms')->group(f
     Route::apiResource('restaurant-tables', RestaurantTableController::class)->parameters(['restaurant-tables' => 'restaurantTable']);
     Route::apiResource('pool-cabanas', PoolCabanaController::class)->parameters(['pool-cabanas' => 'poolCabana']);
     Route::apiResource('transfers', TransferController::class);
+    Route::apiResource('service-categories', AdminServiceCategoryController::class)->parameters(['service-categories' => 'serviceCategory']);
+    Route::apiResource('service-items', AdminServiceItemController::class)->parameters(['service-items' => 'serviceItem']);
     Route::apiResource('menu-categories', MenuCategoryController::class)->parameters(['menu-categories' => 'menuCategory']);
     Route::apiResource('menu-items', MenuItemController::class)->parameters(['menu-items' => 'menuItem']);
     Route::post  ('/menu-items/{menuItem}/images',         [MediaController::class, 'storeMenuItem']);

@@ -4,9 +4,11 @@ namespace App\Actions\Folio;
 
 use App\Enums\FolioStatus;
 use App\Enums\ServiceBookingStatus;
+use App\Enums\ServiceRequestStatus;
 use App\Models\Folio;
 use App\Models\Reservation;
 use App\Models\ServiceBooking;
+use App\Models\ServiceRequest;
 use Illuminate\Support\Facades\DB;
 
 class GenerateFolioAction
@@ -56,6 +58,30 @@ class GenerateFolioAction
                     'amount_usd'  => (float) $price,
                     'source_type' => 'service_booking',
                     'source_id'   => $booking->id,
+                ];
+            }
+
+            // Catalog service requests carrying a priced item. Billed here rather
+            // than at request time because this action rebuilds line items from
+            // scratch on every call — a row written at request time would be
+            // deleted on the next regeneration.
+            $requests = ServiceRequest::where('reservation_id', $reservation->id)
+                ->whereNot('status', ServiceRequestStatus::CANCELLED)
+                ->whereNotNull('service_item_id')
+                ->with('serviceItem')
+                ->get();
+
+            foreach ($requests as $serviceRequest) {
+                $price = $serviceRequest->serviceItem?->price_usd;
+                if ($price === null) {
+                    continue; // complimentary item — no charge
+                }
+
+                $lines[] = [
+                    'description' => $serviceRequest->serviceItem->getTranslation('name', app()->getLocale()),
+                    'amount_usd'  => (float) $price,
+                    'source_type' => 'service_request',
+                    'source_id'   => $serviceRequest->id,
                 ];
             }
 

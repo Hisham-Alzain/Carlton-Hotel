@@ -20,6 +20,7 @@ class ServiceRequestService
     public function myRequests(Guest $guest): array
     {
         return ['data' => ServiceRequest::where('guest_id', $guest->id)
+            ->with('serviceItem.category')
             ->latest()
             ->paginate(15), 'code' => 200];
     }

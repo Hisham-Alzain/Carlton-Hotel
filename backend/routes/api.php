@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\ServiceCatalogController;
 use App\Http\Controllers\Api\StayController;
 use App\Http\Controllers\Api\TableReservationController;
 use App\Http\Controllers\Api\AmenityController as ApiAmenityController;
+use App\Http\Controllers\Api\BookableController;
 use App\Http\Controllers\Api\ReviewController as ApiReviewController;
 use App\Http\Controllers\Admin\ConversationController as AdminConversationController;
 use App\Http\Controllers\Admin\FolioController as AdminFolioController;
@@ -110,6 +111,13 @@ Route::prefix('public')->group(function () {
     // Guest service menu: 8 categories with their microservices. `kind` tells
     // the client how to render each one — see ServiceCategoryKind.
     Route::get('/service-catalog',        [ServiceCatalogController::class, 'index']);
+
+    // Bookables — the uuids POST /service-bookings needs. Without these the
+    // booking endpoint had no discoverable input.
+    Route::get('/spa-services',   [BookableController::class, 'spaServices']);
+    Route::get('/pool-cabanas',   [BookableController::class, 'poolCabanas']);
+    Route::get('/transfers',      [BookableController::class, 'transfers']);
+    Route::get('/dining-venues/{diningVenue}/tables', [BookableController::class, 'restaurantTables']);
     // {type} is a ReviewableType value (room_type|dining_venue) — see ReviewService.
     Route::get('/reviews/{type}/{uuid}',  [ApiReviewController::class,     'index']);
     Route::get('/pages/{slug}',           [ApiPageController::class,       'show']);

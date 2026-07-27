@@ -306,6 +306,10 @@ All read-only, no token required. Same content the website shows — pulled by t
 | Promotions (offers) | `GET /public/promotions` | `GET /public/promotions/{uuid}` |
 | Service catalog | `GET /public/service-catalog` | — |
 | Reviews | `GET /public/reviews/{type}/{uuid}` | — |
+| Spa services | `GET /public/spa-services` | — |
+| Pool cabanas | `GET /public/pool-cabanas` | — |
+| Transfers | `GET /public/transfers` | — |
+| Restaurant tables | `GET /public/dining-venues/{uuid}/tables` | — |
 
 List endpoints are paginated (`data.items` + `data.meta`, 15/page) unless noted. Every type except `Page` carries an `images: [{uuid, url, file_name, sort_order}]` array. Names, descriptions, etc. are all `{en, ar}` objects — pick the key matching your locale. `EventSpace.amenities` is a **translatable string** (`{en, ar}`), unlike the room-type amenity objects below — don't share parsing logic between them.
 
@@ -445,7 +449,7 @@ Same as the website (public, tier-1) — see request/response shapes in `API_GUI
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `bookable_type` | string | ✅ | `spa_service`, `restaurant_table`, `pool_cabana`, or `transfer` |
-| `bookable_uuid` | string | ✅ | uuid of the specific spa service/table/cabana/transfer |
+| `bookable_uuid` | string | ✅ | uuid of the specific spa service/table/cabana/transfer — list them via `GET /public/spa-services`, `/public/pool-cabanas`, `/public/transfers`, `/public/dining-venues/{uuid}/tables` |
 | `scheduled_at` | datetime | ✅ | Must be in the future |
 | `notes` | string | optional | Max 1000 |
 
@@ -607,7 +611,7 @@ state, not an error, so don't treat a `null`/`[]` payload as a failure.
 | Field | Notes |
 |---|---|
 | `booking_code` | The "reservation code" |
-| `room_number` | ⚠ **usually `null`** — rooms are assigned at check-in. Render `room_name` pre-arrival |
+| `room_number` | e.g. `"801"` — a specific room is reserved when the booking is made, so this is populated straight away |
 | `room_name` | `{en, ar}` |
 | `price_usd` | Reservation total |
 | `check_in` / `check_out` / `nights` | |

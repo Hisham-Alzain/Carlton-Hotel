@@ -412,7 +412,7 @@ Paginated, all reservations, newest first.
   "uuid": "...", "booking_code": "CARL-XXXXXXXX", "status": "confirmed",
   "check_in": "2026-07-20", "check_out": "2026-07-22", "nights": 2,
   "source": "direct", "payment_method": "cash", "total_usd": "270.00", "hold_expires_at": null,
-  "rooms": [ { "room_type": { "...room type..." }, "room_uuid": null, "room_number": null, "price_usd": "270.00" } ],
+  "rooms": [ { "room_type": { "...room type..." }, "room_uuid": "...", "room_number": "801", "price_usd": "270.00" } ],
   "guest": { "uuid": "...", "name": "...", "phone": "...", "email": "..." },
   "promo_code": null
 }
@@ -428,13 +428,15 @@ Paginated, all reservations, newest first.
 
 ### POST /cms/reservations/{uuid}/assign-room — `reservations.create`
 
-**Purpose:** Physically assign a room at check-in. **This is the check-in action — there is no separate "check in" endpoint.**
+**Purpose:** Check the guest in, optionally moving them to a different room. **This is the check-in action — there is no separate "check in" endpoint.**
 
-**Request body:** `{ "room_uuid": "..." }` (required, must exist).
+**Request body:** `{ "room_uuid": "..." }` — **optional.**
 
-**Behavior:** requires the reservation to be `confirmed`, the room's type to match the booked type, and no date-overlapping assignment of that room elsewhere. On success, sets `room_id` and flips reservation `status` to `checked_in`.
+A specific room is now reserved when the booking is created, so `rooms[].room_number` is already populated before check-in. Omit `room_uuid` to check the guest into the room they were given; send it only to move them to a different room of the same type.
 
-**Response `data`:** updated reservation with the room now populated under `rooms[].room_uuid`/`room_number`.
+**Behavior:** requires the reservation to be `confirmed`, the target room's type to match the booked type, and no date-overlapping hold on that room by another booking. A booking holds its room from creation — including while merely `pending` — so a room reserved by an unconfirmed booking cannot be handed to someone else. On success, sets `room_id`, flips `status` to `checked_in`, and stamps `checked_in_at` (a later room move does not overwrite the original arrival time).
+
+**Response `data`:** updated reservation with the room under `rooms[].room_uuid`/`room_number`.
 
 **Failure `error_code`s:** `reservation_state` (422, wrong status or type mismatch), `room_already_assigned` (409, overlapping dates), `validation_failed` (422, bad `room_uuid`).
 

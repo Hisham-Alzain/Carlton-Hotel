@@ -15,8 +15,8 @@ class UpcomingStayResource extends BaseResource
             'uuid'         => $this->uuid,
             'booking_code' => $this->booking_code,
             'status'       => $this->status,
-            // Usually null: rooms are assigned at check-in, so the app should
-            // render room_name pre-arrival.
+            // Populated from booking time — a specific room is reserved when the
+            // booking is made, not at check-in.
             'room_number'  => $stayRoom?->room?->number,
             'room_name'    => $stayRoom?->roomType?->getTranslations('name'),
             'price_usd'    => $this->total_usd,

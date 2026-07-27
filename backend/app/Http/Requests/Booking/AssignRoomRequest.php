@@ -9,7 +9,10 @@ class AssignRoomRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'room_uuid' => ['required', 'string', 'exists:rooms,uuid'],
+            // Optional: rooms are reserved at booking time, so omitting this
+            // checks the guest into the room they already hold. Send it only to
+            // move them to a different room of the same type.
+            'room_uuid' => ['nullable', 'string', 'exists:rooms,uuid'],
         ];
     }
 }

@@ -26,7 +26,16 @@ class CreateReservationAction
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if (! $this->checkAvailability->handle($roomType->id, $data['check_in'], $data['check_out'])) {
+            // A specific room is reserved now, not at check-in, so the guest can
+            // be told "Room 801" the moment the booking is made. Picking the
+            // room *is* the availability check — if none is free, none is free.
+            $room = $this->checkAvailability->findFreeRoom(
+                $roomType->id,
+                $data['check_in'],
+                $data['check_out'],
+            );
+
+            if (! $room) {
                 throw new NoAvailabilityException(__('custom.errors.no_availability'));
             }
 
@@ -57,6 +66,7 @@ class CreateReservationAction
             // Snapshot the pre-promo subtotal per room; promo discount lives at reservation level
             $reservation->rooms()->create([
                 'room_type_id' => $roomType->id,
+                'room_id'      => $room->id,
                 'price_usd'    => $pricing['subtotal_usd'],
             ]);
 
@@ -65,7 +75,7 @@ class CreateReservationAction
                 \App\Models\PromoCode::where('id', $pricing['promo_code_id'])->increment('used_count');
             }
 
-            $reservation->load(['rooms.roomType', 'guest', 'promoCode']);
+            $reservation->load(['rooms.roomType', 'rooms.room', 'guest', 'promoCode']);
 
             return ['data' => $reservation, 'code' => 201];
         });

@@ -40,9 +40,13 @@ class ReservationController extends BaseController
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
 
+    // Checks the guest in. `room_uuid` is optional — omit it to use the room
+    // reserved at booking time, send it to move the guest to another room.
     public function assignRoom(AssignRoomRequest $request, Reservation $reservation): JsonResponse
     {
-        $room   = Room::where('uuid', $request->validated('room_uuid'))->firstOrFail();
+        $roomUuid = $request->validated('room_uuid');
+        $room     = $roomUuid ? Room::where('uuid', $roomUuid)->firstOrFail() : null;
+
         $result = $this->service->assignRoom($reservation, $room);
         $result['data'] = new ReservationResource($result['data']);
         return $this->respondFromService($result, request: $request);

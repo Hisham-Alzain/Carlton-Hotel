@@ -7,6 +7,7 @@ use App\Enums\ReservationSource;
 use App\Enums\ReservationStatus;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -42,6 +43,28 @@ class Reservation extends Model
     public function rooms(): HasMany     { return $this->hasMany(ReservationRoom::class); }
     public function payments(): MorphMany { return $this->morphMany(Payment::class, 'payable'); }
     public function documents(): HasMany  { return $this->hasMany(GuestDocument::class); }
+
+    /**
+     * Reservations that still hold their room.
+     *
+     * Single source of truth for "this booking occupies inventory", shared by
+     * availability counting and by staff room assignment so the two can never
+     * disagree about whether a room is free. An unverified hold only counts
+     * while it has not expired.
+     */
+    public function scopeHoldingInventory(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->whereIn('status', [
+                ReservationStatus::PENDING,
+                ReservationStatus::CONFIRMED,
+                ReservationStatus::CHECKED_IN,
+            ])->orWhere(function (Builder $q) {
+                $q->where('status', ReservationStatus::PENDING_VERIFICATION)
+                  ->where('hold_expires_at', '>', now());
+            });
+        });
+    }
 
     public function isHoldExpired(): bool
     {

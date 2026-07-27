@@ -145,7 +145,7 @@ class ReservationService
         return $this->cancel->handle($reservation);
     }
 
-    public function assignRoom(Reservation $reservation, Room $room): array
+    public function assignRoom(Reservation $reservation, ?Room $room = null): array
     {
         return $this->assignRoom->handle($reservation, $room);
     }

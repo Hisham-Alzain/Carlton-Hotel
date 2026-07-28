@@ -206,6 +206,7 @@ class RoomDetailsContent extends StatelessWidget {
     ),
   );
 
+//check spacing between tiles
   Widget _amenityTile(IconLabel amenity) {
     final TextTheme textStyle = Get.textTheme;
     return SizedBox(

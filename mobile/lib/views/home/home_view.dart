@@ -2,6 +2,7 @@ import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:carlton/components/custom_home_container.dart';
 import 'package:carlton/components/cards/custom_listing_card.dart';
+import 'package:carlton/views/home/home_active_booking_view.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/models/card_meta.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,15 @@ class HomeView extends GetView<HomeController> {
     return Scaffold(
       body: GetBuilder<HomeController>(
         builder: (_) {
+          // Guests with an active reservation see the active-booking dashboard;
+          // everyone else gets the default explore sections. Deliberately NOT
+          // const: a const instance is canonicalised, so GetBuilder's rebuild
+          // after the room/dining content loads would skip it and the Dining
+          // rail would stay empty.
+          if (controller.hasReservation) {
+            // ignore: prefer_const_constructors
+            return HomeActiveBookingBody();
+          }
           final sections = _sections();
           return CustomScrollView(
             slivers: [

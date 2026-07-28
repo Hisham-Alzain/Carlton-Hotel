@@ -1,7 +1,9 @@
+import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:flutter/material.dart';
 
 /// The restaurant gallery (Figma info tab): a 2×2 masonry — a wide + narrow
-/// tile on the first row, mirrored narrow + wide on the second.
+/// tile on the first row, mirrored narrow + wide on the second. Images are
+/// venue photo URLs (`CustomImage` handles both network URLs and assets).
 class CustomGalleryGrid extends StatelessWidget {
   final List<String> images;
   final double rowHeight;
@@ -18,7 +20,7 @@ class CustomGalleryGrid extends StatelessWidget {
     flex: flex,
     child: ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: Image.asset(path, height: rowHeight, fit: BoxFit.cover),
+      child: CustomImage(source: path, height: rowHeight, fit: BoxFit.cover),
     ),
   );
 

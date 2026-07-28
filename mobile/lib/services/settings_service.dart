@@ -60,6 +60,15 @@ class SettingsService extends GetxService {
     Get.updateLocale(locale.value);
   }
 
+  /// Mirror a server-provided locale code (`en`/`ar`) into the app — called
+  /// once when a guest signs in (their `preferred_locale`). No-op if already set.
+  Future<void> setLocaleFromCode(String code) async {
+    if (code == locale.value.languageCode) return;
+    final match = langs.where((l) => l.local == code);
+    if (match.isEmpty) return;
+    await changeLanguage(match.first);
+  }
+
   bool get isArabic => locale.value.languageCode == 'ar';
 
   /// -------- CURRENCY --------

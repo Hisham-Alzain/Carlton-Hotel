@@ -1,12 +1,19 @@
 import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/constants/error_codes.dart';
 import 'package:carlton/controllers/main/main_controller.dart';
 import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
 import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/models/booking_models.dart';
+import 'package:carlton/models/quote.dart';
+import 'package:carlton/models/reservation.dart';
+import 'package:carlton/models/room_type.dart';
 import 'package:carlton/routes/routes.dart';
+import 'package:carlton/services/api/api_service.dart';
+import 'package:carlton/services/middleware_service.dart';
 import 'package:carlton/views/book/room_details_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -31,11 +38,14 @@ class BookingFlowController extends GetxController {
   DateTime? rangeEnd = DateUtils.dateOnly(
     DateTime.now(),
   ).add(const Duration(days: 1));
-  int adults = DemoData.bookingAdults;
-  int children = DemoData.bookingChildren;
+  int adults = 2;
+  int children = 0;
 
   // Room + add-ons
-  final List<RoomOption> rooms = DemoData.roomOptions;
+  // Choose-Room list — fetched from GET /public/room-types (mapped to the
+  // booking option). Add-ons stay demo (no backend concept).
+  List<RoomOption> rooms = [];
+  bool roomsLoading = false;
   final List<AddOn> addOns = DemoData.addOns;
   RoomOption? selectedRoom;
   final Set<String> selectedAddOnIds = {};
@@ -63,8 +73,24 @@ class BookingFlowController extends GetxController {
   final promoCtrl = TextEditingController();
   bool promoApplied = false;
 
-  /// Set on confirm; shown on the Booking Confirmed screen.
+  // ── Pricing (real: GET /public/quote) ─────────────────────────────────────
+  /// The server-priced quote for the current room + dates (+ promo). Null until
+  /// fetched, or for a pure-demo room (no uuid) where we fall back to an
+  /// estimate. The breakdown/total read from this, not a client tax/promo calc.
+  Quote? quote;
+  bool quoteLoading = false;
+
+  /// Inline promo error (e.g. `invalid_promo`), shown under the promo field.
+  String? promoError;
+
+  /// True while `POST /reservations` is in flight (disables the confirm CTA).
+  bool isConfirming = false;
+
+  /// Set on a successful `POST /reservations`; shown on the Confirmed screen.
   String? confirmationCode;
+
+  /// The full reservation returned by the last successful booking.
+  Reservation? lastReservation;
 
   // ── Cross-screen derived values ─────────────────────────────────────────
   int get nights {
@@ -100,20 +126,35 @@ class BookingFlowController extends GetxController {
     return '$dateRange · \$${selectedRoom!.pricePerNight}/night';
   }
 
-  int get roomTotal => (selectedRoom?.pricePerNight ?? 0) * nights;
+  /// Fallback subtotal (room nightly × nights) used only for a pure-demo room
+  /// with no uuid, where the quote endpoint can't be called.
+  int get roomSubtotalEstimate => (selectedRoom?.pricePerNight ?? 0) * nights;
 
-  int get extrasTotal => addOns
-      .where((a) => selectedAddOnIds.contains(a.id))
-      .fold(0, (sum, a) => sum + a.price);
+  /// "$580" — strips a trailing ".00" so whole amounts read cleanly.
+  String money(double v) {
+    final whole = v == v.roundToDouble();
+    return '\$${whole ? v.toStringAsFixed(0) : v.toStringAsFixed(2)}';
+  }
 
-  int get subtotal => roomTotal + extrasTotal;
+  /// Nights the price is based on — the quote's own count when priced, else the
+  /// locally-derived nights.
+  int get displayNights => quote?.nights ?? nights;
 
-  int get taxes => (subtotal * DemoData.taxRate).round();
+  /// Room-subtotal line: the quote's subtotal when priced, else the estimate.
+  String get subtotalDisplay =>
+      quote != null ? money(quote!.subtotalUsd) : '\$$roomSubtotalEstimate';
 
-  int get promoDiscount =>
-      promoApplied ? (subtotal * DemoData.promoRate).round() : 0;
+  /// True when a promo actually reduced the priced total (drives the discount
+  /// row in the breakdown).
+  bool get hasDiscount => quote?.hasPromo ?? false;
 
-  int get grandTotal => subtotal + taxes - promoDiscount;
+  String get discountDisplay =>
+      quote != null ? '-${money(quote!.discountUsd)}' : '';
+
+  /// Grand total shown on the summary card / confirm CTA: the real quote total
+  /// when priced, else the estimate.
+  String get totalDisplay =>
+      quote != null ? money(quote!.totalUsd) : '\$$roomSubtotalEstimate';
 
   // ── Step 1 — Plan Your Stay ──────────────────────────────────────────────
   void onRangeSelected(DateTime? start, DateTime? end, DateTime focused) {
@@ -161,6 +202,29 @@ class BookingFlowController extends GetxController {
       return;
     }
     Get.toNamed(Routes.chooseRoom);
+    loadRooms();
+  }
+
+  /// Loads the Choose-Room list from `GET /public/room-types`, mapped to the
+  /// booking option. GetBuilder rebuilds when it lands.
+  Future<void> loadRooms() async {
+    roomsLoading = true;
+    rooms = [];
+    update();
+    final res = await ApiService.find.get<List<dynamic>>(
+      path: '/public/room-types',
+      showErrorDialog: false,
+    );
+    if (isClosed) return;
+    if (res.statusCode == 200 && res.data != null) {
+      rooms = res.data!
+          .whereType<Map<String, dynamic>>()
+          .map(RoomType.fromJson)
+          .map(RoomOption.fromRoomType)
+          .toList();
+    }
+    roomsLoading = false;
+    update();
   }
 
   // ── Step 2 — Choose Your Room + Room Details sheet ──────────────────────
@@ -187,16 +251,39 @@ class BookingFlowController extends GetxController {
     Get.toNamed(Routes.roomDetails, arguments: room);
   }
 
-  /// "Select This Room" from the details screen — start a fresh booking with
-  /// this room preselected. Resets first (like every other booking entry) so a
-  /// prior booking's guest/card/add-on data never carries over.
-  // void beginBooking(RoomOption room) {
-  //   reset();
-  //   selectedRoom = room;
-  //   roomPreselected = true;
-  //   update();
-  //   Get.toNamed(Routes.planStay);
-  // }
+  /// From a listing tap (Home/Discover): fetch the real room-type detail
+  /// (`GET /public/room-types/{uuid}`) and open it.
+  Future<void> openRoomListing(String uuid) async {
+    if (uuid.isEmpty) return;
+    final res = await ApiService.find.get<Map<String, dynamic>>(
+      path: '/public/room-types/$uuid',
+      showLoading: true,
+      showErrorDialog: false,
+    );
+    if (isClosed) return;
+    if (res.statusCode == 200 && res.data != null) {
+      openRoomDetailsScreen(
+        RoomOption.fromRoomType(RoomType.fromJson(res.data!)),
+      );
+    } else {
+      CustomSnackbars.showError(message: 'Could not load this room.');
+    }
+  }
+
+  /// "Select This Room" from the full-screen details page — start a fresh
+  /// booking with this room preselected (carrying its real `room_type_uuid`).
+  /// Resets first (like every booking entry) so a prior attempt's guest/card/
+  /// add-on data never carries over.
+  void beginBookingWithRoom(RoomOption room) {
+    reset();
+    selectedRoom = room;
+    roomPreselected = true;
+    update();
+    // "Plan Your Stay" is the Book tab in the Main shell (no standalone route),
+    // so pop back to the shell and switch to it (index 2).
+    Get.until((r) => r.isFirst);
+    Get.find<MainController>().changeTab(2);
+  }
 
   void selectRoom(RoomOption room) {
     selectedRoom = room;
@@ -225,6 +312,9 @@ class BookingFlowController extends GetxController {
   void continueFromGuest() {
     // if (!guestFormKey.currentState!.validate()) return;
     Get.toNamed(Routes.payment);
+    // Price the stay for the Payment summary + Review breakdown. Fire-and-forget:
+    // the GetBuilder rebuilds when the quote lands.
+    _fetchQuote(promo: promoApplied ? promoCtrl.text.trim() : null);
   }
 
   // ── Step 5 — Payment ─────────────────────────────────────────────────────
@@ -245,16 +335,52 @@ class BookingFlowController extends GetxController {
 
   void onPaymentFieldChanged() => update();
 
-  void applyPromo() {
-    if (promoCtrl.text.trim().isEmpty) {
+  /// Re-prices the stay with the entered promo. A bad/expired code now surfaces
+  /// `invalid_promo` inline (via [promoError]) instead of always "succeeding".
+  Future<void> applyPromo() async {
+    final code = promoCtrl.text.trim();
+    if (code.isEmpty) {
       CustomSnackbars.showInfo(message: 'Enter a promo code first');
       return;
     }
-    promoApplied = true;
+    await _fetchQuote(promo: code);
+    if (promoError == null && hasDiscount) {
+      promoApplied = true;
+      CustomSnackbars.showSuccess(message: 'Promo code "$code" applied');
+    }
     update();
-    CustomSnackbars.showSuccess(
-      message: 'Promo code "${promoCtrl.text.trim()}" applied',
+  }
+
+  String _fmtDate(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
+
+  /// Fetches the server price for the current room + dates (+ optional promo).
+  /// A pure-demo room (no uuid) can't be quoted, so the estimate stands in.
+  Future<void> _fetchQuote({String? promo}) async {
+    final uuid = selectedRoom?.uuid ?? '';
+    if (uuid.isEmpty || !hasDates) return;
+    quoteLoading = true;
+    update();
+    final res = await ApiService.find.get<Map<String, dynamic>>(
+      path: '/public/quote',
+      queryParameters: {
+        'room_type_uuid': uuid,
+        'check_in': _fmtDate(rangeStart!),
+        'check_out': _fmtDate(rangeEnd!),
+        if (promo != null && promo.isNotEmpty) 'promo_code': promo,
+      },
+      showErrorDialog: false,
     );
+    if (isClosed) return;
+    quoteLoading = false;
+    if (res.statusCode == 200 && res.data != null) {
+      quote = Quote.fromJson(res.data!);
+      promoError = null;
+    } else if (res.error?.errorCode == ErrorCodes.invalidPromo) {
+      // Keep the prior (un-promo) quote so the price doesn't vanish; just flag it.
+      promoError = 'That promo code is invalid or expired.';
+      promoApplied = false;
+    }
+    update();
   }
 
   /// "Credit Card ••••1234" / "Apple Pay" / … for the Review summary row.
@@ -265,22 +391,107 @@ class BookingFlowController extends GetxController {
     return last4.isEmpty ? 'Credit Card' : 'Credit Card ••••$last4';
   }
 
-  /// Review CTA copy — "Confirm & Pay \$X" for paid methods, "Confirm Booking"
+  /// The backend `payment_method` value for the selected option, or null when
+  /// it can't be submitted yet — there is no real card/wallet gateway, so only
+  /// Pay-at-Hotel maps (→ `on_arrival`). See decision #1.
+  String? get paymentApiValue => switch (paymentMethod) {
+    PaymentMethod.payAtHotel => 'on_arrival',
+    PaymentMethod.card ||
+    PaymentMethod.applePay ||
+    PaymentMethod.googlePay => null,
+  };
+
+  bool get isPaymentSubmittable => paymentApiValue != null;
+
+  /// Review CTA copy — "Confirm & Pay \$X" for priced methods, "Confirm Booking"
   /// when paying at the hotel.
   String get confirmCtaLabel => paymentMethod == PaymentMethod.payAtHotel
       ? 'Confirm Booking'
-      : 'Confirm & Pay \$$grandTotal';
+      : 'Confirm & Pay $totalDisplay';
 
   void reviewBooking() {
     if (!canReviewBooking) return;
     Get.toNamed(Routes.reviewBooking);
   }
 
-  /// Demo confirm — mints a reservation code and shows the success screen.
-  void confirmBooking() {
-    confirmationCode = DemoData.newConfirmationCode();
+  /// Confirms via `POST /reservations` (tier-2, token identity). Card/wallet
+  /// methods have no gateway yet, so they're blocked here with a clear message
+  /// rather than submitting. On success the guest gains a booking and the real
+  /// `booking_code` shows on the Confirmed screen.
+  Future<void> confirmBooking() async {
+    if (isConfirming) return;
+    // A one-step reservation needs a guest token (tier-2). A guest browsing
+    // without an account gets sent to sign-in rather than a bare 401 failure.
+    if (!MiddlewareService.find.isAuthenticated) {
+      CustomSnackbars.showInfo(
+        message: 'Please sign in to complete your booking.',
+      );
+      Get.toNamed(Routes.signIn);
+      return;
+    }
+    final apiMethod = paymentApiValue;
+    if (apiMethod == null) {
+      CustomSnackbars.showInfo(
+        message:
+            "Card & wallet payments aren't available yet — choose Pay at Hotel "
+            'to confirm your booking.',
+      );
+      return;
+    }
+    final uuid = selectedRoom?.uuid ?? '';
+    if (uuid.isEmpty || !hasDates) {
+      CustomSnackbars.showError(message: 'Select a room and your dates first.');
+      return;
+    }
+
+    isConfirming = true;
     update();
-    Get.toNamed(Routes.bookingConfirmed);
+    final res = await ApiService.find.post<Map<String, dynamic>>(
+      path: '/reservations',
+      data: {
+        'room_type_uuid': uuid,
+        'check_in': _fmtDate(rangeStart!),
+        'check_out': _fmtDate(rangeEnd!),
+        'payment_method': apiMethod,
+        if (promoApplied && promoCtrl.text.trim().isNotEmpty)
+          'promo_code': promoCtrl.text.trim(),
+      },
+      showErrorDialog: false,
+    );
+    if (isClosed) return;
+    isConfirming = false;
+
+    if (res.statusCode == 201 && res.data != null) {
+      final reservation = Reservation.fromJson(res.data!);
+      lastReservation = reservation;
+      confirmationCode = reservation.bookingCode;
+      // The guest now has a booking — flip the app's active-booking entitlement
+      // so Home/Services reflect it without a refetch.
+      final guest = MiddlewareService.find.guest.value;
+      if (guest != null) {
+        MiddlewareService.find.updateGuest(guest.copyWith(hasBooking: true));
+      }
+      update();
+      Get.toNamed(Routes.bookingConfirmed);
+      return;
+    }
+
+    update();
+    final message = switch (res.error?.errorCode) {
+      ErrorCodes.noAvailability =>
+        'Those dates just sold out — please try different dates.',
+      ErrorCodes.invalidPromo => 'That promo code is invalid or expired.',
+      _ => res.error?.message ?? 'We couldn\'t complete your booking.',
+    };
+    CustomSnackbars.showError(message: message);
+  }
+
+  /// Copies the confirmation code to the clipboard (from the confirmed screen).
+  void copyConfirmationCode() {
+    final code = confirmationCode;
+    if (code == null) return;
+    Clipboard.setData(ClipboardData(text: code));
+    CustomSnackbars.showSuccess(message: 'Code copied');
   }
 
   /// "View My Stays" from the confirmation screen — back to the shell on the
@@ -294,11 +505,12 @@ class BookingFlowController extends GetxController {
   /// flow for a new booking (not after finishing one), so "Book Again" never
   /// shows a previous attempt's guest/card details.
   void reset() {
-    focusedDay = DemoData.bookingCheckIn;
-    rangeStart = DemoData.bookingCheckIn;
-    rangeEnd = DemoData.bookingCheckOut;
-    adults = DemoData.bookingAdults;
-    children = DemoData.bookingChildren;
+    final today = DateUtils.dateOnly(DateTime.now());
+    focusedDay = today;
+    rangeStart = today;
+    rangeEnd = today.add(const Duration(days: 1));
+    adults = 2;
+    children = 0;
     selectedRoom = null;
     roomPreselected = false;
     roomImageIndex = 0;
@@ -315,7 +527,12 @@ class BookingFlowController extends GetxController {
     cardNameCtrl.clear();
     promoCtrl.clear();
     promoApplied = false;
+    promoError = null;
+    quote = null;
+    quoteLoading = false;
+    isConfirming = false;
     confirmationCode = null;
+    lastReservation = null;
     // Rebuild live listeners (the Book tab's plan editor) after a reset; other
     // callers navigate away right after, so this is harmless for them.
     update();

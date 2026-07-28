@@ -11,6 +11,8 @@ import 'package:carlton/views/book/guest_details_view.dart';
 import 'package:carlton/views/book/payment_view.dart';
 import 'package:carlton/views/book/review_booking_view.dart';
 import 'package:carlton/views/book/room_details_view.dart';
+import 'package:carlton/views/booking/pre_arrival_documents_view.dart';
+import 'package:carlton/views/discover/discover_view.dart';
 import 'package:carlton/views/home/ai_concierge_view.dart';
 import 'package:carlton/views/main/main_view.dart';
 import 'package:carlton/views/auth/sign_in_view.dart';
@@ -28,10 +30,12 @@ abstract class Routes {
   static const otpVerify = '/otp-verify';
   static const welcomeBack = '/welcome-back';
   static const createProfile = '/create-profile';
+  static const editProfile = '/account/edit-profile';
   static const phoneEntry = '/phone-entry';
   static const reservationChoice = '/reservation-choice';
   static const findBooking = '/find-booking';
   static const aiConcierge = '/ai-concierge';
+  static const discover = '/discover';
   static const serviceCategory = '/services/category';
   static const preferences = '/account/preferences';
   static const restaurantDetail = '/dining/restaurant';
@@ -44,6 +48,7 @@ abstract class Routes {
   static const payment = '/booking/payment';
   static const reviewBooking = '/booking/review';
   static const bookingConfirmed = '/booking/confirmed';
+  static const preArrivalDocuments = '/booking/pre-arrival-documents';
 }
 
 abstract class Pages {
@@ -79,6 +84,11 @@ abstract class Pages {
       binding: CreateProfileBinding(),
     ),
     GetPage(
+      name: Routes.editProfile,
+      page: () => const CreateProfileView(),
+      binding: CreateProfileBinding(),
+    ),
+    GetPage(
       name: Routes.phoneEntry,
       page: () => const PhoneEntryView(),
       binding: PhoneEntryBinding(),
@@ -99,10 +109,19 @@ abstract class Pages {
       binding: AiConciergeBinding(),
     ),
     GetPage(
+      name: Routes.discover,
+      page: () => const DiscoverView(),
+      binding: DiscoverBinding(),
+    ),
+    GetPage(
       name: Routes.serviceCategory,
       page: () => const ServiceCategoryDetailView(),
     ),
-    GetPage(name: Routes.roomDetails, page: () => const RoomDetailsView()),
+    GetPage(
+      name: Routes.roomDetails,
+      page: () => const RoomDetailsView(),
+      binding: RoomDetailsBinding(),
+    ),
     GetPage(
       name: Routes.preferences,
       page: () => const PreferencesView(),
@@ -121,6 +140,11 @@ abstract class Pages {
     GetPage(
       name: Routes.bookingConfirmed,
       page: () => const BookingConfirmedView(),
+    ),
+    GetPage(
+      name: Routes.preArrivalDocuments,
+      page: () => const PreArrivalDocumentsView(),
+      binding: PreArrivalDocumentsBinding(),
     ),
   ];
 }

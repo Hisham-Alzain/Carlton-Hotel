@@ -25,6 +25,18 @@ class ErrorCodes {
   static const String conflict = 'conflict';
   static const String paymentFailed = 'payment_failed';
 
+  // ── Guest auth / booking flow ─────────────────────────────────────────
+  static const String identityRequired = 'identity_required';
+  static const String otpExpired = 'otp_expired';
+  static const String otpInvalid = 'otp_invalid';
+  static const String otpLocked = 'otp_locked';
+  static const String bookingLinkFailed = 'booking_link_failed';
+  static const String verifiedContactImmutable = 'verified_contact_immutable';
+  static const String noActiveReservation = 'no_active_reservation';
+  static const String noAvailability = 'no_availability';
+  static const String invalidPromo = 'invalid_promo';
+  static const String reservationState = 'reservation_state';
+
   // ── Rate limiting ─────────────────────────────────────────────────────
   static const String tooManyRequests = 'too_many_requests';
 

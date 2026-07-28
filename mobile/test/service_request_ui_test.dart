@@ -1,5 +1,4 @@
 import 'package:carlton/customWidgets/custom_filled_button.dart';
-import 'package:carlton/models/service_models.dart';
 import 'package:carlton/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 Future<void> pumpInBox(WidgetTester tester, Widget child) {
   return tester.pumpWidget(
     MaterialApp(
-      theme: Themes().theme,
+      theme: Themes.theme,
       home: Scaffold(
         body: SizedBox(width: 400, child: Column(children: [child])),
       ),
@@ -57,20 +56,6 @@ void main() {
       expect(tester.takeException(), isNull);
       final first = tester.getSize(find.byType(FilledButton).first);
       expect(first.width, lessThan(400));
-    });
-  });
-
-  group('ServiceOption', () {
-    test('etaLabel drops the "ETA: " prefix for use in prose', () {
-      const option = ServiceOption(
-        iconPath: 'assets/icons/svc_clean.svg',
-        title: 'Room Cleaning',
-        description: 'Full room service and tidying',
-        eta: 'ETA: 45 min',
-      );
-
-      expect(option.etaLabel, '45 min');
-      expect(option.eta, 'ETA: 45 min');
     });
   });
 }

@@ -4,21 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-/// A tappable row for one [ServiceOption] inside a category detail list:
-/// leading icon chip, title/description/ETA, trailing chevron.
+/// A tappable row for one service-catalog option inside a category detail
+/// list: leading icon chip, title/description/ETA, trailing chevron.
 class CustomServiceOptionTile extends StatelessWidget {
-  final String iconPath;
+  /// Optional per-option SVG. The service catalog gives no per-item icon, so
+  /// this is null there and a generic glyph is shown instead.
+  final String? iconPath;
   final String title;
   final String description;
   final String etaLabel;
   final VoidCallback onTap;
 
   const CustomServiceOptionTile({
-    required this.iconPath,
     required this.title,
     required this.description,
     required this.etaLabel,
     required this.onTap,
+    this.iconPath,
     super.key,
   });
 
@@ -30,7 +32,7 @@ class CustomServiceOptionTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Card(
-        margin: EdgeInsets.zero,
+        margin: const EdgeInsets.all(10),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadiusGeometry.circular(12),
           side: BorderSide(color: AppColors.black06),
@@ -42,15 +44,21 @@ class CustomServiceOptionTile extends StatelessWidget {
           child: Row(
             spacing: 20,
             children: [
-              SvgPicture.asset(
-                height: 32,
-                width: 32,
-                iconPath,
-                colorFilter: const ColorFilter.mode(
-                  AppColors.antiqueGold,
-                  BlendMode.srcIn,
-                ),
-              ),
+              iconPath != null
+                  ? SvgPicture.asset(
+                      height: 32,
+                      width: 32,
+                      iconPath!,
+                      colorFilter: const ColorFilter.mode(
+                        AppColors.antiqueGold,
+                        BlendMode.srcIn,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.room_service_outlined,
+                      size: 32,
+                      color: AppColors.antiqueGold,
+                    ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,17 +81,18 @@ class CustomServiceOptionTile extends StatelessWidget {
                         color: AppColors.dimGrey,
                       ),
                     ),
-                    PillContainer(
-                      backgroundColor: AppColors.cream,
-                      radius: 3,
-                      padding: const EdgeInsets.all(10),
-                      child: Text(
-                        etaLabel,
-                        style: textStyle.labelSmall?.copyWith(
-                          color: AppColors.walnutGold,
+                    if (etaLabel.isNotEmpty)
+                      PillContainer(
+                        backgroundColor: AppColors.cream,
+                        radius: 3,
+                        padding: const EdgeInsets.all(10),
+                        child: Text(
+                          etaLabel,
+                          style: textStyle.labelSmall?.copyWith(
+                            color: AppColors.walnutGold,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),

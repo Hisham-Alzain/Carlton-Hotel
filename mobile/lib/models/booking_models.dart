@@ -3,6 +3,8 @@
 // typed dates/amounts. Nothing here talks to a backend yet.
 
 import 'package:carlton/customWidgets/custom_country_code_picker.dart';
+import 'package:carlton/models/amenity.dart';
+import 'package:carlton/models/room_type.dart';
 
 enum StayStatus { active, upcoming, past }
 
@@ -31,6 +33,19 @@ class ReceiptData {
 /// status renders a different card (see StaysView tab bodies).
 class Stay {
   final String id;
+
+  /// The reservation `uuid` (Phase 4) — drives cancel
+  /// (`DELETE /reservations/{uuid}`) and receipt (`GET /stays/{uuid}/receipt`).
+  /// Empty for demo-shaped stays; stamped during controller-boundary mapping.
+  final String uuid;
+
+  /// Whether `DELETE /reservations/{uuid}` will succeed (upcoming stays only).
+  final bool isCancellable;
+
+  /// Whether a folio/receipt exists for this stay (past stays only). Gates the
+  /// receipt fetch — a cancelled stay has none.
+  final bool hasReceipt;
+
   final String roomName;
   final StayStatus status;
 
@@ -58,6 +73,9 @@ class Stay {
     required this.id,
     required this.roomName,
     required this.status,
+    this.uuid = '',
+    this.isCancellable = false,
+    this.hasReceipt = false,
     this.subtitle,
     this.imagePath,
     this.dateRangeLabel,
@@ -82,6 +100,10 @@ class IconLabel {
 }
 
 class RoomOption {
+  /// The real `room_type_uuid` when the booking began from an API-backed room
+  /// (Home/Discover → room details); empty for pure-demo rooms (Book-tab
+  /// choose-room list). Quote + `POST /reservations` require it.
+  final String uuid;
   final String id;
   final String name;
   final List<String> images;
@@ -110,7 +132,59 @@ class RoomOption {
     required this.highlights,
     required this.amenities,
     required this.description,
+    this.uuid = '',
   });
+
+  /// Stamps a real `room_type_uuid` onto an otherwise-demo option (used when a
+  /// booking starts from an API-backed room — see `DemoData.roomDetailsFor`).
+  RoomOption copyWith({String? uuid}) => RoomOption(
+    uuid: uuid ?? this.uuid,
+    id: id,
+    name: name,
+    images: images,
+    area: area,
+    view: view,
+    bed: bed,
+    rating: rating,
+    reviewCount: reviewCount,
+    pricePerNight: pricePerNight,
+    amenityChips: amenityChips,
+    highlights: highlights,
+    amenities: amenities,
+    description: description,
+  );
+
+  /// Maps the API room-type detail (`GET /public/room-types/{uuid}`) to the
+  /// booking option the details screen renders. Amenity icons arrive as names
+  /// (e.g. "jacuzzi"); map to the matching bundled asset, falling back to a
+  /// generic glyph for names we didn't extract.
+  factory RoomOption.fromRoomType(RoomType r) {
+    IconLabel toIconLabel(Amenity a) =>
+        IconLabel(_amenityAsset(a.icon), a.name.value);
+    return RoomOption(
+      uuid: r.uuid,
+      id: r.uuid,
+      name: r.name.value,
+      images: r.images.map((i) => i.url).toList(),
+      area: r.sizeSqm != null ? '${r.sizeSqm} m²' : '',
+      view: r.viewType != null ? '${r.viewType} view' : '',
+      bed: r.bedTypes.isNotEmpty ? '${r.bedTypes.first} bed' : '',
+      rating: r.rating ?? 0,
+      reviewCount: r.ratingCount,
+      pricePerNight: double.tryParse(r.basePriceUsd)?.round() ?? 0,
+      amenityChips: r.highlights.map((a) => a.name.value).toList(),
+      highlights: r.highlights.map(toIconLabel).toList(),
+      amenities: r.amenities.map(toIconLabel).toList(),
+      description: r.description.value,
+    );
+  }
+
+  static String _amenityAsset(String icon) {
+    const present = {'jacuzzi', 'desk', 'tv', 'coffee', 'butler', 'view'};
+    return present.contains(icon)
+        ? 'assets/icons/$icon.svg'
+        : 'assets/icons/view.svg';
+  }
 }
 
 class AddOn {
@@ -138,6 +212,15 @@ enum PaymentMethod {
   const PaymentMethod(this.label, this.subtitle);
   final String label;
   final String subtitle;
+}
+
+extension PaymentMethodIcon on PaymentMethod {
+  /// Brand glyph for the wallet methods; null for card / pay-at-hotel.
+  String? get iconPath => switch (this) {
+    PaymentMethod.applePay => 'assets/icons/pay_apple.svg',
+    PaymentMethod.googlePay => 'assets/icons/pay_google.svg',
+    PaymentMethod.card || PaymentMethod.payAtHotel => null,
+  };
 }
 
 /// Mutable draft of the guest form (Step 4).

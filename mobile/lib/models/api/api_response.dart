@@ -1,5 +1,5 @@
 import 'package:carlton/models/api/api_exception.dart';
-import 'package:carlton/models/api/paginated_meta.dart';
+import 'package:carlton/models/pagination.dart';
 
 /// Result of an [ApiService] call. **Never thrown — always returned.**
 ///
@@ -22,7 +22,7 @@ class ApiResponse<T> {
   final String? message;
   final String? requestId;
   final bool? success;
-  final PaginationMeta? meta;
+  final Pagination? meta;
 
   /// The failure that produced this response, or null on success. Branch on
   /// `error!.errorCode` / `error!.validationErrors` when a caller needs more
@@ -46,14 +46,14 @@ class ApiResponse<T> {
     required T Function(dynamic) dataParser,
   }) {
     final rawData = json['data'];
-    PaginationMeta? meta;
+    Pagination? meta;
     dynamic parsedData = rawData;
 
     // Detect paginated envelope: data.items + data.meta
     if (rawData is Map<String, dynamic> &&
         rawData.containsKey('items') &&
         rawData.containsKey('meta')) {
-      meta = PaginationMeta.fromJson(rawData['meta'] as Map<String, dynamic>);
+      meta = Pagination.fromJson(rawData['meta'] as Map<String, dynamic>);
       parsedData = rawData['items']; // unwrap one level — T will be List<...>
     }
 

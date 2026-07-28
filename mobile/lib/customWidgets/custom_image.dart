@@ -47,6 +47,10 @@ class CustomImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (_isAsset) return _buildAsset(context);
+    // A null/blank source (e.g. a menu item or venue with no photo) would
+    // otherwise resolve to the bare storage host `${storageBaseUrl}` — a
+    // guaranteed 404. Show the placeholder instead of firing a doomed request.
+    if (source.trim().isEmpty) return _error();
     if (source.endsWith('.svg')) return _buildSvg();
     return _buildRaster(context);
   }

@@ -117,6 +117,7 @@ class CustomPaymentCardPreview extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
+      spacing: 2,
       children: [
         Text(
           label.toUpperCase(),
@@ -125,7 +126,6 @@ class CustomPaymentCardPreview extends StatelessWidget {
             color: AppColors.white50,
           ),
         ),
-        const SizedBox(height: 2),
         Text(
           value,
           style: textStyle.labelMedium?.copyWith(

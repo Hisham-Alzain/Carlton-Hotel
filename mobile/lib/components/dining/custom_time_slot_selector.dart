@@ -16,6 +16,8 @@ class CustomTimeSlotSelector extends StatelessWidget {
     super.key,
   });
 
+
+//TODO: move design to theme
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;

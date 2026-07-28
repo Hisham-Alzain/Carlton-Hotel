@@ -1,20 +1,20 @@
-import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/controllers/home/services_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
-import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
-import 'package:carlton/models/service_models.dart';
+import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/models/service_catalog_item.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Confirm-a-request bottom sheet body for one [ServiceOption], shown via
-/// `ServicesController.openServiceRequest` -> `CustomBottomSheet.show`.
+/// Confirm-a-request bottom sheet body for one [ServiceCatalogOption], shown
+/// via `ServicesController.openServiceRequest` -> `CustomBottomSheet.show`.
 ///
 /// The option's title and description are rendered by the sheet shell's
 /// header, so they are deliberately absent here.
 class ServiceRequestSheet extends StatefulWidget {
-  final ServiceOption option;
+  final ServiceCatalogOption option;
 
   const ServiceRequestSheet({required this.option, super.key});
 
@@ -36,6 +36,13 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
+    final mins = widget.option.expectedMinutes;
+    // Active-stay label from the live Services controller (was demo Room 812).
+    final services = Get.find<ServicesController>();
+    final stayLabel = [
+      services.room,
+      services.stayRoomName,
+    ].where((s) => s.isNotEmpty).join(' · ');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,13 +62,14 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
                     children: [
                       const TextSpan(text: 'This request is for '),
                       TextSpan(
-                        text: '${DemoData.room} · ${DemoData.stayRoomName}',
+                        text: stayLabel.isEmpty ? 'your room' : stayLabel,
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       TextSpan(
-                        text:
-                            '. Our team will be with you within '
-                            '${widget.option.etaLabel}.',
+                        text: mins != null
+                            ? '. Our team will be with you within '
+                                  '${AppTranslations.etaMinutes(mins)}.'
+                            : '. Our team will be with you shortly.',
                       ),
                     ],
                   ),
@@ -92,10 +100,11 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
           width: double.infinity,
           backgroundColor: AppColors.lagoonTeal,
           onPressed: () {
-            Get.back();
-            CustomSnackbars.showSuccess(
-              message: "Request sent — we'll be in touch shortly",
+            Get.find<ServicesController>().submitServiceRequest(
+              serviceItemUuid: widget.option.uuid,
+              notes: _notesController.text,
             );
+            Get.back();
           },
           child: const Text('Send Request'),
         ),

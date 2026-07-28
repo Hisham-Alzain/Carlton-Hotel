@@ -1,8 +1,8 @@
 import 'package:carlton/components/dining/custom_restaurant_hero.dart';
-import 'package:carlton/components/dining/custom_underline_tabs.dart';
 import 'package:carlton/components/dining/restaurant_info_tab.dart';
 import 'package:carlton/components/dining/restaurant_menu_tab.dart';
 import 'package:carlton/components/dining/restaurant_reserve_tab.dart';
+import 'package:carlton/components/dining/restaurant_reviews_tab.dart';
 import 'package:carlton/controllers/dining/restaurant_controller.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -79,21 +79,37 @@ class RestaurantDetailView extends GetView<RestaurantController> {
               ],
             ),
             const SizedBox(height: 46),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: CustomUnderlineTabs(
-                labels: const ['Menu', 'Info', 'Reserve'],
-                selectedIndex: c.tabIndex,
-                onChanged: c.switchTab,
+            TabBar(
+              controller: c.tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.graphite,
+              indicatorColor: AppColors.primary,
+              indicatorWeight: 2,
+              dividerColor: AppColors.black06,
+              labelStyle: Get.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
               ),
+              unselectedLabelStyle: Get.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              tabs: const [
+                Tab(text: 'Menu'),
+                Tab(text: 'Info'),
+                Tab(text: 'Reserve'),
+                Tab(text: 'Reviews'),
+              ],
             ),
             const SizedBox(height: 6),
             Expanded(
-              child: switch (c.tabIndex) {
-                0 => RestaurantMenuTab(c: c),
-                1 => RestaurantInfoTab(c: c),
-                _ => RestaurantReserveTab(c: c),
-              },
+              child: TabBarView(
+                controller: c.tabController,
+                children: [
+                  RestaurantMenuTab(c: c),
+                  RestaurantInfoTab(c: c),
+                  RestaurantReserveTab(c: c),
+                  RestaurantReviewsTab(c: c),
+                ],
+              ),
             ),
           ],
         ),

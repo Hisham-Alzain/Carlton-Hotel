@@ -246,6 +246,52 @@ class AppTranslations {
   static String get nightsRemainingPrefix =>
       'services.nightsRemainingPrefix'.tr;
 
+  // Services — In-stay requests (Phase 5)
+  static String get serviceComingSoon => 'services.comingSoon'.tr;
+  static String etaMinutes(int minutes) =>
+      'services.etaMinutes'.trParams({'count': '$minutes'});
+  static String get requestSubmitted => 'services.requestSubmitted'.tr;
+  static String get requestNeedsCheckIn => 'services.requestNeedsCheckIn'.tr;
+  static String get requestFailed => 'services.requestFailed'.tr;
+  static String get editComingSoon => 'services.editComingSoon'.tr;
+  static String get dndTitle => 'services.dndTitle'.tr;
+  static String get dndSubtitle => 'services.dndSubtitle'.tr;
+  static String get dndSwitchLabel => 'services.dndSwitchLabel'.tr;
+  static String get dndNeedsCheckIn => 'services.dndNeedsCheckIn'.tr;
+  static String get dndFailed => 'services.dndFailed'.tr;
+
+  // Dining — table reservations (Phase 5)
+  static String tableReservedFor(String label) =>
+      'dining.tableReservedFor'.trParams({'label': label});
+  static String get tableNeedsBooking => 'dining.tableNeedsBooking'.tr;
+  static String get tableNoAvailability => 'dining.tableNoAvailability'.tr;
+  static String get tableVenueUnavailable => 'dining.tableVenueUnavailable'.tr;
+  static String get tableFailed => 'dining.tableFailed'.tr;
+
+  // Pre-arrival e-check-in documents (Phase 5)
+  static String get preArrivalTitle => 'preArrival.title'.tr;
+  static String get preArrivalIntro => 'preArrival.intro'.tr;
+  static String get addDocument => 'preArrival.addDocument'.tr;
+  static String get submitDocuments => 'preArrival.submit'.tr;
+  static String get preArrivalEmptyTitle => 'preArrival.emptyTitle'.tr;
+  static String get preArrivalEmptySubtitle => 'preArrival.emptySubtitle'.tr;
+  static String get documentsSubmitted => 'preArrival.submitted'.tr;
+  static String get documentsNeedBooking => 'preArrival.needBooking'.tr;
+  static String get documentsInvalid => 'preArrival.invalid'.tr;
+  static String get documentsFailed => 'preArrival.failed'.tr;
+  static String documentType(String type) {
+    switch (type) {
+      case 'passport':
+        return 'preArrival.typePassport'.tr;
+      case 'id_card':
+        return 'preArrival.typeIdCard'.tr;
+      case 'visa':
+        return 'preArrival.typeVisa'.tr;
+      default:
+        return type;
+    }
+  }
+
   // AI Concierge
   static String get aiTabLabel => 'concierge.aiTabLabel'.tr;
   static String get customerServiceTabLabel =>

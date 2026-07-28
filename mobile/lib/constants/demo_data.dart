@@ -1,13 +1,7 @@
-import 'dart:math';
-
 import 'package:carlton/models/booking_models.dart';
-import 'package:carlton/models/chat_message.dart';
 import 'package:carlton/models/home_models.dart';
-import 'package:carlton/models/menu_item.dart';
 import 'package:carlton/models/preference_option.dart';
 import 'package:carlton/models/service_item.dart';
-import 'package:carlton/models/service_models.dart';
-import 'package:carlton/models/service_request.dart';
 import 'package:flutter/material.dart';
 
 /// Every hardcoded demo value in the app lives here, so wiring the real
@@ -15,25 +9,12 @@ import 'package:flutter/material.dart';
 /// API integration.
 abstract class DemoData {
   // ── Auth ────────────────────────────────────────────────────────────────
-  /// The only OTP code `OtpVerifyController` accepts.
-  static const otpCode = '123456';
-  static const otpResendSeconds = 20;
-
-  /// Simulated network round-trip used by every demo submit.
+  /// Simulated network round-trip used by the remaining demo submits.
   static const networkDelay = Duration(milliseconds: 800);
 
-  // ── Checkout pricing (Figma Payment / Review flow) ────────────────────────
-  /// Taxes & fees applied to the booking subtotal.
-  static const taxRate = 0.15;
-
-  /// Discount applied once any promo code is entered (demo accepts anything).
-  static const promoRate = 0.10;
-
-  /// A fresh demo reservation code, e.g. "CRS-812-9032".
-  static String newConfirmationCode() {
-    final r = Random();
-    return 'CRS-${800 + r.nextInt(200)}-${1000 + r.nextInt(9000)}';
-  }
+  // Checkout pricing is no longer client-computed — Phase 3 replaced the
+  // taxRate/promoRate engine and newConfirmationCode() with the real
+  // `GET /public/quote` + `POST /reservations` endpoints.
 
   // ── Homepage (Figma "homepage", node 2089:861) ─────────────────────────
   /// The hotel promo clip (the Figma hero's video fill). The source file is
@@ -62,6 +43,8 @@ abstract class DemoData {
       bed: 'King Bed',
       priceAmount: '\$580',
       imagePath: 'assets/images/room_classic_courtyard.jpg',
+      category: 'Suites',
+      amenities: ['City View Balcony', 'Jacuzzi', '+3 more'],
     ),
     RoomItem(
       name: 'Premier Terrace',
@@ -71,6 +54,8 @@ abstract class DemoData {
       bed: 'King Bed',
       priceAmount: '\$850',
       imagePath: 'assets/images/room_premier_terrace.jpg',
+      category: 'Deluxe',
+      amenities: ['Private Terrace', 'Sun Loungers', '+2 more'],
     ),
     RoomItem(
       name: 'Deluxe City View Suite',
@@ -80,15 +65,14 @@ abstract class DemoData {
       bed: 'King Bed',
       priceAmount: '\$680',
       imagePath: 'assets/images/room_deluxe_city.jpg',
+      category: 'Classic',
+      amenities: ['City View', 'Rain Shower', '+2 more'],
     ),
   ];
 
-  /// Bridge the sparse Home [RoomItem] to the rich [RoomOption] the details
-  /// screen needs, matching on name (a real API would return one model).
-  static RoomOption roomDetailsFor(RoomItem item) => roomOptions.firstWhere(
-    (o) => o.name == item.name || o.name.startsWith(item.name),
-    orElse: () => roomOptions.first,
-  );
+  // Room details + the Choose-Room list now come from GET /public/room-types
+  // (+ /{uuid}); mapped via RoomOption.fromRoomType. roomOptions/roomDetailsFor
+  // retired.
 
   static const restaurants = <RestaurantItem>[
     RestaurantItem(
@@ -97,6 +81,7 @@ abstract class DemoData {
       hours: '7:00 AM – 11:00 PM',
       location: 'Ground Floor, Carlton Hotel',
       imagePath: 'assets/images/restaurant_alsham.jpg',
+      category: 'Mediterranean',
     ),
     RestaurantItem(
       name: 'Al-Qamar Restaurant',
@@ -104,6 +89,7 @@ abstract class DemoData {
       hours: '7:00 AM – 11:00 PM',
       location: 'Ground Floor, Carlton Hotel',
       imagePath: 'assets/images/restaurant_alqamar.jpg',
+      category: 'Fine Dining',
     ),
     RestaurantItem(
       name: 'ELENA Restaurant',
@@ -111,30 +97,50 @@ abstract class DemoData {
       hours: '7:00 AM – 11:00 PM',
       location: 'Ground Floor, Carlton Hotel',
       imagePath: 'assets/images/restaurant_elena.jpg',
+      category: 'Italian',
+    ),
+  ];
+
+  /// Curated experiences shown on the Discover "Experiences" listing (Figma
+  /// frame 2195:2813). Images reuse existing hotel photography for the demo.
+  static const experiences = <ExperienceItem>[
+    ExperienceItem(
+      name: 'Al-Sham Culinary Journey',
+      subtitle: 'Syrian · Mediterranean',
+      hours: '7:00 AM – 11:00 PM',
+      imagePath: 'assets/images/restaurant_alsham.jpg',
+      category: 'Gastronomy',
+    ),
+    ExperienceItem(
+      name: 'Umayyad Mosque & Old City Walk',
+      subtitle: '1–4 guests',
+      hours: '7:00 AM – 10:00 PM',
+      imagePath: 'assets/images/hero_experience.png',
+      category: 'Culture',
+      badge: 'Culture',
+    ),
+    ExperienceItem(
+      name: 'Old City Heritage Tour',
+      subtitle: '1–4 guests',
+      hours: '9:00 AM – 5:00 PM',
+      imagePath: 'assets/images/restaurant_alqamar.jpg',
+      category: 'Culture',
+      badge: 'Culture',
+    ),
+    ExperienceItem(
+      name: 'Private Rooftop Dining',
+      subtitle: '2 guests',
+      hours: 'By reservation',
+      imagePath: 'assets/images/restaurant_elena.jpg',
+      category: 'Privilege',
+      badge: 'Privilege',
     ),
   ];
 
   // ── Dining (Figma restaurant menu / info / reserve) ────────────────────
-  static const restaurantTagline = 'Fine Syrian & Mediterranean Dining';
-  static const restaurantOpenNow = true;
-
-  /// The Services-hub tile that opens the dining flow instead of a
-  /// service-request list. Bound to both the tile and the routing check so the
-  /// two can't drift.
-  static const restaurantServiceTitle = 'Restaurant Res.';
-  static const restaurantAbout =
-      'Experience the finest Syrian and Mediterranean cuisine in an atmosphere '
-      'of refined elegance. Al-Sham blends traditional Damascene flavors with '
-      'modern culinary techniques, served in a beautifully appointed dining '
-      'room with hand-painted ceilings and soft candlelight.';
-  static const restaurantRating = 4.9;
-  static const restaurantReviews = 124;
-  static const restaurantGallery = <String>[
-    'assets/images/gallery1.png',
-    'assets/images/gallery2.png',
-    'assets/images/gallery3.png',
-    'assets/images/gallery4.png',
-  ];
+  // Venue about/gallery/rating/tagline are now fetched from
+  // `GET /public/dining-venues/{uuid}` (see RestaurantController). Only the
+  // reservation time slots stay demo — there is no backend slots endpoint wired.
   static const reserveTimeSlots = <String>[
     '12:30 PM',
     '1:00 PM',
@@ -143,94 +149,6 @@ abstract class DemoData {
     '8:00 PM',
     '8:30 PM',
     '9:00 PM',
-  ];
-  static const restaurantMenu = <MenuCategory>[
-    MenuCategory(
-      name: 'Breakfast',
-      items: [
-        MenuItem(
-          name: 'Ful Medames',
-          description:
-              'Slow-cooked fava beans, olive oil, lemon, cumin, '
-              'fresh herbs',
-          price: '\$5',
-          imagePath: 'assets/images/food_ful.png',
-          tag: 'vegan',
-        ),
-        MenuItem(
-          name: 'Continental Spread',
-          description:
-              'Pastries, seasonal fruits, yoghurt, honey, Arabic '
-              'coffee',
-          price: '\$15',
-          imagePath: 'assets/images/food_spread.png',
-        ),
-        MenuItem(
-          name: 'Garden Fresh Omelette',
-          description: 'Eggs, bell peppers, Vegs, cheese, served with toast',
-          price: '\$8',
-          imagePath: 'assets/images/food_omelette.png',
-        ),
-      ],
-    ),
-    MenuCategory(
-      name: 'Starters',
-      items: [
-        MenuItem(
-          name: 'Hummus Beiruti',
-          description: 'Chickpea purée, tahini, garlic and parsley.',
-          price: '\$6',
-          imagePath: 'assets/images/food_ful.png',
-          tag: 'vegan',
-        ),
-        MenuItem(
-          name: 'Fattoush',
-          description: 'Crisp greens, sumac and toasted pita.',
-          price: '\$7',
-          imagePath: 'assets/images/food_omelette.png',
-        ),
-      ],
-    ),
-    MenuCategory(
-      name: 'Mains',
-      items: [
-        MenuItem(
-          name: 'Lamb Shish',
-          description: 'Chargrilled lamb skewers, rice and grilled tomato.',
-          price: '\$22',
-          imagePath: 'assets/images/food_spread.png',
-        ),
-        MenuItem(
-          name: 'Sea Bass Sayadieh',
-          description: 'Spiced rice, caramelised onions and pine nuts.',
-          price: '\$26',
-          imagePath: 'assets/images/food_omelette.png',
-        ),
-      ],
-    ),
-    MenuCategory(
-      name: 'Desserts',
-      items: [
-        MenuItem(
-          name: 'Knafeh Nabulsieh',
-          description: 'Warm cheese pastry, semolina and rose syrup.',
-          price: '\$9',
-          imagePath: 'assets/images/food_spread.png',
-        ),
-      ],
-    ),
-    MenuCategory(
-      name: 'Beverages',
-      items: [
-        MenuItem(
-          name: 'Mint Lemonade',
-          description: 'Fresh lemon, mint and a touch of honey.',
-          price: '\$4',
-          imagePath: 'assets/images/food_ful.png',
-          tag: 'vegan',
-        ),
-      ],
-    ),
   ];
 
   // ── Customer Service (Figma "Customer Service" chat) ───────────────────
@@ -244,19 +162,10 @@ abstract class DemoData {
     'Special request',
     'Feedback',
   ];
-  static List<ChatMessage> customerServiceThread() => [
-    const ChatMessage(
-      sender: ChatSender.agent,
-      text:
-          'Good afternoon, Ahmed! This is Lara from Carlton Hotel Guest '
-          'Relations. How may I help you today?',
-      time: '3:24 PM',
-    ),
-  ];
-
-  // ── Account (Figma Account screen) ─────────────────────────────────────
-  static const userName = 'Yazan VX';
-  static const userEmail = 'yazanvx412q@example.com';
+  // The seeded customer-service thread is retired — the Customer Service tab is
+  // wired to GET /conversations + GET /conversations/{uuid}/messages (Phase 6).
+  // csAgentName/Role/Initial/csQuickReplies/csPhone stay demo: the message API
+  // carries only sender_type, no staff identity or quick-replies.
 
   // ── Preferences (Figma Preferences + option-picker sheets) ─────────────
   // Bed / mattress / pillow use the exported Figma glyphs (assets/icons);
@@ -357,17 +266,11 @@ abstract class DemoData {
     PreferenceOption(id: 'syp', label: 'SYP', icon: Icons.payments_outlined),
   ];
 
-  // ── Current stay (Services stay card, Figma 2073:133) ──────────────────
-  static const room = 'Room 812';
-  static const stayRoomName = 'Grand Damascus Suite';
-  static const checkedInTime = '3:00 PM';
-  static const nightsRemaining = 2;
-  static const stayImagePath = 'assets/images/stay_room.png';
-
   // ── Services grid (Figma "Services 1", node 2073:133) ──────────────────
   static const services = <ServiceItem>[
     ServiceItem(
       title: 'Room Service',
+      code: 'room_service',
       subtitle: '24 hrs',
       imagePath: 'assets/images/tile_room_service.png',
       imageWidth: 57,
@@ -376,6 +279,7 @@ abstract class DemoData {
     ),
     ServiceItem(
       title: 'Laundry',
+      code: 'laundry',
       subtitle: 'Same-day',
       imagePath: 'assets/images/tile_laundry.png',
       imageWidth: 76,
@@ -384,6 +288,7 @@ abstract class DemoData {
     ),
     ServiceItem(
       title: 'Housekeeping',
+      code: 'housekeeping',
       subtitle: 'On demand',
       imagePath: 'assets/images/tile_housekeeping.png',
       imageWidth: 70,
@@ -392,6 +297,7 @@ abstract class DemoData {
     ),
     ServiceItem(
       title: 'Concierge',
+      code: 'concierge',
       subtitle: 'Always available',
       imagePath: 'assets/images/tile_concierge.png',
       imageWidth: 65,
@@ -400,6 +306,7 @@ abstract class DemoData {
     ),
     ServiceItem(
       title: 'Transport',
+      code: 'transport',
       subtitle: 'Car & Valet',
       imagePath: 'assets/images/tile_transport.png',
       imageWidth: 79,
@@ -407,7 +314,8 @@ abstract class DemoData {
       imageOpacity: 1,
     ),
     ServiceItem(
-      title: restaurantServiceTitle,
+      title: 'Restaurant Res.',
+      code: 'restaurant',
       subtitle: 'Always available',
       imagePath: 'assets/images/tile_restaurant.png',
       imageWidth: 88,
@@ -416,6 +324,7 @@ abstract class DemoData {
     ),
     ServiceItem(
       title: 'Maintenance',
+      code: 'maintenance',
       subtitle: 'Quick request',
       imagePath: 'assets/images/tile_maintenance.png',
       imageWidth: 65,
@@ -424,6 +333,7 @@ abstract class DemoData {
     ),
     ServiceItem(
       title: 'Do Not Disturb',
+      code: 'do_not_disturb',
       subtitle: 'Privacy mode',
       imagePath: 'assets/images/tile_dnd.png',
       imageWidth: 74,
@@ -432,111 +342,14 @@ abstract class DemoData {
     ),
   ];
 
-  // ── Services category detail (hub tile -> option list -> request sheet) ──
-  static const serviceCategories = <ServiceDetailCategory>[
-    ServiceDetailCategory(
-      key: 'room_service',
-      name: 'Room Service',
-      subtitle: '24-hour dining to your room',
-      imagePath: 'assets/images/tile_room_service.png',
-      options: [
-        ServiceOption(
-          iconPath: 'assets/icons/svc_breakfast.svg',
-          title: 'Carlton Breakfast',
-          description: 'Full breakfast selection with fresh juice',
-          eta: 'ETA: 25–35 min',
-        ),
-        ServiceOption(
-          iconPath: 'assets/icons/svc_lunch.svg',
-          title: 'Lunch Menu',
-          description: 'Syrian and international cuisine',
-          eta: 'ETA: 30–45 min',
-        ),
-        ServiceOption(
-          iconPath: 'assets/icons/svc_latenight.svg',
-          title: 'Late Night Menu',
-          description: 'Light bites available until 2 AM',
-          eta: 'ETA: 20–30 min',
-        ),
-      ],
-    ),
-    ServiceDetailCategory(
-      key: 'laundry',
-      name: 'Laundry',
-      subtitle: 'Laundry Service',
-      imagePath: 'assets/images/tile_laundry.png',
-      options: [
-        ServiceOption(
-          iconPath: 'assets/icons/svc_laundry_express.svg',
-          title: 'Express Laundry',
-          description: 'Fast cleaning for items you need today.',
-          eta: 'ETA: 3 hr',
-        ),
-        ServiceOption(
-          iconPath: 'assets/icons/svc_laundry_dry_cleaning.svg',
-          title: 'Dry Cleaning',
-          description: 'Suits, dresses, and delicates',
-          eta: 'ETA: 24 hr',
-        ),
-        ServiceOption(
-          iconPath: 'assets/icons/svc_laundry_pressing.svg',
-          title: 'Pressing Service',
-          description: 'Quick pressing for a crisp finish.',
-          eta: 'ETA: 1 hr',
-        ),
-      ],
-    ),
-    ServiceDetailCategory(
-      key: 'housekeeping',
-      name: 'Housekeeping',
-      subtitle: 'On demand',
-      imagePath: 'assets/images/tile_housekeeping.png',
-      options: [
-        ServiceOption(
-          iconPath: 'assets/icons/svc_clean.svg',
-          title: 'Room Cleaning',
-          description: 'Full room service and tidying',
-          eta: 'ETA: 45 min',
-        ),
-        ServiceOption(
-          iconPath: 'assets/icons/svc_towels.svg',
-          title: 'Fresh Towels',
-          description: 'Towels and linens replacement',
-          eta: 'ETA: 15 min',
-        ),
-        ServiceOption(
-          iconPath: 'assets/icons/svc_turndown.svg',
-          title: 'Turndown Service',
-          description: 'Evening bed preparation',
-          eta: 'ETA: On request',
-        ),
-      ],
-    ),
-  ];
+  // Service categories are now fetched live (Phase 5 — GET /public/service-
+  // catalog → ServiceCatalogItem/ServiceCatalogOption), and active requests
+  // come from GET /service-requests. The demo category/request lists are
+  // retired.
 
-  /// Looks up a [ServiceDetailCategory] by its hub grid title (case-insensitive).
-  static ServiceDetailCategory? serviceCategoryByName(String name) {
-    for (final category in serviceCategories) {
-      if (category.name.toLowerCase() == name.toLowerCase()) return category;
-    }
-    return null;
-  }
-
-  // ── Active requests (Figma "Services 2") ────────────────────────────────
-  /// Returned as a fresh mutable list — the controller removes entries when
-  /// a request is cancelled.
-  static List<ServiceRequest> initialActiveRequests() => [
-    const ServiceRequest(
-      title: 'Room service — Carlton Breakfast',
-      detail: '25–35 min',
-      status: ServiceRequestStatus.inProgress,
-    ),
-    const ServiceRequest(
-      title: 'House Keeping - Fresh Towels',
-      detail: 'Arriving soon',
-      status: ServiceRequestStatus.confirmed,
-    ),
-  ];
+  // The Home active-booking dashboard (stay hero + running bill) is now fetched
+  // from GET /stays/active + GET /folio (see HomeController). currentBillLines/
+  // currentBillTotal/activeStay() retired.
 
   // ── AI Concierge (Figma AI1/AI2) ────────────────────────────────────────
   static const aiSuggestions = <String>[
@@ -548,126 +361,12 @@ abstract class DemoData {
     'Help me booking',
   ];
 
-  // ── Booking draft defaults (Figma "Plan Your Stay") ────────────────────
-  // The initial dates/guests the booking flow opens with. A real API would
-  // return the calendar bounds + any pre-selected values instead.
-  static final DateTime bookingFirstDay = DateTime(2026, 1, 1);
-  static final DateTime bookingLastDay = DateTime(2100, 12, 31);
-  static final DateTime bookingCheckIn = DateTime(2026, 8, 14);
-  static final DateTime bookingCheckOut = DateTime(2026, 8, 16);
-  static const int bookingAdults = 2;
-  static const int bookingChildren = 1;
+  // Booking draft defaults are now live controller state seeded from "today"
+  // (Phase 3), not fixed demo dates/guests.
 
   // ── My Stays (Figma "Past Stays" 2116:198 / "Stays / Upcoming" 2116:483) ─
-  static ReceiptData _receipt({
-    required String room,
-    required String dates,
-    required String res,
-    required String roomCost,
-    required String dining,
-    required String taxes,
-    required String total,
-    required String card,
-  }) => ReceiptData(
-    roomName: room,
-    dateLabel: dates,
-    resCode: res,
-    lines: [
-      (label: room, amount: roomCost),
-      (label: 'Dining & Services', amount: dining),
-      (label: 'Taxes & fees (15%)', amount: taxes),
-    ],
-    total: total,
-    paymentInfo: 'Payment processed · VISA •••• $card',
-  );
-
-  /// Past stays — const-shaped but returned fresh so screens can't mutate the
-  /// shared source.
-  static List<Stay> pastStays() => [
-    Stay(
-      id: 'past-1',
-      roomName: 'Grand Damascus Suite',
-      status: StayStatus.past,
-      imagePath: 'assets/images/room_classic_courtyard.jpg',
-      dateRangeLabel: 'Jul 8 – Jul 10 · 2 nights',
-      totalCharged: '\$596',
-      receipt: _receipt(
-        room: 'Grand Damascus Suite',
-        dates: 'Jul 8 – Jul 10',
-        res: 'CRS-812-4821',
-        roomCost: '\$417',
-        dining: '\$72',
-        taxes: '\$107',
-        total: '\$596',
-        card: '4821',
-      ),
-    ),
-    Stay(
-      id: 'past-2',
-      roomName: 'Classic Deluxe Room',
-      status: StayStatus.past,
-      imagePath: 'assets/images/room_deluxe_city.jpg',
-      dateRangeLabel: 'Mar 14 – Mar 16 · 2 nights',
-      totalCharged: '\$384',
-      receipt: _receipt(
-        room: 'Classic Deluxe Room',
-        dates: 'Mar 14 – Mar 16',
-        res: 'CRS-337-1180',
-        roomCost: '\$300',
-        dining: '\$18',
-        taxes: '\$66',
-        total: '\$384',
-        card: '4821',
-      ),
-    ),
-    Stay(
-      id: 'past-3',
-      roomName: 'Heritage Corner Suite',
-      status: StayStatus.past,
-      imagePath: 'assets/images/room_premier_terrace.jpg',
-      dateRangeLabel: 'Jan 20 – Jan 23 · 3 nights',
-      totalCharged: '\$768',
-      receipt: _receipt(
-        room: 'Heritage Corner Suite',
-        dates: 'Jan 20 – Jan 23',
-        res: 'CRS-201-9930',
-        roomCost: '\$600',
-        dining: '\$68',
-        taxes: '\$100',
-        total: '\$768',
-        card: '4821',
-      ),
-    ),
-  ];
-
-  /// The single upcoming reservation (fresh list so cancel can remove it).
-  static List<Stay> upcomingStays() => [
-    const Stay(
-      id: 'up-1',
-      roomName: 'Grand Damascus Suite',
-      status: StayStatus.upcoming,
-      subtitle: 'Carlton Hotel Damascus · Room 504',
-      imagePath: 'assets/images/room_classic_courtyard.jpg',
-      checkInLabel: 'Sep 5, 2026',
-      checkOutLabel: 'Sep 8, 2026',
-      resCode: 'CRS-504-2891',
-      pricePerNight: '\$240/night',
-      nextCheckInDays: 52,
-    ),
-  ];
-
-  /// The current in-house stay shown on the My Stays "Active" tab.
-  static Stay activeStay() => const Stay(
-    id: 'active-1',
-    roomName: 'Grand Damascus Suite',
-    status: StayStatus.active,
-    subtitle: 'Room 812',
-    imagePath: stayImagePath,
-    checkedInSince: '3:00 PM',
-    nightsRemaining: 2,
-    checkInLabel: 'Aug 14, 2026',
-    checkOutLabel: 'Aug 16, 2026',
-  );
+  // Upcoming + past stays are fetched live (Phase 4). Home's active-booking
+  // dashboard is now fetched too (GET /stays/active) — activeStay() retired.
 
   /// Quick-request chips under the Services grid (Figma "Services").
   static const quickRequests = <String>[
@@ -680,102 +379,6 @@ abstract class DemoData {
   ];
 
   // ── Booking flow (Figma "Booking / Step 1-8") ──────────────────────────
-  static const _roomDescription =
-      'An exceptional suite that blends traditional Syrian elegance with modern '
-      'luxury. Floor-to-ceiling windows frame dramatic city views while the '
-      'private balcony overlooks the historic Old City skyline. Features a marble '
-      'jacuzzi, hand-crafted furnishings, and complimentary butler service.';
-
-  static const roomOptions = <RoomOption>[
-    RoomOption(
-      id: 'room-grand',
-      name: 'Grand Damascus Suite',
-      images: [
-        'assets/images/room_classic_courtyard.jpg',
-        'assets/images/room_deluxe_city.jpg',
-        'assets/images/room_premier_terrace.jpg',
-      ],
-      area: '85 m² space',
-      view: 'City View',
-      bed: 'King Bed',
-      rating: 4.9,
-      reviewCount: 142,
-      pricePerNight: 280,
-      amenityChips: ['City View Balcony', 'Jacuzzi', '+3 more'],
-      highlights: [
-        IconLabel('assets/icons/jacuzzi.svg', 'Marble Jacuzzi'),
-        IconLabel('assets/icons/view.svg', 'City View Balcony'),
-        IconLabel('assets/icons/butler.svg', 'Butler Service'),
-        IconLabel('assets/icons/coffee.svg', 'Tea & Coffee Station'),
-      ],
-      amenities: [
-        IconLabel('assets/icons/view.svg', 'City View Balcony'),
-        IconLabel('assets/icons/jacuzzi.svg', 'Jacuzzi'),
-        IconLabel('assets/icons/desk.svg', 'Work Desk'),
-        IconLabel('assets/icons/tv.svg', 'Smart TV'),
-        IconLabel('assets/icons/coffee.svg', 'Tea & Coffee Station'),
-        IconLabel('assets/icons/info.svg', 'In-room safe'),
-      ],
-      description: _roomDescription,
-    ),
-    RoomOption(
-      id: 'room-deluxe',
-      name: 'Deluxe City View Suite',
-      images: [
-        'assets/images/room_deluxe_city.jpg',
-        'assets/images/room_classic_courtyard.jpg',
-      ],
-      area: '48 m² space',
-      view: 'City View',
-      bed: 'King Bed',
-      rating: 4.8,
-      reviewCount: 98,
-      pricePerNight: 240,
-      amenityChips: ['City View', 'Work Desk', '+2 more'],
-      highlights: [
-        IconLabel('assets/icons/view.svg', 'City View'),
-        IconLabel('assets/icons/desk.svg', 'Work Desk'),
-        IconLabel('assets/icons/tv.svg', 'Smart TV'),
-        IconLabel('assets/icons/coffee.svg', 'Coffee Station'),
-      ],
-      amenities: [
-        IconLabel('assets/icons/view.svg', 'City View'),
-        IconLabel('assets/icons/desk.svg', 'Work Desk'),
-        IconLabel('assets/icons/tv.svg', 'Smart TV'),
-        IconLabel('assets/icons/coffee.svg', 'Coffee Station'),
-      ],
-      description: _roomDescription,
-    ),
-    RoomOption(
-      id: 'room-terrace',
-      name: 'Premier Terrace Suite',
-      images: [
-        'assets/images/room_premier_terrace.jpg',
-        'assets/images/room_deluxe_city.jpg',
-      ],
-      area: '52 m² space',
-      view: 'Terrace',
-      bed: 'King Bed',
-      rating: 4.9,
-      reviewCount: 121,
-      pricePerNight: 320,
-      amenityChips: ['Private Terrace', 'Jacuzzi', '+3 more'],
-      highlights: [
-        IconLabel('assets/icons/jacuzzi.svg', 'Marble Jacuzzi'),
-        IconLabel('assets/icons/view.svg', 'Private Terrace'),
-        IconLabel('assets/icons/butler.svg', 'Butler Service'),
-        IconLabel('assets/icons/coffee.svg', 'Tea & Coffee Station'),
-      ],
-      amenities: [
-        IconLabel('assets/icons/view.svg', 'Private Terrace'),
-        IconLabel('assets/icons/jacuzzi.svg', 'Jacuzzi'),
-        IconLabel('assets/icons/desk.svg', 'Work Desk'),
-        IconLabel('assets/icons/tv.svg', 'Smart TV'),
-      ],
-      description: _roomDescription,
-    ),
-  ];
-
   static const addOns = <AddOn>[
     AddOn(
       id: 'addon-breakfast',

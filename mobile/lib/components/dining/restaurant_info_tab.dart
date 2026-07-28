@@ -1,5 +1,4 @@
 import 'package:carlton/components/dining/custom_gallery_grid.dart';
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/dining/restaurant_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -30,7 +29,7 @@ class RestaurantInfoTab extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          DemoData.restaurantAbout,
+          c.about.isNotEmpty ? c.about : 'Details coming soon.',
           style: textStyle.labelMedium?.copyWith(
             fontFamily: 'DM Sans',
             height: 1.5,
@@ -67,22 +66,24 @@ class RestaurantInfoTab extends StatelessWidget {
                 icon: 'assets/icons/rating.svg',
                 label: 'Rating',
                 value:
-                    '${DemoData.restaurantRating} / 5.0 · '
-                    '${DemoData.restaurantReviews} reviews',
+                    '${c.restaurant.rating} / 5.0 · '
+                    '${c.restaurant.reviews} reviews',
               ),
             ],
           ),
         ),
-        const SizedBox(height: 20),
-        Text(
-          'Gallery',
-          style: textStyle.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppColors.inkBlack,
+        if (c.gallery.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          Text(
+            'Gallery',
+            style: textStyle.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.inkBlack,
+            ),
           ),
-        ),
-        const SizedBox(height: 10),
-        CustomGalleryGrid(images: DemoData.restaurantGallery),
+          const SizedBox(height: 10),
+          CustomGalleryGrid(images: c.gallery),
+        ],
         const SizedBox(height: 20),
         CustomFilledButton(
           width: double.infinity,

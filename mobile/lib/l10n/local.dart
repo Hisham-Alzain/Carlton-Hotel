@@ -242,6 +242,46 @@ class Local implements Translations {
     "services.checkedInSincePrefix": "Checked in since ",
     "services.nightsRemainingPrefix": "Nights remaining  ",
 
+    // Services — In-stay requests (Phase 5)
+    "services.comingSoon": "Coming soon",
+    "services.etaMinutes": "~@count min",
+    "services.requestSubmitted": "Request submitted",
+    "services.requestNeedsCheckIn":
+        "Room service is available once you are checked in.",
+    "services.requestFailed": "Could not submit your request.",
+    "services.editComingSoon": "Editing requests is coming soon",
+    "services.dndTitle": "Do Not Disturb",
+    "services.dndSubtitle": "Pause housekeeping and in-room visits.",
+    "services.dndSwitchLabel": "Do Not Disturb",
+    "services.dndNeedsCheckIn":
+        "Do Not Disturb is available once you are checked in.",
+    "services.dndFailed": "Could not update Do Not Disturb.",
+
+    // Dining — table reservations (Phase 5)
+    "dining.tableReservedFor": "Table reserved · @label",
+    "dining.tableNeedsBooking": "Book a stay first to reserve a table.",
+    "dining.tableNoAvailability": "Nothing free for that time or party size.",
+    "dining.tableVenueUnavailable": "This restaurant is unavailable.",
+    "dining.tableFailed": "Could not reserve your table.",
+
+    // Pre-arrival e-check-in documents (Phase 5)
+    "preArrival.title": "Pre-Arrival Check-in",
+    "preArrival.intro":
+        "Upload your passport or ID for a faster check-in when you arrive.",
+    "preArrival.addDocument": "Add Document",
+    "preArrival.submit": "Submit Documents",
+    "preArrival.emptyTitle": "No documents yet",
+    "preArrival.emptySubtitle":
+        "Add a passport, ID card, or visa (JPG, PNG, or PDF) to complete "
+        "your e-check-in.",
+    "preArrival.submitted": "Documents submitted",
+    "preArrival.needBooking": "Available once you have a confirmed booking.",
+    "preArrival.invalid": "Please check the file type and size (max 10MB).",
+    "preArrival.failed": "Could not upload your documents.",
+    "preArrival.typePassport": "Passport",
+    "preArrival.typeIdCard": "ID Card",
+    "preArrival.typeVisa": "Visa",
+
     // AI Concierge
     "concierge.aiTabLabel": "Carlton AI Concierge",
     "concierge.customerServiceTabLabel": "Customer Service",
@@ -553,6 +593,44 @@ class Local implements Translations {
     "services.requestCancelled": "تم إلغاء الطلب",
     "services.checkedInSincePrefix": "تم تسجيل الدخول منذ ",
     "services.nightsRemainingPrefix": "الليالي المتبقية  ",
+
+    // Services — In-stay requests (Phase 5)
+    "services.comingSoon": "قريباً",
+    "services.etaMinutes": "~@count دقيقة",
+    "services.requestSubmitted": "تم إرسال الطلب",
+    "services.requestNeedsCheckIn": "خدمة الغرف متاحة بعد تسجيل وصولك.",
+    "services.requestFailed": "تعذّر إرسال طلبك.",
+    "services.editComingSoon": "تعديل الطلبات قريباً",
+    "services.dndTitle": "عدم الإزعاج",
+    "services.dndSubtitle": "أوقف خدمة التنظيف والزيارات مؤقتاً.",
+    "services.dndSwitchLabel": "عدم الإزعاج",
+    "services.dndNeedsCheckIn": "خاصية عدم الإزعاج متاحة بعد تسجيل وصولك.",
+    "services.dndFailed": "تعذّر تحديث خاصية عدم الإزعاج.",
+
+    // Dining — table reservations (Phase 5)
+    "dining.tableReservedFor": "تم حجز الطاولة · @label",
+    "dining.tableNeedsBooking": "احجز إقامة أولاً لحجز طاولة.",
+    "dining.tableNoAvailability": "لا يتوفر شيء لهذا الوقت أو عدد الضيوف.",
+    "dining.tableVenueUnavailable": "هذا المطعم غير متاح.",
+    "dining.tableFailed": "تعذّر حجز طاولتك.",
+
+    // Pre-arrival e-check-in documents (Phase 5)
+    "preArrival.title": "تسجيل الوصول المسبق",
+    "preArrival.intro": "حمّل جواز سفرك أو هويتك لتسجيل وصول أسرع عند حضورك.",
+    "preArrival.addDocument": "إضافة مستند",
+    "preArrival.submit": "إرسال المستندات",
+    "preArrival.emptyTitle": "لا توجد مستندات بعد",
+    "preArrival.emptySubtitle":
+        "أضف جواز سفر أو بطاقة هوية أو تأشيرة (JPG أو PNG أو PDF) "
+        "لإكمال تسجيل وصولك الإلكتروني.",
+    "preArrival.submitted": "تم إرسال المستندات",
+    "preArrival.needBooking": "متاح بمجرد وجود حجز مؤكد.",
+    "preArrival.invalid":
+        "يرجى التحقق من نوع الملف وحجمه (بحد أقصى 10 ميغابايت).",
+    "preArrival.failed": "تعذّر رفع مستنداتك.",
+    "preArrival.typePassport": "جواز السفر",
+    "preArrival.typeIdCard": "بطاقة الهوية",
+    "preArrival.typeVisa": "التأشيرة",
 
     // AI Concierge
     "concierge.aiTabLabel": "كونسيرج كارلتون الذكي",

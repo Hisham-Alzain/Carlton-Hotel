@@ -24,7 +24,7 @@ class AccountView extends GetView<AccountController> {
             children: [
               CustomInitialAvatar(
                 initial: controller.name,
-                backgroundColor: AppColors.inkBlack,
+                backgroundColor: AppColors.primary,
               ),
               Expanded(
                 child: Column(

@@ -1,5 +1,5 @@
+import 'package:carlton/components/booking_price_breakdown.dart';
 import 'package:carlton/components/booking_summary_header.dart';
-import 'package:carlton/components/custom_price_summary.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
@@ -13,54 +13,6 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 /// Step 6 — final review before confirming (Figma "Booking / Step 12").
 class ReviewBookingView extends StatelessWidget {
   const ReviewBookingView({super.key});
-
-  static const _methodIconPaths = {
-    PaymentMethod.applePay: 'assets/icons/pay_apple.svg',
-    PaymentMethod.googlePay: 'assets/icons/pay_google.svg',
-  };
-
-  Widget _breakdown(BookingFlowController controller) {
-    final room = controller.selectedRoom!;
-    return Padding(
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 10,
-        children: [
-          CustomPriceSummaryRow(
-            title: '${room.name} · ${controller.nights} nights',
-            value: '\$${controller.roomTotal}',
-          ),
-          ...controller.selectedAddOnIds.map(
-            (id) => CustomPriceSummaryRow(
-              title: controller.addOns
-                  .firstWhere((addOn) => addOn.id == id)
-                  .title,
-              value:
-                  '\$${controller.addOns.firstWhere((addOn) => addOn.id == id).price}',
-            ),
-          ),
-          CustomPriceSummaryRow(
-            title: 'Taxes & fees (15%)',
-            value: '\$${controller.taxes}',
-          ),
-          if (controller.promoApplied)
-            CustomPriceSummaryRow(
-              title: 'Promo ${controller.promoCtrl.text} (-10%)',
-              value: '-\$${controller.promoDiscount}',
-              titleColor: AppColors.successGreen,
-              valueColor: AppColors.successGreen,
-            ),
-          const Divider(),
-          CustomPriceSummaryRow(
-            title: 'Total',
-            value: '\$${controller.grandTotal}',
-            isTotal: true,
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +52,10 @@ class ReviewBookingView extends StatelessWidget {
                     dotColor: AppColors.iceBlue,
                   ),
                 ),
-                BookingSummaryHeader(controller: controller),
+                BookingSummaryHeader(
+                  controller: controller,
+                  showPriceSection: false,
+                ),
 
                 Container(
                   decoration: BoxDecoration(
@@ -108,15 +63,14 @@ class ReviewBookingView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.black06, width: 1),
                   ),
-                  child: _breakdown(controller),
+                  child: BookingPriceBreakdown(controller: controller),
                 ),
 
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: AppColors.whisperGrey,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.black06, width: 1.18),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,7 +106,7 @@ class ReviewBookingView extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     spacing: 10,
                     children: [
-                      if (_methodIconPaths[controller.paymentMethod]
+                      if (controller.paymentMethod.iconPath
                           case final iconPath?)
                         SvgPicture.asset(
                           iconPath,

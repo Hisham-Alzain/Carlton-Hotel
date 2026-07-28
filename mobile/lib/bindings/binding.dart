@@ -1,19 +1,25 @@
 import 'package:carlton/controllers/account/account_controller.dart';
 import 'package:carlton/controllers/account/preferences_controller.dart';
 import 'package:carlton/controllers/dining/restaurant_controller.dart';
+import 'package:carlton/controllers/reviews/review_controller.dart';
 import 'package:carlton/controllers/auth/create_profile_controller.dart';
 import 'package:carlton/controllers/stays/stays_controller.dart';
 import 'package:carlton/controllers/booking/find_booking_controller.dart';
+import 'package:carlton/controllers/booking/pre_arrival_documents_controller.dart';
 import 'package:carlton/controllers/booking/reservation_choice_controller.dart';
 import 'package:carlton/controllers/auth/otp_verify_controller.dart';
 import 'package:carlton/controllers/auth/phone_entry_controller.dart';
 import 'package:carlton/controllers/home/ai_concierge_controller.dart';
+import 'package:carlton/controllers/home/discover_controller.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:carlton/controllers/home/services_controller.dart';
 import 'package:carlton/controllers/main/main_controller.dart';
 import 'package:carlton/controllers/auth/sign_in_controller.dart';
 import 'package:carlton/controllers/splash/splash_screen_controller.dart';
 import 'package:carlton/controllers/auth/welcome_back_controller.dart';
+import 'package:carlton/models/booking_models.dart';
+import 'package:carlton/models/home_models.dart';
+import 'package:carlton/models/review.dart';
 import 'package:get/get.dart';
 
 class SplashBinding implements Bindings {
@@ -47,6 +53,34 @@ class RestaurantBinding implements Bindings {
   @override
   void dependencies() {
     Get.lazyPut(() => RestaurantController());
+    // Reviews tab (autoLoad) — target derived from the route argument; a demo
+    // venue (empty uuid) skips the fetch and renders the empty state.
+    Get.lazyPut(
+      () => ReviewController(
+        reviewType: ReviewTargetType.diningVenue,
+        targetUuid: Get.arguments is RestaurantItem
+            ? (Get.arguments as RestaurantItem).uuid
+            : '',
+      ),
+    );
+  }
+}
+
+class RoomDetailsBinding implements Bindings {
+  @override
+  void dependencies() {
+    // Room Details only submits reviews — the list is never rendered, so
+    // autoLoad is off. A demo room (empty uuid) can't be reviewed; the view
+    // hides the CTA in that case.
+    Get.lazyPut(
+      () => ReviewController(
+        reviewType: ReviewTargetType.roomType,
+        targetUuid: Get.arguments is RoomOption
+            ? (Get.arguments as RoomOption).uuid
+            : '',
+        autoLoad: false,
+      ),
+    );
   }
 }
 
@@ -103,6 +137,20 @@ class AiConciergeBinding implements Bindings {
   @override
   void dependencies() {
     Get.lazyPut(() => AiConciergeController());
+  }
+}
+
+class DiscoverBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => DiscoverController());
+  }
+}
+
+class PreArrivalDocumentsBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => PreArrivalDocumentsController());
   }
 }
 

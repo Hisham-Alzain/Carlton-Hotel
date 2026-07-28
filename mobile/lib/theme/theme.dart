@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 const _mainFontFamily = 'Plus Jakarta Sans';
 
 class Themes {
-  //TODO: add static when done
-  ThemeData get theme => ThemeData(
+  static ThemeData get theme => ThemeData(
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primary,
       // The color of the spinning arrow/arc

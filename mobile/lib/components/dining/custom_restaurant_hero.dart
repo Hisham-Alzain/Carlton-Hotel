@@ -1,4 +1,4 @@
-import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_pill_button.dart';
 import 'package:carlton/models/home_models.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -28,7 +28,7 @@ class CustomRestaurantHero extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(restaurant.imagePath, fit: BoxFit.cover),
+          CustomImage(source: restaurant.imagePath, fit: BoxFit.cover),
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -68,15 +68,9 @@ class CustomRestaurantHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 6,
               children: [
-                Row(
-                  spacing: 10,
-                  children: [
-                    if (DemoData.restaurantOpenNow) const _OpenNowBadge(),
-                    _HeroRating(
-                      rating: DemoData.restaurantRating,
-                      reviews: DemoData.restaurantReviews,
-                    ),
-                  ],
+                _HeroRating(
+                  rating: restaurant.rating,
+                  reviews: restaurant.reviews,
                 ),
                 Row(
                   spacing: 10,
@@ -102,7 +96,7 @@ class CustomRestaurantHero extends StatelessWidget {
                   ],
                 ),
                 Text(
-                  DemoData.restaurantTagline,
+                  restaurant.cuisine,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: textStyle.labelMedium?.copyWith(
@@ -155,44 +149,6 @@ class RestaurantMetaLine extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _OpenNowBadge extends StatelessWidget {
-  const _OpenNowBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.oliveDark,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 5,
-        children: [
-          SvgPicture.asset(
-            'assets/icons/door.svg',
-            width: 13,
-            height: 13,
-            colorFilter: const ColorFilter.mode(
-              AppColors.white,
-              BlendMode.srcIn,
-            ),
-          ),
-          Text(
-            'Open Now',
-            style: Get.textTheme.labelSmall?.copyWith(
-              fontFamily: 'DM Sans',
-              fontWeight: FontWeight.w600,
-              color: AppColors.white,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

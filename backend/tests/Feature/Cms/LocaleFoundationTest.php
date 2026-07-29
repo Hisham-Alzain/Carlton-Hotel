@@ -9,19 +9,72 @@ use App\Models\User;
 use App\Support\TranslatableRules;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\TestCase;
 
 /**
  * Phase 0 — locale foundation.
  *
  * Translatable CMS fields are JSON columns, so the locale set lives in
- * `config/cms.php` rather than in each FormRequest. These tests pin the two
+ * `config/cms.php` rather than in each FormRequest. These tests pin the three
  * halves of that contract: existing `en`/`ar` clients keep working unchanged,
- * and the additional locales are accepted, stored, and served.
+ * the additional locales are accepted, stored and served, and a misconfigured
+ * locale list fails loudly instead of quietly disabling validation.
  */
 class LocaleFoundationTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * A representative sample of real translated content per locale. These are
+     * literal strings on purpose: comparing a locale against itself (or merely
+     * counting keys) still passes with the whole `lang/<locale>` directory
+     * deleted, because Laravel silently falls back to `APP_FALLBACK_LOCALE`.
+     */
+    private const SAMPLE_TRANSLATIONS = [
+        'en' => [
+            'custom.errors.not_found'         => 'Resource not found.',
+            'custom.errors.forbidden'         => 'You do not have permission to perform this action.',
+            'custom.errors.validation_failed' => 'The given data was invalid.',
+            'custom.messages.success'         => 'Success.',
+            'custom.messages.created'         => 'Created successfully.',
+            'custom.auth.otp_sent'            => 'A verification code has been sent.',
+        ],
+        'ar' => [
+            'custom.errors.not_found'         => 'المورد غير موجود.',
+            'custom.errors.forbidden'         => 'ليس لديك صلاحية لتنفيذ هذا الإجراء.',
+            'custom.errors.validation_failed' => 'البيانات المدخلة غير صالحة.',
+            'custom.messages.success'         => 'تمت العملية بنجاح.',
+            'custom.messages.created'         => 'تم الإنشاء بنجاح.',
+            'custom.auth.otp_sent'            => 'تم إرسال رمز التحقق.',
+        ],
+        'fr' => [
+            'custom.errors.not_found'         => 'Ressource introuvable.',
+            'custom.errors.forbidden'         => "Vous n'avez pas l'autorisation d'effectuer cette action.",
+            'custom.errors.validation_failed' => 'Les données fournies sont invalides.',
+            'custom.messages.success'         => 'Opération réussie.',
+            'custom.messages.created'         => 'Créé avec succès.',
+            'custom.auth.otp_sent'            => 'Un code de vérification a été envoyé.',
+        ],
+        'tr' => [
+            'custom.errors.not_found'         => 'Kayıt bulunamadı.',
+            'custom.errors.forbidden'         => 'Bu işlemi gerçekleştirme izniniz yok.',
+            'custom.errors.validation_failed' => 'Girilen veriler geçersiz.',
+            'custom.messages.success'         => 'İşlem başarılı.',
+            'custom.messages.created'         => 'Başarıyla oluşturuldu.',
+            'custom.auth.otp_sent'            => 'Doğrulama kodu gönderildi.',
+        ],
+        'es' => [
+            'custom.errors.not_found'         => 'Recurso no encontrado.',
+            'custom.errors.forbidden'         => 'No tiene permiso para realizar esta acción.',
+            'custom.errors.validation_failed' => 'Los datos proporcionados no son válidos.',
+            'custom.messages.success'         => 'Operación realizada con éxito.',
+            'custom.messages.created'         => 'Creado correctamente.',
+            'custom.auth.otp_sent'            => 'Se ha enviado un código de verificación.',
+        ],
+    ];
 
     protected function setUp(): void
     {
@@ -254,15 +307,325 @@ class LocaleFoundationTest extends TestCase
             ->assertJsonStructure(['errors' => ['name.en']]);
     }
 
-    // ── Locale resolution ─────────────────────────────────────────────────
+    // ── Misconfiguration must fail LOUD and CLOSED ────────────────────────
+    //
+    // `config('cms.locales')` is the single source of truth. No consumer keeps a
+    // divergent hardcoded fallback, so a bad list must stop the request rather
+    // than quietly validate against a locale set nobody configured.
 
-    public function test_accept_language_resolves_a_newly_supported_locale(): void
+    public function test_required_locale_outside_the_locale_set_fails_closed(): void
     {
-        $this->withHeaders(['Accept-Language' => 'fr'])
+        // Previously this was intersected away, leaving an empty required set —
+        // every locale became `nullable` and a create with no `name` at all passed.
+        config(['cms.required_locales' => ['de']]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/required_locales/');
+
+        TranslatableRules::for('name', ['string', 'max:255']);
+    }
+
+    public function test_a_misconfigured_required_locale_cannot_wave_content_past_validation(): void
+    {
+        config(['cms.required_locales' => ['de']]);
+
+        // Intersecting `['de']` away left an empty required set, so `en` and `ar`
+        // became `nullable` and this French-only payload was accepted (201).
+        $this->withToken($this->editorToken())
+            ->postJson('/api/cms/room-types', $this->roomTypePayload([
+                'name'        => ['fr' => 'Suite de luxe'],
+                'description' => ['fr' => 'Suite spacieuse'],
+            ]))
+            ->assertStatus(500)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error_code', 'server_error');
+
+        $this->assertDatabaseCount('room_types', 0);
+    }
+
+    public function test_missing_locale_config_throws_instead_of_falling_back(): void
+    {
+        config(['cms.locales' => null]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/single source of truth/');
+
+        TranslatableRules::locales();
+    }
+
+    #[DataProvider('invalidLocaleCodeProvider')]
+    public function test_an_invalid_locale_code_never_reaches_a_validation_rule_key(string $code): void
+    {
+        // `*` would produce the wildcard key `name.*` (applying `required` to
+        // every locale sent); `pt.BR` would produce the nested path `name.pt.BR`.
+        config(['cms.locales' => ['en', 'ar', $code]]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/invalid locale code/');
+
+        TranslatableRules::for('name', ['string', 'max:255']);
+    }
+
+    public static function invalidLocaleCodeProvider(): array
+    {
+        return [
+            'wildcard'      => ['*'],
+            'dotted'        => ['pt.BR'],
+            'nested path'   => ['en.name'],
+            'blank'         => [' '],
+            'sql fragment'  => ["en')--"],
+        ];
+    }
+
+    public function test_a_regional_locale_code_is_still_accepted(): void
+    {
+        config(['cms.locales' => ['en', 'ar', 'pt_BR', 'zh-Hans']]);
+
+        $this->assertSame(
+            ['name.en', 'name.ar', 'name.pt_BR', 'name.zh-Hans'],
+            array_keys(TranslatableRules::for('name', ['string'])),
+        );
+    }
+
+    // ── The config file itself sanitises at the boundary ──────────────────
+
+    public function test_config_file_poisons_a_locale_list_containing_an_invalid_code(): void
+    {
+        // Narrowing `en,ar,*` to `['en','ar']` would be a silent degradation to a
+        // locale set nobody configured, so the whole list is rejected instead.
+        $this->assertSame([], $this->cmsConfigWith(['CMS_LOCALES' => 'en,ar,*'])['locales']);
+        $this->assertSame([], $this->cmsConfigWith(['CMS_LOCALES' => 'en,pt.BR'])['locales']);
+        $this->assertSame(
+            [],
+            $this->cmsConfigWith(['CMS_REQUIRED_LOCALES' => 'en,*'])['required_locales'],
+        );
+    }
+
+    public function test_config_file_keeps_valid_env_lists_and_the_shipped_defaults(): void
+    {
+        $this->assertSame(
+            ['en', 'ar', 'fr', 'tr', 'es', 'de'],
+            $this->cmsConfigWith(['CMS_LOCALES' => 'en, ar ,fr,tr,es,de'])['locales'],
+        );
+        $this->assertSame(['en', 'ar', 'fr', 'tr', 'es'], $this->cmsConfigWith([])['locales']);
+    }
+
+    /**
+     * Re-evaluate `config/cms.php` with the given env vars in place.
+     *
+     * @param  array<string, string>  $env
+     * @return array<string, list<string>>
+     */
+    private function cmsConfigWith(array $env): array
+    {
+        foreach ($env as $key => $value) {
+            $_ENV[$key] = $_SERVER[$key] = $value;
+            putenv("{$key}={$value}");
+        }
+
+        try {
+            return require base_path('config/cms.php');
+        } finally {
+            foreach (array_keys($env) as $key) {
+                unset($_ENV[$key], $_SERVER[$key]);
+                putenv($key);
+            }
+        }
+    }
+
+    // ── Locale resolution from a real Accept-Language header ──────────────
+
+    public function test_a_real_browser_accept_language_header_resolves_the_language(): void
+    {
+        // What Chrome actually sends. A strict `in_array()` against the raw
+        // header never matches this, so every browser silently got `en`.
+        $this->withHeaders(['Accept-Language' => 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7'])
             ->getJson('/api/public/room-types')
             ->assertOk();
 
         $this->assertSame('fr', app()->getLocale());
-        $this->assertSame(__('custom.errors.not_found'), trans('custom.errors.not_found', [], 'fr'));
+    }
+
+    public function test_quality_values_decide_which_supported_locale_wins(): void
+    {
+        // German is preferred but unsupported; Turkish outranks English.
+        $this->withHeaders(['Accept-Language' => 'de-DE,de;q=0.9,tr;q=0.8,en;q=0.5'])
+            ->getJson('/api/public/room-types')
+            ->assertOk();
+
+        $this->assertSame('tr', app()->getLocale());
+    }
+
+    public function test_a_bare_locale_tag_still_resolves(): void
+    {
+        $this->withHeaders(['Accept-Language' => 'ar'])
+            ->getJson('/api/public/room-types')
+            ->assertOk();
+
+        $this->assertSame('ar', app()->getLocale());
+    }
+
+    public function test_an_unsupported_language_falls_back_to_the_app_locale(): void
+    {
+        // The fallback is `config('app.locale')`, not a hardcoded 'en'.
+        config(['app.locale' => 'ar']);
+
+        $this->withHeaders(['Accept-Language' => 'de-DE,de;q=0.9,ja;q=0.8'])
+            ->getJson('/api/public/room-types')
+            ->assertOk();
+
+        $this->assertSame('ar', app()->getLocale());
+    }
+
+    public function test_an_empty_accept_language_header_falls_back_to_the_app_locale(): void
+    {
+        // Symfony's Request::create() injects a default `en-us,en;q=0.5`, so an
+        // absent header is simulated by sending an empty one.
+        config(['app.locale' => 'es']);
+
+        $this->withHeaders(['Accept-Language' => ''])
+            ->getJson('/api/public/room-types')
+            ->assertOk();
+
+        $this->assertSame('es', app()->getLocale());
+    }
+
+    public function test_an_app_locale_outside_the_supported_set_degrades_to_the_first_supported(): void
+    {
+        config(['app.locale' => 'de']);
+
+        $this->withHeaders(['Accept-Language' => 'ja-JP'])
+            ->getJson('/api/public/room-types')
+            ->assertOk();
+
+        $this->assertSame('en', app()->getLocale());
+        $this->assertContains(app()->getLocale(), config('cms.locales'));
+    }
+
+    // ── The lang/ files actually exist and actually differ ────────────────
+
+    #[DataProvider('localeProvider')]
+    public function test_each_locale_serves_its_own_translated_strings(string $locale): void
+    {
+        foreach (self::SAMPLE_TRANSLATIONS[$locale] as $key => $expected) {
+            $this->assertSame(
+                $expected,
+                trans($key, [], $locale),
+                "lang/{$locale} does not provide [{$key}]; Laravel fell back to "
+                . config('app.fallback_locale') . '.',
+            );
+
+            if ($locale !== 'en') {
+                $this->assertNotSame(
+                    self::SAMPLE_TRANSLATIONS['en'][$key],
+                    trans($key, [], $locale),
+                    "lang/{$locale} returns the English string for [{$key}].",
+                );
+            }
+        }
+    }
+
+    #[DataProvider('localeProvider')]
+    public function test_every_configured_locale_ships_the_full_custom_key_set(string $locale): void
+    {
+        $path = lang_path("{$locale}/custom.php");
+        $this->assertFileExists($path, "lang/{$locale}/custom.php is missing.");
+
+        $reference = array_keys($this->flattenLangFile('en'));
+        $actual    = array_keys($this->flattenLangFile($locale));
+
+        $this->assertNotSame([], $reference);
+        $this->assertSame(
+            [],
+            array_values(array_diff($reference, $actual)),
+            "lang/{$locale}/custom.php is missing keys present in lang/en.",
+        );
+        $this->assertSame(
+            [],
+            array_values(array_diff($actual, $reference)),
+            "lang/{$locale}/custom.php declares keys that lang/en does not.",
+        );
+    }
+
+    public function test_accept_language_localises_the_error_envelope_end_to_end(): void
+    {
+        $missing = 'no-such-page-' . Str::random(8);
+
+        foreach (['fr' => 'fr-FR,fr;q=0.9', 'tr' => 'tr-TR,tr;q=0.9', 'es' => 'es-ES,es;q=0.9'] as $locale => $header) {
+            $this->withHeaders(['Accept-Language' => $header])
+                ->getJson("/api/public/pages/{$missing}")
+                ->assertStatus(404)
+                ->assertJsonPath('error_code', 'not_found')
+                ->assertJsonPath('message', self::SAMPLE_TRANSLATIONS[$locale]['custom.errors.not_found']);
+        }
+    }
+
+    public function test_accept_language_localises_the_forbidden_envelope_end_to_end(): void
+    {
+        $user = User::factory()->create();
+
+        $this->withToken($user->createToken('t')->plainTextToken)
+            ->withHeaders(['Accept-Language' => 'fr-FR,fr;q=0.9,en;q=0.8'])
+            ->postJson('/api/cms/room-types', $this->roomTypePayload())
+            ->assertStatus(403)
+            ->assertJsonPath('error_code', 'forbidden')
+            ->assertJsonPath('message', self::SAMPLE_TRANSLATIONS['fr']['custom.errors.forbidden']);
+    }
+
+    public function test_accept_language_localises_the_validation_envelope_end_to_end(): void
+    {
+        $this->withToken($this->editorToken())
+            ->withHeaders(['Accept-Language' => 'es-ES,es;q=0.9,en;q=0.8'])
+            ->postJson('/api/cms/room-types', $this->roomTypePayload(['name' => ['en' => 'Only English']]))
+            ->assertStatus(422)
+            ->assertJsonPath('message', self::SAMPLE_TRANSLATIONS['es']['custom.errors.validation_failed']);
+    }
+
+    public static function localeProvider(): array
+    {
+        return [
+            'en' => ['en'],
+            'ar' => ['ar'],
+            'fr' => ['fr'],
+            'tr' => ['tr'],
+            'es' => ['es'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function flattenLangFile(string $locale): array
+    {
+        $path = lang_path("{$locale}/custom.php");
+
+        if (! is_file($path)) {
+            return [];
+        }
+
+        return $this->flatten(require $path);
+    }
+
+    /**
+     * @param  array<string, mixed>  $lines
+     * @return array<string, string>
+     */
+    private function flatten(array $lines, string $prefix = ''): array
+    {
+        $flat = [];
+
+        foreach ($lines as $key => $value) {
+            $path = $prefix === '' ? (string) $key : "{$prefix}.{$key}";
+
+            if (is_array($value)) {
+                $flat += $this->flatten($value, $path);
+
+                continue;
+            }
+
+            $flat[$path] = (string) $value;
+        }
+
+        return $flat;
     }
 }

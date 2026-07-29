@@ -16,7 +16,7 @@ class PromotionController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->indexPublic()['data'], PromotionResource::class, $request);
+        return $this->paginatedSuccess($this->service->indexPublic($this->perPageParam($request))['data'], PromotionResource::class, $request);
     }
 
     public function show(Promotion $promotion, Request $request): JsonResponse

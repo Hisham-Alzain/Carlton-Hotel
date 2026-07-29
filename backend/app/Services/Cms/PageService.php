@@ -4,12 +4,14 @@ namespace App\Services\Cms;
 
 use App\Base\BaseService;
 use App\Exceptions\NotFoundException;
+use App\Filters\PageFilter;
 use App\Models\Page;
 use Illuminate\Database\Eloquent\Builder;
 
 class PageService extends BaseService
 {
     protected string $model = Page::class;
+    protected ?string $filter = PageFilter::class;
     protected array $with = [];
 
     public function findBySlug(string $slug): array

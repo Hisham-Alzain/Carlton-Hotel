@@ -16,7 +16,7 @@ class RestaurantTableController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->index()['data'], RestaurantTableResource::class, $request);
+        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], RestaurantTableResource::class, $request);
     }
 
     public function show(RestaurantTable $restaurantTable, Request $request): JsonResponse

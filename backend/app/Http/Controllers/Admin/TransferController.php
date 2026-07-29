@@ -16,7 +16,7 @@ class TransferController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->index()['data'], TransferResource::class, $request);
+        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], TransferResource::class, $request);
     }
 
     public function show(Transfer $transfer, Request $request): JsonResponse

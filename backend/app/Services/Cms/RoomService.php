@@ -3,6 +3,7 @@
 namespace App\Services\Cms;
 
 use App\Base\BaseService;
+use App\Filters\RoomFilter;
 use App\Models\Room;
 use App\Models\RoomType;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 class RoomService extends BaseService
 {
     protected string $model = Room::class;
+    protected ?string $filter = RoomFilter::class;
     protected array $with = ['roomType', 'images'];
 
     public function store(array $data): array
@@ -31,14 +33,14 @@ class RoomService extends BaseService
         return parent::update($model, $data);
     }
 
-    public function indexPublic(): array
+    public function indexPublic(?int $perPage = null): array
     {
         $query = Room::query()
             ->with($this->with)
             ->where('is_active', true)
             ->orderBy('room_type_id')
             ->orderBy('number');
-        return ['data' => $query->paginate($this->perPage), 'code' => 200];
+        return ['data' => $query->paginate($this->resolvePerPage($perPage)), 'code' => 200];
     }
 
     protected function query(): Builder

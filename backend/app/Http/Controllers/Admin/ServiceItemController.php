@@ -16,7 +16,7 @@ class ServiceItemController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->index()['data'], ServiceItemResource::class, $request);
+        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], ServiceItemResource::class, $request);
     }
 
     public function show(ServiceItem $serviceItem, Request $request): JsonResponse

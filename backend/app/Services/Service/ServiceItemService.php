@@ -3,6 +3,7 @@
 namespace App\Services\Service;
 
 use App\Base\BaseService;
+use App\Filters\ServiceItemFilter;
 use App\Models\ServiceCategory;
 use App\Models\ServiceItem;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 class ServiceItemService extends BaseService
 {
     protected string $model = ServiceItem::class;
+    protected ?string $filter = ServiceItemFilter::class;
     protected array $with = ['category'];
 
     public function store(array $data): array

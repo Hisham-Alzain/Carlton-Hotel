@@ -17,7 +17,7 @@ class DiningVenueController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->index()['data'], DiningVenueResource::class, $request);
+        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], DiningVenueResource::class, $request);
     }
 
     public function show(DiningVenue $diningVenue, Request $request): JsonResponse

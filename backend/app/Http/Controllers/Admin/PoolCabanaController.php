@@ -16,7 +16,7 @@ class PoolCabanaController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->index()['data'], PoolCabanaResource::class, $request);
+        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], PoolCabanaResource::class, $request);
     }
 
     public function show(PoolCabana $poolCabana, Request $request): JsonResponse

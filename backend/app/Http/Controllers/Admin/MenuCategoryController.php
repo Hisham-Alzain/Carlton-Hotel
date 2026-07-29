@@ -16,7 +16,7 @@ class MenuCategoryController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->index()['data'], MenuCategoryResource::class, $request);
+        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], MenuCategoryResource::class, $request);
     }
 
     public function show(MenuCategory $menuCategory, Request $request): JsonResponse

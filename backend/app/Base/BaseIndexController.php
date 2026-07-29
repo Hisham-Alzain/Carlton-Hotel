@@ -12,7 +12,10 @@ abstract class BaseIndexController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->respondFromService($this->service()->index(), request: $request);
+        return $this->respondFromService(
+            $this->service()->index($this->indexParams($request), perPage: $this->perPageParam($request)),
+            request: $request,
+        );
     }
 
     public function show(Model $model, Request $request): JsonResponse

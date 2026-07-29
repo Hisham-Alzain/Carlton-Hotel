@@ -14,6 +14,6 @@ class HomeSliderController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->indexPublic()['data'], HomeSliderResource::class, $request);
+        return $this->paginatedSuccess($this->service->indexPublic($this->perPageParam($request))['data'], HomeSliderResource::class, $request);
     }
 }

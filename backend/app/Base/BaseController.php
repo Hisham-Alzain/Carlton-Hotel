@@ -43,6 +43,28 @@ abstract class BaseController extends Controller
         ], 'custom.messages.success', 200, $request);
     }
 
+    /**
+     * The page size the client asked for, or null when it did not ask. The
+     * default and the ceiling belong to the service — the controller's only job
+     * is to read the request, because services never touch `request()`.
+     */
+    protected function perPageParam(Request $request): ?int
+    {
+        return $request->has('per_page') ? $request->integer('per_page') : null;
+    }
+
+    /**
+     * Query-string params (filters, `search`, `sort`) handed down to the
+     * service's filter. Whitelisting happens in the filter's `$safeParms`, so
+     * passing the raw query array here is safe.
+     *
+     * @return array<string, mixed>
+     */
+    protected function indexParams(Request $request): array
+    {
+        return $request->query();
+    }
+
     protected function respondFromService(
         array $result,
         string $messageKey = 'custom.messages.success',

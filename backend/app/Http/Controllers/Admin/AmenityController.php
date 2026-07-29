@@ -17,7 +17,7 @@ class AmenityController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->index()['data'], AmenityResource::class, $request);
+        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], AmenityResource::class, $request);
     }
 
     public function show(Amenity $amenity, Request $request): JsonResponse

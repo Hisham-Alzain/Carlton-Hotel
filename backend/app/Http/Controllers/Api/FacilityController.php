@@ -16,7 +16,7 @@ class FacilityController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->indexPublic()['data'], FacilityResource::class, $request);
+        return $this->paginatedSuccess($this->service->indexPublic($this->perPageParam($request))['data'], FacilityResource::class, $request);
     }
 
     public function show(Facility $facility, Request $request): JsonResponse

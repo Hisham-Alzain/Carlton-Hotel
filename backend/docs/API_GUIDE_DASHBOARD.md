@@ -47,6 +47,33 @@ Every response is wrapped in this envelope.
 }
 ```
 
+### Index query parameters
+
+Every index endpoint (CMS admin and public alike) accepts:
+
+| Param | Meaning |
+|---|---|
+| `page` | 1-based page number. |
+| `per_page` | Page size. Default `15`, hard cap `100`. Values above the cap are clamped; `0`, negatives and non-numeric values fall back to the default. Never an error. |
+
+CMS admin index endpoints (`/api/cms/*`) additionally accept:
+
+| Param | Meaning |
+|---|---|
+| `is_active` | `true`/`false`. Omit to see both published and draft rows. |
+| `search` | Case-insensitive substring match across the entity's name/title in **every** configured locale (`config/cms.php` → `locales`), plus plain columns like `slug`, `code`, `number`. |
+| `sort` / `sort_dir` | `sort_dir` is `asc` (default) or `desc`. Allowed `sort` columns are per-entity — commonly `sort_order`, `created_at`, `updated_at`; entities without a `sort_order` column do not accept it. An unknown column is ignored and the endpoint's natural ordering is kept. |
+
+Filters also accept an explicit-operator form — `?is_active[eq]=false`,
+`?capacity[gte]=50`, `?status[in]=clean,dirty`. `?field=value` is shorthand for
+`?field[eq]=value`. Operators are `eq`, `like`, `gte`, `lte`, `in`, and each
+entity whitelists which ones each column allows; anything outside the whitelist
+is silently dropped rather than rejected, so an older dashboard build never
+breaks a list screen.
+
+**Public endpoints (`/api/public/*`) take `page` and `per_page` only** — they
+always return `is_active = true` rows in their fixed order.
+
 **Error:**
 ```json
 {

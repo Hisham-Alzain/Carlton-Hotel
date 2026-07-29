@@ -16,7 +16,7 @@ class RoomTypeController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->indexPublic()['data'], RoomTypeResource::class, $request);
+        return $this->paginatedSuccess($this->service->indexPublic($this->perPageParam($request))['data'], RoomTypeResource::class, $request);
     }
 
     public function show(RoomType $roomType, Request $request): JsonResponse

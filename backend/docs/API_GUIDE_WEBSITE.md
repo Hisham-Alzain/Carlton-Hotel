@@ -106,7 +106,14 @@ All public, no token. Every list/show endpoint filters `is_active = true` server
 | Pages | — | `GET /public/pages/{slug}` |
 | Promotions | `GET /public/promotions` | `GET /public/promotions/{uuid}` |
 
-List endpoints are paginated (`data.items` + `data.meta`, 15/page); `show` returns a single object in `data`.
+List endpoints are paginated (`data.items` + `data.meta`); `show` returns a single object in `data`.
+
+Page size is controlled by `?per_page=` — default `15`, hard cap `100`. Values
+above the cap are clamped to 100 rather than rejected, and `0`/negative/
+non-numeric values fall back to 15. `?per_page=100` is the "give me the whole
+collection" call the site makes; if `data.meta.total` ever exceeds 100, page
+through with `?page=`. No other query parameter is read on the public routes —
+they always return `is_active = true` rows in their fixed order.
 
 ### Room type
 ```json

@@ -3,6 +3,7 @@
 namespace App\Services\Cms;
 
 use App\Base\BaseService;
+use App\Filters\RoomTypeFilter;
 use App\Models\Amenity;
 use App\Models\RoomType;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,15 +13,16 @@ use Illuminate\Support\Facades\DB;
 class RoomTypeService extends BaseService
 {
     protected string $model = RoomType::class;
+    protected ?string $filter = RoomTypeFilter::class;
     protected array $with = ['images', 'amenityList'];
 
-    public function indexPublic(): array
+    public function indexPublic(?int $perPage = null): array
     {
         $query = RoomType::query()
             ->with($this->with)
             ->where('is_active', true)
             ->orderBy('sort_order');
-        return ['data' => $query->paginate($this->perPage), 'code' => 200];
+        return ['data' => $query->paginate($this->resolvePerPage($perPage)), 'code' => 200];
     }
 
     public function store(array $data): array

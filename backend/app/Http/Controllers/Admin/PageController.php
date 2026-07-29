@@ -17,7 +17,7 @@ class PageController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->index()['data'], PageResource::class, $request);
+        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], PageResource::class, $request);
     }
 
     public function show(Page $page, Request $request): JsonResponse

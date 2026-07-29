@@ -16,7 +16,7 @@ class ServiceCategoryController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->index()['data'], ServiceCategoryResource::class, $request);
+        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], ServiceCategoryResource::class, $request);
     }
 
     public function show(ServiceCategory $serviceCategory, Request $request): JsonResponse

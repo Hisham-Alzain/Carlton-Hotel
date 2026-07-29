@@ -16,7 +16,7 @@ class MenuItemController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->index()['data'], MenuItemResource::class, $request);
+        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], MenuItemResource::class, $request);
     }
 
     public function show(MenuItem $menuItem, Request $request): JsonResponse

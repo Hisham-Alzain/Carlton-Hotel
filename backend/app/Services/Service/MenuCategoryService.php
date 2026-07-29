@@ -3,6 +3,7 @@
 namespace App\Services\Service;
 
 use App\Base\BaseService;
+use App\Filters\MenuCategoryFilter;
 use App\Models\DiningVenue;
 use App\Models\MenuCategory;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 class MenuCategoryService extends BaseService
 {
     protected string $model = MenuCategory::class;
+    protected ?string $filter = MenuCategoryFilter::class;
     protected array $with = ['venue'];
 
     public function store(array $data): array

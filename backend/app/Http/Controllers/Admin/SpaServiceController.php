@@ -16,7 +16,7 @@ class SpaServiceController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->index()['data'], SpaServiceResource::class, $request);
+        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], SpaServiceResource::class, $request);
     }
 
     public function show(SpaService $spaService, Request $request): JsonResponse

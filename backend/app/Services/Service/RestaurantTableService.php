@@ -3,6 +3,7 @@
 namespace App\Services\Service;
 
 use App\Base\BaseService;
+use App\Filters\RestaurantTableFilter;
 use App\Models\DiningVenue;
 use App\Models\RestaurantTable;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 class RestaurantTableService extends BaseService
 {
     protected string $model = RestaurantTable::class;
+    protected ?string $filter = RestaurantTableFilter::class;
     protected array $with = ['diningVenue'];
 
     public function store(array $data): array

@@ -16,7 +16,7 @@ class EventSpaceController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->paginatedSuccess($this->service->indexPublic()['data'], EventSpaceResource::class, $request);
+        return $this->paginatedSuccess($this->service->indexPublic($this->perPageParam($request))['data'], EventSpaceResource::class, $request);
     }
 
     public function show(EventSpace $eventSpace, Request $request): JsonResponse

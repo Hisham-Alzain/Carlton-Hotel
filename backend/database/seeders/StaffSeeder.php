@@ -22,6 +22,10 @@ class StaffSeeder extends Seeder
             ['email' => 'housekeeping@carlton.demo', 'name' => 'Huda Housekeeping', 'role' => 'housekeeping'],
             ['email' => 'concierge@carlton.demo',    'name' => 'Cyrine Concierge',  'role' => 'concierge'],
             ['email' => 'events@carlton.demo',       'name' => 'Elias Events',      'role' => 'events'],
+            // Non-super-admin CMS persona: without it the dashboard can only be
+            // exercised as a super admin, who bypasses permission checks entirely
+            // and therefore proves nothing about the permission gating.
+            ['email' => 'content@carlton.demo',      'name' => 'Cyrus Content',     'role' => 'content_editor'],
         ];
 
         foreach ($presets as $preset) {

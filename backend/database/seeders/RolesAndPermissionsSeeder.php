@@ -26,11 +26,15 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         $presets = [
-            'reception'    => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'service_requests.view'],
-            'kitchen'      => ['service_requests.view', 'service_requests.update'],
-            'housekeeping' => ['service_requests.view', 'service_requests.update'],
-            'concierge'    => ['service_requests.view', 'service_requests.assign', 'service_requests.update'],
-            'events'       => ['service_requests.view', 'tickets.view', 'tickets.assign', 'tickets.respond'],
+            'reception'      => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'service_requests.view'],
+            'kitchen'        => ['service_requests.view', 'service_requests.update'],
+            'housekeeping'   => ['service_requests.view', 'service_requests.update'],
+            'concierge'      => ['service_requests.view', 'service_requests.assign', 'service_requests.update'],
+            'events'         => ['service_requests.view', 'tickets.view', 'tickets.assign', 'tickets.respond'],
+            // Without this preset no seeded account except the super admin (who
+            // passes via Gate::before, not via permission rows) can reach
+            // /api/cms/* — the CMS shipped ungrantable.
+            'content_editor' => ['cms.view', 'cms.edit'],
         ];
 
         foreach ($presets as $roleName => $rolePerms) {

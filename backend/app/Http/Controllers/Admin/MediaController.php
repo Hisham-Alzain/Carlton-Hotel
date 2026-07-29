@@ -34,9 +34,14 @@ class MediaController extends BaseController
         return $this->respondFromService($result, request: $request);
     }
 
-    private function delete(Request $request, Media $media): JsonResponse
+    /**
+     * $parent is load-bearing: the service refuses to delete media that is not
+     * attached to it, so the {parent} segment of the route actually scopes the
+     * delete instead of being decorative.
+     */
+    private function delete(Request $request, Model $parent, Media $media): JsonResponse
     {
-        $this->service->destroy($media);
+        $this->service->destroy($parent, $media);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
 
@@ -47,7 +52,7 @@ class MediaController extends BaseController
 
     public function destroyRoomType(Request $request, RoomType $roomType, Media $media): JsonResponse
     {
-        return $this->delete($request, $media);
+        return $this->delete($request, $roomType, $media);
     }
 
     public function storeRoom(UploadMediaRequest $request, Room $room): JsonResponse
@@ -57,7 +62,7 @@ class MediaController extends BaseController
 
     public function destroyRoom(Request $request, Room $room, Media $media): JsonResponse
     {
-        return $this->delete($request, $media);
+        return $this->delete($request, $room, $media);
     }
 
     public function storeFacility(UploadMediaRequest $request, Facility $facility): JsonResponse
@@ -67,7 +72,7 @@ class MediaController extends BaseController
 
     public function destroyFacility(Request $request, Facility $facility, Media $media): JsonResponse
     {
-        return $this->delete($request, $media);
+        return $this->delete($request, $facility, $media);
     }
 
     public function storeDiningVenue(UploadMediaRequest $request, DiningVenue $diningVenue): JsonResponse
@@ -77,7 +82,7 @@ class MediaController extends BaseController
 
     public function destroyDiningVenue(Request $request, DiningVenue $diningVenue, Media $media): JsonResponse
     {
-        return $this->delete($request, $media);
+        return $this->delete($request, $diningVenue, $media);
     }
 
     public function storeEventSpace(UploadMediaRequest $request, EventSpace $eventSpace): JsonResponse
@@ -87,7 +92,7 @@ class MediaController extends BaseController
 
     public function destroyEventSpace(Request $request, EventSpace $eventSpace, Media $media): JsonResponse
     {
-        return $this->delete($request, $media);
+        return $this->delete($request, $eventSpace, $media);
     }
 
     public function storeMenuItem(UploadMediaRequest $request, MenuItem $menuItem): JsonResponse
@@ -97,7 +102,7 @@ class MediaController extends BaseController
 
     public function destroyMenuItem(Request $request, MenuItem $menuItem, Media $media): JsonResponse
     {
-        return $this->delete($request, $media);
+        return $this->delete($request, $menuItem, $media);
     }
 
     public function storeHomeSlider(UploadMediaRequest $request, HomeSlider $homeSlider): JsonResponse
@@ -107,7 +112,7 @@ class MediaController extends BaseController
 
     public function destroyHomeSlider(Request $request, HomeSlider $homeSlider, Media $media): JsonResponse
     {
-        return $this->delete($request, $media);
+        return $this->delete($request, $homeSlider, $media);
     }
 
     public function storePromotion(UploadMediaRequest $request, Promotion $promotion): JsonResponse
@@ -117,6 +122,6 @@ class MediaController extends BaseController
 
     public function destroyPromotion(Request $request, Promotion $promotion, Media $media): JsonResponse
     {
-        return $this->delete($request, $media);
+        return $this->delete($request, $promotion, $media);
     }
 }

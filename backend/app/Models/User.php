@@ -7,7 +7,9 @@ use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -30,5 +32,29 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->type === 'super_admin';
+    }
+
+    /**
+     * Every permission name this user can actually exercise.
+     *
+     * A super admin holds no permission rows: AppServiceProvider's
+     * `Gate::before` hook short-circuits every check for them, so
+     * `getAllPermissions()` returns an empty collection while the API
+     * allows everything. Mirroring the bypass here keeps what a client
+     * is told in sync with what the API will permit. Reads come from
+     * Spatie's permission cache, so this adds no query per request.
+     *
+     * @return Collection<int, string>
+     */
+    public function effectivePermissionNames(): Collection
+    {
+        if ($this->isSuperAdmin()) {
+            return app(PermissionRegistrar::class)
+                ->getPermissions(['guard_name' => $this->guard_name])
+                ->pluck('name')
+                ->values();
+        }
+
+        return $this->getAllPermissions()->pluck('name')->values();
     }
 }

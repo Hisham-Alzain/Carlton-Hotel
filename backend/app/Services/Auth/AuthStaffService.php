@@ -27,7 +27,7 @@ class AuthStaffService
             'data' => [
                 'user'        => $user,
                 'token'       => $token,
-                'permissions' => $user->getAllPermissions()->pluck('name'),
+                'permissions' => $user->effectivePermissionNames(),
             ],
             'code' => 200,
         ];

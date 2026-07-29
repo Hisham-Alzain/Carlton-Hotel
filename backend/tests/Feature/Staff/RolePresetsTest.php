@@ -16,7 +16,7 @@ class RolePresetsTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
     }
 
-    public function test_roles_returns_5_presets_with_permissions(): void
+    public function test_roles_returns_6_presets_with_permissions(): void
     {
         $actor = User::factory()->create();
         $actor->givePermissionTo('staff.manage');
@@ -26,11 +26,15 @@ class RolePresetsTest extends TestCase
                     ->assertStatus(200)->assertJson(['success' => true]);
 
         $roles = $res->json('data');
-        $this->assertCount(5, $roles);
+        $this->assertCount(6, $roles);
 
         $reception = collect($roles)->firstWhere('name', 'reception');
         $this->assertNotNull($reception);
         $this->assertContains('reservations.view', $reception['permissions']);
         $this->assertContains('folios.settle', $reception['permissions']);
+
+        $contentEditor = collect($roles)->firstWhere('name', 'content_editor');
+        $this->assertNotNull($contentEditor);
+        $this->assertContains('cms.edit', $contentEditor['permissions']);
     }
 }

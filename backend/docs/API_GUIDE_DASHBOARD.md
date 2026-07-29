@@ -418,6 +418,50 @@ Paginated, all reservations, newest first.
 }
 ```
 
+### POST /cms/reservations — `reservations.create`
+
+**Purpose:** Front-desk booking — reception creating a reservation for a guest at the desk or on the phone. There is no OTP step: the public two-step flow verifies a guest who is not present, whereas here staff vouch for them by holding the permission.
+
+**Request body — identify the guest one of two ways.**
+
+Existing guest already on file:
+```json
+{
+  "guest_uuid": "...",
+  "room_type_uuid": "...", "check_in": "2026-09-05", "check_out": "2026-09-08",
+  "payment_method": "on_arrival"
+}
+```
+
+New arrival — name plus **at least one** of `phone` / `email`:
+```json
+{
+  "first_name": "Nour", "last_name": "Haddad",
+  "phone": "+963955123456", "email": "nour@example.com",
+  "room_type_uuid": "...", "check_in": "2026-09-05", "check_out": "2026-09-08",
+  "payment_method": "on_arrival", "promo_code": "CARLTON10",
+  "status": "confirmed", "source": "walk_in"
+}
+```
+
+| Field | Required | Notes |
+|---|---|---|
+| `guest_uuid` | either/or | Existing guest. When sent, name and contact fields are ignored. |
+| `first_name`, `last_name` | required without `guest_uuid` | |
+| `phone`, `email` | at least one without `guest_uuid` | Phone is normalised to E.164. An existing guest matching the phone (then email) is reused rather than duplicated. |
+| `room_type_uuid`, `check_in`, `check_out`, `payment_method` | yes | `check_in` cannot be in the past; `check_out` must be after it. |
+| `promo_code` | no | Applied and its usage counter incremented, same as the guest flow. |
+| `status` | no | `confirmed` (default) or `pending` — use `pending` for a phone booking still awaiting a deposit. |
+| `source` | no | `walk_in` (default) or `direct`. |
+
+**Behavior:** identical inventory and pricing path to the guest-facing booking — the room type row is locked, a specific room is reserved immediately (so `rooms[].room_number` is populated on the response), the stay is priced, and any promo is applied inside the same transaction. No `hold_expires_at` is set; the booking is live at once.
+
+A guest created through this endpoint has **no verified contact** — they never proved they own the number. They claim the booking in the app through `POST /auth/guest/link-booking-code`, which is what performs the verification.
+
+**Response:** HTTP 201, the reservation in the shape shown under `GET /cms/reservations/{uuid}`.
+
+**Failure `error_code`s:** `no_availability` (409, no free room of that type for the dates), `validation_failed` (422 — including `identity` when neither `guest_uuid` nor a phone/email was sent), `not_found` (404, unknown `guest_uuid`).
+
 ### POST /cms/reservations/{uuid}/confirm — `reservations.create`
 
 **Purpose:** Confirm a `pending`/`pending_verification` reservation.

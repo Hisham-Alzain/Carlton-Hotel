@@ -8,6 +8,7 @@ use App\Exceptions\NoActiveReservationException;
 use App\Exceptions\NotFoundException;
 use App\Http\Requests\Service\SetDndRequest;
 use App\Http\Resources\Booking\ActiveStayResource;
+use App\Http\Resources\Booking\CheckInStatusResource;
 use App\Http\Resources\Booking\PastStayResource;
 use App\Http\Resources\Booking\UpcomingStayResource;
 use App\Http\Resources\Folio\ReceiptResource;
@@ -28,6 +29,19 @@ class StayController extends BaseController
         private readonly ReceiptPdfRenderer $pdf,
         private readonly SetDndAction       $setDnd,
     ) {}
+
+    /**
+     * Check-in state for the token holder. Plain `auth:guests` on purpose —
+     * "not checked in" is the answer this endpoint exists to give, so gating
+     * it behind `is_checked_in` would make it impossible to ever return false.
+     */
+    public function status(Request $request): JsonResponse
+    {
+        $result         = $this->stays->checkInStatus($request->user('guests'));
+        $result['data'] = new CheckInStatusResource($result['data']);
+
+        return $this->respondFromService($result, request: $request);
+    }
 
     /**
      * Sits behind plain `auth:guests`, not `is_checked_in`: having no active

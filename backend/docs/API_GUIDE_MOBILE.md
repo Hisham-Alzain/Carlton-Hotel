@@ -91,6 +91,73 @@ Both gates reject with `error_code: no_active_reservation` (403) when unmet — 
 
 ---
 
+## Endpoint index
+
+Every endpoint the app can reach — 58 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
+
+| Tier | Method | Path | Section |
+|---|---|---|---|
+| P | GET | `/health` | [System](#module-system) |
+| P | POST | `/auth/guest/request-otp` | [Guest Auth](#module-guest-auth) |
+| P | POST | `/auth/guest/verify-otp` | [Guest Auth](#module-guest-auth) |
+| P | POST | `/auth/guest/link-booking-code` | [Guest Auth](#module-guest-auth) |
+| G | GET | `/auth/guest/me` | [Guest Auth](#module-guest-auth) |
+| G | PUT | `/auth/guest/profile` | [Guest Auth](#module-guest-auth) |
+| P | GET | `/public/home-sliders` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/room-types` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/room-types/{uuid}` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/rooms` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/rooms/{uuid}` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/amenities` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/facilities` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/facilities/{uuid}` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/dining-venues` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/dining-venues/{uuid}` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/dining-venues/{uuid}/menu-categories` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/dining-venues/{uuid}/menu` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/dining-venues/{uuid}/tables` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/event-spaces` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/event-spaces/{uuid}` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/pages/{slug}` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/promotions` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/promotions/{uuid}` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/service-catalog` | [Service Catalog](#module-service-catalog) |
+| P | GET | `/public/spa-services` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/pool-cabanas` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/transfers` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/reviews/{type}/{uuid}` | [Reviews](#reviews) |
+| G | POST | `/reviews/{type}/{uuid}` | [Reviews](#reviews) |
+| P | GET | `/public/availability` | [Booking](#module-booking--reservations) |
+| P | GET | `/public/quote` | [Booking](#module-booking--reservations) |
+| P | POST | `/reservations/guest` | [Booking](#module-booking--reservations) |
+| P | POST | `/reservations/guest/verify` | [Booking](#module-booking--reservations) |
+| G | POST | `/reservations` | [Booking](#module-booking--reservations) |
+| G | GET | `/reservations` | [Booking](#module-booking--reservations) |
+| G | GET | `/reservations/{uuid}` | [Booking](#module-booking--reservations) |
+| G | DELETE | `/reservations/{uuid}` | [Booking](#module-booking--reservations) |
+| G | GET | `/stays/status` | [Stays](#module-stays) |
+| G | GET | `/stays/active` | [Stays](#module-stays) |
+| G | GET | `/stays/upcoming` | [Stays](#module-stays) |
+| G | GET | `/stays/past` | [Stays](#module-stays) |
+| G | GET | `/stays/{uuid}/receipt` | [Stays](#module-stays) |
+| G | GET | `/stays/{uuid}/receipt/pdf` | [Stays](#module-stays) |
+| S | PATCH | `/stays/active/dnd` | [Stays](#module-stays) |
+| A | POST | `/service-bookings` | [In-Stay & Pre-Arrival](#module-in-stay--pre-arrival-services) |
+| A | POST | `/dining-venues/{uuid}/table-reservations` | [In-Stay & Pre-Arrival](#module-in-stay--pre-arrival-services) |
+| A | POST | `/pre-arrival/documents` | [In-Stay & Pre-Arrival](#module-in-stay--pre-arrival-services) |
+| S | POST | `/service-requests` | [In-Stay & Pre-Arrival](#module-in-stay--pre-arrival-services) |
+| S | GET | `/service-requests` | [In-Stay & Pre-Arrival](#module-in-stay--pre-arrival-services) |
+| S | POST | `/transport-requests` | [Folio](#module-folio--express-checkout) |
+| S | GET | `/folio` | [Folio](#module-folio--express-checkout) |
+| S | POST | `/folio/approve` | [Folio](#module-folio--express-checkout) |
+| G | POST | `/device-tokens` | [Notifications & Chat](#module-notifications--chat-tier-2--any-guest-token) |
+| G | GET | `/conversations` | [Notifications & Chat](#module-notifications--chat-tier-2--any-guest-token) |
+| G | POST | `/conversations` | [Notifications & Chat](#module-notifications--chat-tier-2--any-guest-token) |
+| G | GET | `/conversations/{uuid}/messages` | [Notifications & Chat](#module-notifications--chat-tier-2--any-guest-token) |
+| P | POST | `/event-inquiries` | [Event Inquiry](#module-event-inquiry-rfp) |
+
+---
+
 ## Module: System
 
 ### GET /api/health
@@ -254,6 +321,45 @@ Show `masked_contact` so the guest knows where to look.
 
 ---
 
+### GET /api/auth/guest/me
+
+**Purpose:** The signed-in guest plus the two entitlement flags that decide which mode the app renders. Call on launch after restoring a stored token, and again after any check-in/checkout.
+
+**Who can call:** Tier-2 (any guest token).
+
+**Request:** No body.
+
+**Response `data`:**
+```json
+{
+  "uuid": "...", "name": "Ahmad Khalil", "first_name": "Ahmad", "last_name": "Khalil",
+  "phone": "+963900000001", "phone_country": "SY", "phone_verified": true,
+  "email": "ahmad.khalil@example.com", "email_verified": true,
+  "preferred_locale": "en",
+  "has_booking": true,
+  "is_checked_in": true,
+  "has_active_reservation": true,
+  "active_reservation": {
+    "uuid": "...", "booking_code": "CARL-DEMO0001", "status": "checked_in",
+    "check_in": "2026-07-26", "check_out": "2026-07-29"
+  }
+}
+```
+
+| Field | Notes |
+|---|---|
+| `has_booking` | Unlocks the pre-arrival tier. True while you hold a `confirmed` or `checked_in` reservation whose `check_out` has not passed. |
+| `is_checked_in` | Unlocks the in-stay tier. |
+| `has_active_reservation` | **Deprecated alias of `has_booking`** — read the two flags above instead. |
+| `active_reservation` | The latest booking by `check_in`, or `null`. A trimmed shape — use `GET /stays/active` for the full in-stay payload. |
+| `phone_verified` / `email_verified` | Which contacts the guest has proven. A guest created by reception has neither until they link their booking. |
+
+**Failure `error_code`s:** `unauthenticated` (401, token missing/expired).
+
+> Prefer `GET /stays/status` when all you need is the check-in state — it answers the same entitlement question without loading the profile.
+
+---
+
 ## Guest profile fields
 
 | Field | Notes |
@@ -361,14 +467,121 @@ Review shape: `{ uuid, rating, comment, is_verified_stay, created_at, author: { 
 
 ## Module: Booking & Reservations
 
-### GET /public/availability / GET /public/quote
+### GET /public/availability
 
-Same as the website (public, tier-1) — see request/response shapes in `API_GUIDE_WEBSITE.md`. Used for the app's own booking flow and for showing price before a returning guest re-books.
+**Purpose:** Is this room type free for these dates? Call before showing the "Select Room" button as enabled.
+
+**Who can call:** Public (tier-1).
+
+**Query params:** `room_type_uuid` (required, must exist), `check_in` (required, today or later), `check_out` (required, after `check_in`).
+
+**Response `data`:**
+```json
+{ "room_type_uuid": "...", "check_in": "2026-09-05", "check_out": "2026-09-08", "available": true, "rooms_available": 3 }
+```
+
+**Failure `error_code`s:** `not_found` (404, unknown or inactive room type), `validation_failed` (422).
+
+### GET /public/quote
+
+**Purpose:** Price a stay before booking — base rate → seasonal/weekend rules → promo. This is what fills the price-details breakdown on the review screen.
+
+**Who can call:** Public (tier-1).
+
+**Query params:** `room_type_uuid`, `check_in`, `check_out` (required, same rules as availability), `promo_code` (optional).
+
+**Response `data`:**
+```json
+{ "daily_rate_usd": 280, "nights": 2, "subtotal_usd": 560, "discount_usd": 56, "total_usd": 504, "promo_code_id": 4, "rules_applied": 0 }
+```
+
+`discount_usd` is `0` and `promo_code_id` `null` when no promo applies. `rules_applied` counts the seasonal/weekend pricing rules that moved the rate — `0` means the flat base rate was used. Taxes are **not** in this payload — apply your own display rate on `subtotal_usd` if the design shows a tax line.
+
+**Failure `error_code`s:** `invalid_promo` (422, promo missing/expired/inactive), `not_found` (404), `validation_failed` (422).
 
 ### Two entry paths, one destination
 
 - `POST /reservations` — **app-only, tier-2.** Guest already has a token; identity comes from the token, body contact fields are ignored. One step, no OTP.
-- `POST /reservations/guest` + `POST /reservations/guest/verify` — **public, two-step** (same flow as the website — see `API_GUIDE_WEBSITE.md`'s Module: Availability, Quote & Booking). The app **keeps** the token this returns (the website discards it) — this is how a brand-new guest booking on the app becomes a logged-in session in one motion.
+- `POST /reservations/guest` + `POST /reservations/guest/verify` — **public, two-step.** The app **keeps** the token step 2 returns (the website discards it) — this is how a brand-new guest booking on the app becomes a logged-in session in one motion.
+
+```
+1. POST /reservations/guest          → soft-holds a room for 5 min, sends an OTP
+   → { reservation_uuid, identifier_masked, channel }
+2. POST /reservations/guest/verify   → activates the booking
+   → { reservation, guest, token }   ← KEEP the token
+```
+
+**Dev/testing note:** no SMS/WhatsApp/email provider is wired yet. In local and testing environments the code is always `000000`.
+
+### POST /reservations/guest
+
+**Purpose:** Step 1 of the public path — submit booking details, get an OTP sent to the guest's contact.
+
+**Who can call:** Public (tier-1).
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `room_type_uuid` | string | ✅ | Must exist |
+| `check_in` | date | ✅ | Today or later |
+| `check_out` | date | ✅ | After `check_in` |
+| `first_name` | string | ✅ | Max 100 |
+| `last_name` | string | ✅ | Max 100 |
+| `phone` | string | one of phone/email | Normalized to E.164 server-side |
+| `email` | string | one of phone/email | Lowercased/trimmed |
+| `payment_method` | string | optional | `cash` or `on_arrival` |
+| `promo_code` | string | optional | |
+
+**Response `data`:**
+```json
+{ "reservation_uuid": "...", "identifier_masked": "+963****", "channel": "sms" }
+```
+`channel` is `sms` or `email`. The OTP TTL is a fixed 5 minutes and is not echoed — the room stays soft-held for exactly that long, then auto-releases if step 2 never completes.
+
+**Failure `error_code`s:** `no_availability` (409, last room raced away), `invalid_promo` (422), `too_many_requests` (429, OTP rate limit — 1/min, 5/hr per contact), `validation_failed` (422, includes an `identity` key when neither phone nor email was given).
+
+### POST /reservations/guest/verify
+
+**Purpose:** Step 2 — verify the OTP, activate the booking, and receive the token that signs the guest in.
+
+**Who can call:** Public (tier-1).
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `reservation_uuid` | string | ✅ | From step 1 |
+| `phone` | string | one of phone/email | Must match the contact used in step 1 |
+| `email` | string | one of phone/email | |
+| `otp_code` | string | ✅ | 6 digits |
+
+**Response `data`:**
+```json
+{
+  "reservation": {
+    "uuid": "...", "booking_code": "CARL-7K2M9XQR", "status": "pending",
+    "check_in": "2026-09-05", "check_out": "2026-09-08", "nights": 3,
+    "source": "direct", "payment_method": "cash", "total_usd": "840.00", "hold_expires_at": null
+  },
+  "guest": { "uuid": "...", "name": "...", "phone": "+963...", "email": null, "preferred_locale": "en" },
+  "token": "1|abcdef..."
+}
+```
+
+**Store `token`** — the guest is now signed in and every tier-2 endpoint is open to them. No separate login step is needed after booking.
+
+**Failure `error_code`s:**
+
+| Code | HTTP | UI action |
+|---|---|---|
+| `not_found` | 404 | Reservation not in the right state, or the contact doesn't match step 1 — generic "Booking not found." |
+| `otp_invalid` | 422 | "Incorrect code." Allow retry. |
+| `otp_expired` | 422 | "Code expired." The hold is gone too — send the guest back to step 1. |
+| `otp_locked` | 429 | Too many attempts — back to step 1. |
+| `hold_expired` | 422 | The 5-minute window passed — back to step 1; the room may no longer be free. |
+
+**Booking code format:** `CARL-` + 8 Crockford-Base32 characters (excludes `I`, `L`, `O`, `U` to avoid ambiguity), e.g. `CARL-7K2M9XQR`.
 
 ### POST /api/reservations
 
@@ -590,6 +803,38 @@ Read projections over your reservations for the three stay screens. All three
 reads are **tier-2** (`auth:guests` only) — having no active stay is an empty
 state, not an error, so don't treat a `null`/`[]` payload as a failure.
 
+### GET /api/stays/status
+
+**Purpose:** The cheap entitlement probe — "is the bearer of this token in the hotel right now?" Poll it on app resume to decide whether to render the in-stay home or the browse home, without pulling the full profile or stay payload.
+
+**Who can call:** Tier-2 (any guest token). Deliberately **not** behind the in-stay gate: "not checked in" is the answer this endpoint exists to give, so gating it would make `false` impossible to return.
+
+**Response `data`:**
+```json
+{
+  "has_booking": true,
+  "is_checked_in": true,
+  "reservation": {
+    "uuid": "...", "booking_code": "CARL-DEMO0001", "status": "checked_in",
+    "check_in": "2026-07-26", "check_out": "2026-07-29",
+    "checked_in_at": "2026-07-26T12:00:00+00:00",
+    "nights_remaining": 2,
+    "room_number": "812"
+  }
+}
+```
+
+| Field | Notes |
+|---|---|
+| `has_booking` / `is_checked_in` | The same two flags `GET /auth/guest/me` returns, resolved from the same source the `has_booking` / `is_checked_in` middleware use — so the app can never disagree with the gate that will reject its next request. |
+| `reservation` | The in-progress stay when there is one, otherwise the latest booking. **`null`** when the guest has no booking at all. |
+| `checked_in_at` | `null` for a booking not yet arrived at, and for stays predating this column. |
+| `room_number` | Assigned at check-in — `null` before then. |
+
+Both flags are `false` with `reservation: null` for a guest who has only ever browsed. That is a success response, not an error.
+
+**Failure `error_code`s:** `unauthenticated` (401).
+
 ### GET /api/stays/active
 
 `data` is a single object, or `null` when you are not currently checked in.
@@ -743,7 +988,39 @@ Live delivery mirrors to Firestore (`chats` collection, one doc per message keye
 
 ## Module: Event Inquiry (RFP)
 
-`POST /event-inquiries` — public (tier-1), same endpoint and shape as the website (see `API_GUIDE_WEBSITE.md`'s Module: Event Inquiry). If called with a guest token attached, the inquiry is silently linked to your guest record; the response is identical either way.
+### POST /api/event-inquiries
+
+**Purpose:** Submit a wedding/conference/corporate-event inquiry. Fire-and-forget — there is no confirmation flow, the inquiry just routes to the right department.
+
+**Who can call:** Public (tier-1). If a guest token *is* attached the inquiry is silently linked to that guest record; the response is identical either way, so send the token when you have one.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `name` | string | ✅ | Max 255 |
+| `email` | string | ✅ | |
+| `phone` | string | optional | Normalized to E.164 if valid |
+| `company` | string | optional | |
+| `event_type` | string | ✅ | `wedding`, `corporate`, `conference`, `gala`, `birthday`, `product_launch`, `other` |
+| `event_date` | date | optional | Must be after today |
+| `expected_guests` | integer | optional | Min 1 |
+| `budget_usd` | number | optional | |
+| `notes` | string | optional | Max 5000 |
+| `requirements` | array | optional | `[{ "type": "av_equipment", "notes": "..." }]` |
+
+**Response `data`** (HTTP 201):
+```json
+{
+  "uuid": "...", "name": "...", "email": "...", "event_type": "corporate", "event_date": "2026-08-01",
+  "status": "new", "department": "sales",
+  "requirements": [ { "uuid": "...", "type": "av_equipment", "notes": "..." } ]
+}
+```
+
+**Department routing:** `corporate`, `conference`, `product_launch` → `sales`; everything else (`wedding`, `gala`, `birthday`, `other`) → `events`.
+
+**Failure `error_code`s:** `validation_failed` (422).
 
 ---
 

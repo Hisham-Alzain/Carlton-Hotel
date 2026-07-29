@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Base\BaseController;
 use App\Http\Requests\Booking\AssignRoomRequest;
+use App\Http\Requests\Booking\StoreAdminReservationRequest;
 use App\Http\Resources\Booking\ReservationResource;
 use App\Models\Reservation;
 use App\Models\Room;
@@ -23,6 +24,15 @@ class ReservationController extends BaseController
     public function show(Reservation $reservation, Request $request): JsonResponse
     {
         $result = $this->service->show($reservation);
+        $result['data'] = new ReservationResource($result['data']);
+        return $this->respondFromService($result, request: $request);
+    }
+
+    // Front-desk booking: reception books for a guest at the desk or on the
+    // phone. No OTP step — see ReservationService::adminStore().
+    public function store(StoreAdminReservationRequest $request): JsonResponse
+    {
+        $result = $this->service->adminStore($request->validated());
         $result['data'] = new ReservationResource($result['data']);
         return $this->respondFromService($result, request: $request);
     }

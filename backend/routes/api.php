@@ -257,6 +257,9 @@ Route::middleware('auth:guests')
 // past-stay payload.
 // ──────────────────────────────────────────────────────────────────────
 Route::middleware('auth:guests')->prefix('stays')->group(function () {
+    // Cheap entitlement probe the app can poll on resume: is this token's guest
+    // checked in? Declared before /{reservation} so "status" is never a UUID.
+    Route::get('/status',   [StayController::class, 'status']);
     Route::get('/active',   [StayController::class, 'active']);
     Route::get('/upcoming', [StayController::class, 'upcoming']);
     Route::get('/past',     [StayController::class, 'past']);
@@ -286,6 +289,8 @@ Route::middleware('auth:users')->prefix('cms/reservations')->group(function () {
         Route::get   ('/{reservation}', [AdminReservationController::class, 'show']);
     });
     Route::middleware('permission:reservations.create')->group(function () {
+        // Front-desk booking — reception creating a reservation for a guest.
+        Route::post  ('/',                          [AdminReservationController::class, 'store']);
         Route::post  ('/{reservation}/confirm',     [AdminReservationController::class, 'confirm']);
         Route::post  ('/{reservation}/assign-room', [AdminReservationController::class, 'assignRoom']);
     });

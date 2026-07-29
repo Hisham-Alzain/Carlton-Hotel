@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Cms;
 
 use App\Base\BaseRequest;
+use App\Support\TranslatableRules;
 
 class CreatePageRequest extends BaseRequest
 {
@@ -10,10 +11,8 @@ class CreatePageRequest extends BaseRequest
     {
         return [
             'slug'       => ['required', 'string', 'max:255', 'unique:pages,slug', 'regex:/^[a-z0-9-]+$/'],
-            'title.en'   => ['required', 'string', 'max:255'],
-            'title.ar'   => ['required', 'string', 'max:255'],
-            'content.en' => ['required', 'string'],
-            'content.ar' => ['required', 'string'],
+            ...TranslatableRules::for('title', ['string', 'max:255']),
+            ...TranslatableRules::for('content', ['string']),
             'is_active'  => ['boolean'],
             'sort_order' => ['integer', 'min:0'],
         ];

@@ -5,6 +5,7 @@ namespace App\Http\Requests\Cms;
 use App\Base\BaseRequest;
 use App\Enums\BedType;
 use App\Enums\RoomView;
+use App\Support\TranslatableRules;
 use Illuminate\Validation\Rule;
 
 class CreateRoomTypeRequest extends BaseRequest
@@ -12,10 +13,8 @@ class CreateRoomTypeRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'name.en'                => ['required', 'string', 'max:255'],
-            'name.ar'                => ['required', 'string', 'max:255'],
-            'description.en'         => ['required', 'string'],
-            'description.ar'         => ['required', 'string'],
+            ...TranslatableRules::for('name', ['string', 'max:255']),
+            ...TranslatableRules::for('description', ['string']),
             // Catalog rows from `amenities`, not free text — see AmenitySeeder.
             'amenities'              => ['nullable', 'array'],
             'amenities.*.uuid'       => ['required', 'string', 'exists:amenities,uuid'],

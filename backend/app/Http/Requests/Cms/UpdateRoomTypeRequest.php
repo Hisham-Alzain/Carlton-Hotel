@@ -5,6 +5,7 @@ namespace App\Http\Requests\Cms;
 use App\Base\BaseRequest;
 use App\Enums\BedType;
 use App\Enums\RoomView;
+use App\Support\TranslatableRules;
 use Illuminate\Validation\Rule;
 
 class UpdateRoomTypeRequest extends BaseRequest
@@ -12,10 +13,8 @@ class UpdateRoomTypeRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'name.en'                => ['sometimes', 'required', 'string', 'max:255'],
-            'name.ar'                => ['sometimes', 'required', 'string', 'max:255'],
-            'description.en'         => ['sometimes', 'required', 'string'],
-            'description.ar'         => ['sometimes', 'required', 'string'],
+            ...TranslatableRules::sometimes('name', ['string', 'max:255']),
+            ...TranslatableRules::sometimes('description', ['string']),
             // Omit the key to leave the existing pivot untouched; send [] to clear.
             'amenities'              => ['nullable', 'array'],
             'amenities.*.uuid'       => ['required', 'string', 'exists:amenities,uuid'],

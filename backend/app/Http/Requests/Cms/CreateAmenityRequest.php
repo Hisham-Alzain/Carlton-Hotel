@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Cms;
 
 use App\Base\BaseRequest;
+use App\Support\TranslatableRules;
 use Illuminate\Support\Str;
 
 class CreateAmenityRequest extends BaseRequest
@@ -18,8 +19,7 @@ class CreateAmenityRequest extends BaseRequest
     {
         return [
             'slug'       => ['required', 'string', 'max:255', 'unique:amenities,slug'],
-            'name.en'    => ['required', 'string', 'max:255'],
-            'name.ar'    => ['required', 'string', 'max:255'],
+            ...TranslatableRules::for('name', ['string', 'max:255']),
             'icon'       => ['nullable', 'string', 'max:64'],
             'is_active'  => ['boolean'],
             'sort_order' => ['integer', 'min:0'],

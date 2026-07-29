@@ -3,20 +3,17 @@
 namespace App\Http\Requests\Cms;
 
 use App\Base\BaseRequest;
+use App\Support\TranslatableRules;
 
 class CreatePromotionRequest extends BaseRequest
 {
     public function rules(): array
     {
         return [
-            'title.en'       => ['required', 'string', 'max:255'],
-            'title.ar'       => ['required', 'string', 'max:255'],
-            'description.en' => ['required', 'string'],
-            'description.ar' => ['required', 'string'],
-            'secondary_description.en' => ['nullable', 'string'],
-            'secondary_description.ar' => ['nullable', 'string'],
-            'terms.en'       => ['nullable', 'string'],
-            'terms.ar'       => ['nullable', 'string'],
+            ...TranslatableRules::for('title', ['string', 'max:255']),
+            ...TranslatableRules::for('description', ['string']),
+            ...TranslatableRules::optional('secondary_description', ['string']),
+            ...TranslatableRules::optional('terms', ['string']),
             'valid_from'     => ['nullable', 'date'],
             'valid_until'    => ['nullable', 'date', 'after_or_equal:valid_from'],
             'is_active'      => ['boolean'],

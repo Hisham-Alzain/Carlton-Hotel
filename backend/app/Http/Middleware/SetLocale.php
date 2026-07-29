@@ -10,8 +10,11 @@ class SetLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = $request->header('Accept-Language', config('app.locale', 'en'));
-        $locale = in_array($locale, ['en', 'ar']) ? $locale : 'en';
+        $fallback = config('app.locale', 'en');
+        $locale   = $request->header('Accept-Language', $fallback);
+        // Supported locales are config-driven — see config/cms.php.
+        $supported = (array) config('cms.locales', ['en', 'ar']);
+        $locale = in_array($locale, $supported, true) ? $locale : 'en';
         app()->setLocale($locale);
         return $next($request);
     }

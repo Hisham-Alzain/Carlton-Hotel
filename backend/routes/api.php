@@ -130,90 +130,118 @@ Route::prefix('public')->group(function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────
-// P3 — CMS: Admin CRUD (cms.edit permission)
+// P3 — CMS: Admin CRUD
+//
+// Read verbs require cms.view, write verbs require cms.edit. Reads are gated
+// on `cms.view|cms.edit` rather than `cms.view` alone because Spatie's
+// PermissionMiddleware resolves a pipe-separated list through `canAny()` —
+// ANY, not ALL (see vendor/spatie/laravel-permission PermissionMiddleware).
+// That makes cms.edit imply read access, so an editor never needs both rows
+// to use the CMS, while cms.view alone yields a genuine read-only reviewer.
+//
+// Before this split the whole block sat behind cms.edit and cms.view was
+// enforced nowhere — a role granted only cms.view got 403 on every GET while
+// the seeder advertised it as the read half of a read+write pair.
 // ──────────────────────────────────────────────────────────────────────
-Route::middleware(['auth:users', 'permission:cms.edit'])->prefix('cms')->group(function () {
-    // Room types
-    Route::get   ('/room-types',                                  [AdminRoomTypeController::class, 'index']);
-    Route::post  ('/room-types',                                  [AdminRoomTypeController::class, 'store']);
-    Route::get   ('/room-types/{roomType}',                       [AdminRoomTypeController::class, 'show']);
-    Route::put   ('/room-types/{roomType}',                       [AdminRoomTypeController::class, 'update']);
-    Route::delete('/room-types/{roomType}',                       [AdminRoomTypeController::class, 'destroy']);
-    Route::post  ('/room-types/{roomType}/images',                [MediaController::class, 'storeRoomType']);
-    Route::delete('/room-types/{roomType}/images/{media}',        [MediaController::class, 'destroyRoomType']);
+Route::middleware('auth:users')->prefix('cms')->group(function () {
 
-    // Rooms
-    Route::get   ('/rooms',                                       [AdminRoomController::class, 'index']);
-    Route::post  ('/rooms',                                       [AdminRoomController::class, 'store']);
-    Route::get   ('/rooms/{room}',                                [AdminRoomController::class, 'show']);
-    Route::put   ('/rooms/{room}',                                [AdminRoomController::class, 'update']);
-    Route::delete('/rooms/{room}',                                [AdminRoomController::class, 'destroy']);
-    Route::post  ('/rooms/{room}/images',                         [MediaController::class, 'storeRoom']);
-    Route::delete('/rooms/{room}/images/{media}',                 [MediaController::class, 'destroyRoom']);
+    // ── Reads (cms.view, or cms.edit which implies it) ────────────────
+    Route::middleware('permission:cms.view|cms.edit')->group(function () {
+        Route::get('/room-types',                   [AdminRoomTypeController::class, 'index']);
+        Route::get('/room-types/{roomType}',        [AdminRoomTypeController::class, 'show']);
 
-    // Facilities
-    Route::get   ('/facilities',                                  [AdminFacilityController::class, 'index']);
-    Route::post  ('/facilities',                                  [AdminFacilityController::class, 'store']);
-    Route::get   ('/facilities/{facility}',                       [AdminFacilityController::class, 'show']);
-    Route::put   ('/facilities/{facility}',                       [AdminFacilityController::class, 'update']);
-    Route::delete('/facilities/{facility}',                       [AdminFacilityController::class, 'destroy']);
-    Route::post  ('/facilities/{facility}/images',                [MediaController::class, 'storeFacility']);
-    Route::delete('/facilities/{facility}/images/{media}',        [MediaController::class, 'destroyFacility']);
+        Route::get('/rooms',                        [AdminRoomController::class, 'index']);
+        Route::get('/rooms/{room}',                 [AdminRoomController::class, 'show']);
 
-    // Dining venues
-    Route::get   ('/dining-venues',                               [AdminDiningVenueController::class, 'index']);
-    Route::post  ('/dining-venues',                               [AdminDiningVenueController::class, 'store']);
-    Route::get   ('/dining-venues/{diningVenue}',                 [AdminDiningVenueController::class, 'show']);
-    Route::put   ('/dining-venues/{diningVenue}',                 [AdminDiningVenueController::class, 'update']);
-    Route::delete('/dining-venues/{diningVenue}',                 [AdminDiningVenueController::class, 'destroy']);
-    Route::post  ('/dining-venues/{diningVenue}/images',          [MediaController::class, 'storeDiningVenue']);
-    Route::delete('/dining-venues/{diningVenue}/images/{media}',  [MediaController::class, 'destroyDiningVenue']);
+        Route::get('/facilities',                   [AdminFacilityController::class, 'index']);
+        Route::get('/facilities/{facility}',        [AdminFacilityController::class, 'show']);
 
-    // Event spaces
-    Route::get   ('/event-spaces',                                [AdminEventSpaceController::class, 'index']);
-    Route::post  ('/event-spaces',                                [AdminEventSpaceController::class, 'store']);
-    Route::get   ('/event-spaces/{eventSpace}',                   [AdminEventSpaceController::class, 'show']);
-    Route::put   ('/event-spaces/{eventSpace}',                   [AdminEventSpaceController::class, 'update']);
-    Route::delete('/event-spaces/{eventSpace}',                   [AdminEventSpaceController::class, 'destroy']);
-    Route::post  ('/event-spaces/{eventSpace}/images',            [MediaController::class, 'storeEventSpace']);
-    Route::delete('/event-spaces/{eventSpace}/images/{media}',    [MediaController::class, 'destroyEventSpace']);
+        Route::get('/dining-venues',                [AdminDiningVenueController::class, 'index']);
+        Route::get('/dining-venues/{diningVenue}',  [AdminDiningVenueController::class, 'show']);
 
-    // Amenities (in-room amenity catalog joined to room types)
-    Route::get   ('/amenities',                                   [AdminAmenityController::class, 'index']);
-    Route::post  ('/amenities',                                   [AdminAmenityController::class, 'store']);
-    Route::get   ('/amenities/{amenity}',                         [AdminAmenityController::class, 'show']);
-    Route::put   ('/amenities/{amenity}',                         [AdminAmenityController::class, 'update']);
-    Route::delete('/amenities/{amenity}',                         [AdminAmenityController::class, 'destroy']);
+        Route::get('/event-spaces',                 [AdminEventSpaceController::class, 'index']);
+        Route::get('/event-spaces/{eventSpace}',    [AdminEventSpaceController::class, 'show']);
 
-    // Home sliders
-    Route::get   ('/home-sliders',                                [AdminHomeSliderController::class, 'index']);
-    Route::post  ('/home-sliders',                                [AdminHomeSliderController::class, 'store']);
-    Route::get   ('/home-sliders/{homeSlider}',                   [AdminHomeSliderController::class, 'show']);
-    Route::put   ('/home-sliders/{homeSlider}',                   [AdminHomeSliderController::class, 'update']);
-    Route::delete('/home-sliders/{homeSlider}',                   [AdminHomeSliderController::class, 'destroy']);
-    Route::post  ('/home-sliders/{homeSlider}/images',            [MediaController::class, 'storeHomeSlider']);
-    Route::delete('/home-sliders/{homeSlider}/images/{media}',    [MediaController::class, 'destroyHomeSlider']);
+        Route::get('/amenities',                    [AdminAmenityController::class, 'index']);
+        Route::get('/amenities/{amenity}',          [AdminAmenityController::class, 'show']);
 
-    // Reviews — read + moderation only; guests are the only authors.
-    Route::get  ('/reviews',                                      [AdminReviewController::class, 'index']);
-    Route::patch('/reviews/{review}/publish',                     [AdminReviewController::class, 'setPublished']);
+        Route::get('/home-sliders',                 [AdminHomeSliderController::class, 'index']);
+        Route::get('/home-sliders/{homeSlider}',    [AdminHomeSliderController::class, 'show']);
 
-    // Pages
-    Route::get   ('/pages',                                       [AdminPageController::class, 'index']);
-    Route::post  ('/pages',                                       [AdminPageController::class, 'store']);
-    Route::get   ('/pages/{page}',                                [AdminPageController::class, 'show']);
-    Route::put   ('/pages/{page}',                                [AdminPageController::class, 'update']);
-    Route::delete('/pages/{page}',                                [AdminPageController::class, 'destroy']);
+        // Reviews — read; guests are the only authors.
+        Route::get('/reviews',                      [AdminReviewController::class, 'index']);
 
-    // Promotions
-    Route::get   ('/promotions',                                  [AdminPromotionController::class, 'index']);
-    Route::post  ('/promotions',                                  [AdminPromotionController::class, 'store']);
-    Route::get   ('/promotions/{promotion}',                      [AdminPromotionController::class, 'show']);
-    Route::put   ('/promotions/{promotion}',                      [AdminPromotionController::class, 'update']);
-    Route::delete('/promotions/{promotion}',                      [AdminPromotionController::class, 'destroy']);
-    Route::post  ('/promotions/{promotion}/images',               [MediaController::class, 'storePromotion']);
-    Route::delete('/promotions/{promotion}/images/{media}',       [MediaController::class, 'destroyPromotion']);
+        Route::get('/pages',                        [AdminPageController::class, 'index']);
+        Route::get('/pages/{page}',                 [AdminPageController::class, 'show']);
 
+        Route::get('/promotions',                   [AdminPromotionController::class, 'index']);
+        Route::get('/promotions/{promotion}',       [AdminPromotionController::class, 'show']);
+    });
+
+    // ── Writes (cms.edit only) ────────────────────────────────────────
+    Route::middleware('permission:cms.edit')->group(function () {
+        // Room types
+        Route::post  ('/room-types',                                  [AdminRoomTypeController::class, 'store']);
+        Route::put   ('/room-types/{roomType}',                       [AdminRoomTypeController::class, 'update']);
+        Route::delete('/room-types/{roomType}',                       [AdminRoomTypeController::class, 'destroy']);
+        Route::post  ('/room-types/{roomType}/images',                [MediaController::class, 'storeRoomType']);
+        Route::delete('/room-types/{roomType}/images/{media}',        [MediaController::class, 'destroyRoomType']);
+
+        // Rooms
+        Route::post  ('/rooms',                                       [AdminRoomController::class, 'store']);
+        Route::put   ('/rooms/{room}',                                [AdminRoomController::class, 'update']);
+        Route::delete('/rooms/{room}',                                [AdminRoomController::class, 'destroy']);
+        Route::post  ('/rooms/{room}/images',                         [MediaController::class, 'storeRoom']);
+        Route::delete('/rooms/{room}/images/{media}',                 [MediaController::class, 'destroyRoom']);
+
+        // Facilities
+        Route::post  ('/facilities',                                  [AdminFacilityController::class, 'store']);
+        Route::put   ('/facilities/{facility}',                       [AdminFacilityController::class, 'update']);
+        Route::delete('/facilities/{facility}',                       [AdminFacilityController::class, 'destroy']);
+        Route::post  ('/facilities/{facility}/images',                [MediaController::class, 'storeFacility']);
+        Route::delete('/facilities/{facility}/images/{media}',        [MediaController::class, 'destroyFacility']);
+
+        // Dining venues
+        Route::post  ('/dining-venues',                               [AdminDiningVenueController::class, 'store']);
+        Route::put   ('/dining-venues/{diningVenue}',                 [AdminDiningVenueController::class, 'update']);
+        Route::delete('/dining-venues/{diningVenue}',                 [AdminDiningVenueController::class, 'destroy']);
+        Route::post  ('/dining-venues/{diningVenue}/images',          [MediaController::class, 'storeDiningVenue']);
+        Route::delete('/dining-venues/{diningVenue}/images/{media}',  [MediaController::class, 'destroyDiningVenue']);
+
+        // Event spaces
+        Route::post  ('/event-spaces',                                [AdminEventSpaceController::class, 'store']);
+        Route::put   ('/event-spaces/{eventSpace}',                   [AdminEventSpaceController::class, 'update']);
+        Route::delete('/event-spaces/{eventSpace}',                   [AdminEventSpaceController::class, 'destroy']);
+        Route::post  ('/event-spaces/{eventSpace}/images',            [MediaController::class, 'storeEventSpace']);
+        Route::delete('/event-spaces/{eventSpace}/images/{media}',    [MediaController::class, 'destroyEventSpace']);
+
+        // Amenities (in-room amenity catalog joined to room types)
+        Route::post  ('/amenities',                                   [AdminAmenityController::class, 'store']);
+        Route::put   ('/amenities/{amenity}',                         [AdminAmenityController::class, 'update']);
+        Route::delete('/amenities/{amenity}',                         [AdminAmenityController::class, 'destroy']);
+
+        // Home sliders
+        Route::post  ('/home-sliders',                                [AdminHomeSliderController::class, 'store']);
+        Route::put   ('/home-sliders/{homeSlider}',                   [AdminHomeSliderController::class, 'update']);
+        Route::delete('/home-sliders/{homeSlider}',                   [AdminHomeSliderController::class, 'destroy']);
+        Route::post  ('/home-sliders/{homeSlider}/images',            [MediaController::class, 'storeHomeSlider']);
+        Route::delete('/home-sliders/{homeSlider}/images/{media}',    [MediaController::class, 'destroyHomeSlider']);
+
+        // Reviews — moderation is a write.
+        Route::patch ('/reviews/{review}/publish',                    [AdminReviewController::class, 'setPublished']);
+
+        // Pages
+        Route::post  ('/pages',                                       [AdminPageController::class, 'store']);
+        Route::put   ('/pages/{page}',                                [AdminPageController::class, 'update']);
+        Route::delete('/pages/{page}',                                [AdminPageController::class, 'destroy']);
+
+        // Promotions
+        Route::post  ('/promotions',                                  [AdminPromotionController::class, 'store']);
+        Route::put   ('/promotions/{promotion}',                      [AdminPromotionController::class, 'update']);
+        Route::delete('/promotions/{promotion}',                      [AdminPromotionController::class, 'destroy']);
+        Route::post  ('/promotions/{promotion}/images',               [MediaController::class, 'storePromotion']);
+        Route::delete('/promotions/{promotion}/images/{media}',       [MediaController::class, 'destroyPromotion']);
+    });
 });
 
 // ──────────────────────────────────────────────────────────────────────
@@ -337,17 +365,33 @@ Route::middleware(['auth:guests', 'is_checked_in'])->prefix('service-requests')-
 // routes here; the read+assign layer over service_requests/service_bookings
 // belongs to P10 (OperationsQueueService), not P7.
 // ──────────────────────────────────────────────────────────────────────
-Route::middleware(['auth:users', 'permission:cms.edit'])->prefix('cms')->group(function () {
-    Route::apiResource('spa-services', SpaServiceController::class)->parameters(['spa-services' => 'spaService']);
-    Route::apiResource('restaurant-tables', RestaurantTableController::class)->parameters(['restaurant-tables' => 'restaurantTable']);
-    Route::apiResource('pool-cabanas', PoolCabanaController::class)->parameters(['pool-cabanas' => 'poolCabana']);
-    Route::apiResource('transfers', TransferController::class);
-    Route::apiResource('service-categories', AdminServiceCategoryController::class)->parameters(['service-categories' => 'serviceCategory']);
-    Route::apiResource('service-items', AdminServiceItemController::class)->parameters(['service-items' => 'serviceItem']);
-    Route::apiResource('menu-categories', MenuCategoryController::class)->parameters(['menu-categories' => 'menuCategory']);
-    Route::apiResource('menu-items', MenuItemController::class)->parameters(['menu-items' => 'menuItem']);
-    Route::post  ('/menu-items/{menuItem}/images',         [MediaController::class, 'storeMenuItem']);
-    Route::delete('/menu-items/{menuItem}/images/{media}', [MediaController::class, 'destroyMenuItem']);
+// Same read/write split as the P3 block above — index+show on cms.view (or
+// cms.edit, which implies it), the mutating verbs on cms.edit.
+Route::middleware('auth:users')->prefix('cms')->group(function () {
+
+    Route::middleware('permission:cms.view|cms.edit')->group(function () {
+        Route::apiResource('spa-services', SpaServiceController::class)->only(['index', 'show'])->parameters(['spa-services' => 'spaService']);
+        Route::apiResource('restaurant-tables', RestaurantTableController::class)->only(['index', 'show'])->parameters(['restaurant-tables' => 'restaurantTable']);
+        Route::apiResource('pool-cabanas', PoolCabanaController::class)->only(['index', 'show'])->parameters(['pool-cabanas' => 'poolCabana']);
+        Route::apiResource('transfers', TransferController::class)->only(['index', 'show']);
+        Route::apiResource('service-categories', AdminServiceCategoryController::class)->only(['index', 'show'])->parameters(['service-categories' => 'serviceCategory']);
+        Route::apiResource('service-items', AdminServiceItemController::class)->only(['index', 'show'])->parameters(['service-items' => 'serviceItem']);
+        Route::apiResource('menu-categories', MenuCategoryController::class)->only(['index', 'show'])->parameters(['menu-categories' => 'menuCategory']);
+        Route::apiResource('menu-items', MenuItemController::class)->only(['index', 'show'])->parameters(['menu-items' => 'menuItem']);
+    });
+
+    Route::middleware('permission:cms.edit')->group(function () {
+        Route::apiResource('spa-services', SpaServiceController::class)->except(['index', 'show'])->parameters(['spa-services' => 'spaService']);
+        Route::apiResource('restaurant-tables', RestaurantTableController::class)->except(['index', 'show'])->parameters(['restaurant-tables' => 'restaurantTable']);
+        Route::apiResource('pool-cabanas', PoolCabanaController::class)->except(['index', 'show'])->parameters(['pool-cabanas' => 'poolCabana']);
+        Route::apiResource('transfers', TransferController::class)->except(['index', 'show']);
+        Route::apiResource('service-categories', AdminServiceCategoryController::class)->except(['index', 'show'])->parameters(['service-categories' => 'serviceCategory']);
+        Route::apiResource('service-items', AdminServiceItemController::class)->except(['index', 'show'])->parameters(['service-items' => 'serviceItem']);
+        Route::apiResource('menu-categories', MenuCategoryController::class)->except(['index', 'show'])->parameters(['menu-categories' => 'menuCategory']);
+        Route::apiResource('menu-items', MenuItemController::class)->except(['index', 'show'])->parameters(['menu-items' => 'menuItem']);
+        Route::post  ('/menu-items/{menuItem}/images',         [MediaController::class, 'storeMenuItem']);
+        Route::delete('/menu-items/{menuItem}/images/{media}', [MediaController::class, 'destroyMenuItem']);
+    });
 });
 
 // P7 — Pre-arrival check-in approvals (reservations.create — same tier as assign-room)

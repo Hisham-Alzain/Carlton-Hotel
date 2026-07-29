@@ -40,7 +40,7 @@ class Local implements Translations {
     "general.for": "For",
     "general.remove": "Remove",
     "general.submit": "Submit",
-    "general.confirm": "confirm",
+    "general.confirm": "Confirm",
     "general.changeNumber": "changeNumber",
     "general.goBack": "Go Back",
     "general.discoverAll": "Discover All",

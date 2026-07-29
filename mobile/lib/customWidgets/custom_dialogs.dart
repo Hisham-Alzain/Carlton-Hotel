@@ -12,12 +12,12 @@ import 'package:url_launcher/url_launcher.dart';
 // ─── Type → Color/Icon lookup tables ──────────────────────────────────────────
 
 final _kDefaultColors = {
-  AppDialogType.success: Colors.green.shade900,
-  AppDialogType.error: Colors.red.shade900,
-  AppDialogType.warning: Colors.yellow.shade900,
+  AppDialogType.success: AppColors.primary,
+  AppDialogType.error: AppColors.brickRed,
+  AppDialogType.warning: AppColors.bronzeGold,
   AppDialogType.info: AppColors.primary,
-  AppDialogType.confirmation: Colors.red.shade900,
-  AppDialogType.destructive: Colors.red.shade900,
+  AppDialogType.confirmation: AppColors.brickRed,
+  AppDialogType.destructive: AppColors.brickRed,
 };
 
 const _kDefaultIcons = {
@@ -72,7 +72,7 @@ class CustomDialogs {
                   Transform.scale(scale: scaleFactor, child: child),
               child: Material(
                 // color: AppColors.backgroundColor,
-                borderRadius: BorderRadius.circular(0),
+                borderRadius: BorderRadius.circular(10),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(
                     minWidth: 300,
@@ -345,6 +345,7 @@ class CustomDialogs {
           prefixIcon: Icons.edit_note,
           hintText: hintText,
           maxLines: 3,
+          fillColor: AppColors.whisperGrey,
         ),
       ),
     );

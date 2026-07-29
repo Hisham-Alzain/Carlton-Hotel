@@ -199,6 +199,130 @@ class IndexQueryTest extends TestCase
         $this->assertSame(3, $res->json('data.meta.total'));
     }
 
+    public function test_cms_index_treats_an_empty_is_active_as_no_filter(): void
+    {
+        Amenity::factory()->count(5)->create();
+        Amenity::factory()->inactive()->count(2)->create();
+
+        // A "Status: All" dropdown submits `?is_active=`. That used to cast to
+        // `false` and show the editor nothing but drafts, who then reported
+        // that every published amenity had vanished.
+        $res = $this->withToken($this->editorToken())
+            ->getJson('/api/cms/amenities?is_active=')
+            ->assertOk();
+
+        $this->assertSame(7, $res->json('data.meta.total'));
+    }
+
+    public function test_cms_index_treats_an_empty_operator_form_value_as_no_filter(): void
+    {
+        Amenity::factory()->count(3)->create();
+        Amenity::factory()->inactive()->create();
+
+        $res = $this->withToken($this->editorToken())
+            ->getJson('/api/cms/amenities?is_active[eq]=')
+            ->assertOk();
+
+        $this->assertSame(4, $res->json('data.meta.total'));
+    }
+
+    public function test_cms_index_rejects_an_uninterpretable_is_active(): void
+    {
+        Amenity::factory()->count(3)->create();
+
+        // `trve` is a typo. Answering it with the published list makes the typo
+        // indistinguishable from a real answer, so it is a 422 instead.
+        $this->withToken($this->editorToken())
+            ->getJson('/api/cms/amenities?is_active=trve')
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error_code', 'validation_failed')
+            ->assertJsonStructure(['errors' => ['is_active']]);
+    }
+
+    public function test_cms_index_rejects_an_uninterpretable_operator_form_value(): void
+    {
+        Amenity::factory()->count(2)->create();
+
+        $this->withToken($this->editorToken())
+            ->getJson('/api/cms/amenities?is_active[eq]=maybe')
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'validation_failed')
+            ->assertJsonStructure(['errors' => ['is_active.eq']]);
+    }
+
+    public function test_cms_index_rejects_a_non_numeric_integer_filter(): void
+    {
+        $this->withToken($this->editorToken())
+            ->getJson('/api/cms/event-spaces?capacity[gte]=abc')
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'validation_failed')
+            ->assertJsonStructure(['errors' => ['capacity.gte']]);
+    }
+
+    public function test_cms_index_rejects_an_array_where_a_scalar_belongs(): void
+    {
+        Amenity::factory()->count(2)->create();
+
+        // `?slug[like][]=x` used to be stringified to the literal "Array".
+        $this->withToken($this->editorToken())
+            ->getJson('/api/cms/amenities?slug[like][]=x')
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'validation_failed');
+    }
+
+    public function test_cms_index_accepts_repeated_array_params_as_in(): void
+    {
+        Amenity::factory()->create(['slug' => 'wifi']);
+        Amenity::factory()->create(['slug' => 'minibar']);
+        Amenity::factory()->count(4)->create();
+
+        // Advertised by BaseFilter's docblock; silently discarded before the fix.
+        $res = $this->withToken($this->editorToken())
+            ->getJson('/api/cms/amenities?slug[]=wifi&slug[]=minibar')
+            ->assertOk();
+
+        $this->assertSame(2, $res->json('data.meta.total'));
+    }
+
+    public function test_cms_search_treats_a_percent_sign_literally(): void
+    {
+        Amenity::factory()->count(4)->create();
+
+        // `?search=%` used to compile to `like '%%%'` and return everything.
+        $res = $this->withToken($this->editorToken())
+            ->getJson('/api/cms/amenities?search=%25')
+            ->assertOk();
+
+        $this->assertSame(0, $res->json('data.meta.total'));
+    }
+
+    public function test_cms_search_still_finds_a_name_containing_a_percent_sign(): void
+    {
+        Amenity::factory()->create([
+            'slug' => 'cotton-linens',
+            'name' => ['en' => '100% Cotton Linens', 'ar' => 'أغطية قطنية'],
+        ]);
+        Amenity::factory()->count(3)->create();
+
+        $res = $this->withToken($this->editorToken())
+            ->getJson('/api/cms/amenities?search=' . urlencode('100% cotton'))
+            ->assertOk();
+
+        $this->assertSame(1, $res->json('data.meta.total'));
+    }
+
+    public function test_public_index_is_unaffected_by_a_malformed_filter_param(): void
+    {
+        RoomType::factory()->count(3)->create();
+
+        // The public route has no filter surface at all, so a value that would
+        // 422 on the CMS route must still return the live list.
+        $res = $this->getJson('/api/public/room-types?is_active=trve')->assertOk();
+
+        $this->assertSame(3, $res->json('data.meta.total'));
+    }
+
     public function test_cms_index_ignores_columns_outside_the_whitelist(): void
     {
         Amenity::factory()->count(4)->create(['icon' => 'tv']);

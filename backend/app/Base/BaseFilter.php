@@ -2,7 +2,10 @@
 
 namespace App\Base;
 
+use App\Support\TranslatableRules;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 /**
  * Declarative query-string filtering for index endpoints.
@@ -10,16 +13,30 @@ use Illuminate\Database\Eloquent\Builder;
  * A filter is constructed by the **controller** from the request's query array
  * and handed to the service, so no service ever has to read `request()`. Only
  * columns listed in `$safeParms` are reachable, and only with the operators
- * that column opted into — an unknown column or operator is silently ignored
- * rather than erroring, so a stale dashboard build never breaks a list screen.
+ * that column opted into.
  *
  * Supported query syntax:
  *
  *   ?is_active[eq]=false        canonical DSL — column[operator]=value
  *   ?is_active=false            shorthand, equivalent to [eq] when `eq` is allowed
- *   ?status[in]=clean,dirty     comma list or repeated array params
+ *   ?status[in]=clean,dirty     comma list …
+ *   ?status[]=clean&status[]=dirty   … or repeated array params (same as [in])
  *   ?search=deluxe              case-insensitive scan of $searchable + $translatable
  *   ?sort=sort_order&sort_dir=desc
+ *
+ * Three rules govern what happens to input the filter cannot honour, and they
+ * are deliberately different from one another:
+ *
+ * 1. **Unknown column or operator → ignored.** `?icon=safe` on an entity that
+ *    never whitelisted `icon` is dropped, so a stale dashboard build cannot
+ *    break a list screen by sending a param the API no longer knows.
+ * 2. **Empty value → no filter.** `?is_active=` is the "Status: All" option of
+ *    a `<select>` that submits an empty option; it must mean *unfiltered*, not
+ *    `where is_active = 0`.
+ * 3. **Uninterpretable value → 422.** `?is_active=trve` is a typo, and a typo
+ *    that silently returns the published list is indistinguishable from a real
+ *    answer. Bad input is rejected with `error_code: validation_failed` and an
+ *    `errors` entry keyed by the offending param, never reinterpreted.
  */
 class BaseFilter
 {
@@ -68,6 +85,20 @@ class BaseFilter
     /** Every operator the DSL understands. */
     public const OPERATORS = ['eq', 'like', 'gte', 'lte', 'in'];
 
+    /** Truthy tokens accepted by the `bool` cast (lower-cased before matching). */
+    protected const BOOL_TRUE = ['1', 'true', 'yes', 'on'];
+
+    /** Falsy tokens accepted by the `bool` cast (lower-cased before matching). */
+    protected const BOOL_FALSE = ['0', 'false', 'no', 'off'];
+
+    /**
+     * Character that neutralises a LIKE wildcard. Not a backslash: SQLite has
+     * no default escape character (so `ESCAPE` must be stated explicitly) while
+     * MySQL treats a backslash specially inside the string literal that would
+     * carry it, leaving no spelling of `ESCAPE '\'` that both drivers accept.
+     */
+    protected const LIKE_ESCAPE = '!';
+
     /**
      * @param  array<string, mixed>  $params   The request's query string, already
      *                                         decoded. Never the Request itself.
@@ -101,33 +132,92 @@ class BaseFilter
 
             $raw = $this->params[$field];
 
-            // `?is_active=false` is treated as `?is_active[eq]=false`.
-            $conditions = is_array($raw) ? $raw : ['eq' => $raw];
-
-            foreach ($conditions as $operator => $value) {
-                if (! is_string($operator) || ! in_array($operator, $operators, true)) {
+            foreach ($this->normalizeConditions($raw) as $operator => $value) {
+                if (! in_array($operator, $operators, true)) {
                     continue;
                 }
-                $this->applyCondition($query, $field, $operator, $value);
+
+                // Rule 2: a present-but-empty param is the "no filter" option.
+                if ($this->isBlank($value)) {
+                    continue;
+                }
+
+                // `?is_active=x` reports as `is_active`; `?is_active[eq]=x` as
+                // `is_active.eq`, so the client can find the param it fumbled.
+                $key = is_array($raw) ? $field . '.' . $operator : $field;
+
+                $this->applyCondition($query, $field, $operator, $value, $key);
             }
         }
     }
 
-    protected function applyCondition(Builder $query, string $field, string $operator, mixed $value): void
+    /**
+     * Reduce whatever PHP decoded out of the query string into `operator => value`.
+     *
+     * @return array<string, mixed>
+     */
+    protected function normalizeConditions(mixed $raw): array
     {
+        // `?is_active=false` is treated as `?is_active[eq]=false`.
+        if (! is_array($raw)) {
+            return ['eq' => $raw];
+        }
+
+        $named      = [];
+        $positional = [];
+
+        foreach ($raw as $key => $value) {
+            if (is_string($key)) {
+                $named[$key] = $value;
+            } else {
+                $positional[] = $value;
+            }
+        }
+
+        // `?status[]=clean&status[]=dirty` — repeated params are the `in`
+        // operator. Dropping them (as this used to) contradicted the docblock
+        // and lost the filter without telling anyone.
+        if ($positional !== []) {
+            $named['in'] = array_merge($this->toList($named['in'] ?? null), $positional);
+        }
+
+        return $named;
+    }
+
+    protected function applyCondition(
+        Builder $query,
+        string $field,
+        string $operator,
+        mixed $value,
+        string $key
+    ): void {
         match ($operator) {
-            'eq'   => $query->where($field, '=', $this->cast($field, $value)),
-            'gte'  => $query->where($field, '>=', $this->cast($field, $value)),
-            'lte'  => $query->where($field, '<=', $this->cast($field, $value)),
+            'eq'   => $query->where($field, '=', $this->cast($field, $this->scalar($value, $key), $key)),
+            'gte'  => $query->where($field, '>=', $this->cast($field, $this->scalar($value, $key), $key)),
+            'lte'  => $query->where($field, '<=', $this->cast($field, $this->scalar($value, $key), $key)),
             'like' => $query->where(
-                fn (Builder $inner) => $this->orWhereLikeInsensitive($inner, $field, (string) $value)
+                fn (Builder $inner) => $this->orWhereLikeInsensitive($inner, $field, (string) $this->scalar($value, $key))
             ),
-            'in'   => $query->whereIn($field, array_map(
-                fn (mixed $item): mixed => $this->cast($field, $item),
-                is_array($value) ? $value : explode(',', (string) $value),
-            )),
+            'in'   => $this->applyIn($query, $field, $value, $key),
             default => null,
         };
+    }
+
+    protected function applyIn(Builder $query, string $field, mixed $value, string $key): void
+    {
+        $items = [];
+
+        foreach ($this->toList($value) as $item) {
+            $items[] = $this->cast($field, $this->scalar($item, $key), $key);
+        }
+
+        // `?status[in]=` (or a list of nothing but empties) is rule 2 again:
+        // no filter. `whereIn($field, [])` would instead match no rows at all.
+        if ($items === []) {
+            return;
+        }
+
+        $query->whereIn($field, $items);
     }
 
     protected function applySearch(Builder $query): void
@@ -196,19 +286,28 @@ class BaseFilter
     }
 
     /**
+     * The CMS locale set, read through the one accessor that owns it.
+     *
+     * `TranslatableRules::locales()` is the single source of truth: it reads
+     * `config('cms.locales')`, and throws when that is missing, empty or
+     * contains a code that is not a plain locale tag. This class deliberately
+     * adds nothing on top —
+     *
+     * - **no fallback list.** A hardcoded `['en','ar']` here would make search
+     *   cover a *different* locale set than validation the moment the config is
+     *   poisoned, and nothing would report it.
+     * - **no local re-filtering.** Dropping the codes it dislikes would narrow
+     *   the list silently, which is the same failure in a smaller disguise. The
+     *   accessor already rejects anything unfit for a JSON path in raw SQL —
+     *   `.` and `*` included — by refusing the whole list rather than pruning it.
+     *
      * @return list<string>
+     *
+     * @throws RuntimeException when `cms.locales` is missing, empty or malformed
      */
     protected function locales(): array
     {
-        $configured = config('cms.locales');
-        $locales    = is_array($configured) && $configured !== [] ? $configured : ['en', 'ar'];
-
-        // The locale ends up inside a JSON path in raw SQL, so anything that is
-        // not a plain locale tag is dropped rather than trusted.
-        return array_values(array_filter(
-            $locales,
-            static fn (mixed $locale): bool => is_string($locale) && preg_match('/^[A-Za-z0-9_-]+$/', $locale) === 1,
-        ));
+        return TranslatableRules::locales();
     }
 
     /**
@@ -224,16 +323,120 @@ class BaseFilter
     protected function orWhereLikeInsensitive(Builder $query, string $column, string $term): void
     {
         $wrapped = $query->getQuery()->getGrammar()->wrap($column);
+        $escape  = self::LIKE_ESCAPE;
 
-        $query->orWhereRaw("lower({$wrapped}) like ?", ['%' . mb_strtolower($term) . '%']);
+        $query->orWhereRaw(
+            "lower({$wrapped}) like ? escape '{$escape}'",
+            ['%' . $this->escapeLike(mb_strtolower($term)) . '%'],
+        );
     }
 
-    protected function cast(string $field, mixed $value): mixed
+    /**
+     * Neutralise LIKE wildcards in user input. Without this, `?search=100%`
+     * matches every row and `?search=a_b` matches `axb` — a wrong answer the
+     * caller has no way to spot.
+     */
+    protected function escapeLike(string $term): string
+    {
+        $e = self::LIKE_ESCAPE;
+
+        // The escape character itself must be doubled first, otherwise the one
+        // introduced by `%` → `!%` would be re-escaped.
+        return str_replace([$e, '%', '_'], [$e . $e, $e . '%', $e . '_'], $term);
+    }
+
+    /**
+     * Split a comma list — or pass an already-decoded array through — into the
+     * list `in` compares against. Empty segments are dropped, not compared.
+     *
+     * @return list<mixed>
+     */
+    protected function toList(mixed $value): array
+    {
+        if (is_array($value)) {
+            return array_values(array_filter(
+                $value,
+                fn (mixed $item): bool => ! $this->isBlank($item),
+            ));
+        }
+
+        if ($this->isBlank($value)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map('trim', explode(',', (string) $value)),
+            static fn (string $item): bool => $item !== '',
+        ));
+    }
+
+    protected function isBlank(mixed $value): bool
+    {
+        return $value === null || $value === '' || $value === [];
+    }
+
+    /**
+     * Guard the scalar operators against array input. `?name[like][]=x` used to
+     * be stringified to the literal `"Array"` (with a PHP warning) and searched
+     * for — a query the caller never asked for.
+     */
+    protected function scalar(mixed $value, string $key): mixed
+    {
+        if (! is_scalar($value)) {
+            throw $this->reject($key, __('validation.string', ['attribute' => $key]));
+        }
+
+        return $value;
+    }
+
+    protected function cast(string $field, mixed $value, string $key): mixed
     {
         return match ($this->casts[$field] ?? null) {
-            'bool'  => filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? (bool) $value,
-            'int'   => (int) $value,
+            'bool'  => $this->castBool($value, $key),
+            'int'   => $this->castInt($value, $key),
             default => $value,
         };
+    }
+
+    protected function castBool(mixed $value, string $key): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        $token = is_string($value) ? strtolower(trim($value)) : $value;
+
+        if ($token === 1 || (is_string($token) && in_array($token, self::BOOL_TRUE, true))) {
+            return true;
+        }
+
+        if ($token === 0 || (is_string($token) && in_array($token, self::BOOL_FALSE, true))) {
+            return false;
+        }
+
+        throw $this->reject($key, __('validation.boolean', ['attribute' => $key]));
+    }
+
+    protected function castInt(mixed $value, string $key): int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && preg_match('/^[+-]?\d+$/', trim($value)) === 1) {
+            return (int) trim($value);
+        }
+
+        throw $this->reject($key, __('validation.integer', ['attribute' => $key]));
+    }
+
+    /**
+     * A filter value the DSL cannot interpret is a client error, not a hint.
+     * Surfaced through the standard `validation_failed` envelope so callers
+     * branch on the same `error_code` they already handle for request bodies.
+     */
+    protected function reject(string $key, string $message): ValidationException
+    {
+        return ValidationException::withMessages([$key => [$message]]);
     }
 }

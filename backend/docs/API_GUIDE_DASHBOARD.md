@@ -60,16 +60,25 @@ CMS admin index endpoints (`/api/cms/*`) additionally accept:
 
 | Param | Meaning |
 |---|---|
-| `is_active` | `true`/`false`. Omit to see both published and draft rows. |
-| `search` | Case-insensitive substring match across the entity's name/title in **every** configured locale (`config/cms.php` → `locales`), plus plain columns like `slug`, `code`, `number`. |
+| `is_active` | `true` or `false` (also accepted: `1`/`0`, `yes`/`no`, `on`/`off`, any case). Omit **or send empty** (`?is_active=`) to see both published and draft rows. Any other value is a `422`. |
+| `search` | Case-insensitive substring match across the entity's name/title in **every** configured locale (`config/cms.php` → `locales`), plus plain columns like `slug`, `code`, `number`. `%` and `_` are matched literally, not as wildcards. |
 | `sort` / `sort_dir` | `sort_dir` is `asc` (default) or `desc`. Allowed `sort` columns are per-entity — commonly `sort_order`, `created_at`, `updated_at`; entities without a `sort_order` column do not accept it. An unknown column is ignored and the endpoint's natural ordering is kept. |
 
 Filters also accept an explicit-operator form — `?is_active[eq]=false`,
-`?capacity[gte]=50`, `?status[in]=clean,dirty`. `?field=value` is shorthand for
+`?capacity[gte]=50`, `?status[in]=clean,dirty`, `?status[]=clean&status[]=dirty`
+(repeated params are the same as `in`). `?field=value` is shorthand for
 `?field[eq]=value`. Operators are `eq`, `like`, `gte`, `lte`, `in`, and each
-entity whitelists which ones each column allows; anything outside the whitelist
-is silently dropped rather than rejected, so an older dashboard build never
-breaks a list screen.
+entity whitelists which ones each column allows.
+
+**How unusable input is treated** — three different rules, on purpose:
+
+| Input | Result |
+|---|---|
+| Unknown column or operator (`?icon=safe`, `?is_active[gte]=1`) | Silently dropped, `200`. An older dashboard build never breaks a list screen. |
+| Empty value (`?is_active=`, `?capacity[gte]=`, `?status[in]=`) | **No filter applied.** This is the "Status: All" option of a `<select>`; it does not mean `is_active = false`. |
+| Value the column cannot interpret (`?is_active=trve`, `?capacity[gte]=abc`, `?name[like][]=x`) | **`422`** with `error_code: "validation_failed"` and an `errors` entry keyed by the param (`is_active`, or `capacity.gte` for the operator form). A typo is never silently answered as if it were a valid query. |
+
+
 
 **Public endpoints (`/api/public/*`) take `page` and `per_page` only** — they
 always return `is_active = true` rows in their fixed order.

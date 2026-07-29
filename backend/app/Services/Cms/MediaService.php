@@ -19,7 +19,7 @@ class MediaService
         $path = $this->storeFile($file, $dir);
 
         $media = DB::transaction(fn () => Media::create([
-            'mediable_type' => get_class($model),
+            'mediable_type' => $model->getMorphClass(),
             'mediable_id'   => $model->id,
             'disk'          => 'public',
             'path'          => $path,
@@ -41,10 +41,15 @@ class MediaService
      * route). 404 rather than 403: from the caller's perspective that media
      * does not exist under that parent, and it leaks nothing about other
      * entities' assets.
+     *
+     * Both sides use `getMorphClass()`, never `get_class()`: `Relation::morphMap()`
+     * already aliases four models, and the moment a media-bearing model joins
+     * that map the stored `mediable_type` becomes the alias while `get_class()`
+     * keeps returning the FQCN — every legitimate delete would 404.
      */
     public function destroy(Model $parent, Media $media): array
     {
-        if ($media->mediable_type !== get_class($parent) || (int) $media->mediable_id !== (int) $parent->getKey()) {
+        if ($media->mediable_type !== $parent->getMorphClass() || (int) $media->mediable_id !== (int) $parent->getKey()) {
             throw new NotFoundException(__('custom.errors.not_found'), [
                 'media'  => $media->uuid,
                 'parent' => class_basename($parent),

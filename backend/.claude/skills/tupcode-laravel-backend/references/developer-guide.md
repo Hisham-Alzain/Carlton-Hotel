@@ -8,6 +8,16 @@ The  backend is built on a thin, opinionated base layer that handles 80% of the 
 
 This guide walks through everything you need.
 
+> **The code is the truth.** This guide drifted from it once, and the drift was not
+> cosmetic: it named the base controllers in the wrong namespace and prescribed
+> PascalCase route verbs (`GetAll`/`GetOne`/`Create`/`Update`/`Delete`) that no
+> controller in this codebase has ever used, which actively misled work on this
+> project. Those claims are corrected in sections 3, 4, 5 and 12, and every place
+> where an earlier version described something the code has never done is now
+> marked as such rather than quietly deleted — so that a reader who remembers the
+> old advice can see it was wrong, not just missing. If this guide and `app/`
+> disagree again, `app/` wins; fix the guide in the same PR.
+
 ---
 
 ## Table of contents
@@ -530,14 +540,22 @@ class CategoryController extends BaseCRUDController
 ```
 
 Note what is **not** there: `$createRequest` and `$updateRequest`. Earlier versions
-of this guide listed both as properties to declare; neither exists. `store()` and
-`update()` type-hint the abstract `App\Base\BaseRequest`, and there is no property
-or hook naming the concrete FormRequest a route should validate against — PHP
-forbids narrowing the parameter type in an override, and Laravel cannot resolve an
-abstract class out of the container. So the write half of the base pair is not
-route-ready as written; `BaseControllerPlumbingTest` exercises it by calling
-`store()`/`update()` directly with a concrete `BaseRequest` subclass. Closing that
-gap is part of the migration below.
+of this guide listed both as properties to declare; neither exists. Two abstract
+type-hints stand between the base pair and a live route, and both have to be
+closed before anything can extend it:
+
+- `store()` and `update()` type-hint the abstract `App\Base\BaseRequest`, and
+  nothing names the concrete FormRequest a route should validate against. PHP
+  forbids narrowing a parameter type in an override, and Laravel cannot resolve an
+  abstract class out of the container.
+- `show()`, `update()` and `destroy()` type-hint the abstract
+  `Illuminate\Database\Eloquent\Model`. Implicit route-model binding needs a
+  concrete model class to bind, so `{category}` would arrive unresolved.
+
+`BaseControllerPlumbingTest` therefore exercises them by calling
+`store()`/`update()`/`show()` directly, passing a concrete `BaseRequest` subclass
+and an already-loaded model. The read path (`index()`) has no such problem and is
+route-ready today.
 
 > **Known outstanding task: nothing extends `BaseCRUDController` or
 > `BaseIndexController`.** All 69 controllers extend `BaseController` directly and
@@ -545,7 +563,9 @@ gap is part of the migration below.
 > same `paginatedSuccess()` call. The base pair was written to end that
 > duplication and is covered by `tests/Unit/BaseControllerPlumbingTest.php`
 > through test-only subclasses, so its `per_page` and filter plumbing is not
-> shipped untested — but the migration of the real controllers has not been done.
+> shipped untested — but the migration of the real controllers has not been done,
+> and the two abstract type-hints above have to be resolved first. Roughly a day
+> and a half of mechanical work once they are.
 > `BaseIndexController::index()` deliberately makes the same `paginatedSuccess()`
 > call the hand-written controllers make, so a controller that moves onto the base
 > class emits a byte-identical envelope. Until that migration happens, **write new
@@ -683,7 +703,7 @@ public function markPaid(Order $order): array
 
 ### When NOT to put logic in a service
 
-If the operation is a **verb** that doesn't naturally belong to one resource (e.g. `Checkout`, `AssignDriver`, `RefundOrder`), use an **Action** instead. See [section 10](#10-actions).
+If the operation is a **verb** that doesn't naturally belong to one resource (e.g. `CreateReservation`, `SettleFolio`, `RecalculateRating`), use an **Action** instead. See [section 10](#10-actions).
 
 ---
 
@@ -719,16 +739,20 @@ class CreateProductRequest extends BaseRequest
 
 ```
 app/Http/Requests/
-  Admin/
-    Product/
-      CreateProductRequest.php
-      UpdateProductRequest.php
-  User/
-    Order/
-      CheckoutRequest.php
+  Cms/
+    CreatePageRequest.php
+    UpdatePageRequest.php
+    UpsertSiteSettingsRequest.php
+  Auth/
+    UpdateGuestProfileRequest.php
+  Booking/  Chat/  Events/  Folio/  Notification/
+  Operations/  Payment/  Review/  Service/  Staff/
 ```
 
-`{Role}/{Domain}/{Action}Request.php`. Stick to this — it makes the project navigable.
+`{Domain}/{Action}{Resource}Request.php` — **one level of domain, not role plus
+domain.** Both the admin and the public controller for a resource share the same
+request classes, so there is nowhere for a role segment to go. Stick to this; it
+makes the project navigable.
 
 ### Authorization in requests
 
@@ -922,61 +946,69 @@ Add the translation key in `lang/{en,ar}/custom.php` and you're done.
 
 Actions are single-purpose classes for operations that don't fit CRUD. Use them when:
 
-- The operation is a **verb**, not a resource (`Checkout`, `AssignDriver`, `RefundOrder`).
+- The operation is a **verb**, not a resource (`CreateReservation`, `SettleFolio`, `AssignRoom`).
 - The operation spans multiple services or domains.
 - A service file is approaching 300+ lines.
 
 ### Anatomy
 
+> **There is no `BaseAction` class, and the entry method is `handle()`, not
+> `execute()`.** Earlier versions of this guide sketched `extends BaseAction` with
+> an `execute()` and a `$this->transaction()` helper; none of it exists. All 33
+> actions in `app/Actions` are plain classes with a `handle()` method that calls
+> `DB::transaction` directly. A base class would buy one wrapper method and cost
+> every action a parent — if you want one, propose it; do not write against it.
+
 ```php
-namespace App\Actions\Orders;
+namespace App\Actions\Booking;
 
-use App\Actions\BaseAction;
-use App\Exceptions\OutOfStockException;
-use App\Models\Order;
-use App\Models\Product;
+use App\Exceptions\NoAvailabilityException;
+use App\Models\Reservation;
+use Illuminate\Support\Facades\DB;
 
-class CheckoutAction extends BaseAction
+class CreateReservationAction
 {
     public function __construct(
-        protected CalculateOrderTotalAction $calculator,
+        protected CalculateStayPriceAction $pricing,
     ) {}
 
-    public function execute(array $data): array
+    public function handle(array $data): array
     {
-        return $this->transaction(function () use ($data) {
-            $items = collect($data['items'])->map(function ($item) {
-                $product = Product::find($item['product_id']);
-                if ($product->stock < $item['quantity']) {
-                    throw new OutOfStockException(__('custom.out_of_stock'), [
-                        'product_id' => $product->id,
-                    ]);
-                }
-                return ['product' => $product, 'quantity' => $item['quantity']];
-            });
+        return DB::transaction(function () use ($data) {
+            $room = $this->findFreeRoom($data);   // SELECT … FOR UPDATE
 
-            $total = $this->calculator->execute(['items' => $items->toArray()])['data'];
+            if ($room === null) {
+                throw new NoAvailabilityException(__('custom.errors.no_availability'), [
+                    'room_type_uuid' => $data['room_type_uuid'],
+                ]);
+            }
 
-            $order = Order::create([
-                'user_id' => $data['user_id'],
-                'total'   => $total,
-                'status'  => 'pending',
+            $price = $this->pricing->handle($data)['data'];
+
+            $reservation = Reservation::create([
+                'guest_id'  => $data['guest_id'],
+                'total_usd' => $price,
+                'status'    => 'pending',
             ]);
 
-            // ...attach items, decrement stock, fire events...
+            // ...attach rooms with their price snapshot, fire events...
 
-            return ['data' => $order, 'code' => 201];
+            return ['data' => $reservation, 'code' => 201];
         });
     }
 }
 ```
 
+The price is **snapshotted** onto the child rows inside the same transaction:
+editing a `PricingRule` afterwards must not change what an existing reservation
+was charged.
+
 ### Calling from a controller
 
 ```php
-public function checkout(CheckoutAction $action, CheckoutRequest $request): JsonResponse
+public function store(CreateReservationAction $action, CreateReservationRequest $request): JsonResponse
 {
-    $result = $action->execute([
+    $result = $action->handle([
         ...$request->validated(),
         'guest_id' => $request->user()->id,
     ]);
@@ -989,14 +1021,13 @@ public function checkout(CheckoutAction $action, CheckoutRequest $request): Json
 
 ### Folder convention
 
+By domain, mirroring `app/Services`:
+
 ```
 app/Actions/
-  Orders/
-    CheckoutAction.php
-    AssignDriverAction.php
-    CalculateOrderTotalAction.php
-  Payments/
-    RefundAction.php
+  Auth/  Booking/  Chat/  Cms/  Events/  Folio/
+  Notification/  Operations/  Payment/  Review/  Service/  Staff/
+    {Verb}{Noun}Action.php
 ```
 
 ---
@@ -1400,7 +1431,9 @@ That is the single most common thing to get wrong when importing.
 
 ```
 app/
-  Base/                            ← ALL the base classes live here
+  Base/                            ← ALL the base classes live here.
+    │                                Note: there is no BaseAction — actions are
+    │                                plain classes with a handle() method.
     BaseController.php             ← success, paginatedSuccess, respondFromService,
     │                                perPageParam, indexParams
     BaseIndexController.php        ← index, show   (no subclasses yet)
@@ -1412,8 +1445,7 @@ app/
     BaseFilter.php                 ← $safeParms whitelist, search, sort
     BaseCollection.php             ← paginator → {items, meta}
   Actions/
-    BaseAction.php
-    {Domain}/{Verb}Action.php
+    {Domain}/{Verb}{Noun}Action.php ← plain class, handle(), DB::transaction
   Enums/
   Exceptions/
     DomainException.php            ← abstract: errorCode(), statusCode(), context()

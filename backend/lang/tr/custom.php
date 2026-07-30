@@ -97,6 +97,8 @@ return [
     'validation' => [
         'required'             => ':attribute alanı zorunludur.',
         'string'               => ':attribute alanı metin olmalıdır.',
+        'boolean'              => ':attribute alanı doğru veya yanlış olmalıdır.',
+        'integer'              => ':attribute alanı tam sayı olmalıdır.',
         'email'                => ':attribute alanı geçerli bir e-posta adresi olmalıdır.',
         'max'                  => ':attribute alanı :max karakterden uzun olamaz.',
         'phone_invalid'        => 'Telefon numarası geçerli değil.',

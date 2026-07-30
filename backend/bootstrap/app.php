@@ -23,8 +23,21 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->appendToGroup('api', \App\Http\Middleware\AttachRequestId::class);
-        $middleware->appendToGroup('api', \App\Http\Middleware\SetLocale::class);
+        // Both of these shape the error envelope, so both must run *before*
+        // anything that can fail. Appending put them after Laravel's own
+        // SubstituteBindings, and a 404 from implicit route-model binding is
+        // thrown inside that middleware — so `GET /api/public/room-types/{uuid}`
+        // with an unknown uuid rendered its message in the default locale
+        // however the client spelled `Accept-Language`, and carried no
+        // `X-Request-Id`. Only controller-raised 404s were localized.
+        //
+        // Ordering within the prepend is significant: AttachRequestId leads so
+        // the id exists for the whole request. Neither middleware reads the
+        // resolved route, so nothing is lost by running them earlier.
+        $middleware->prependToGroup('api', [
+            \App\Http\Middleware\AttachRequestId::class,
+            \App\Http\Middleware\SetLocale::class,
+        ]);
         $middleware->alias([
             'permission'          => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role'                => \Spatie\Permission\Middleware\RoleMiddleware::class,

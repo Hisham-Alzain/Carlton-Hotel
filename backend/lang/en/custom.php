@@ -97,6 +97,8 @@ return [
     'validation' => [
         'required'             => 'The :attribute field is required.',
         'string'               => 'The :attribute must be a string.',
+        'boolean'              => 'The :attribute must be true or false.',
+        'integer'              => 'The :attribute must be a whole number.',
         'email'                => 'The :attribute must be a valid email address.',
         'max'                  => 'The :attribute may not be greater than :max characters.',
         'phone_invalid'        => 'The phone number is not valid.',

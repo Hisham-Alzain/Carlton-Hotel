@@ -549,14 +549,122 @@ class LocaleFoundationTest extends TestCase
 
     public function test_accept_language_localises_the_error_envelope_end_to_end(): void
     {
-        $missing = 'no-such-page-' . Str::random(8);
+        // Two 404s that reach the handler from deliberately different places:
+        //
+        // - `/public/pages/{slug}` is looked up inside the controller, so the
+        //   exception is thrown after the whole middleware stack has run.
+        // - `/public/room-types/{roomType}` is implicit route-model binding, so
+        //   Laravel's own SubstituteBindings raises the 404. While SetLocale was
+        //   *appended* to the `api` group it sat after SubstituteBindings and
+        //   never ran for this route, so the message came back in the default
+        //   locale however the client spelled Accept-Language.
+        $routes = [
+            'controller-raised' => '/api/public/pages/no-such-page-' . Str::random(8),
+            'binding-raised'    => '/api/public/room-types/' . Str::uuid(),
+        ];
 
-        foreach (['fr' => 'fr-FR,fr;q=0.9', 'tr' => 'tr-TR,tr;q=0.9', 'es' => 'es-ES,es;q=0.9'] as $locale => $header) {
-            $this->withHeaders(['Accept-Language' => $header])
-                ->getJson("/api/public/pages/{$missing}")
-                ->assertStatus(404)
-                ->assertJsonPath('error_code', 'not_found')
-                ->assertJsonPath('message', self::SAMPLE_TRANSLATIONS[$locale]['custom.errors.not_found']);
+        $headers = ['fr' => 'fr-FR,fr;q=0.9', 'tr' => 'tr-TR,tr;q=0.9', 'es' => 'es-ES,es;q=0.9'];
+
+        foreach ($routes as $origin => $url) {
+            foreach ($headers as $locale => $header) {
+                $res = $this->withHeaders(['Accept-Language' => $header])
+                    ->getJson($url)
+                    ->assertStatus(404)
+                    ->assertJsonPath('error_code', 'not_found');
+
+                $this->assertSame(
+                    self::SAMPLE_TRANSLATIONS[$locale]['custom.errors.not_found'],
+                    $res->json('message'),
+                    "A {$origin} 404 ignored `Accept-Language: {$header}`.",
+                );
+            }
+        }
+    }
+
+    public function test_a_binding_raised_404_still_carries_the_request_id_header(): void
+    {
+        // AttachRequestId was appended after SubstituteBindings too, so a
+        // binding failure short-circuited it: the envelope's `request_id` was a
+        // throwaway uuid minted by the handler and no header matched it, which
+        // is precisely the response support most needs to trace.
+        $res = $this->getJson('/api/public/room-types/' . Str::uuid())->assertStatus(404);
+
+        $this->assertNotEmpty($res->headers->get('X-Request-Id'));
+        $this->assertSame($res->headers->get('X-Request-Id'), $res->json('request_id'));
+    }
+
+    // ── Filter rejections localise `errors`, not just `message` ───────────
+    //
+    // `BaseFilter` turns an uninterpretable query value into the standard
+    // `validation_failed` envelope. Its messages used to resolve against
+    // Laravel's built-in `validation.*` keys, which ship only in `lang/en`, so
+    // a single 422 came back with a localized `message` beside English
+    // `errors` text.
+
+    public function test_a_boolean_filter_rejection_localises_the_errors_text(): void
+    {
+        $token = $this->editorToken();
+        $url   = '/api/cms/room-types?is_active=trve';
+
+        $en = $this->withToken($token)->withHeaders(['Accept-Language' => 'en-US,en;q=0.9'])
+            ->getJson($url)
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'validation_failed');
+
+        $ar = $this->withToken($token)->withHeaders(['Accept-Language' => 'ar'])
+            ->getJson($url)
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'validation_failed');
+
+        $this->assertSame(
+            self::SAMPLE_TRANSLATIONS['ar']['custom.errors.validation_failed'],
+            $ar->json('message'),
+        );
+        $this->assertNotSame(
+            $en->json('errors.is_active.0'),
+            $ar->json('errors.is_active.0'),
+            'The filter rejection returned the same `errors` text for en and ar.',
+        );
+        $this->assertMatchesRegularExpression('/\p{Arabic}/u', (string) $ar->json('errors.is_active.0'));
+    }
+
+    public function test_an_integer_filter_rejection_localises_the_errors_text(): void
+    {
+        $token = $this->editorToken();
+        $url   = '/api/cms/event-spaces?capacity=abc';
+
+        $en = $this->withToken($token)->withHeaders(['Accept-Language' => 'en-US,en;q=0.9'])
+            ->getJson($url)
+            ->assertStatus(422);
+
+        $ar = $this->withToken($token)->withHeaders(['Accept-Language' => 'ar'])
+            ->getJson($url)
+            ->assertStatus(422);
+
+        $this->assertNotSame(
+            $en->json('errors.capacity.0'),
+            $ar->json('errors.capacity.0'),
+            'The filter rejection returned the same `errors` text for en and ar.',
+        );
+        $this->assertMatchesRegularExpression('/\p{Arabic}/u', (string) $ar->json('errors.capacity.0'));
+    }
+
+    #[DataProvider('localeProvider')]
+    public function test_every_locale_translates_the_filter_rejection_messages(string $locale): void
+    {
+        foreach (['boolean', 'integer', 'string'] as $rule) {
+            $key       = "custom.validation.{$rule}";
+            $translated = trans($key, ['attribute' => 'is_active'], $locale);
+
+            $this->assertNotSame($key, $translated, "lang/{$locale} does not provide [{$key}].");
+
+            if ($locale !== 'en') {
+                $this->assertNotSame(
+                    trans($key, ['attribute' => 'is_active'], 'en'),
+                    $translated,
+                    "lang/{$locale} returns the English string for [{$key}].",
+                );
+            }
         }
     }
 

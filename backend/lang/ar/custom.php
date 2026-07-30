@@ -97,6 +97,8 @@ return [
     'validation' => [
         'required'             => 'حقل :attribute مطلوب.',
         'string'               => 'يجب أن يكون :attribute نصاً.',
+        'boolean'              => 'يجب أن يكون :attribute صحيحاً أو خطأً.',
+        'integer'              => 'يجب أن يكون :attribute رقماً صحيحاً.',
         'email'                => 'يجب أن يكون :attribute بريداً إلكترونياً صالحاً.',
         'max'                  => 'يجب ألا يتجاوز :attribute :max حرفاً.',
         'phone_invalid'        => 'رقم الهاتف غير صالح.',

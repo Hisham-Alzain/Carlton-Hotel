@@ -7,6 +7,7 @@ use App\Traits\HasReviews;
 use App\Traits\HasTranslations;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
+use App\Traits\PurgesMedia;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class RoomType extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, HasReviews, LogsActivity;
+    use HasFactory, HasUuid, HasTranslations, HasReviews, LogsActivity, PurgesMedia;
 
     protected $translatable = ['name', 'description'];
 
@@ -49,6 +50,16 @@ class RoomType extends Model
     public function rooms(): HasMany
     {
         return $this->hasMany(Room::class);
+    }
+
+    /**
+     * `rooms.room_type_id` is `ON DELETE CASCADE`, so the database removes the
+     * rooms without Eloquent ever seeing them — their photography has to be
+     * purged from here, while they are still readable.
+     */
+    protected function mediaCascades(): array
+    {
+        return ['rooms'];
     }
 
     public function images(): MorphMany

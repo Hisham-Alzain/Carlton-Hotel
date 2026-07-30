@@ -5,13 +5,14 @@ namespace App\Models;
 use App\Traits\HasTranslations;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
+use App\Traits\PurgesMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Facility extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, LogsActivity;
+    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia;
 
     protected $translatable = ['name', 'description', 'location', 'hours'];
 

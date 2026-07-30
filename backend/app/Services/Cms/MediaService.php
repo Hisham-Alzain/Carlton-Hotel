@@ -102,7 +102,8 @@ class MediaService
      * The row is **copied**, not moved: `media` carries one `mediable_type` /
      * `mediable_id` pair, so a shared asset needs one row per placement. Both
      * rows name the same `disk` + `path`, which is why deletion checks for other
-     * referents before touching the file (see `deleteRow()`). Each placement then
+     * referents before touching the file (see `Media::purgeFileIfUnreferenced()`,
+     * which every delete path runs through). Each placement then
      * owns its `sort_order` independently, and the library entry survives.
      *
      * Idempotent per parent: a uuid whose file is already on this parent returns
@@ -208,7 +209,7 @@ class MediaService
             ]);
         }
 
-        DB::transaction(fn () => $this->deleteRow($media));
+        DB::transaction(fn () => $media->delete());
 
         return ['data' => null, 'code' => 204];
     }
@@ -223,32 +224,9 @@ class MediaService
      */
     public function purge(Media $media): array
     {
-        DB::transaction(fn () => $this->deleteRow($media));
+        DB::transaction(fn () => $media->delete());
 
         return ['data' => null, 'code' => 204];
-    }
-
-    /**
-     * Drop the row, and the stored file only when nothing else points at it.
-     *
-     * `attachExisting()` copies rows that share one `disk` + `path`, so deleting
-     * a placement must not unlink a file three other entities are still
-     * rendering. Checked inside the caller's transaction, so a concurrent attach
-     * cannot slip between the count and the unlink.
-     */
-    private function deleteRow(Media $media): void
-    {
-        $shared = Media::query()
-            ->where('disk', $media->disk)
-            ->where('path', $media->path)
-            ->whereKeyNot($media->getKey())
-            ->exists();
-
-        $media->delete();
-
-        if (! $shared) {
-            $this->deleteFile($media->path, $media->disk);
-        }
     }
 
     /** Clamp into `[1, MAX_PER_PAGE]`; mirrors `BaseService::resolvePerPage()`. */

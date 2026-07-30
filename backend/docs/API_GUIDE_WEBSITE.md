@@ -206,8 +206,31 @@ Image-galleried types expose an `images` array of media objects:
 
 ```json
 { "uuid": "...", "url": "http://127.0.0.1:8000/storage/cms/RoomType/8c1f…/9aKd….jpg",
-  "file_name": "deluxe-king.jpg", "mime_type": "image/jpeg", "size": 184320, "sort_order": 0 }
+  "file_name": "deluxe-king.jpg",
+  "alt_text": { "en": "Deluxe king bedroom", "ar": "…" },
+  "title": "Deluxe king — bedroom",
+  "mime_type": "image/jpeg", "size": 184320, "sort_order": 0 }
 ```
+
+**`alt_text` is a translatable locale map**, exactly like `name` and `description`
+on the content types below: the response carries every stored locale, so a site
+that switches language client-side off a single fetch can switch the `alt` with
+it — use `alt_text[lang] ?? alt_text.en ?? ""` the same way you resolve any other
+translatable field. **It is `[]`, not `{}`, when the editor has not written one**
+(PHP's empty array serializes as a JSON array), and individual locales may be
+absent, so both guards are needed.
+
+`title` is a plain string, not translatable — it is the CMS picker's own label
+and is usually not what you want to render. `null` when unset.
+
+The public routes reuse the same `MediaResource` as the CMS, so `alt_text` and
+`title` appear on every media object the site receives. Older revisions of this
+guide showed the shape without them.
+
+The same file can legitimately appear under more than one record with **different
+uuids** — the CMS media library copies a row per placement rather than sharing
+one. So do not use a media `uuid` to dedupe images across two content types; use
+`url`.
 
 Several types also expose a **first-image convenience field** — `banner` (room
 types, promotions), `photo` (home sliders, menu items), `cover_image` (journal
@@ -232,7 +255,7 @@ settings. Home sliders expose `photo` but no `images` array.
   "rating": "4.5", "rating_count": 12,
   "is_active": true, "sort_order": 0,
   "banner": "http://.../storage/cms/RoomType/.../a.jpg",
-  "images": [ { "uuid":"...", "url":"...", "file_name":"...", "mime_type":"image/jpeg", "size":81234, "sort_order":0 } ],
+  "images": [ { "uuid":"...", "url":"...", "file_name":"...", "alt_text":{"en":"…"}, "title":null, "mime_type":"image/jpeg", "size":81234, "sort_order":0 } ],
   "amenities": [ { "uuid":"...", "slug":"wifi", "name":{"en":"Wi-Fi","ar":"..."}, "icon":"wifi", "is_active":true, "sort_order":0 } ],
   "highlights": [ "…the subset of amenities flagged as highlights, same object shape…" ]
 }

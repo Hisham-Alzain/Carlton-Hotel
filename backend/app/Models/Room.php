@@ -6,6 +6,7 @@ use App\Enums\RoomStatus;
 use App\Models\ReservationRoom;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
+use App\Traits\PurgesMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Room extends Model
 {
-    use HasFactory, HasUuid, LogsActivity;
+    use HasFactory, HasUuid, LogsActivity, PurgesMedia;
 
     protected $fillable = [
         'room_type_id',

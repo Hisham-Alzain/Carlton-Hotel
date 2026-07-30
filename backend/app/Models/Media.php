@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\PurgeMediaFile;
 use App\Traits\FileTrait;
 use App\Traits\HasTranslations;
 use App\Traits\HasUuid;
@@ -48,9 +49,57 @@ class Media extends Model
         'sort_order' => 'integer',
     ];
 
+    /**
+     * A deleted row takes its file with it — unless another row still names the
+     * same `disk` + `path`.
+     *
+     * This lives on the model rather than in `MediaService` because it is the
+     * one rule that must hold for *every* way a row can disappear: the library
+     * screen, a nested `{parent}/images/{media}` route, and — since
+     * `PurgesMedia` — a parent being deleted or cascaded away. Before it moved
+     * here, deleting content left both the rows and the files behind forever.
+     *
+     * `deleted`, not `deleting`: the row must be gone before the file is, so a
+     * failed delete can never leave a row pointing at a file that is not there.
+     */
+    protected static function booted(): void
+    {
+        static::deleted(function (Media $media): void {
+            $media->purgeFileIfUnreferenced();
+        });
+    }
+
     public function mediable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /**
+     * Queue the unlink when nothing else points at this file.
+     *
+     * `attachExisting()` copies rows that share one `disk` + `path`, so deleting
+     * a placement must not unlink a file three other entities are still
+     * rendering. `whereKeyNot()` keeps the check correct whether this row has
+     * already been removed or not. The job re-checks before unlinking, which is
+     * what makes the deferral safe.
+     */
+    public function purgeFileIfUnreferenced(): void
+    {
+        if ($this->path === null) {
+            return;
+        }
+
+        $shared = static::query()
+            ->where('disk', $this->disk)
+            ->where('path', $this->path)
+            ->whereKeyNot($this->getKey())
+            ->exists();
+
+        if ($shared) {
+            return;
+        }
+
+        PurgeMediaFile::dispatch($this->disk, $this->path)->afterCommit();
     }
 
     /** Library assets: uploaded, not yet placed on any entity. */

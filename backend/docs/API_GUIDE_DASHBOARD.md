@@ -484,6 +484,8 @@ Route binding is by **`uuid`** everywhere under `/cms/*`, never by slug or numer
 | Journal posts | `/cms/journal-posts` | ✅ | `published_on` is a display date, not a schedule |
 | Site settings | `/cms/settings` | — | **`GET` + bulk `PUT` only** — see below |
 
+`/cms/media` sits under the same gates but is **not** a content type, so it is absent from the table above: it is the media library (`GET` / `POST` / `PATCH` / `DELETE`, no `show`, nothing translatable but `alt_text`). See **The media library** below.
+
 P7 service catalog, identical gates, full `apiResource` each (`PUT` **or** `PATCH`, full payload required on update, `en`/`ar` only): `/cms/spa-services`, `/cms/pool-cabanas`, `/cms/transfers`, `/cms/restaurant-tables`, `/cms/service-categories`, `/cms/service-items`. Only `/cms/menu-items` in that group takes media.
 
 Response shapes are identical to the public read shapes — the same Resource class serves both admin and public routes, so only the row *selection* differs. `store` returns HTTP 201, `destroy` returns HTTP 204 with `data: null`.
@@ -581,21 +583,105 @@ The public read of the same data (`GET /api/public/settings`) is a **flat `{grou
 
 ### Images
 
-> ⚠️ **In flight:** a media library (parentless upload, a filterable `index`, an
-> `update`, a delete by media uuid alone, `attach`-existing routes per parent, and
-> new `alt_text` (translatable) + `title` fields on every media object) is being
-> added in `MediaController` / `MediaService` / `Media` / `MediaResource` but is
-> **not yet wired into `routes/api.php`**. Everything below is what the API serves
-> today; re-check before building an asset picker.
-
 12 modules accept media: `room-types`, `rooms`, `facilities`, `dining-venues`, `event-spaces`, `home-sliders`, `promotions`, `testimonials`, `experiences`, `gallery-items`, `journal-posts`, `menu-items`. Not `amenities`, `faqs`, `pages`, `gallery-categories`, `settings`, `reviews`, or the P7 catalog other than menu items.
 
-- `POST /cms/{module}/{uuid}/images` — multipart, `image` (**required**, a single file, `jpg`/`jpeg`/`png`/`webp`, max 5 MB / `max:5120` KB), `sort_order` (optional int ≥0, default 0). Returns HTTP 201 and the created media object: `{ "uuid", "url", "file_name", "mime_type", "size", "sort_order" }`. One file per request — upload a five-image gallery with five calls.
-- `DELETE /cms/{module}/{uuid}/images/{media}` — removes the file and the record. HTTP 204. No bulk delete.
+Every media object, everywhere in the API, is `MediaResource`:
+
+```json
+{ "uuid": "9f3c…", "url": "http://127.0.0.1:8000/storage/cms/library/9aKd….jpg",
+  "file_name": "lobby.jpg", "alt_text": { "en": "Lobby at dusk", "ar": "…" },
+  "title": "Lobby — chandelier", "mime_type": "image/jpeg", "size": 184320, "sort_order": 0 }
+```
+
+- **`alt_text` is a translatable locale map**, exactly like `name`/`description` on a content type: all five configured locales accepted, every one optional, and the response carries the whole map so a client can switch `alt` with the language off a single fetch.
+- **When no alt text exists the value is `[]`, not `{}`** — PHP's empty array serializes as a JSON array. Guard for it.
+- **`title` is a plain string, not translatable.** It is the editor-facing label in the picker; `null` when unset.
+- `size` is bytes. `file_name` is the client's original filename; the stored path uses a generated hash name.
+- **`mediable_type` / `mediable_id` are not exposed.** You can filter the library by parent type but cannot read back which parent a row belongs to.
+
+#### Per-parent upload and delete
+
+- `POST /cms/{module}/{uuid}/images` — multipart, `image` (**required**, a single file, `jpg`/`jpeg`/`png`/`webp`, max 5 MB / `max:5120` KB), `sort_order` (optional int ≥0, default 0). HTTP 201, `data` = the created media object. One file per request — upload a five-image gallery with five calls. **No `alt_text`/`title` on this route**; upload then `PATCH`, or use the library.
+- `DELETE /cms/{module}/{uuid}/images/{media}` — HTTP 204. Removes the record, and the file **only when no other row references it** (see the copy semantics below). No bulk delete.
 
 **The `{uuid}` parent segment scopes the delete.** `MediaService` verifies that the media's owner matches the parent in the URL; deleting a valid media uuid through the wrong parent returns **`404 not_found`** (with `context: { media, parent }`) and deletes nothing. A flat client-side map of media uuids is not enough — you must call with the parent the image actually belongs to.
 
-URLs are **absolute**, built as `APP_URL + /storage/ + path`, so media is served by the API origin and **`php artisan storage:link` must have been run** or every URL is a well-formed 404. Storage layout is `cms/{ModelClassBasename}/{parent-uuid}/{hash}.{ext}`.
+URLs are **absolute**, built as `APP_URL + /storage/ + path`, so media is served by the API origin and **`php artisan storage:link` must have been run** or every URL is a well-formed 404. Storage layout is `cms/{ModelClassBasename}/{parent-uuid}/{hash}.{ext}` for a parent upload and `cms/library/{hash}.{ext}` for a library upload. An attached copy keeps the path it was uploaded to — do **not** infer the parent from the URL.
+
+### The media library
+
+Upload once with no parent, then place the same asset on as many records as you like. `GET` needs `cms.view` (or `cms.edit`, which implies it); all four writes need `cms.edit`.
+
+| Verb | Path | Purpose |
+|---|---|---|
+| `GET` | `/cms/media` | Browse every asset, attached or not |
+| `POST` | `/cms/media` | Upload with no parent |
+| `PATCH` | `/cms/media/{media}` | Edit `alt_text` / `title` / `sort_order` |
+| `DELETE` | `/cms/media/{media}` | Delete a row, unscoped |
+| `POST` | `/cms/{module}/{uuid}/images/attach` | Place library assets on a parent (all 12 modules) |
+
+`{media}` binds by uuid, like every other CMS route.
+
+#### `GET /cms/media`
+
+Standard paginated envelope — `data.items[]` + `data.meta`. `per_page` defaults to **15**, **clamped to 100** rather than rejected.
+
+**Newest-first by default:** `created_at DESC, id DESC`. The `id` tiebreak is load-bearing — `created_at` has one-second resolution, so a batch uploaded together would otherwise come back in an arbitrary, unstably-paginated order. A picker opens on what the editor just uploaded with no `sort` param.
+
+| Param | Notes |
+|---|---|
+| `mime` | The CMS-facing spelling of the `mime_type` column, and the only one the dashboard sends. Aliased to `mime_type` **only when `mime_type` is absent** — an explicit `mime_type` wins. |
+| `mime_type` | Operators `eq`, `like`, `in`: `?mime=image/webp`, `?mime_type[like]=webp`, `?mime_type[in]=image/jpeg,image/png`, `?mime_type[]=…&mime_type[]=…`. The alias carries the whole param, so `?mime[in]=…` works too. |
+| `mediable_type` | Operators `eq`, `in`. Matches the **stored** morph value, which is the FQCN — `App\Models\RoomType`, not `room-types`. URL-encode the backslashes. |
+| `unattached` | `true` → only rows with no parent (the "unused assets" view). `false` → only attached rows. Accepts `1/true/yes/on` and `0/false/no/off`. |
+| `search` | Case-insensitive `LIKE` over `file_name`, `title`, and `alt_text` in **each of the five locales**. `%` and `_` in the term are escaped. |
+| `sort` | `sort_order`, `created_at`, `updated_at`, `size`, `file_name`. Anything else ignored, default ordering stands. An accepted `sort` **replaces** the default rather than tie-breaking it. `sort_dir` = `asc` (default) / `desc`. |
+
+Filter rules are the universal three: unknown param **ignored**, empty value means **no filter**, uninterpretable value is a **`422`** keyed by the param (`?unattached=mabye` → `errors: { unattached: [...] }`). **No `is_active` filter** — the `media` table has no such column.
+
+#### `POST /cms/media`
+
+Multipart. `image` (**required**, single file, `jpg`/`jpeg`/`png`/`webp`, max 5 MB / `max:5120` KB), `alt_text[{locale}]` (optional string max 255, per locale, optional in *every* locale including the required ones), `title` (optional string max 255), `sort_order` (optional int ≥0, default 0).
+
+Byte-identical file contract to the per-parent upload — the two share one FormRequest so they cannot drift on the size cap or the mime whitelist.
+
+HTTP **201**, `data` = the created media object. `mediable_type`/`mediable_id` are stored **null** — the row is a real asset the moment it exists; attaching is a separate decision. Stored under `cms/library/`.
+
+> `sort_order` is `integer|min:0` with no `nullable`, so a form that submits `sort_order=""` for an untouched field gets a `422`. Strip empty optional parts before building the `FormData`.
+
+#### `PATCH /cms/media/{media}`
+
+`alt_text[{locale}]` (optional string max 255), `title` (optional string max 255), `sort_order` (optional int ≥0). HTTP 200 with the refreshed object. **No `image`, no `path`, no `mediable_*`** — replacing a file is a new upload, moving an asset between parents is attach + delete.
+
+**`alt_text` merges per locale.** Sending only `alt_text[en]` updates `en` and leaves the other four as stored; it does not blank the locales you omitted. A single-language edit form is safe.
+
+#### `DELETE /cms/media/{media}`
+
+HTTP 204. **Unscoped on purpose** — this is the library's own route, addressed by media uuid alone, and `cms.edit` already gates it. It will delete an *attached* row too. The nested `{module}/{uuid}/images/{media}` route remains the only way to reach a row *through* an entity's URL, so its cross-parent guard is untouched.
+
+#### `POST /cms/{module}/{uuid}/images/attach`
+
+```json
+{ "media_uuids": ["9f3c…", "1a2b…"] }
+```
+
+`media_uuids` **required** array, **1–50** entries; each entry **required** string, `distinct`, must `exist` in `media` by uuid.
+
+HTTP **201**, `data` = an **array** of media objects — the parent's rows, **one per requested uuid, in request order** — so you can zip the response straight back onto the uuids you sent. An unknown uuid is a **`422`** naming the offending index (`errors: { "media_uuids.1": [...] }`), not a `404` that leaves you guessing which of five was wrong. `distinct` rejects the same uuid twice in one call, because the service is idempotent per parent and a duplicate would otherwise collapse silently. `max:50` bounds the batch since every uuid becomes a row.
+
+New rows are appended: `sort_order` starts at `max(existing) + 1` (or `0` when the parent had none) and increments across the batch. `alt_text` and `title` are **copied from the source row**. The source may itself already be attached elsewhere — copying a room type's hero onto a promotion is the point.
+
+#### Two behaviours that will bite an asset picker
+
+**1. Attach copies the row.** A `media` row carries exactly one `mediable_type`/`mediable_id` pair, so a shared asset needs **one row per placement**. The same asset on three parents is **three rows with three uuids naming one file on disk**. Therefore:
+
+- **A media uuid identifies a placement, not an asset.** The library row and each attached copy have different uuids. To mark "already used" in a picker, compare on `url` — `disk` + `path` is what the backend itself compares on, and `url` is derived from it.
+- **Editing one copy does not touch the others.** `PATCH` changes that placement only. Deliberate — the same photograph legitimately needs different alt text in different contexts — but there is no "edit the asset once" operation.
+- **Deleting a placement does not delete the file.** The file is unlinked only when no remaining row references the same `disk` + `path`. Removing a photograph from one promotion leaves the other parents and the library entry rendering. Conversely, deleting the **last** row does destroy the file — including when that last row is the library entry.
+
+**2. Attach is idempotent per parent.** Attaching an asset a parent already has returns **the existing row** instead of adding a second copy, so a double-submitted form or a retried request cannot put the same photograph on a page twice. The match is on `disk` + `path`, not uuid, which is what makes it work when the row you attach *from* is itself a copy of the one already there.
+
+Two gaps to handle client-side: one request naming two *different* uuids that point at the same file will create two rows (the check reads the parent's rows as they were before the batch) — deduplicate by `url` before sending. And idempotency is per parent, not global; the same asset on many different records is expected.
 
 The single-image convenience fields — `banner` (room types, promotions), `photo` (home sliders, menu items), `cover_image` (journal posts), `avatar` (testimonials), `image` (experiences, gallery items) — are all `images->first()?->url`, i.e. load order. There is **no designated primary image** and no way to set one; `sort_order` is advisory.
 
@@ -787,7 +873,7 @@ Three properties this whole group shares, and which differ from Module: CMS Cont
 - **Update requires the full payload.** Each update route reuses its *create* FormRequest, so every `required` field is still required on `PUT`/`PATCH`. A partial update returns `422`.
 - **`is_active` is `['nullable','boolean']` here**, so `null` is accepted — unlike the CMS content modules, where `null` is a `422`.
 
-Response shapes mirror the fillable fields (translatable fields as locale maps, foreign keys exposed as `_uuid`, never the internal integer id). Menu categories nest their items under `items: []` when the relation is loaded; menu items expose `type` (the parent category's slug) and `photo` (first image). **`/cms/menu-items` is the only member of this group with media routes** (`POST`/`DELETE .../{uuid}/images` — same contract as Module: CMS Content).
+Response shapes mirror the fillable fields (translatable fields as locale maps, foreign keys exposed as `_uuid`, never the internal integer id). Menu categories nest their items under `items: []` when the relation is loaded; menu items expose `type` (the parent category's slug) and `photo` (first image). **`/cms/menu-items` is the only member of this group with media routes** (`POST`/`DELETE .../{uuid}/images` and `POST .../{uuid}/images/attach` — same contract as Module: CMS Content).
 
 For the menu module specifically, see also Module: CMS Content — it is documented there as part of the dining content the website reads.
 

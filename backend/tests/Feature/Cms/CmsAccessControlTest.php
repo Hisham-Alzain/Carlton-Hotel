@@ -236,7 +236,8 @@ class CmsAccessControlTest extends TestCase
             ->deleteJson("/api/cms/room-types/{$roomType->uuid}")
             ->assertStatus(204);
 
-        $this->assertDatabaseMissing('room_types', ['id' => $roomType->id]);
+        // Recoverable now: the row stays, marked, and vanishes from every query.
+        $this->assertSoftDeleted('room_types', ['id' => $roomType->id]);
     }
 
     public function test_reception_role_cannot_write_through_the_cms(): void

@@ -66,7 +66,8 @@ class HomeSliderTest extends TestCase
             ->assertJsonPath('data.sort_order', 5);
 
         $this->withToken($token)->deleteJson("/api/cms/home-sliders/{$slider->uuid}")->assertStatus(204);
-        $this->assertDatabaseMissing('home_sliders', ['id' => $slider->id]);
+        // Recoverable now: the row stays, marked, and vanishes from every query.
+        $this->assertSoftDeleted('home_sliders', ['id' => $slider->id]);
     }
 
     public function test_create_requires_bilingual_fields(): void

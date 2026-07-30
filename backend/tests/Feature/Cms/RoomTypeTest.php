@@ -97,7 +97,8 @@ class RoomTypeTest extends TestCase
         $this->withToken($this->editorToken())
             ->deleteJson("/api/cms/room-types/{$rt->uuid}")
             ->assertStatus(204);
-        $this->assertDatabaseMissing('room_types', ['id' => $rt->id]);
+        // Recoverable now: the row stays, marked, and vanishes from every query.
+        $this->assertSoftDeleted('room_types', ['id' => $rt->id]);
     }
 
     // ── Permission gate ───────────────────────────────────────────────────

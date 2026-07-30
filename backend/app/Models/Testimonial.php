@@ -9,6 +9,7 @@ use App\Traits\PurgesMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Curated marketing testimonial. Distinct from `Review`, which is guest UGC —
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  */
 class Testimonial extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia;
+    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia, SoftDeletes;
 
     protected $translatable = ['author_title', 'quote'];
 

@@ -15,6 +15,7 @@ use App\Services\Firebase\FirebaseService;
 use App\Services\Firebase\NullFirebaseService;
 use App\Models\User;
 use App\Policies\StaffPolicy;
+use App\Validation\LiveRowPresenceVerifier;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -34,6 +35,17 @@ class AppServiceProvider extends ServiceProvider
                 ? new FirebaseService()
                 : new NullFirebaseService();
         });
+
+        // `unique:` and `exists:` reach the database through the query builder,
+        // so they never saw the soft-delete scope the CMS content models gained.
+        // A deleted page would keep its slug reserved forever and a trashed
+        // gallery chip would still pass `exists`. The verifier is the one place
+        // both rules resolve through — see LiveRowPresenceVerifier for why it is
+        // not `->whereNull('deleted_at')` on each rule.
+        $this->app->extend(
+            'validation.presence',
+            fn ($verifier, $app) => new LiveRowPresenceVerifier($app['db']),
+        );
     }
 
     /**

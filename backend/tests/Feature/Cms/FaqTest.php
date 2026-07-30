@@ -59,7 +59,8 @@ class FaqTest extends TestCase
             ->assertJsonPath('data.answer.en', 'Yes — valet only.');
 
         $this->withToken($token)->deleteJson("/api/cms/faqs/{$uuid}")->assertStatus(204);
-        $this->assertDatabaseCount('faqs', 0);
+        // Recoverable now: the row stays, marked, and vanishes from every query.
+        $this->assertSoftDeleted('faqs', ['uuid' => $uuid]);
     }
 
     public function test_unauthenticated_request_is_rejected(): void

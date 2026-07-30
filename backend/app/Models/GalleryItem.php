@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * One photograph in the website's gallery. Deleted with its category — the FK
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  */
 class GalleryItem extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia;
+    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia, SoftDeletes;
 
     protected $translatable = ['caption'];
 

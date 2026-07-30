@@ -9,6 +9,7 @@ use App\Traits\PurgesMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * A concierge-arranged experience. See the migration for why this is neither a
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  */
 class Experience extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia;
+    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia, SoftDeletes;
 
     /**
      * `group_size` and `duration_label` are prose the site prints verbatim

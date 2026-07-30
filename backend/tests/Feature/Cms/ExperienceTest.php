@@ -68,7 +68,8 @@ class ExperienceTest extends TestCase
             ->assertJsonPath('data.price_usd', '250.00');
 
         $this->withToken($token)->deleteJson("/api/cms/experiences/{$uuid}")->assertStatus(204);
-        $this->assertDatabaseCount('experiences', 0);
+        // Recoverable now: the row stays, marked, and vanishes from every query.
+        $this->assertSoftDeleted('experiences', ['uuid' => $uuid]);
     }
 
     public function test_unauthenticated_request_is_rejected(): void

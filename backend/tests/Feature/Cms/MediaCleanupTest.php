@@ -14,7 +14,12 @@ use App\Models\Promotion;
 use App\Models\Room;
 use App\Models\RoomType;
 use App\Models\User;
+use App\Services\Cms\DiningVenueService;
+use App\Services\Cms\ExperienceService;
+use App\Services\Cms\GalleryCategoryService;
 use App\Services\Cms\MediaService;
+use App\Services\Cms\PromotionService;
+use App\Services\Cms\RoomTypeService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,14 +29,30 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * Deleting content must take its media rows — and the files behind them — with
- * it.
+ * Permanently destroying a content record must take its media rows — and the
+ * files behind them — with it. A *recoverable* delete must not.
  *
  * Before `PurgesMedia`, every CMS delete left both behind forever: the rows
  * pointed at a parent that no longer existed and nothing ever unlinked the
  * files. The cascade paths were the worst of it, because a single room type or
  * dining venue takes a whole subtree of media with it and none of those child
- * deletes pass through a service at all — the database does them.
+ * deletes pass through a service at all.
+ *
+ * ## Why these tests changed with soft deletes
+ *
+ * They used to drive the purge through `DELETE /api/cms/...` and assert the media
+ * was gone. That endpoint is now a *recoverable* delete: the row is marked, and
+ * the whole point of `PurgesMedia` moving from `deleting` to `forceDeleted` is
+ * that the photography survives so a restore comes back whole. Asserting the old
+ * behaviour would be asserting the data loss.
+ *
+ * So the intent of every case is preserved and its trigger moved: the HTTP delete
+ * now proves media *survives* (`test_a_recoverable_delete_keeps_its_media...`),
+ * and the purge cases drive `forceDestroy()` — the service verb an eventual
+ * "empty the bin" endpoint will call. The child-row counts moved with them: after
+ * a soft delete the cascade children are still *rows*, marked rather than gone,
+ * so those assertions became `assertSoftDeleted`/`onlyTrashed` where the point
+ * was "the cascade really fired".
  */
 class MediaCleanupTest extends TestCase
 {
@@ -61,28 +82,67 @@ class MediaCleanupTest extends TestCase
         return app(MediaService::class)->attach($parent, UploadedFile::fake()->image($name))['data'];
     }
 
-    public function test_deleting_content_purges_its_media_rows_and_files(): void
+    /**
+     * The recycle-bin guarantee. An editor's delete is recoverable, so it must
+     * leave the images alone — a restore that hands back a room type with no
+     * photography is data loss dressed as a safety feature.
+     */
+    public function test_a_recoverable_delete_keeps_its_media_rows_and_files(): void
+    {
+        $experience = Experience::factory()->create();
+        $media      = $this->attach($experience);
+
+        $this->withToken($this->editorToken())
+            ->deleteJson("/api/cms/experiences/{$experience->uuid}")
+            ->assertStatus(204);
+
+        $this->assertSoftDeleted($experience);
+        $this->assertDatabaseHas('media', ['id' => $media->id]);
+        Storage::disk('public')->assertExists($media->path);
+    }
+
+    /**
+     * The cascade children keep their media too, so restoring the venue restores
+     * a menu with its dish photography intact.
+     */
+    public function test_a_recoverable_delete_keeps_the_media_of_its_cascade_children(): void
+    {
+        $venue    = DiningVenue::factory()->create();
+        $category = MenuCategory::factory()->forVenue($venue)->create();
+        $dish     = MenuItem::factory()->create(['menu_category_id' => $category->id]);
+
+        $dishMedia = $this->attach($dish, 'dish.jpg');
+
+        $this->withToken($this->editorToken())
+            ->deleteJson("/api/cms/dining-venues/{$venue->uuid}")
+            ->assertStatus(204);
+
+        $this->assertSoftDeleted($dish);
+        $this->assertDatabaseHas('media', ['id' => $dishMedia->id]);
+        Storage::disk('public')->assertExists($dishMedia->path);
+    }
+
+    public function test_permanently_deleting_content_purges_its_media_rows_and_files(): void
     {
         $experience = Experience::factory()->create();
         $path       = $this->attach($experience)->path;
 
         Storage::disk('public')->assertExists($path);
 
-        $this->withToken($this->editorToken())
-            ->deleteJson("/api/cms/experiences/{$experience->uuid}")
-            ->assertStatus(204);
+        app(ExperienceService::class)->forceDestroy($experience);
 
         $this->assertDatabaseCount('media', 0);
         Storage::disk('public')->assertMissing($path);
     }
 
     /**
-     * `rooms.room_type_id` is `ON DELETE CASCADE`, so the rooms vanish without
-     * Eloquent firing a single event for them and `RoomService::destroy()` is
-     * never called. Their photography is only reachable from the room type's own
-     * `deleting` hook — which is why the cleanup cannot live in a service.
+     * `rooms.room_type_id` is `ON DELETE CASCADE`, so on a hard delete the rooms
+     * would vanish without Eloquent firing a single event for them and
+     * `RoomService::destroy()` is never called. `CascadesSoftDeletes` takes them
+     * through Eloquent first, which is the only way their photography is ever
+     * reachable — which is why the cleanup cannot live in a service.
      */
-    public function test_deleting_a_room_type_purges_the_images_of_the_rooms_it_cascades_to(): void
+    public function test_permanently_deleting_a_room_type_purges_the_images_of_the_rooms_it_cascades_to(): void
     {
         $roomType = RoomType::factory()->create();
         $rooms    = Room::factory()->count(2)->create(['room_type_id' => $roomType->id]);
@@ -92,12 +152,10 @@ class MediaCleanupTest extends TestCase
 
         $this->assertSame(3, Media::count());
 
-        $this->withToken($this->editorToken())
-            ->deleteJson("/api/cms/room-types/{$roomType->uuid}")
-            ->assertStatus(204);
+        app(RoomTypeService::class)->forceDestroy($roomType);
 
-        // The database cascade really did fire — otherwise this test would pass
-        // for the wrong reason.
+        // The rooms really did go — otherwise this test would pass for the wrong
+        // reason, with the media purged by some path that never saw them.
         $this->assertDatabaseCount('rooms', 0);
         $this->assertDatabaseCount('media', 0);
 
@@ -112,20 +170,18 @@ class MediaCleanupTest extends TestCase
      * carry no media themselves, so they exist in the walk purely to reach the
      * dish photography below them.
      */
-    public function test_deleting_a_dining_venue_purges_its_menu_categories_and_dish_images(): void
+    public function test_permanently_deleting_a_dining_venue_purges_its_menu_categories_and_dish_images(): void
     {
         $venue    = DiningVenue::factory()->create();
         $category = MenuCategory::factory()->forVenue($venue)->create();
         $dishes   = MenuItem::factory()->count(2)->create(['menu_category_id' => $category->id]);
 
-        $venuePath  = $this->attach($venue, 'venue.jpg')->path;
-        $dishPaths  = $dishes->map(fn (MenuItem $dish): string => $this->attach($dish, 'dish.jpg')->path);
+        $venuePath = $this->attach($venue, 'venue.jpg')->path;
+        $dishPaths = $dishes->map(fn (MenuItem $dish): string => $this->attach($dish, 'dish.jpg')->path);
 
         $this->assertSame(3, Media::count());
 
-        $this->withToken($this->editorToken())
-            ->deleteJson("/api/cms/dining-venues/{$venue->uuid}")
-            ->assertStatus(204);
+        app(DiningVenueService::class)->forceDestroy($venue);
 
         $this->assertDatabaseCount('menu_categories', 0);
         $this->assertDatabaseCount('menu_items', 0);
@@ -138,19 +194,43 @@ class MediaCleanupTest extends TestCase
     }
 
     /**
+     * Emptying the bin has to reach a child that was *already* marked, which is
+     * the normal case: the editor deletes, then permanently deletes. Without
+     * `withTrashed()` on the force cascade the soft-delete scope would hide every
+     * child and the database's own `ON DELETE CASCADE` would take them with no
+     * event fired — orphaning the dish photography for good.
+     */
+    public function test_emptying_the_bin_purges_media_of_children_already_marked_deleted(): void
+    {
+        $venue    = DiningVenue::factory()->create();
+        $category = MenuCategory::factory()->forVenue($venue)->create();
+        $dish     = MenuItem::factory()->create(['menu_category_id' => $category->id]);
+
+        $dishPath = $this->attach($dish, 'dish.jpg')->path;
+
+        app(DiningVenueService::class)->destroy($venue);
+        $this->assertSoftDeleted($dish);
+        $this->assertSame(1, Media::count());
+
+        app(DiningVenueService::class)->forceDestroy($venue);
+
+        $this->assertDatabaseCount('menu_items', 0);
+        $this->assertDatabaseCount('media', 0);
+        Storage::disk('public')->assertMissing($dishPath);
+    }
+
+    /**
      * `gallery_items.gallery_category_id` cascades too — the migration already
      * promised these rows would be "cleaned up by the same morph-delete path".
      */
-    public function test_deleting_a_gallery_category_purges_its_photographs(): void
+    public function test_permanently_deleting_a_gallery_category_purges_its_photographs(): void
     {
         $category = GalleryCategory::factory()->create();
         $items    = GalleryItem::factory()->count(2)->create(['gallery_category_id' => $category->id]);
 
         $paths = $items->map(fn (GalleryItem $item): string => $this->attach($item, 'gallery.jpg')->path);
 
-        $this->withToken($this->editorToken())
-            ->deleteJson("/api/cms/gallery-categories/{$category->uuid}")
-            ->assertStatus(204);
+        app(GalleryCategoryService::class)->forceDestroy($category);
 
         $this->assertDatabaseCount('gallery_items', 0);
         $this->assertDatabaseCount('media', 0);
@@ -162,10 +242,11 @@ class MediaCleanupTest extends TestCase
 
     /**
      * The media library places one asset on several parents by COPYING the row,
-     * so two rows can name the same `disk` + `path`. Deleting one parent must
-     * take only its own row — the other placement is still rendering that file.
+     * so two rows can name the same `disk` + `path`. Permanently deleting one
+     * parent must take only its own row — the other placement is still rendering
+     * that file.
      */
-    public function test_deleting_content_leaves_a_file_another_placement_still_shares(): void
+    public function test_permanently_deleting_content_leaves_a_file_another_placement_still_shares(): void
     {
         $experience = Experience::factory()->create();
         $promotion  = Promotion::factory()->create();
@@ -178,18 +259,14 @@ class MediaCleanupTest extends TestCase
         $this->assertSame(2, Media::count());
         $this->assertSame(1, Media::query()->distinct()->count('path'));
 
-        $this->withToken($this->editorToken())
-            ->deleteJson("/api/cms/experiences/{$experience->uuid}")
-            ->assertStatus(204);
+        app(ExperienceService::class)->forceDestroy($experience);
 
         $this->assertSame(1, Media::count());
         $this->assertCount(1, $promotion->refresh()->images);
         Storage::disk('public')->assertExists($path);
 
         // Last referent gone → the file goes with it.
-        $this->withToken($this->editorToken())
-            ->deleteJson("/api/cms/promotions/{$promotion->uuid}")
-            ->assertStatus(204);
+        app(PromotionService::class)->forceDestroy($promotion);
 
         $this->assertDatabaseCount('media', 0);
         Storage::disk('public')->assertMissing($path);
@@ -209,9 +286,7 @@ class MediaCleanupTest extends TestCase
         $experience = Experience::factory()->create();
         $path       = $this->attach($experience)->path;
 
-        $this->withToken($this->editorToken())
-            ->deleteJson("/api/cms/experiences/{$experience->uuid}")
-            ->assertStatus(204);
+        app(ExperienceService::class)->forceDestroy($experience);
 
         $this->assertDatabaseCount('media', 0);
 
@@ -239,9 +314,7 @@ class MediaCleanupTest extends TestCase
 
         Queue::fake();
 
-        $this->withToken($this->editorToken())
-            ->deleteJson("/api/cms/experiences/{$experience->uuid}")
-            ->assertStatus(204);
+        app(ExperienceService::class)->forceDestroy($experience);
 
         Queue::assertNothingPushed();
     }

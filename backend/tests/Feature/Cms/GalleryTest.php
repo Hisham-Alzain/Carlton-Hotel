@@ -75,7 +75,8 @@ class GalleryTest extends TestCase
             ->assertJsonPath('data.name.en', 'Rooms & Suites');
 
         $this->withToken($token)->deleteJson("/api/cms/gallery-categories/{$uuid}")->assertStatus(204);
-        $this->assertDatabaseCount('gallery_categories', 0);
+        // Recoverable now: the row stays, marked, and vanishes from every query.
+        $this->assertSoftDeleted('gallery_categories', ['uuid' => $uuid]);
     }
 
     public function test_category_slug_must_be_unique_and_url_shaped(): void
@@ -127,7 +128,7 @@ class GalleryTest extends TestCase
             ->assertJsonPath('data.category_slug', 'dining');
 
         $this->withToken($token)->deleteJson("/api/cms/gallery-items/{$uuid}")->assertStatus(204);
-        $this->assertDatabaseCount('gallery_items', 0);
+        $this->assertSoftDeleted('gallery_items', ['uuid' => $uuid]);
     }
 
     public function test_item_requires_an_existing_category_uuid(): void
@@ -150,8 +151,14 @@ class GalleryTest extends TestCase
 
     /**
      * A photograph has no meaning outside its chip, so retiring a chip must take
-     * its photographs with it — the FK cascades rather than orphaning rows the
-     * website can never render.
+     * its photographs with it rather than orphan rows the website can never
+     * render.
+     *
+     * The FK's `ON DELETE CASCADE` no longer does this on its own: the delete is
+     * recoverable now, so no row is removed and the referential action never
+     * fires. `CascadesSoftDeletes` carries the mark down instead — the rows stay
+     * in the table (this is a recycle bin, they have to) but leave every query,
+     * which is what "cascades" has to mean from here on.
      */
     public function test_deleting_a_category_cascades_to_its_items(): void
     {
@@ -161,13 +168,14 @@ class GalleryTest extends TestCase
         GalleryItem::factory()->count(3)->create(['gallery_category_id' => $category->id]);
         GalleryItem::factory()->create(['gallery_category_id' => $keep->id]);
 
-        $this->assertDatabaseCount('gallery_items', 4);
+        $this->assertSame(4, GalleryItem::count());
 
         $this->withToken($this->editorToken())
             ->deleteJson("/api/cms/gallery-categories/{$category->uuid}")
             ->assertStatus(204);
 
-        $this->assertDatabaseCount('gallery_items', 1);
+        $this->assertSame(1, GalleryItem::count());
+        $this->assertSame(3, GalleryItem::onlyTrashed()->count());
         $this->assertSame(0, GalleryItem::where('gallery_category_id', $category->id)->count());
         $this->assertSame(1, GalleryItem::where('gallery_category_id', $keep->id)->count());
     }

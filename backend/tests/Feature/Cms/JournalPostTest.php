@@ -67,7 +67,8 @@ class JournalPostTest extends TestCase
             ->assertJsonPath('data.excerpt.en', 'Six weeks of work.');
 
         $this->withToken($token)->deleteJson("/api/cms/journal-posts/{$uuid}")->assertStatus(204);
-        $this->assertDatabaseCount('journal_posts', 0);
+        // Recoverable now: the row stays, marked, and vanishes from every query.
+        $this->assertSoftDeleted('journal_posts', ['uuid' => $uuid]);
     }
 
     public function test_unauthenticated_request_is_rejected(): void

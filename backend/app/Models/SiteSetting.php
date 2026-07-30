@@ -7,6 +7,7 @@ use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * One global website setting, addressed by (group, key).
@@ -21,7 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SiteSetting extends Model
 {
-    use HasFactory, HasUuid, LogsActivity;
+    use HasFactory, HasUuid, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'group',

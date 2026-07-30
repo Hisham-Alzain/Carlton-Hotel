@@ -66,7 +66,8 @@ class TestimonialTest extends TestCase
             ->assertJsonPath('data.quote.en', 'Reworded.');
 
         $this->withToken($token)->deleteJson("/api/cms/testimonials/{$uuid}")->assertStatus(204);
-        $this->assertDatabaseCount('testimonials', 0);
+        // Recoverable now: the row stays, marked, and vanishes from every query.
+        $this->assertSoftDeleted('testimonials', ['uuid' => $uuid]);
     }
 
     public function test_unauthenticated_request_is_rejected(): void

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\CascadesSoftDeletes;
 use App\Traits\HasTranslations;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
@@ -9,6 +10,7 @@ use App\Traits\PurgesMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * A filter chip above the website's photo gallery. See the migration for why the
@@ -16,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class GalleryCategory extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia;
+    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia, SoftDeletes, CascadesSoftDeletes;
 
     protected $translatable = ['name'];
 
@@ -37,12 +39,13 @@ class GalleryCategory extends Model
     }
 
     /**
-     * A chip carries no media of its own; its photographs do, and
      * `gallery_items.gallery_category_id` is `ON DELETE CASCADE` — the migration
-     * already promised these would be "cleaned up by the same morph-delete
-     * path", which is this.
+     * already promised these would be "cleaned up by the same morph-delete path",
+     * which is this. A soft delete has to carry down too: `GalleryItemService`'s
+     * public read joins `gallery_categories` for ordering, so a marked chip would
+     * still publish its photographs.
      */
-    protected function mediaCascades(): array
+    protected function softDeleteCascades(): array
     {
         return ['items'];
     }

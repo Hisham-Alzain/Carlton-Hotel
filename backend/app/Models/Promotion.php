@@ -9,10 +9,11 @@ use App\Traits\PurgesMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Promotion extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia;
+    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia, SoftDeletes;
 
     protected $translatable = ['title', 'description', 'secondary_description', 'terms'];
 

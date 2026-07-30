@@ -9,6 +9,7 @@ use App\Traits\PurgesMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * An editorial article in the website's Journal.
@@ -21,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  */
 class JournalPost extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia;
+    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia, SoftDeletes;
 
     protected $translatable = ['title', 'excerpt', 'body', 'category'];
 

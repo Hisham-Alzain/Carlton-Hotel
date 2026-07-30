@@ -4,7 +4,9 @@ namespace App\Base;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use LogicException;
 
 abstract class BaseService
 {
@@ -61,10 +63,91 @@ abstract class BaseService
         return ['data' => $model, 'code' => 200];
     }
 
+    /**
+     * On a model using `SoftDeletes` this marks the row rather than removing it,
+     * and `CascadesSoftDeletes` carries the mark down the relations the database
+     * used to cascade. The wire contract is unchanged either way — 204, and the
+     * record is gone from every index and show route.
+     */
     public function destroy(Model $model): array
     {
         DB::transaction(fn () => $model->delete());
         return ['data' => null, 'code' => 204];
+    }
+
+    /**
+     * The recycle bin: rows `destroy()` marked, most recently deleted first.
+     *
+     * Ordered by `deleted_at` rather than by the collection's own `sort_order`
+     * (which several `query()` overrides impose) because a bin is read
+     * chronologically — "what did I just delete" — not editorially.
+     *
+     * @param  array<string, mixed>  $params
+     */
+    public function trashed(array $params = [], ?BaseFilter $filter = null, ?int $perPage = null): array
+    {
+        $this->assertSoftDeletable($this->model);
+
+        $query = $this->query()->onlyTrashed();
+
+        $filter ??= $this->makeFilter($params);
+        $filter?->apply($query);
+
+        $query->reorder('deleted_at', 'desc');
+
+        return ['data' => $query->paginate($this->resolvePerPage($perPage)), 'code' => 200];
+    }
+
+    /**
+     * Bring a marked row — and the children that went down with it — back.
+     *
+     * The cascade back up is `CascadesSoftDeletes::cascadeRestore()`, fired from
+     * the model's `restoring` event, so this stays a one-liner and a restore
+     * triggered from a console command behaves identically.
+     */
+    public function restore(Model $model): array
+    {
+        $this->assertSoftDeletable($model);
+
+        DB::transaction(fn () => $model->restore());
+        $model->refresh()->loadMissing($this->with);
+
+        return ['data' => $model, 'code' => 200];
+    }
+
+    /**
+     * Empty this row out of the bin for good.
+     *
+     * This is the point where the media purge finally runs (`PurgesMedia` hooks
+     * `forceDeleted`) and where the descendants are removed through Eloquent so
+     * their own media goes with them.
+     */
+    public function forceDestroy(Model $model): array
+    {
+        $this->assertSoftDeletable($model);
+
+        DB::transaction(fn () => $model->forceDelete());
+
+        return ['data' => null, 'code' => 204];
+    }
+
+    /**
+     * Restoring what was never recoverable is a wiring mistake, not a rule a user
+     * broke — hence `LogicException` and not a domain exception with an
+     * `error_code`. It would mean a controller wired a bin endpoint to a service
+     * whose model has no `deleted_at`, which is a bug to fix, not a 4xx to render.
+     *
+     * @param  Model|class-string<Model>  $model
+     */
+    protected function assertSoftDeletable(Model|string $model): void
+    {
+        if (in_array(SoftDeletes::class, class_uses_recursive($model), true)) {
+            return;
+        }
+
+        $name = is_string($model) ? $model : $model::class;
+
+        throw new LogicException("[{$name}] does not use SoftDeletes: it has no recoverable delete.");
     }
 
     protected function query(): Builder

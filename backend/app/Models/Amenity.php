@@ -8,10 +8,11 @@ use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Amenity extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, LogsActivity;
+    use HasFactory, HasUuid, HasTranslations, LogsActivity, SoftDeletes;
 
     protected $translatable = ['name'];
 

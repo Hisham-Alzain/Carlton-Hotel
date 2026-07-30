@@ -7,10 +7,11 @@ use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Page extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, LogsActivity;
+    use HasFactory, HasUuid, HasTranslations, LogsActivity, SoftDeletes;
 
     protected $translatable = ['title', 'content'];
 

@@ -66,7 +66,8 @@ class AmenityTest extends TestCase
             ->assertJsonPath('data.name.en', 'Jacuzzi');
 
         $this->withToken($token)->deleteJson("/api/cms/amenities/{$amenity->uuid}")->assertStatus(204);
-        $this->assertDatabaseMissing('amenities', ['id' => $amenity->id]);
+        // Recoverable now: the row stays, marked, and vanishes from every query.
+        $this->assertSoftDeleted('amenities', ['id' => $amenity->id]);
     }
 
     public function test_slug_must_be_unique(): void

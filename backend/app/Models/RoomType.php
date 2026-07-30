@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\RoomView;
+use App\Traits\CascadesSoftDeletes;
 use App\Traits\HasReviews;
 use App\Traits\HasTranslations;
 use App\Traits\HasUuid;
@@ -14,10 +15,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RoomType extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, HasReviews, LogsActivity, PurgesMedia;
+    use HasFactory, HasUuid, HasTranslations, HasReviews, LogsActivity, PurgesMedia, SoftDeletes, CascadesSoftDeletes;
 
     protected $translatable = ['name', 'description'];
 
@@ -53,11 +55,13 @@ class RoomType extends Model
     }
 
     /**
-     * `rooms.room_type_id` is `ON DELETE CASCADE`, so the database removes the
-     * rooms without Eloquent ever seeing them — their photography has to be
-     * purged from here, while they are still readable.
+     * `rooms.room_type_id` is `ON DELETE CASCADE`, which a soft delete never
+     * triggers: marking a room type would otherwise leave its rooms live and
+     * bookable under a type nobody can see. The soft delete is carried down here
+     * instead, and a force delete takes the rooms through Eloquent so their
+     * photography is purged rather than stranded by the database's own cascade.
      */
-    protected function mediaCascades(): array
+    protected function softDeleteCascades(): array
     {
         return ['rooms'];
     }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\CascadesSoftDeletes;
 use App\Traits\HasTranslations;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
@@ -10,10 +11,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MenuCategory extends Model
 {
-    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia;
+    use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia, SoftDeletes, CascadesSoftDeletes;
 
     protected $translatable = ['name'];
 
@@ -25,11 +27,11 @@ class MenuCategory extends Model
     public function items(): HasMany   { return $this->hasMany(MenuItem::class); }
 
     /**
-     * A category carries no media of its own; its dishes do, and
-     * `menu_items.menu_category_id` is `ON DELETE CASCADE`, so those rows are
-     * only reachable from here.
+     * `menu_items.menu_category_id` is `ON DELETE CASCADE`. The dishes are only
+     * reachable from here, so this is the second leg of the venue → category →
+     * dish cascade as well as the whole of a standalone category delete.
      */
-    protected function mediaCascades(): array
+    protected function softDeleteCascades(): array
     {
         return ['items'];
     }

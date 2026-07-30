@@ -490,7 +490,7 @@ P7 service catalog, identical gates, full `apiResource` each (`PUT` **or** `PATC
 
 Response shapes are identical to the public read shapes — the same Resource class serves both admin and public routes, so only the row *selection* differs. `store` returns HTTP 201, `destroy` returns HTTP 204 with `data: null`.
 
-> **There are no soft deletes anywhere in the CMS.** `DELETE` is permanent, and several relations cascade (room type → rooms, dining venue → menu categories → menu items, gallery category → items, menu category → items). Deleting a parent also leaves its media rows and files behind — nothing cleans them up. Confirm destructively and name what else disappears.
+> **There are no soft deletes anywhere in the CMS.** `DELETE` is permanent, and several relations cascade (room type → rooms, dining venue → menu categories → menu items, gallery category → items, menu category → items). **Deleting a parent now also deletes its media** — the `PurgesMedia` trait drops the record's `media` rows and its cascade descendants' rows before the database cascade fires, so a dining venue takes its menu categories, their dishes, and every photograph on any of them. Confirm destructively and name what else disappears, images included. (Earlier revisions of this guide said media survived the parent; that was true before the trait landed.) File unlinks are queued (`PurgeMediaFile`, dispatched after commit, re-checked before deleting), so storage is reclaimed shortly after the request rather than during it — and not at all on a host with no queue worker.
 
 ### Publishing
 

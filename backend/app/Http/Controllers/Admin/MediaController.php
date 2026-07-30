@@ -7,8 +7,11 @@ use App\Http\Requests\Cms\UploadMediaRequest;
 use App\Http\Resources\Cms\MediaResource;
 use App\Models\DiningVenue;
 use App\Models\EventSpace;
+use App\Models\Experience;
 use App\Models\Facility;
+use App\Models\GalleryItem;
 use App\Models\HomeSlider;
+use App\Models\JournalPost;
 use App\Models\Media;
 use App\Models\MenuItem;
 use App\Models\Promotion;
@@ -134,5 +137,40 @@ class MediaController extends BaseController
     public function destroyTestimonial(Request $request, Testimonial $testimonial, Media $media): JsonResponse
     {
         return $this->delete($request, $testimonial, $media);
+    }
+
+    public function storeExperience(UploadMediaRequest $request, Experience $experience): JsonResponse
+    {
+        return $this->upload($request, $experience);
+    }
+
+    public function destroyExperience(Request $request, Experience $experience, Media $media): JsonResponse
+    {
+        return $this->delete($request, $experience, $media);
+    }
+
+    /**
+     * A gallery item is a photograph with a caption, so this route is how the
+     * photograph gets there — the row is meaningless until it has one.
+     */
+    public function storeGalleryItem(UploadMediaRequest $request, GalleryItem $galleryItem): JsonResponse
+    {
+        return $this->upload($request, $galleryItem);
+    }
+
+    public function destroyGalleryItem(Request $request, GalleryItem $galleryItem, Media $media): JsonResponse
+    {
+        return $this->delete($request, $galleryItem, $media);
+    }
+
+    /** First image (lowest sort_order) is the article's cover — see JournalPostResource. */
+    public function storeJournalPost(UploadMediaRequest $request, JournalPost $journalPost): JsonResponse
+    {
+        return $this->upload($request, $journalPost);
+    }
+
+    public function destroyJournalPost(Request $request, JournalPost $journalPost, Media $media): JsonResponse
+    {
+        return $this->delete($request, $journalPost, $media);
     }
 }

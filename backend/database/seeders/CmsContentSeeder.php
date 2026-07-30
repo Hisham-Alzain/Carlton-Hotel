@@ -6,13 +6,19 @@ use App\Enums\BedType;
 use App\Enums\RoomView;
 use App\Models\DiningVenue;
 use App\Models\EventSpace;
+use App\Models\Experience;
 use App\Models\Facility;
 use App\Models\Faq;
+use App\Models\GalleryCategory;
+use App\Models\GalleryItem;
+use App\Enums\SettingType;
 use App\Models\HomeSlider;
+use App\Models\JournalPost;
 use App\Models\Page;
 use App\Models\Promotion;
 use App\Models\Room;
 use App\Models\RoomType;
+use App\Models\SiteSetting;
 use App\Models\Testimonial;
 use Database\Seeders\Support\GeneratesPlaceholderMedia;
 use Illuminate\Database\Seeder;
@@ -32,6 +38,616 @@ class CmsContentSeeder extends Seeder
         $this->homeSliders();
         $this->testimonials();
         $this->faqs();
+        $this->experiences();
+        $this->gallery();
+        $this->journalPosts();
+        $this->siteSettings();
+    }
+
+    /**
+     * The website's photo gallery: four chips and the nineteen photographs it
+     * currently ships. Structural data (order, category) comes from
+     * `src/app/content/fallback.ts` under `galleryImages`, chip labels and
+     * captions from `src/app/i18n/translations.ts` under `galleryPage`.
+     *
+     * en/ar/fr are seeded — the site has human translations for all three.
+     * tr/es are left to editors.
+     *
+     * CAPTION PAIRING — read this before "fixing" the order. The site pairs
+     * `galleryImages[i]` with `galleryPage.captions[i]`, but `captions` still has
+     * 24 entries while `galleryImages` was trimmed to 19: the five pool/hammam
+     * photographs that used to sit at indices 13–17 were removed and their
+     * captions were not. On the live site every Lobby and Damascus tile is
+     * therefore captioned five places off — the "Lobby" tiles read "Grand indoor
+     * pool…". This seeder pairs each photograph with the caption that actually
+     * describes it (rooms 0–6, dining 7–12, lobby 18–20, damascus 21–23) and
+     * drops the five orphans, because seeding a database from a display bug would
+     * make the bug permanent and much harder to see.
+     */
+    private function gallery(): void
+    {
+        $chips = [
+            ['slug' => 'rooms',    'name' => ['en' => 'Rooms',    'ar' => 'الغرف',   'fr' => 'Chambres']],
+            ['slug' => 'dining',   'name' => ['en' => 'Dining',   'ar' => 'المطاعم', 'fr' => 'Restauration']],
+            ['slug' => 'lobby',    'name' => ['en' => 'Lobby',    'ar' => 'الردهة',  'fr' => 'Hall']],
+            ['slug' => 'damascus', 'name' => ['en' => 'Damascus', 'ar' => 'دمشق',    'fr' => 'Damas']],
+        ];
+
+        $captions = [
+            'rooms' => [
+                [
+                    'en' => 'Grand Suite panoramic living room with city views',
+                    'ar' => 'صالة معيشة بانورامية في الجناح الكبير بإطلالة على المدينة',
+                    'fr' => 'Salon panoramique de la Suite Grand avec vue sur la ville',
+                ],
+                [
+                    'en' => 'Luxury suite living area with modern chandelier',
+                    'ar' => 'منطقة معيشة في جناح فاخر بثريا عصرية',
+                    'fr' => "Espace de vie d'une suite de luxe avec lustre moderne",
+                ],
+                [
+                    'en' => 'Deluxe king bedroom with floor-to-ceiling windows',
+                    'ar' => 'غرفة نوم ديلوكس بسرير كينغ ونوافذ ممتدة من الأرض حتى السقف',
+                    'fr' => 'Chambre Deluxe avec lit king et baies vitrées du sol au plafond',
+                ],
+                [
+                    'en' => 'Classic twin bedroom with city panorama',
+                    'ar' => 'غرفة نوم كلاسيكية بسريرين وإطلالة بانورامية على المدينة',
+                    'fr' => 'Chambre classique à lits jumeaux avec panorama sur la ville',
+                ],
+                [
+                    'en' => 'Premier suite sitting room with full-width glazing',
+                    'ar' => 'صالة جلوس في الجناح الفاخر بواجهة زجاجية كاملة',
+                    'fr' => 'Salon de la suite Premier avec vitrage pleine largeur',
+                ],
+                [
+                    'en' => 'Freestanding marble bath in Premier suite bathroom',
+                    'ar' => 'حوض استحمام رخامي قائم بذاته في حمّام الجناح الفاخر',
+                    'fr' => 'Bain en marbre autoportant dans la salle de bain de la suite Premier',
+                ],
+                [
+                    'en' => 'Marble double vanity in Classic Courtyard bathroom',
+                    'ar' => 'مغسلة رخامية مزدوجة في حمّام الفناء الكلاسيكي',
+                    'fr' => 'Double vasque en marbre dans la salle de bain Classique Cour',
+                ],
+            ],
+            'dining' => [
+                [
+                    'en' => 'The Carlton Club lounge with panoramic city view',
+                    'ar' => 'صالة كارلتون كلوب بإطلالة بانورامية على المدينة',
+                    'fr' => 'Le salon Carlton Club avec vue panoramique sur la ville',
+                ],
+                [
+                    'en' => 'The Carlton dining room with carved mashrabiyya screens',
+                    'ar' => 'قاعة طعام كارلتون بمشربيات منحوتة يدويًا',
+                    'fr' => 'La salle à manger Carlton avec moucharabiehs sculptés',
+                ],
+                [
+                    'en' => 'Rooftop lounge with glass ceiling and Damascus skyline',
+                    'ar' => 'صالة على السطح بسقف زجاجي وإطلالة على أفق دمشق',
+                    'fr' => 'Salon sur le toit avec plafond vitré et silhouette de Damas',
+                ],
+                [
+                    'en' => 'Tomahawk from The Forge — our signature grill',
+                    'ar' => 'توماهوك من ذا فورج — مشوانا المميز',
+                    'fr' => 'Tomahawk de The Forge — notre grillade signature',
+                ],
+                [
+                    'en' => 'Freshly crafted brunch spread by Chef Karim Nassar',
+                    'ar' => 'مائدة فطور متجددة معدّة بإشراف الشيف كريم نصّار',
+                    'fr' => 'Buffet de brunch fraîchement préparé sous la supervision du Chef Karim Nassar',
+                ],
+                [
+                    'en' => 'Artisan Syrian cuisine plated with precision',
+                    'ar' => 'أطباق سورية حرفية مُقدَّمة بدقة',
+                    'fr' => 'Cuisine syrienne artisanale dressée avec précision',
+                ],
+            ],
+            'lobby' => [
+                [
+                    'en' => 'Grand hotel lobby with ornate chandelier',
+                    'ar' => 'ردهة فندق فخمة بثريا مزخرفة',
+                    'fr' => "Hall d'hôtel grandiose au lustre orné",
+                ],
+                [
+                    'en' => 'Damascene courtyard fountain surrounded by stone arches',
+                    'ar' => 'نافورة فناء دمشقي محاطة بأقواس حجرية',
+                    'fr' => 'Fontaine de cour damascène entourée d\'arches de pierre',
+                ],
+                [
+                    'en' => 'Carlton Syria grand lobby with Damascus skylight',
+                    'ar' => 'ردهة كارلتون سوريا الكبرى بفتحة سقفية على طراز دمشق',
+                    'fr' => 'Hall principal de Carlton Syria sous une verrière à la damascène',
+                ],
+            ],
+            'damascus' => [
+                [
+                    'en' => 'Ancient architecture of Damascus at golden hour',
+                    'ar' => 'عمارة دمشق العريقة عند ساعة الذهب',
+                    'fr' => "Architecture ancienne de Damas à l'heure dorée",
+                ],
+                [
+                    'en' => 'Al-Hamidiyah Souq — the great covered market',
+                    'ar' => 'سوق الحميدية — السوق المسقوف الكبير',
+                    'fr' => 'Souk Al-Hamidiyah — le grand marché couvert',
+                ],
+                [
+                    'en' => 'Historic Damascus minaret at dusk',
+                    'ar' => 'مئذنة دمشق التاريخية عند الغسق',
+                    'fr' => 'Minaret historique de Damas au crépuscule',
+                ],
+            ],
+        ];
+
+        foreach ($chips as $chipIndex => $chip) {
+            $category = GalleryCategory::create([
+                'slug'       => $chip['slug'],
+                'name'       => $chip['name'],
+                'is_active'  => true,
+                'sort_order' => $chipIndex,
+            ]);
+
+            foreach ($captions[$chip['slug']] as $i => $caption) {
+                $item = GalleryItem::create([
+                    'gallery_category_id' => $category->id,
+                    'caption'             => $caption,
+                    'is_active'           => true,
+                    'sort_order'          => $i,
+                ]);
+
+                // The site's own photographs are frontend assets (bundled files
+                // and Unsplash URLs), so there is nothing here to copy — one
+                // labelled placeholder gives the API a servable image URL.
+                $this->attachPhoto($item, $caption['en']);
+            }
+        }
+    }
+
+    /**
+     * Global website copy that belongs to no single content entity, lifted from
+     * `src/app/i18n/translations.ts` (the `nav`, `hero`, `footer`, `support` and
+     * `location` blocks) and from the contact details the site hardcodes in its
+     * components — `+963 (0)11 000 00 00` and `reservations@carltonsyria.com`,
+     * which appear as `tel:` / `mailto:` hrefs in Navigation, Footer,
+     * LocationPage, SupportPage and ConciergeChat.
+     *
+     * en/ar/fr where the site has human copy for all three; `tr`/`es` are left
+     * to editors, as everywhere else in this seeder.
+     *
+     * Scalar vs translated is a per-key decision, and the reason `value` is json:
+     * a phone number and an email address are stored as bare JSON strings
+     * because they are not translated, while `footer.tagline` is a locale map.
+     * One table, both shapes.
+     *
+     * `type` is the CMS widget hint (App\Enums\SettingType), not a storage
+     * format — `address_lines` is `json` because the editor gets a list editor,
+     * while `address` is `text` even though both live in the same column.
+     */
+    private function siteSettings(): void
+    {
+        $settings = [
+            // ── contact ───────────────────────────────────────────────────
+            // Display form, spaces and parentheses included. The `tel:` href is
+            // the client's business: it strips the punctuation the humans need.
+            ['contact', 'phone', SettingType::TEXT, '+963 (0)11 000 00 00'],
+            ['contact', 'email', SettingType::TEXT, 'reservations@carltonsyria.com'],
+            ['contact', 'address', SettingType::TEXT, [
+                'en' => 'Kafr Sousa, Damascus, Syrian Arab Republic',
+                'ar' => 'كفر سوسة، دمشق، الجمهورية العربية السورية',
+                'fr' => 'Kafr Sousa, Damas, République Arabe Syrienne',
+            ]],
+            // The site prints the address as three stacked lines
+            // (`location.addressLine1..3`). Stored as a list per locale rather
+            // than one string with separators, so nothing has to split on a
+            // comma to lay it out.
+            ['contact', 'address_lines', SettingType::JSON, [
+                'en' => ['Kafr Sousa', 'Damascus', 'Syrian Arab Republic'],
+                'ar' => ['كفر سوسة', 'دمشق', 'الجمهورية العربية السورية'],
+                'fr' => ['Kafr Sousa', 'Damas', 'République Arabe Syrienne'],
+            ]],
+            ['contact', 'hours_note', SettingType::TEXT, [
+                'en' => 'Available 24 hours a day',
+                'ar' => 'متاح على مدار الساعة',
+                'fr' => 'Disponible 24h/24',
+            ]],
+
+            // ── social ────────────────────────────────────────────────────
+            // Seeded INACTIVE, and that is the honest state: `Footer.tsx` lists
+            // these four platforms with `href: "#"` — the hotel has no published
+            // handles yet. Seeding `#` or a guessed vanity URL would put a dead
+            // link in the footer of a live site. Inactive keeps the rows out of
+            // the public map (so the footer renders no icons) while giving an
+            // editor the four slots to fill, in the site's own order.
+            ['social', 'instagram', SettingType::URL, null, false],
+            ['social', 'facebook', SettingType::URL, null, false],
+            ['social', 'x', SettingType::URL, null, false],
+            ['social', 'youtube', SettingType::URL, null, false],
+
+            // ── footer ────────────────────────────────────────────────────
+            ['footer', 'tagline', SettingType::TEXT, [
+                'en' => 'A sanctuary of refined hospitality in the heart of Damascus. Established 2026.',
+                'ar' => 'ملاذ للضيافة الراقية في قلب دمشق. تأسّس عام 2026.',
+                'fr' => "Un sanctuaire d'hospitalité raffinée au cœur de Damas. Établi en 2026.",
+            ]],
+            ['footer', 'copyright', SettingType::TEXT, [
+                'en' => '© 2026 Carlton Syria. All rights reserved.',
+                'ar' => '© 2026 كارلتون سوريا. جميع الحقوق محفوظة.',
+                'fr' => '© 2026 Carlton Syria. Tous droits réservés.',
+            ]],
+            ['footer', 'newsletter_heading', SettingType::TEXT, [
+                'en' => 'Private Offers',
+                'ar' => 'العروض الحصرية',
+                'fr' => 'Offres privées',
+            ]],
+
+            // ── booking ───────────────────────────────────────────────────
+            ['booking', 'cta_label', SettingType::TEXT, [
+                'en' => 'Book Now',
+                'ar' => 'احجز الآن',
+                'fr' => 'Réserver',
+            ]],
+            ['booking', 'availability_note', SettingType::TEXT, [
+                'en' => 'Reservations open 24 hours',
+                'ar' => 'الحجوزات متاحة على مدار الساعة',
+                'fr' => 'Réservations ouvertes 24h/24',
+            ]],
+
+            // ── seo ───────────────────────────────────────────────────────
+            // `index.html` still carries the template's placeholder title, so
+            // these come from the hotel's own copy instead: the name as the
+            // footer prints it, and the footer tagline as the description.
+            ['seo', 'site_title', SettingType::TEXT, [
+                'en' => 'Carlton Syria',
+                'ar' => 'كارلتون سوريا',
+                'fr' => 'Carlton Syria',
+            ]],
+            ['seo', 'meta_description', SettingType::TEXT, [
+                'en' => 'A sanctuary of refined hospitality in the heart of Damascus. Established 2026.',
+                'ar' => 'ملاذ للضيافة الراقية في قلب دمشق. تأسّس عام 2026.',
+                'fr' => "Un sanctuaire d'hospitalité raffinée au cœur de Damas. Établi en 2026.",
+            ]],
+
+            // ── hero ──────────────────────────────────────────────────────
+            ['hero', 'eyebrow', SettingType::TEXT, [
+                'en' => 'The Luxury Hotel',
+                'ar' => 'الفندق الفاخر',
+                'fr' => "L'Hôtel de Luxe",
+            ]],
+            // The site splits its headline across two lines (`heading1` /
+            // `heading2`) for typography. Stored as the one sentence it is —
+            // where a line breaks is the front end's decision, not content.
+            ['hero', 'heading', SettingType::TEXT, [
+                'en' => 'Stay with Comfort and Style.',
+                'ar' => 'إقامة في راحة وأناقة.',
+                'fr' => 'Séjournez avec confort et style.',
+            ]],
+            ['hero', 'subheading', SettingType::TEXT, [
+                'en' => 'Enjoy thoughtfully designed rooms and suites offering ultimate comfort, stunning city views, and premium amenities.',
+                'ar' => 'استمتع بغرف وأجنحة مصممة بعناية توفر راحة فائقة وإطلالات أخّاذة على المدينة ومرافق راقية.',
+                'fr' => 'Profitez de chambres et suites pensées dans les moindres détails, offrant un confort absolu, une vue imprenable sur la ville et des prestations haut de gamme.',
+            ]],
+            ['hero', 'cta_label', SettingType::TEXT, [
+                'en' => 'Reserve Your Stay',
+                'ar' => 'احجز إقامتك',
+                'fr' => 'Réserver votre séjour',
+            ]],
+        ];
+
+        foreach ($settings as $setting) {
+            [$group, $key, $type, $value] = $setting;
+
+            SiteSetting::create([
+                'group'     => $group,
+                'key'       => $key,
+                'value'     => $value,
+                'type'      => $type,
+                'is_active' => $setting[4] ?? true,
+            ]);
+        }
+    }
+
+    /**
+     * Journal articles.
+     *
+     * UNLIKE every other block in this seeder, these are NOT lifted from the
+     * public site: there is no journal on it. The only "Journal" strings in
+     * `translations.ts` are `gallery.tag` / `galleryPage.heroTag` — "Visual
+     * Journal" — which name the photo wall, a different module. So this is
+     * hand-written launch copy in en/ar, written to be replaced: it exists so
+     * the endpoints return something renderable to a front-end developer, and
+     * so the migration's display-date decision has fixtures that demonstrate it.
+     *
+     * No `fr`: there is no human French journal copy to draw on, and inventing
+     * it here would be the machine translation this seeder refuses everywhere
+     * else. `fr` is optional in `cms.required_locales`, so the rows are valid.
+     *
+     * The third post is DATED IN THE FUTURE on purpose. It must appear on the
+     * public endpoint — `published_on` is a display date, not a schedule — and
+     * seeding one makes that visible to anyone who runs `migrate --seed` and
+     * looks at `/api/public/journal`, not only to the test suite.
+     */
+    private function journalPosts(): void
+    {
+        $posts = [
+            [
+                'slug'      => 'a-jasmine-courtyard-in-winter',
+                'published' => '2026-01-18',
+                'category'  => ['en' => 'The Hotel', 'ar' => 'الفندق'],
+                'title'     => [
+                    'en' => 'A Jasmine Courtyard in Winter',
+                    'ar' => 'فناء الياسمين في الشتاء',
+                ],
+                'excerpt'   => [
+                    'en' => 'How the garden courtyard is kept in bloom through the coldest weeks of the Damascus year.',
+                    'ar' => 'كيف يُحفَظ فناء الحديقة مزهراً خلال أبرد أسابيع العام في دمشق.',
+                ],
+                'body'      => [
+                    'en' => "The jasmine that gives our courtyard its name is not a Damascus winter plant, and keeping it in flower from December through February is the quietest piece of engineering in the hotel.\n\nThe head gardener moves the youngest cuttings under glass in November and lifts the older beds onto warmed gravel. Guests who dine in the courtyard in January see the same white flowers they would in June; what they do not see is the six weeks of work that put them there.",
+                    'ar' => "الياسمين الذي منح فناءنا اسمه ليس من نباتات شتاء دمشق، والحفاظ على إزهاره من كانون الأول إلى شباط هو أهدأ عمل هندسي في الفندق.\n\nينقل رئيس الحدائق أحدث العُقل إلى البيوت الزجاجية في تشرين الثاني، ويرفع الأحواض الأقدم على حصى مُدفّأة. يرى الضيوف الذين يتناولون العشاء في الفناء في كانون الثاني الأزهار البيضاء ذاتها التي يرونها في حزيران؛ وما لا يرونه هو ستة أسابيع من العمل التي أوصلتها إلى هناك.",
+                ],
+            ],
+            [
+                'slug'      => 'chef-karim-nassar-on-the-spring-menu',
+                'published' => '2026-03-04',
+                'category'  => ['en' => 'Dining', 'ar' => 'المطاعم'],
+                'title'     => [
+                    'en' => 'Chef Karim Nassar on the Spring Menu',
+                    'ar' => 'الشيف كريم نصار عن قائمة الربيع',
+                ],
+                'excerpt'   => [
+                    'en' => 'Le Rocher\'s tasting menu changes four times a year. The chef explains what the spring market decides for him.',
+                    'ar' => 'تتغيّر قائمة التذوق في لو روشيه أربع مرات سنوياً. يشرح الشيف ما يقرّره عنه سوق الربيع.',
+                ],
+                'body'      => [
+                    'en' => "\"I do not write the spring menu,\" Chef Nassar says. \"The Ghouta writes it and I take dictation.\"\n\nThe tasting menu at Le Rocher turns over four times a year, and the spring turn is the one he plans least. Green almonds arrive for perhaps three weeks; wild artichoke for less. A dish built around either has to be conceived, tested and retired inside a month, which is why the spring menu carries more courses than the other three and holds none of them for long.",
+                    'ar' => "«أنا لا أكتب قائمة الربيع»، يقول الشيف نصار. «الغوطة تكتبها وأنا أُدوّن ما تُمليه».\n\nتتبدّل قائمة التذوق في لو روشيه أربع مرات في السنة، ودورة الربيع هي أقلّها تخطيطاً. يصل اللوز الأخضر لثلاثة أسابيع ربما؛ والخرشوف البرّي لأقل من ذلك. أي طبق يُبنى على أحدهما يجب أن يُتصوَّر ويُختبَر ويُعتزَل خلال شهر، ولهذا تحمل قائمة الربيع أطباقاً أكثر من القوائم الثلاث الأخرى ولا تُبقي أياً منها طويلاً.",
+                ],
+            ],
+            [
+                // Dated ahead of today on purpose — see this method's docblock.
+                'slug'      => 'the-carlton-standard-a-note-on-arrivals',
+                'published' => null, // resolved below, relative to seed time
+                'category'  => ['en' => 'The Hotel', 'ar' => 'الفندق'],
+                'title'     => [
+                    'en' => 'The Carlton Standard: A Note on Arrivals',
+                    'ar' => 'معيار كارلتون: ملاحظة عن الوصول',
+                ],
+                'excerpt'   => [
+                    'en' => 'What happens between the airport kerb and your room key, and why we count it in minutes.',
+                    'ar' => 'ما يحدث بين رصيف المطار ومفتاح غرفتك، ولماذا نحسبه بالدقائق.',
+                ],
+                'body'      => [
+                    'en' => "A stay begins before the door. From the moment a chauffeur closes the boot at Damascus International, the arrival is a sequence we time: twenty minutes on the road, and — if the reservation reached us with a flight number — a room already opened, cooled and lit before the car turns in.\n\nThis piece is dated ahead of publication on purpose: it is the editorial note that accompanies the new arrivals procedure, and it carries the date the procedure takes effect rather than the date it was written.",
+                    'ar' => "تبدأ الإقامة قبل الباب. من اللحظة التي يُغلق فيها السائق صندوق السيارة في مطار دمشق الدولي، يصبح الوصول تسلسلاً نقيس زمنه: عشرون دقيقة على الطريق، و — إن وصلنا الحجز مصحوباً برقم الرحلة — غرفة مفتوحة ومُبرَّدة ومُضاءة قبل أن تدخل السيارة.\n\nهذا المقال مؤرَّخ بتاريخ لاحق للنشر عن قصد: فهو الملاحظة التحريرية المرافقة لإجراء الوصول الجديد، ويحمل تاريخ نفاذ الإجراء لا تاريخ كتابته.",
+                ],
+            ],
+        ];
+
+        foreach ($posts as $i => $post) {
+            $journalPost = JournalPost::create([
+                'slug'         => $post['slug'],
+                'title'        => $post['title'],
+                'excerpt'      => $post['excerpt'],
+                'body'         => $post['body'],
+                'category'     => $post['category'],
+                'published_on' => $post['published'] ?? now()->addMonth()->toDateString(),
+                'is_active'    => true,
+                'sort_order'   => $i,
+            ]);
+
+            $this->attachPhotos($journalPost, [$post['title']['en']]);
+        }
+
+        // One draft — proves the public endpoints hide it, in a seeded database
+        // as well as in the tests.
+        JournalPost::factory()->inactive()->create([
+            'slug'         => 'unpublished-draft-a-note-on-suites',
+            'title'        => ['en' => 'A Note on Suites (draft)', 'ar' => 'ملاحظة عن الأجنحة (مسودة)'],
+            'published_on' => '2026-02-01',
+            'sort_order'   => 99,
+        ]);
+    }
+
+    /**
+     * The twelve concierge experiences the public website hardcodes — structural
+     * data (id, order) in `src/app/content/fallback.ts` under `experienceMeta`,
+     * copy in `src/app/i18n/translations.ts` under `experiencesPage.items`.
+     *
+     * en/ar/fr are seeded because the site already has human translations for all
+     * three. tr/es are left to editors: these paragraphs are the hotel's own
+     * marketing voice, and a machine rendering of "the mountain that has presided
+     * over Damascus for four thousand years" is not a translation, it is a guess.
+     *
+     * `category` stores the stable lowercase key, not the site's per-locale chip
+     * label ("Gastronomy" / "فنون الطهي" / "Gastronomie") — the column is indexed
+     * and filtered, so it cannot depend on a locale.
+     *
+     * `duration_minutes` carries the UPPER bound of the site's printed range,
+     * because the block of time a concierge reserves has to be the longest the
+     * experience can run. "Half day" is read as four hours.
+     *
+     * `price_usd` stays null everywhere: the site publishes no prices for these
+     * and its call to action is "Enquire". A seeded number would be a quote the
+     * hotel never gave.
+     */
+    private function experiences(): void
+    {
+        $items = [
+            [
+                'slug' => 'spice-journey', 'category' => 'gastronomy', 'minutes' => 180,
+                'title' => [
+                    'en' => 'Private Spice & Herb Journey',
+                    'ar' => 'رحلة خاصة في عالم التوابل والأعشاب',
+                    'fr' => 'Voyage privé des épices et herbes',
+                ],
+                'description' => [
+                    'en' => "An exclusive session with our head chef exploring the aromatic foundations of the Levantine kitchen. Taste, blend, and compose using saffron, sumac, oud, and dried roses — then sit for a private tasting dinner built around what you have discovered. Each guest receives a bespoke spice collection to take home.",
+                    'ar' => 'جلسة حصرية مع رئيس الطهاة لاستكشاف الأسس العطرية للمطبخ الشامي. تذوّق وامزج وكوّن باستخدام الزعفران والسماق والعود والورد المجفف — ثم اجلس لعشاء تذوّقي خاص يُبنى على ما اكتشفته. يحصل كل ضيف على مجموعة توابل مخصصة لاصطحابها معه.',
+                    'fr' => "Une session exclusive avec notre chef explorant les fondements aromatiques de la cuisine levantine. Goûtez, composez et assemblez safran, sumac, oud et roses séchées — puis installez-vous pour un dîner dégustation privé construit autour de vos découvertes. Chaque hôte repart avec une collection d'épices sur mesure.",
+                ],
+            ],
+            [
+                'slug' => 'chefs-table', 'category' => 'gastronomy', 'minutes' => 240,
+                'title' => [
+                    'en' => "Chef's Table by Candlelight",
+                    'ar' => 'مائدة الشيف على ضوء الشموع',
+                    'fr' => 'Table du Chef aux chandelles',
+                ],
+                'description' => [
+                    'en' => "A private table set beside the open kitchen of Le Rocher. Chef Nassar designs a bespoke multi-course menu in real time — responding to your preferences, the season's finest produce, and the mood of the evening. The most intimate dining in Damascus.",
+                    'ar' => 'طاولة خاصة بجانب المطبخ المفتوح في لو روشيه. يصمم الشيف نصّار قائمة متعددة الأطباق في الوقت الحقيقي — استجابةً لتفضيلاتك، وأجود محاصيل الموسم، وأجواء الأمسية. أكثر تجربة طعامٍ حميمية في دمشق.',
+                    'fr' => "Une table privée installée à côté de la cuisine ouverte du Rocher. Le Chef Nassar conçoit en temps réel un menu sur mesure à plusieurs services — en fonction de vos préférences, des plus beaux produits de saison et de l'ambiance du soir. Le dîner le plus intime de Damas.",
+                ],
+            ],
+            [
+                'slug' => 'bab-sharqi', 'category' => 'culture', 'minutes' => 240,
+                'title' => [
+                    'en' => 'Bab Sharqi — Gate of the East',
+                    'ar' => 'باب شرقي — بوابة الشرق',
+                    'fr' => "Bab Sharqi — La Porte de l'Orient",
+                ],
+                'description' => [
+                    'en' => "One of the oldest inhabited streets in the world: the Via Recta of Roman Damascus, which cuts through Bab Sharqi — the Gate of the East — deep into the heart of the old city. Your private guide walks you past ancient stone facades and workshops unchanged for centuries, through one of the most storied quarters of Damascus. The journey ends with lunch in a restored Damascene house.",
+                    'ar' => 'واحد من أقدم الشوارع المأهولة في العالم: الطريق المستقيم في دمشق الرومانية، يخترق باب شرقي — بوابة الشرق — في عمق قلب المدينة القديمة. مرشدك الخاص يأخذك عبر الواجهات الحجرية العريقة وورش العمل التي لم تتغير منذ قرون، عبر أحد أعرق أحياء دمشق التاريخية. تنتهي الجولة بغداء في منزل دمشقي أصيل.',
+                    'fr' => "L'une des rues les plus anciennes du monde : la Via Recta de la Damas romaine, qui traverse Bab Sharqi — la Porte de l'Orient — jusqu'au cœur de la vieille ville. Votre guide privé vous emmène à travers des façades en pierre millénaires et des ateliers inchangés depuis des siècles, au fil de l'un des quartiers les plus historiques de Damas. La visite se conclut par un déjeuner dans une maison damascène restaurée.",
+                ],
+            ],
+            [
+                'slug' => 'personal-shopping', 'category' => 'privilege', 'minutes' => 240,
+                'title' => [
+                    'en' => 'Personal Shopping Concierge',
+                    'ar' => 'كونسيرج التسوّق الشخصي',
+                    'fr' => 'Concierge shopping personnel',
+                ],
+                'description' => [
+                    'en' => "Our style concierge curates a private half-day of appointment-only access to Damascus's most distinguished boutiques, ateliers, and jewellers — with refreshments arranged at each destination and purchases delivered seamlessly to your suite.",
+                    'ar' => 'ينسّق خبير الأناقة لدينا نصف يومٍ خاص لزيارة أرقى المتاجر والمحترفات والمجوهرات في دمشق بمواعيد حصرية — مع تجهيز المرطبات في كل وجهة وتوصيل المشتريات بسلاسة إلى جناحك.',
+                    'fr' => "Notre concierge styliste organise une demi-journée privée d'accès sur rendez-vous aux boutiques, ateliers et joailliers les plus distingués de Damas — avec des rafraîchissements prévus à chaque étape et vos achats livrés directement dans votre suite.",
+                ],
+            ],
+            [
+                'slug' => 'in-suite-cinema', 'category' => 'privilege', 'minutes' => 240,
+                'title' => [
+                    'en' => 'In-Suite Cinema Evening',
+                    'ar' => 'أمسية سينما في الجناح',
+                    'fr' => 'Soirée cinéma en suite',
+                ],
+                'description' => [
+                    'en' => "Your suite transformed: a cinema-grade projection screen, Dolby Atmos sound, and a custom tasting menu of small plates and artisanal beverages served course by course throughout the screening. Our concierge will select a film — or you may choose from our curated library.",
+                    'ar' => 'يتحوّل جناحك بالكامل: شاشة عرض سينمائية، ونظام صوت دولبي أتموس، وقائمة تذوق مخصصة من الأطباق الصغيرة والمشروبات الحرفية تُقدَّم طبقًا تلو الآخر طوال العرض. سيختار الكونسيرج فيلمًا — أو يمكنك الاختيار من مكتبتنا المنتقاة.',
+                    'fr' => "Votre suite transformée : un écran de projection digne d'une salle de cinéma, un système Dolby Atmos, et un menu dégustation sur mesure de petites assiettes et de boissons artisanales servies au fil de la projection. Notre concierge sélectionnera un film — ou vous pourrez choisir dans notre bibliothèque sélectionnée.",
+                ],
+            ],
+            [
+                'slug' => 'umayyad-mosque', 'category' => 'culture', 'minutes' => 300,
+                'title' => [
+                    'en' => 'Umayyad Mosque & Old City Walk',
+                    'ar' => 'الجامع الأموي والجولة في المدينة القديمة',
+                    'fr' => 'La Mosquée des Omeyyades & la Vieille Ville',
+                ],
+                'description' => [
+                    'en' => "A private guided journey through the heart of Old Damascus — beginning at the seventh-century Umayyad Mosque, one of the oldest and grandest mosques in the Islamic world. Your expert guide leads you through Byzantine mosaics, ancient prayer halls, and winding stone lanes. A private courtyard lunch follows.",
+                    'ar' => 'رحلة خاصة ومصحوبة بمرشد في قلب دمشق القديمة — تبدأ من الجامع الأموي الذي يعود إلى القرن السابع الميلادي، أحد أقدم المساجد وأعظمها في العالم الإسلامي. يقودك مرشدك الخبير عبر الفسيفساء البيزنطية وقاعات الصلاة العريقة والأزقة الحجرية. يلي ذلك غداء في فناء دمشقي خاص.',
+                    'fr' => "Un parcours guidé en privé au cœur de la vieille Damas — depuis la mosquée des Omeyyades du VIIe siècle, l'une des plus anciennes du monde islamique. Votre guide vous mène à travers les mosaïques byzantines, les salles de prière millénaires et les ruelles pavées de la vieille ville. Un déjeuner dans une cour damascène privée clôture la visite.",
+                ],
+            ],
+            [
+                'slug' => 'old-city-bazaar', 'category' => 'culture', 'minutes' => 240,
+                'title' => [
+                    'en' => 'Al-Hamidiyah Souq Expedition',
+                    'ar' => 'رحلة سوق الحميدية الكبير',
+                    'fr' => 'Expédition au Souk Al-Hamidiyah',
+                ],
+                'description' => [
+                    'en' => "The great vaulted covered market of Damascus, as it should be experienced — privately, unhurried, with a guide who knows every craftsman. Antique silver, hand-woven brocade, Damascene steel, and artisan sweets. Our concierge arranges appointments with the finest ateliers and negotiates on your behalf.",
+                    'ar' => 'سوق دمشق المسقوف العظيم كما ينبغي أن يُرى — بشكل خاص وبلا استعجال، مع مرشد يعرف كل حرفي. أعمال فضية أنتيكا، وديباج منسوج يدويًا، وفولاذ دمشقي، وحلوى تقليدية حرفية. ينسّق الكونسيرج مواعيد مع أمهر الحرفيين ويتفاوض نيابةً عنك.',
+                    'fr' => "Le grand souk couvert de Damas, tel qu'il mérite d'être découvert — en privé, sans hâte, guidé par quelqu'un qui connaît chaque artisan. Argenterie ancienne, brocarts tissés à la main, acier damascène et confiseries artisanales. Notre concierge organise des rendez-vous avec les meilleurs ateliers et négocie en votre nom.",
+                ],
+            ],
+            [
+                'slug' => 'qasioun-sunset', 'category' => 'culture', 'minutes' => 180,
+                'title' => [
+                    'en' => 'Qasioun Mountain at Dusk',
+                    'ar' => 'جبل قاسيون عند الغسق',
+                    'fr' => 'Le Mont Qasioun au crépuscule',
+                ],
+                'description' => [
+                    'en' => "As Damascus glows below, your private driver takes you to the summit of Mount Qasioun — the mountain that has presided over Damascus for four thousand years. Arrive for the last hour of golden light, stay for the spectacle of a city illuminating at nightfall. Syrian sweets and silver tea service prepared on site.",
+                    'ar' => 'بينما تتوهج دمشق في الأسفل، يأخذك سائقك الخاص إلى قمة جبل قاسيون — الجبل الذي أشرف على دمشق منذ أربعة آلاف عام. تصل في اللحظة الأخيرة من الضوء الذهبي، وتبقى لمشهد المدينة وهي تضيء عند حلول الليل. تُحضَّر حلويات سورية وطقم شاي فضي مسبقًا في الموقع.',
+                    'fr' => "Tandis que Damas brille en contrebas, votre chauffeur privé vous conduit au sommet du Qasioun — la montagne qui veille sur Damas depuis quatre mille ans. Arrivez pour la dernière heure de lumière dorée et restez pour le spectacle d'une ville qui s'illumine à la tombée de la nuit. Thé argenté et douceurs syriennes préparés sur place.",
+                ],
+            ],
+            [
+                'slug' => 'azm-palace', 'category' => 'culture', 'minutes' => 180,
+                'title' => [
+                    'en' => 'Azm Palace & Damascene Heritage',
+                    'ar' => 'قصر العظم والتراث الدمشقي',
+                    'fr' => 'Le Palais Azm & le Patrimoine Damascène',
+                ],
+                'description' => [
+                    'en' => "The 18th-century palace of the Ottoman governor of Damascus — considered the finest example of traditional Damascene domestic architecture. A private guided visit through the inner courtyards, the grand iwan, and the historic apartments. Your curator explains the architectural language of the mashrabiya, the muqarnas, and the elaborate marquetry that defines classical Damascus.",
+                    'ar' => 'قصر والي دمشق العثماني من القرن الثامن عشر — يُعدّ النموذج الأرقى للعمارة المنزلية الدمشقية التقليدية. جولة خاصة بمرشد متخصص عبر الأفنية الداخلية والإيوان الكبير والأجنحة التاريخية. يشرح المرشد لغة العمارة الدمشقية: المشربية والمقرنصات والتطعيم الخشبي الدقيق.',
+                    'fr' => "Le palais du gouverneur ottoman de Damas au XVIIIe siècle — considéré comme le chef-d'œuvre de l'architecture domestique damascène. Visite guidée privée des cours intérieures, du grand iwan et des appartements historiques. Votre guide vous explique le langage architectural de la mashrabiya, des muqarnas et de la marqueterie damascène.",
+                ],
+            ],
+            [
+                'slug' => 'calligraphy-workshop', 'category' => 'culture', 'minutes' => 120,
+                'title' => [
+                    'en' => 'Arabic Calligraphy with a Master',
+                    'ar' => 'الخط العربي مع أستاذ متمرّس',
+                    'fr' => 'Calligraphie Arabe avec un Maître',
+                ],
+                'description' => [
+                    'en' => "A private atelier session with one of Damascus's last practicing master calligraphers. Learn the foundations of Nastaliq script, work with reed pen and walnut ink on fine Syrian paper, and leave with a composed piece bearing your name rendered in classical Arabic. Tea and conversation throughout.",
+                    'ar' => 'جلسة خاصة في أتيليه أحد آخر أساتذة الخط العربي في دمشق. تتعلّم أسس خط النسخ والنستعليق، وتعمل بالقلم الرصاصي وحبر الجوز على أوراق سورية فاخرة، وتغادر بعملٍ فني يحمل اسمك بالخط العربي الكلاسيكي. شاي وحوار طوال الجلسة.',
+                    'fr' => "Une session d'atelier privé avec l'un des derniers maîtres calligraphes de Damas. Apprenez les bases du Nastaliq, travaillez avec un calame de roseau et de l'encre de noyer sur du papier syrien fin, et repartez avec une composition portant votre nom en arabe classique. Thé et conversation tout au long de la session.",
+                ],
+            ],
+            [
+                'slug' => 'meze-masterclass', 'category' => 'gastronomy', 'minutes' => 180,
+                'title' => [
+                    'en' => 'Syrian Meze Masterclass',
+                    'ar' => 'تحضير المازة السورية',
+                    'fr' => 'Masterclass Meze Syrien',
+                ],
+                'description' => [
+                    'en' => "A hands-on session in our private kitchen — led by Chef Nassar's sous-chef — dedicated entirely to the art of the Syrian meze table. Prepare kibbeh nayyeh, muhammara, fattoush, and a dozen other dishes from scratch, then sit down to eat what you have made. Recipes printed and bound for you to take home.",
+                    'ar' => 'جلسة عملية في مطبخنا الخاص — بقيادة مساعد الشيف نصّار — مخصصة كلياً لفن مائدة المازة السورية. تحضّر الكبة النيئة والمحمّرة والفتوش واثني عشر طبقاً آخر من الصفر، ثم تجلس لتناول ما صنعته. تحصل على وصفاتك مطبوعة ومجلّدة للمنزل.',
+                    'fr' => "Une session pratique dans notre cuisine privée — animée par le sous-chef de Nassar — entièrement dédiée à l'art de la table meze syrienne. Préparez kibbeh nayyeh, muhammara, fattoush et une douzaine d'autres plats, puis attablez-vous pour déguster ce que vous avez cuisiné. Les recettes sont imprimées et reliées pour vous.",
+                ],
+            ],
+            [
+                'slug' => 'rooftop-dawn', 'category' => 'privilege', 'minutes' => 120,
+                'title' => [
+                    'en' => 'Rooftop Dawn & Private Breakfast',
+                    'ar' => 'سطح الفجر وإفطار خاص',
+                    'fr' => "Toit à l'Aube & Petit-Déjeuner Privé",
+                ],
+                'description' => [
+                    'en' => "Before the city wakes: the Al-Qamar rooftop reserved entirely for you, as the call to prayer echoes from the old mosques below. Our team sets a full Syrian breakfast — labneh, za'atar, warm bread, and fresh seasonal produce — accompanied by loose-leaf tea or hand-brewed Levantine coffee. No schedule, no other guests. Just Damascus at first light.",
+                    'ar' => 'قبل أن تستيقظ المدينة: يُخصَّص سطح القمر كاملاً لك، بينما يتردّد صدى الأذان من المساجد القديمة في الأسفل. يُجهّز فريقنا إفطاراً سورياً متكاملاً — لبنة وزعتر وخبز طازج وموسميات طازجة — يرافقه شاي بالأوراق أو قهوة شامية مُعدّة يدوياً. لا جدول، لا ضيوف آخرون. دمشق عند الفجر لك وحدك.',
+                    'fr' => "Avant le réveil de la ville : le toit Al-Qamar réservé entièrement pour vous, tandis que l'appel à la prière résonne depuis les vieilles mosquées en contrebas. Notre équipe dresse un petit-déjeuner syrien complet — labneh, za'atar, pain chaud et produits frais de saison — accompagné de thé en feuilles ou de café levantin préparé à la main. Aucun programme, aucun autre convive. Juste Damas à la première lumière.",
+                ],
+            ],
+        ];
+
+        foreach ($items as $i => $item) {
+            $experience = Experience::create([
+                'slug'             => $item['slug'],
+                'title'            => $item['title'],
+                'description'      => $item['description'],
+                'category'         => $item['category'],
+                'duration_minutes' => $item['minutes'],
+                'price_usd'        => null,
+                'is_active'        => true,
+                'sort_order'       => $i,
+            ]);
+
+            // The site's own images are frontend assets (bundled files and
+            // Unsplash URLs), so there is nothing here to copy — one labelled
+            // placeholder per record gives the API a servable image URL.
+            $this->attachPhotos($experience, [$item['title']['en']]);
+        }
     }
 
     /**

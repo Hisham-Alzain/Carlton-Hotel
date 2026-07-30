@@ -42,6 +42,11 @@ use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\PromotionController as AdminPromotionController;
 use App\Http\Controllers\Admin\RoomController as AdminRoomController;
 use App\Http\Controllers\Admin\FaqController as AdminFaqController;
+use App\Http\Controllers\Admin\ExperienceController as AdminExperienceController;
+use App\Http\Controllers\Admin\GalleryCategoryController as AdminGalleryCategoryController;
+use App\Http\Controllers\Admin\GalleryItemController as AdminGalleryItemController;
+use App\Http\Controllers\Admin\JournalPostController as AdminJournalPostController;
+use App\Http\Controllers\Admin\SiteSettingController as AdminSiteSettingController;
 use App\Http\Controllers\Admin\RoomTypeController as AdminRoomTypeController;
 use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
 use App\Http\Controllers\Api\AvailabilityController;
@@ -53,6 +58,10 @@ use App\Http\Controllers\Api\PageController as ApiPageController;
 use App\Http\Controllers\Api\PromotionController as ApiPromotionController;
 use App\Http\Controllers\Api\RoomController as ApiRoomController;
 use App\Http\Controllers\Api\FaqController as ApiFaqController;
+use App\Http\Controllers\Api\ExperienceController as ApiExperienceController;
+use App\Http\Controllers\Api\GalleryController as ApiGalleryController;
+use App\Http\Controllers\Api\JournalPostController as ApiJournalPostController;
+use App\Http\Controllers\Api\SiteSettingController as ApiSiteSettingController;
 use App\Http\Controllers\Api\RoomTypeController as ApiRoomTypeController;
 use App\Http\Controllers\Api\TestimonialController as ApiTestimonialController;
 use App\Http\Controllers\Auth\GuestAuthController;
@@ -131,6 +140,24 @@ Route::prefix('public')->group(function () {
     Route::get('/testimonials',           [ApiTestimonialController::class, 'index']);
     // One accordion on the site, so likewise no `show`.
     Route::get('/faqs',                   [ApiFaqController::class,        'index']);
+    // Concierge experiences. Unlike the two above these have detail pages, so
+    // `show` exists — and 404s on a draft rather than previewing it.
+    Route::get('/experiences',              [ApiExperienceController::class, 'index']);
+    Route::get('/experiences/{experience}', [ApiExperienceController::class, 'show']);
+    // Gallery: the chip row and the photographs. Two reads for one screen, and
+    // no `show` — nothing deep-links to a single photo. `/gallery` returns only
+    // photographs whose chip is published as well as themselves.
+    Route::get('/gallery-categories',       [ApiGalleryController::class, 'categories']);
+    Route::get('/gallery',                  [ApiGalleryController::class, 'index']);
+    // Journal. Bound by `{journalPost:slug}`, not uuid: the article URL on the
+    // website is the slug an editor chose. Ordered by `published_on` descending —
+    // that column is a display date, NOT a schedule, so a future-dated active
+    // post is returned here (see JournalPostService::indexPublic).
+    Route::get('/journal',                    [ApiJournalPostController::class, 'index']);
+    Route::get('/journal/{journalPost:slug}', [ApiJournalPostController::class, 'show']);
+    // Global site copy — a flat {group: {key: value}} map, NOT paginated and NOT
+    // {items, meta}. Deliberate exception; see Api\SiteSettingController::index().
+    Route::get('/settings',                   [ApiSiteSettingController::class, 'index']);
 
     // P4 — Availability & pricing (public)
     Route::get('/availability', [AvailabilityController::class, 'check']);
@@ -190,6 +217,25 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
 
         Route::get('/faqs',                         [AdminFaqController::class, 'index']);
         Route::get('/faqs/{faq}',                   [AdminFaqController::class, 'show']);
+
+        Route::get('/experiences',                  [AdminExperienceController::class, 'index']);
+        Route::get('/experiences/{experience}',     [AdminExperienceController::class, 'show']);
+
+        // Gallery — chips and photographs are separate CRUD resources; the item
+        // list narrows by chip slug via `?category=rooms`.
+        Route::get('/gallery-categories',                    [AdminGalleryCategoryController::class, 'index']);
+        Route::get('/gallery-categories/{galleryCategory}',  [AdminGalleryCategoryController::class, 'show']);
+        Route::get('/gallery-items',                         [AdminGalleryItemController::class, 'index']);
+        Route::get('/gallery-items/{galleryItem}',           [AdminGalleryItemController::class, 'show']);
+
+        // Journal — the CMS addresses posts by uuid so re-slugging an article
+        // never breaks an editor's bookmark; only the public route uses the slug.
+        Route::get('/journal-posts',                 [AdminJournalPostController::class, 'index']);
+        Route::get('/journal-posts/{journalPost}',   [AdminJournalPostController::class, 'show']);
+
+        // Site settings — one grouped read, no per-row show. Not paginated;
+        // see SiteSettingService::grouped().
+        Route::get('/settings',                      [AdminSiteSettingController::class, 'index']);
     });
 
     // ── Writes (cms.edit only) ────────────────────────────────────────
@@ -267,6 +313,36 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::post  ('/faqs',                                        [AdminFaqController::class, 'store']);
         Route::put   ('/faqs/{faq}',                                  [AdminFaqController::class, 'update']);
         Route::delete('/faqs/{faq}',                                  [AdminFaqController::class, 'destroy']);
+
+        // Experiences
+        Route::post  ('/experiences',                                 [AdminExperienceController::class, 'store']);
+        Route::put   ('/experiences/{experience}',                    [AdminExperienceController::class, 'update']);
+        Route::delete('/experiences/{experience}',                    [AdminExperienceController::class, 'destroy']);
+        Route::post  ('/experiences/{experience}/images',             [MediaController::class, 'storeExperience']);
+        Route::delete('/experiences/{experience}/images/{media}',     [MediaController::class, 'destroyExperience']);
+
+        // Gallery categories — deleting one cascades to its photographs.
+        Route::post  ('/gallery-categories',                          [AdminGalleryCategoryController::class, 'store']);
+        Route::put   ('/gallery-categories/{galleryCategory}',        [AdminGalleryCategoryController::class, 'update']);
+        Route::delete('/gallery-categories/{galleryCategory}',        [AdminGalleryCategoryController::class, 'destroy']);
+
+        // Gallery items — the photograph arrives through the media routes.
+        Route::post  ('/gallery-items',                               [AdminGalleryItemController::class, 'store']);
+        Route::put   ('/gallery-items/{galleryItem}',                 [AdminGalleryItemController::class, 'update']);
+        Route::delete('/gallery-items/{galleryItem}',                 [AdminGalleryItemController::class, 'destroy']);
+        Route::post  ('/gallery-items/{galleryItem}/images',          [MediaController::class, 'storeGalleryItem']);
+        Route::delete('/gallery-items/{galleryItem}/images/{media}',  [MediaController::class, 'destroyGalleryItem']);
+
+        // Journal posts — first image is the article cover.
+        Route::post  ('/journal-posts',                                [AdminJournalPostController::class, 'store']);
+        Route::put   ('/journal-posts/{journalPost}',                  [AdminJournalPostController::class, 'update']);
+        Route::delete('/journal-posts/{journalPost}',                  [AdminJournalPostController::class, 'destroy']);
+        Route::post  ('/journal-posts/{journalPost}/images',           [MediaController::class, 'storeJournalPost']);
+        Route::delete('/journal-posts/{journalPost}/images/{media}',   [MediaController::class, 'destroyJournalPost']);
+
+        // Site settings — a single bulk upsert, atomic, no per-row verbs. PUT
+        // rather than PATCH: the CMS submits the whole settings form it holds.
+        Route::put   ('/settings',                                     [AdminSiteSettingController::class, 'update']);
     });
 });
 

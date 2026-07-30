@@ -328,34 +328,55 @@ class JournalPostTest extends TestCase
     }
 
     /**
-     * The seeder carries hand-written bilingual editorial copy that no factory
+     * The seeder carries hand-written trilingual editorial copy that no factory
      * exercises. Without this, a typo in it only surfaces when someone runs
      * `migrate --seed` — and by then it has broken their database, not a test.
+     *
+     * It also pins the three articles to the ones the live site shows under
+     * `news.items`. If someone reseeds this module with invented articles, the
+     * Phase 6 swap would silently replace the hotel's real headlines with
+     * fiction, and nothing else would catch it.
      */
     public function test_seeder_loads_the_real_site_copy(): void
     {
         $this->seed(\Database\Seeders\CmsContentSeeder::class);
 
-        // Three published articles plus one seeded draft.
-        $this->assertSame(4, JournalPost::count());
+        // Three real site articles, one future-dated fixture, one draft.
+        $this->assertSame(5, JournalPost::count());
 
-        $first = JournalPost::where('slug', 'a-jasmine-courtyard-in-winter')->firstOrFail();
+        // The exact headlines the public website renders today.
+        foreach ([
+            'new-lighting-design-refreshes-the-lobby'  => 'New Lighting Design Refreshes The Lobby',
+            'restoring-carltons-heritage-facade'       => "Restoring Carlton's Heritage Façade",
+            'a-new-look-for-our-garden-lounge'         => 'A New Look for Our Garden Lounge',
+        ] as $slug => $englishTitle) {
+            $post = JournalPost::where('slug', $slug)->first();
+            $this->assertNotNull($post, "the site's article '{$slug}' is not seeded");
+            $this->assertSame($englishTitle, $post->getTranslation('title', 'en', false));
 
-        foreach (['en', 'ar'] as $locale) {
-            $this->assertNotEmpty(
-                $first->getTranslation('title', $locale, false),
-                "seeded journal post is missing its {$locale} title",
-            );
-            $this->assertNotEmpty(
-                $first->getTranslation('body', $locale, false),
-                "seeded journal post is missing its {$locale} body",
-            );
+            // en/ar/fr all come from the site's own translations.
+            foreach (['en', 'ar', 'fr'] as $locale) {
+                $this->assertNotEmpty(
+                    $post->getTranslation('title', $locale, false),
+                    "seeded article {$slug} is missing its {$locale} title",
+                );
+                $this->assertNotEmpty(
+                    $post->getTranslation('body', $locale, false),
+                    "seeded article {$slug} is missing its {$locale} body",
+                );
+            }
         }
 
-        // Distinct per locale — not the same string copied twice.
+        $first = JournalPost::where('slug', 'new-lighting-design-refreshes-the-lobby')->firstOrFail();
+
+        // Distinct per locale — not one string copied three times.
         $this->assertNotSame(
             $first->getTranslation('title', 'en', false),
             $first->getTranslation('title', 'ar', false),
+        );
+        $this->assertNotSame(
+            $first->getTranslation('title', 'en', false),
+            $first->getTranslation('title', 'fr', false),
         );
 
         // The cover image morph is wired: the seeder attaches one placeholder.
@@ -363,8 +384,8 @@ class JournalPostTest extends TestCase
 
         $items = $this->getJson('/api/public/journal?per_page=100')->assertOk()->json('data.items');
 
-        // The draft is hidden; the three published posts are not.
-        $this->assertCount(3, $items);
+        // The draft is hidden; the four published posts are not.
+        $this->assertCount(4, $items);
 
         // …including the one the seeder deliberately dated next month, which is
         // therefore first in the descending order.

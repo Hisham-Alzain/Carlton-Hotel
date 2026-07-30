@@ -349,17 +349,23 @@ class CmsContentSeeder extends Seeder
     /**
      * Journal articles.
      *
-     * UNLIKE every other block in this seeder, these are NOT lifted from the
-     * public site: there is no journal on it. The only "Journal" strings in
-     * `translations.ts` are `gallery.tag` / `galleryPage.heroTag` — "Visual
-     * Journal" — which name the photo wall, a different module. So this is
-     * hand-written launch copy in en/ar, written to be replaced: it exists so
-     * the endpoints return something renderable to a front-end developer, and
-     * so the migration's display-date decision has fixtures that demonstrate it.
+     * The three articles the public website shows today, from
+     * `translations.ts` under `news` — `news.heading1/heading2` render as
+     * "Latest News and Updates" with a "Read More" link, which is this module.
      *
-     * No `fr`: there is no human French journal copy to draw on, and inventing
-     * it here would be the machine translation this seeder refuses everywhere
-     * else. `fr` is optional in `cms.required_locales`, so the rows are valid.
+     * Searching for "Journal" is what misleads here: the only `Journal` strings
+     * in that file are `gallery.tag` / `galleryPage.heroTag` — "Visual Journal"
+     * — and those name the photo wall. The journal content is under `news`.
+     *
+     * Titles, categories and dates are the site's real copy in **en/ar/fr**, so
+     * swapping the site onto this endpoint shows the same three headlines it
+     * shows now rather than three different articles.
+     *
+     * `excerpt` and `body` are PLACEHOLDER. The site renders only a category, a
+     * date and a headline behind "Read More" — it has no article text at all, so
+     * there is nothing to lift. These are written from each headline, kept short,
+     * and are meant to be replaced by the hotel's editorial team. They are not
+     * machine translations: each locale was written, not converted.
      *
      * The third post is DATED IN THE FUTURE on purpose. It must appear on the
      * public endpoint — `published_on` is a display date, not a schedule — and
@@ -370,55 +376,86 @@ class CmsContentSeeder extends Seeder
     {
         $posts = [
             [
-                'slug'      => 'a-jasmine-courtyard-in-winter',
-                'published' => '2026-01-18',
-                'category'  => ['en' => 'The Hotel', 'ar' => 'الفندق'],
+                'slug'      => 'new-lighting-design-refreshes-the-lobby',
+                'published' => '2026-05-12',
+                'category'  => ['en' => 'Interior Design', 'ar' => 'التصميم الداخلي', 'fr' => "Design d'intérieur"],
                 'title'     => [
-                    'en' => 'A Jasmine Courtyard in Winter',
-                    'ar' => 'فناء الياسمين في الشتاء',
+                    'en' => 'New Lighting Design Refreshes The Lobby',
+                    'ar' => 'تصميم إضاءة جديد يجدد أجواء الردهة',
+                    'fr' => 'Un nouvel éclairage redonne vie au hall',
                 ],
                 'excerpt'   => [
-                    'en' => 'How the garden courtyard is kept in bloom through the coldest weeks of the Damascus year.',
-                    'ar' => 'كيف يُحفَظ فناء الحديقة مزهراً خلال أبرد أسابيع العام في دمشق.',
+                    'en' => 'A new scheme for the lobby, built around the way the room is used at four different hours of the day.',
+                    'ar' => 'مخطط إضاءة جديد للردهة، مبني على طريقة استخدام المكان في أربع ساعات مختلفة من اليوم.',
+                    'fr' => "Un nouveau schéma pour le hall, conçu autour des quatre moments de la journée où l'on y passe.",
                 ],
                 'body'      => [
-                    'en' => "The jasmine that gives our courtyard its name is not a Damascus winter plant, and keeping it in flower from December through February is the quietest piece of engineering in the hotel.\n\nThe head gardener moves the youngest cuttings under glass in November and lifts the older beds onto warmed gravel. Guests who dine in the courtyard in January see the same white flowers they would in June; what they do not see is the six weeks of work that put them there.",
-                    'ar' => "الياسمين الذي منح فناءنا اسمه ليس من نباتات شتاء دمشق، والحفاظ على إزهاره من كانون الأول إلى شباط هو أهدأ عمل هندسي في الفندق.\n\nينقل رئيس الحدائق أحدث العُقل إلى البيوت الزجاجية في تشرين الثاني، ويرفع الأحواض الأقدم على حصى مُدفّأة. يرى الضيوف الذين يتناولون العشاء في الفناء في كانون الثاني الأزهار البيضاء ذاتها التي يرونها في حزيران؛ وما لا يرونه هو ستة أسابيع من العمل التي أوصلتها إلى هناك.",
+                    'en' => "The lobby now carries four lighting states rather than one, each set to how the room is actually occupied: arrivals in the morning, work and meetings through the afternoon, aperitifs at dusk, and a low late setting for guests coming in after midnight.\n\nThe fittings themselves are largely the originals, rewired and re-aimed. The change is in the control, not the hardware.",
+                    'ar' => "تحمل الردهة الآن أربع حالات إضاءة بدلاً من واحدة، كل منها مضبوطة على الاستخدام الفعلي للمكان: الوصول صباحاً، والعمل والاجتماعات بعد الظهر، والمشروبات عند الغروب، وإضاءة خفيفة متأخرة للضيوف القادمين بعد منتصف الليل.\n\nأما وحدات الإضاءة نفسها فهي في معظمها الأصلية، أُعيد توصيلها وتوجيهها. التغيير في التحكم، لا في العتاد.",
+                    'fr' => "Le hall dispose désormais de quatre ambiances lumineuses au lieu d'une, chacune réglée sur l'usage réel de la pièce : les arrivées le matin, le travail et les rendez-vous l'après-midi, l'apéritif au crépuscule, et une lumière basse pour les clients qui rentrent après minuit.\n\nLes luminaires eux-mêmes sont pour l'essentiel les originaux, recâblés et réorientés. Le changement porte sur la commande, pas sur le matériel.",
                 ],
             ],
             [
-                'slug'      => 'chef-karim-nassar-on-the-spring-menu',
-                'published' => '2026-03-04',
-                'category'  => ['en' => 'Dining', 'ar' => 'المطاعم'],
+                'slug'      => 'restoring-carltons-heritage-facade',
+                'published' => '2026-04-28',
+                'category'  => ['en' => 'Renovation', 'ar' => 'التجديد', 'fr' => 'Rénovation'],
                 'title'     => [
-                    'en' => 'Chef Karim Nassar on the Spring Menu',
-                    'ar' => 'الشيف كريم نصار عن قائمة الربيع',
+                    'en' => "Restoring Carlton's Heritage Façade",
+                    'ar' => 'ترميم الواجهة التراثية لكارلتون',
+                    'fr' => 'Restauration de la façade historique du Carlton',
                 ],
                 'excerpt'   => [
-                    'en' => 'Le Rocher\'s tasting menu changes four times a year. The chef explains what the spring market decides for him.',
-                    'ar' => 'تتغيّر قائمة التذوق في لو روشيه أربع مرات سنوياً. يشرح الشيف ما يقرّره عنه سوق الربيع.',
+                    'en' => 'Stone-by-stone conservation work on the street elevation, carried out without closing the hotel.',
+                    'ar' => 'أعمال ترميم حجراً بحجر للواجهة المطلة على الشارع، أُنجزت دون إغلاق الفندق.',
+                    'fr' => "Une conservation pierre par pierre de la façade sur rue, menée sans fermer l'hôtel.",
                 ],
                 'body'      => [
-                    'en' => "\"I do not write the spring menu,\" Chef Nassar says. \"The Ghouta writes it and I take dictation.\"\n\nThe tasting menu at Le Rocher turns over four times a year, and the spring turn is the one he plans least. Green almonds arrive for perhaps three weeks; wild artichoke for less. A dish built around either has to be conceived, tested and retired inside a month, which is why the spring menu carries more courses than the other three and holds none of them for long.",
-                    'ar' => "«أنا لا أكتب قائمة الربيع»، يقول الشيف نصار. «الغوطة تكتبها وأنا أُدوّن ما تُمليه».\n\nتتبدّل قائمة التذوق في لو روشيه أربع مرات في السنة، ودورة الربيع هي أقلّها تخطيطاً. يصل اللوز الأخضر لثلاثة أسابيع ربما؛ والخرشوف البرّي لأقل من ذلك. أي طبق يُبنى على أحدهما يجب أن يُتصوَّر ويُختبَر ويُعتزَل خلال شهر، ولهذا تحمل قائمة الربيع أطباقاً أكثر من القوائم الثلاث الأخرى ولا تُبقي أياً منها طويلاً.",
+                    'en' => "The street elevation has been cleaned, repointed and in places re-cut, using stone from the same quarry that supplied the original build. Conservation rules ruled out replacement panels, so damaged blocks were repaired in situ.\n\nThe work ran in six-metre sections behind screens so that the hotel never closed and no guest room lost its window for more than a week.",
+                    'ar' => "نُظّفت الواجهة المطلة على الشارع وأُعيد رصف مفاصلها ونُحتت في بعض المواضع من جديد، باستخدام حجر من المقلع ذاته الذي زوّد البناء الأصلي. منعت قواعد الحفاظ استخدام ألواح بديلة، فأُصلحت الكتل المتضررة في موضعها.\n\nجرى العمل على مقاطع بطول ستة أمتار خلف حواجز، فلم يُغلق الفندق ولم تفقد أي غرفة نافذتها أكثر من أسبوع.",
+                    'fr' => "La façade sur rue a été nettoyée, rejointoyée et par endroits retaillée, avec de la pierre issue de la carrière qui avait fourni la construction d'origine. Les règles de conservation excluaient des panneaux de remplacement : les blocs abîmés ont donc été réparés sur place.\n\nLe chantier a progressé par sections de six mètres derrière des écrans, si bien que l'hôtel n'a jamais fermé et qu'aucune chambre n'a perdu sa fenêtre plus d'une semaine.",
+                ],
+            ],
+            [
+                'slug'      => 'a-new-look-for-our-garden-lounge',
+                'published' => '2026-04-15',
+                'category'  => ['en' => 'Hospitality', 'ar' => 'الضيافة', 'fr' => 'Hôtellerie'],
+                'title'     => [
+                    'en' => 'A New Look for Our Garden Lounge',
+                    'ar' => 'إطلالة جديدة لصالة الحديقة',
+                    'fr' => 'Un nouveau visage pour notre salon-jardin',
+                ],
+                'excerpt'   => [
+                    'en' => 'Reseated, replanted, and reopened onto the courtyard it had been turned away from.',
+                    'ar' => 'أُعيد ترتيب مقاعدها وزراعتها وفتحها على الفناء الذي كانت تُعطيه ظهرها.',
+                    'fr' => "Réaménagé, replanté, et enfin ouvert sur la cour à laquelle il tournait le dos.",
+                ],
+                'body'      => [
+                    'en' => "The garden lounge has been reseated around the courtyard rather than the bar, which is where guests were sitting anyway. Fewer, larger tables replaced the old arrangement, and the planting was rebuilt so the jasmine reads from inside the room as well as from the terrace.\n\nIt reopened in April and now takes breakfast as well as afternoon service.",
+                    'ar' => "أُعيد ترتيب مقاعد صالة الحديقة حول الفناء بدلاً من البار، وهو المكان الذي كان الضيوف يجلسون فيه على أي حال. حلّت طاولات أقل عدداً وأكبر حجماً محل الترتيب القديم، وأُعيد بناء المزروعات ليُقرأ الياسمين من داخل الصالة كما يُقرأ من التراس.\n\nأُعيد فتحها في نيسان، وهي تستقبل الآن الفطور إلى جانب خدمة العصر.",
+                    'fr' => "Le salon-jardin a été réagencé autour de la cour plutôt que du bar — là où les clients s'installaient de toute façon. Des tables moins nombreuses et plus grandes ont remplacé l'ancienne disposition, et les plantations ont été refaites pour que le jasmin se lise de l'intérieur autant que de la terrasse.\n\nRéouvert en avril, il assure désormais le petit-déjeuner en plus du service de l'après-midi.",
                 ],
             ],
             [
                 // Dated ahead of today on purpose — see this method's docblock.
+                // Not a site article: a fixture that makes the display-date
+                // decision visible to anyone who runs `migrate --seed`.
                 'slug'      => 'the-carlton-standard-a-note-on-arrivals',
                 'published' => null, // resolved below, relative to seed time
-                'category'  => ['en' => 'The Hotel', 'ar' => 'الفندق'],
+                'category'  => ['en' => 'The Hotel', 'ar' => 'الفندق', 'fr' => "L'hôtel"],
                 'title'     => [
                     'en' => 'The Carlton Standard: A Note on Arrivals',
                     'ar' => 'معيار كارلتون: ملاحظة عن الوصول',
+                    'fr' => "Le standard Carlton : note sur les arrivées",
                 ],
                 'excerpt'   => [
                     'en' => 'What happens between the airport kerb and your room key, and why we count it in minutes.',
                     'ar' => 'ما يحدث بين رصيف المطار ومفتاح غرفتك، ولماذا نحسبه بالدقائق.',
+                    'fr' => "Ce qui se passe entre le trottoir de l'aéroport et la clé de votre chambre, et pourquoi nous le comptons en minutes.",
                 ],
                 'body'      => [
                     'en' => "A stay begins before the door. From the moment a chauffeur closes the boot at Damascus International, the arrival is a sequence we time: twenty minutes on the road, and — if the reservation reached us with a flight number — a room already opened, cooled and lit before the car turns in.\n\nThis piece is dated ahead of publication on purpose: it is the editorial note that accompanies the new arrivals procedure, and it carries the date the procedure takes effect rather than the date it was written.",
                     'ar' => "تبدأ الإقامة قبل الباب. من اللحظة التي يُغلق فيها السائق صندوق السيارة في مطار دمشق الدولي، يصبح الوصول تسلسلاً نقيس زمنه: عشرون دقيقة على الطريق، و — إن وصلنا الحجز مصحوباً برقم الرحلة — غرفة مفتوحة ومُبرَّدة ومُضاءة قبل أن تدخل السيارة.\n\nهذا المقال مؤرَّخ بتاريخ لاحق للنشر عن قصد: فهو الملاحظة التحريرية المرافقة لإجراء الوصول الجديد، ويحمل تاريخ نفاذ الإجراء لا تاريخ كتابته.",
+                    'fr' => "Un séjour commence avant la porte. Dès que le chauffeur referme le coffre à Damas International, l'arrivée devient une séquence que nous chronométrons : vingt minutes de route et — si la réservation nous est parvenue avec un numéro de vol — une chambre déjà ouverte, rafraîchie et éclairée avant que la voiture ne se présente.\n\nCet article est daté après sa publication à dessein : c'est la note éditoriale qui accompagne la nouvelle procédure d'arrivée, et il porte la date d'entrée en vigueur de celle-ci, non celle de sa rédaction.",
                 ],
             ],
         ];

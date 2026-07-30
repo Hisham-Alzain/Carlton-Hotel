@@ -112,7 +112,34 @@ After login, the `permissions` array in the user object is the source of truth f
 
 A `super_admin` account bypasses all permission checks on the server.
 
-**Full permission catalog** (seeded since P0, 8 modules): `reservations.view|create|cancel`, `folios.view|settle`, `cms.view|edit`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`. `cms.view` and `pricing.edit` are reserved — no route currently gates on them (`cms.edit` alone gates every CMS write route, and dynamic pricing has no admin UI yet).
+**Full permission catalog** (seeded since P0, 8 modules): `reservations.view|create|cancel`, `folios.view|settle`, `cms.view|edit`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`.
+
+### `cms.view` is enforced — gate read-only navigation on it
+
+CMS routes are split by verb. Every **read** (`GET` on a collection and on `/{uuid}`) is gated on `cms.view|cms.edit`; every **write** (`POST`, `PUT`, `PATCH`, `DELETE`) is gated on `cms.edit`. Spatie resolves a pipe-separated list through `canAny()` — ANY, not ALL — so `cms.edit` implies read access:
+
+| Account holds | CMS reads | CMS writes |
+|---|---|---|
+| `cms.edit` only | ✅ | ✅ |
+| `cms.view` only | ✅ | ❌ `403` |
+| neither | ❌ `403` | ❌ `403` |
+
+So a `cms.view`-only account is a genuine read-only reviewer, and an editor never needs both rows. **Show a read-only CMS section when the account holds `cms.view` *or* `cms.edit`; show the create/edit/delete controls only for `cms.edit`.**
+
+The split is structural, so it also holds for content types added after this revision — gate on the rule above rather than on a route list. At the time of writing that was 48 routes gated `cms.view|cms.edit` and 95 gated `cms.edit`, but each new content type adds several more; run `php artisan route:list --path=api/cms -v` for the live figure rather than trusting a number in a document.
+
+> Earlier revisions of this guide said `cms.view` was reserved and ungated. That was true up to commit `2282314` and is wrong now.
+
+### Where each permission is enforced
+
+Most are route middleware, which is the norm. Two families are not, and are enforced just as strictly:
+
+- **`staff.manage`** — checked by `StaffPolicy` (registered on the `User` model), not by middleware. It gates all six `/staff` routes plus `GET /api/permissions` and `GET /api/roles`. A `403` from those endpoints means `staff.manage` is missing, even though the route carries no `permission:` middleware.
+- **`service_requests.assign` / `service_requests.update` / `tickets.assign` / `tickets.respond`** — checked inside `OperationsQueueService`, which derives the required permission from the `{type}` segment of the URL because it differs per type. See *Module: Operations Queue & Dashboard*.
+
+### Genuinely inert — do not build UI against these
+
+`pricing.edit` and `reports.view` are seeded, appear in `GET /api/permissions`, and are enforced **nowhere** — no route middleware, no policy, no service check. Granting either currently permits nothing and withholding either currently blocks nothing. `reports.view` becomes real when P12 ships its report endpoints; `pricing.edit` has no endpoint planned yet. Every other permission in the catalog is enforced somewhere.
 
 **Role presets** (5): `reception`, `kitchen`, `housekeeping`, `concierge`, `events` — see Module: Reference Data below for exactly which permissions each preset grants.
 
@@ -391,9 +418,9 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 
 ---
 
-## Module: CMS Content (`cms.edit`)
+## Module: CMS Content (reads `cms.view|cms.edit` · writes `cms.edit`)
 
-Admin CRUD for the 7 content types the website/app read publicly. Every type follows the same shape: `GET`/`POST` on the collection, `GET`/`PUT`/`DELETE` on `/{uuid}` (Page also gets these — admin addresses pages by uuid even though the public route uses `slug`). All under `auth:users` + `permission:cms.edit`.
+Admin CRUD for the 7 content types the website/app read publicly. Every type follows the same shape: `GET`/`POST` on the collection, `GET`/`PUT`/`DELETE` on `/{uuid}` (Page also gets these — admin addresses pages by uuid even though the public route uses `slug`). All under `auth:users`; the two `GET`s are gated on `permission:cms.view|cms.edit`, and `POST`/`PUT`/`DELETE` on `permission:cms.edit` — see [Permission model](#permission-model).
 
 | Type | Base path |
 |---|---|
@@ -599,9 +626,9 @@ Paginated, newest first.
 
 ---
 
-## Module: In-Stay Service Catalog (`cms.edit`)
+## Module: In-Stay Service Catalog (reads `cms.view|cms.edit` · writes `cms.edit`)
 
-Standard `apiResource` CRUD (index/store/show/update/destroy) for the 6 bookable/orderable catalog types staff maintain. All under `permission:cms.edit`.
+Standard `apiResource` CRUD (index/store/show/update/destroy) for the 6 bookable/orderable catalog types staff maintain. Gated exactly like Module: CMS Content — `index`/`show` on `permission:cms.view|cms.edit`, `store`/`update`/`destroy` on `permission:cms.edit`.
 
 | Type | Base path | Fillable fields |
 |---|---|---|

@@ -43,9 +43,19 @@ Inherit, declare, done:
 - Requests extend `BaseRequest`, live at `Http/Requests/{Role}/{Domain}/{Action}Request.php`, contain rules only.
 - Resource extends `BaseResource`, uses `localized()` for AR/EN fields and `whenLoaded()` for every relation. Never query inside `toArray()`.
 - Filter extends `BaseFilter` with `$safeParms` operator whitelist (`'name' => ['like']`, `'price' => ['gte','lte']`). Override `apply()` only for search/joins.
-- Routes use PascalCase method names (`GetAll`, `GetOne`, `Create`, `Update`, `Delete`), grouped by role prefix + middleware (`admin`, `user`, `driver`, `seller`; public under `Api/`).
+- Routes use the Laravel resource verbs `index`, `show`, `store`, `update`, `destroy`, grouped by role prefix + middleware (`admin`, `user`, `driver`, `seller`; public under `Api/`). Public read-only controllers add `indexPublic()` on the service, never a second controller verb.
 
-Never duplicate `GetAll`/`GetOne` logic in a child — set `$resource` and let the base do it. See guide §3–§8 for the full Category walkthrough.
+Never duplicate `index`/`show` logic in a child — set `$resource` and let the base do it. See guide §3–§8 for the full Category walkthrough.
+
+> **Current state of this codebase, so the next reader is not misled:** no
+> controller extends `BaseCRUDController` or `BaseIndexController` yet. All 25+
+> controllers extend `BaseController` and hand-copy the one-line index/show
+> bodies. The base classes are real and tested, and migrating onto them is a
+> known outstanding task (~1–1.5 days, mechanical) — two blockers first: their
+> `show`/`update`/`destroy` type-hint the abstract `Model`, so implicit
+> route-model binding cannot resolve, and `store`/`update` type-hint the abstract
+> `BaseRequest`, so `$createRequest`/`$updateRequest` is not yet implemented.
+> Write new controllers the way the existing 25 are written until that lands.
 
 ## When to use an Action instead of a service method
 
@@ -79,7 +89,7 @@ Design (guide §15 for full detail):
 
 Usage:
 - Eager-load via `$with`; every relation used in a Resource must be covered. `whenLoaded()` guards the rest.
-- `DB::transaction` around every multi-step write. Never wrap paginated `GetAll` SELECTs in a transaction (replica lag).
+- `DB::transaction` around every multi-step write. Never wrap paginated `index` SELECTs in a transaction (replica lag).
 - No `Model::all()` in production — always paginate (`request()->integer('per_page', 20)`). Chunk/lazy for large sets. Batch instead of querying in loops.
 - UTC timestamps only; the client converts.
 - `unique` rule on update must exempt the current record: `unique:table,col,{$id}`.

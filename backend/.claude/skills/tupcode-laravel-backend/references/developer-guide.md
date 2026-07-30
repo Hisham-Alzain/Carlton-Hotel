@@ -41,7 +41,7 @@ Route → Controller → FormRequest (validation) → Service → Model
                               ↓
                           Resource (response shaping)
                               ↓
-                  sendResponse() / Exception handler
+        BaseController helpers / Exception handler
                               ↓
                           JSON envelope
 ```
@@ -128,12 +128,19 @@ We'll build a `Category` feature with full CRUD. By the end you'll see exactly h
 // database/migrations/xxxx_create_categories_table.php
 Schema::create('categories', function (Blueprint $table) {
     $table->id();
-    $table->string('name');
+    // Every table that a public route can name carries a uuid — routes bind on
+    // it, never on the sequential id. See HasUuid in section 11.
+    $table->uuid('uuid')->unique();
+    $table->json('name');            // translatable: Spatie stores a locale map
     $table->string('slug')->unique();
     $table->foreignId('parent_id')->nullable()->constrained('categories')->nullOnDelete();
     $table->boolean('is_active')->default(true);
     $table->unsignedInteger('sort_order')->default(0);
     $table->timestamps();
+    // Content tables are soft-deletable so an editorial delete is recoverable.
+    // Read section 14's soft-delete gotcha before adding this to a table with a
+    // natural-key unique index or an ON DELETE CASCADE pointing at it.
+    $table->softDeletes();
 
     $table->index(['parent_id', 'is_active']);
 });
@@ -146,25 +153,22 @@ Schema::create('categories', function (Blueprint $table) {
 namespace App\Models;
 
 use App\Traits\HasTranslations;
+use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Category extends Model
 {
-    use HasTranslations, LogsActivity;
+    use HasFactory, HasUuid, HasTranslations, LogsActivity, SoftDeletes;
 
     protected $fillable = ['name', 'slug', 'parent_id', 'is_active', 'sort_order'];
 
-    /** Fields available in Arabic via the translations table. */
+    /** Translatable fields — Spatie stores a {locale: value} map in the column. */
     protected $translatable = ['name'];
 
-    /** Audit log scope — appears in admin filters. */
-    protected static string $logName = 'categories';
-
-    protected function casts(): array
-    {
-        return ['is_active' => 'boolean'];
-    }
+    protected $casts = ['is_active' => 'boolean'];
 
     public function parent()   { return $this->belongsTo(self::class, 'parent_id'); }
     public function children() { return $this->hasMany(self::class, 'parent_id'); }
@@ -173,15 +177,21 @@ class Category extends Model
 }
 ```
 
+`HasUuid` fills `uuid` on create and makes it the route key. `HasTranslations` is a
+thin wrapper over `Spatie\Translatable\HasTranslations`. `LogsActivity` wraps
+Spatie's activity log with fixed options (`logFillable`, `logOnlyDirty`,
+`dontLogEmptyChanges`) and takes **no** `$logName` — there is no per-model audit
+scope to declare.
+
 ### Step 3: Service
 
 ```php
-// app/Services/Admin/CategoryService.php
-namespace App\Services\Admin;
+// app/Services/Cms/CategoryService.php
+namespace App\Services\Cms;
 
+use App\Base\BaseService;
 use App\Filters\CategoryFilter;
 use App\Models\Category;
-use App\Services\BaseService;
 
 class CategoryService extends BaseService
 {
@@ -193,41 +203,67 @@ class CategoryService extends BaseService
 
 That's the whole service for basic CRUD. No methods needed — the base class handles it.
 
+Two things to note about the paths, because they are easy to get wrong:
+
+- The base classes live in **`App\Base`**, not in the layer folders. `BaseService`,
+  `BaseController`, `BaseIndexController`, `BaseCRUDController`, `BaseRequest`,
+  `BaseResource`, `BaseFilter` and `BaseCollection` are all `app/Base/*.php`.
+- Service subfolders are named by **domain**, not by role: `app/Services/Cms`,
+  `Booking`, `Auth`, `Folio`, `Payment`, `Review`, `Operations`, `Service`,
+  `Events`, `Chat`, `Notification`, `Firebase`. One `CategoryService` serves the
+  admin and the public controller both.
+
 ### Step 4: Filter
 
 ```php
 // app/Filters/CategoryFilter.php
 namespace App\Filters;
 
+use App\Base\BaseFilter;
+
 class CategoryFilter extends BaseFilter
 {
-    protected $safeParms = [
-        'name'       => ['like'],
+    protected array $safeParms = [
+        'slug'       => ['eq', 'like', 'in'],
         'is_active'  => ['eq'],
         'parent_id'  => ['eq'],
     ];
+
+    /** Columns `?search=` scans. */
+    protected array $searchable = ['slug'];
+
+    /** Translatable columns, so `search`/`sort` know to look inside the locale map. */
+    protected array $translatable = ['name'];
 }
 ```
+
+Most CMS filters extend `App\Filters\CmsContentFilter` rather than `BaseFilter`
+directly — it merges in the `is_active` whitelist entry and its boolean cast, and
+declares the `$sortable` set, so a content list cannot lose the published/draft
+toggle by redeclaring `$safeParms`. Check for an existing intermediate before
+extending `BaseFilter`.
 
 Now `?name[like]=elec&is_active[eq]=1` works automatically.
 
 ### Step 5: Requests
 
 ```php
-// app/Http/Requests/Admin/Category/CreateCategoryRequest.php
-namespace App\Http\Requests\Admin\Category;
+// app/Http/Requests/Cms/CreateCategoryRequest.php
+namespace App\Http\Requests\Cms;
 
-use App\Http\Requests\BaseRequest;
+use App\Base\BaseRequest;
 
 class CreateCategoryRequest extends BaseRequest
 {
     public function rules(): array
     {
         return [
-            'name'       => ['required', 'string', 'max:255'],
-            'name_ar'    => ['nullable', 'string', 'max:255'],
-            'slug'       => ['required', 'string', 'max:255', 'unique:categories,slug'],
-            'parent_id'  => ['nullable', 'exists:categories,id'],
+            // Translatable fields arrive as a locale map, not as `name_ar`.
+            'name'       => ['required', 'array'],
+            'name.en'    => ['required', 'string', 'max:255'],
+            'name.ar'    => ['required', 'string', 'max:255'],
+            'slug'       => ['required', 'string', 'max:255', 'unique:categories,slug', 'regex:/^[a-z0-9-]+$/'],
+            'parent_uuid' => ['nullable', 'exists:categories,uuid'],
             'is_active'  => ['boolean'],
             'sort_order' => ['integer', 'min:0'],
         ];
@@ -236,39 +272,56 @@ class CreateCategoryRequest extends BaseRequest
 ```
 
 ```php
-// app/Http/Requests/Admin/Category/UpdateCategoryRequest.php
+// app/Http/Requests/Cms/UpdateCategoryRequest.php
+use Illuminate\Validation\Rule;
+
 class UpdateCategoryRequest extends BaseRequest
 {
     public function rules(): array
     {
-        $id = $this->route('id');
+        // The route binds the model, so `->ignore()` takes the model — there is no
+        // `{id}` segment to read.
         return [
-            'name'       => ['sometimes', 'string', 'max:255'],
-            'name_ar'    => ['nullable', 'string', 'max:255'],
-            'slug'       => ['sometimes', 'string', 'max:255', "unique:categories,slug,{$id}"],
-            'parent_id'  => ['nullable', 'exists:categories,id'],
-            'is_active'  => ['boolean'],
-            'sort_order' => ['integer', 'min:0'],
+            'name'        => ['sometimes', 'array'],
+            'name.en'     => ['sometimes', 'string', 'max:255'],
+            'name.ar'     => ['sometimes', 'string', 'max:255'],
+            'slug'        => ['sometimes', 'string', 'max:255', Rule::unique('categories', 'slug')->ignore($this->route('category')), 'regex:/^[a-z0-9-]+$/'],
+            'parent_uuid' => ['nullable', 'exists:categories,uuid'],
+            'is_active'   => ['boolean'],
+            'sort_order'  => ['integer', 'min:0'],
         ];
     }
 }
 ```
 
+Requests are grouped by **domain**, not by role and domain: `Http/Requests/Cms`,
+`Auth`, `Staff`, `Service`, `Booking`, ... Both the admin and the public
+controller for a resource share the same request classes.
+
+`unique:` and `exists:` are resolved by `App\Validation\LiveRowPresenceVerifier`,
+which excludes soft-deleted rows on any table carrying a `deleted_at`. So
+`unique:categories,slug` means "unique among live categories" and
+`exists:categories,uuid` refuses a trashed parent. Do **not** hand-write
+`->whereNull('deleted_at')` on a rule — it is already handled in one place.
+
 ### Step 6: Resource
 
 ```php
-// app/Http/Resources/CategoryResource.php
-namespace App\Http\Resources;
+// app/Http/Resources/Cms/CategoryResource.php
+namespace App\Http\Resources\Cms;
+
+use App\Base\BaseResource;
+use Illuminate\Http\Request;
 
 class CategoryResource extends BaseResource
 {
-    public function toArray($request): array
+    public function toArray(Request $request): array
     {
         return [
-            'id'         => $this->id,
-            'name'       => $this->localized('name'),
+            // `uuid`, never `id` — the sequential key is not part of the API.
+            'uuid'       => $this->uuid,
+            'name'       => $this->getTranslations('name'),
             'slug'       => $this->slug,
-            'parent_id'  => $this->parent_id,
             'is_active'  => $this->is_active,
             'sort_order' => $this->sort_order,
             'parent'     => new self($this->whenLoaded('parent')),
@@ -278,49 +331,132 @@ class CategoryResource extends BaseResource
 }
 ```
 
-`localized()` reads from the translations table when locale is `ar`, otherwise returns the English column.
+**Translatable fields go out as the whole locale map.** `getTranslations('name')`
+returns `{"en": "...", "ar": "..."}` and the client picks — this codebase does
+**not** collapse a translatable field to one language based on
+`Accept-Language`. That keeps a CMS edit form (which needs both languages at
+once) and the public site on one resource class. `Accept-Language` still drives
+`app()->getLocale()`, and therefore every `__('custom.*')` message and validation
+error; a handful of places that genuinely need one string — folio line
+descriptions, the polymorphic bookable label — call
+`getTranslation('name', $request->getLocale())` explicitly.
+
+> There is no `localized()` helper. Earlier drafts of this guide described one;
+> it has never existed in this codebase. `BaseResource` provides exactly one
+> helper, `uuid()`, and otherwise leaves `toArray()` to you.
+
+Resources are grouped by domain, mirroring the requests: `Http/Resources/Cms`,
+`Auth`, `Service`, ...
 
 ### Step 7: Controller
+
+Write it the way all 69 controllers in this codebase are written: extend
+`App\Base\BaseController`, inject the service, and name the methods
+`index`/`show`/`store`/`update`/`destroy`.
 
 ```php
 // app/Http/Controllers/Admin/CategoryController.php
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\BaseCRUDController;
-use App\Http\Requests\Admin\Category\CreateCategoryRequest;
-use App\Http\Requests\Admin\Category\UpdateCategoryRequest;
-use App\Http\Resources\CategoryResource;
-use App\Services\Admin\CategoryService;
+use App\Base\BaseController;
+use App\Http\Requests\Cms\CreateCategoryRequest;
+use App\Http\Requests\Cms\UpdateCategoryRequest;
+use App\Http\Resources\Cms\CategoryResource;
+use App\Models\Category;
+use App\Services\Cms\CategoryService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
-class CategoryController extends BaseCRUDController
+class CategoryController extends BaseController
 {
-    protected ?string $resource = CategoryResource::class;
-    protected ?string $createRequest = CreateCategoryRequest::class;
-    protected ?string $updateRequest = UpdateCategoryRequest::class;
+    public function __construct(private readonly CategoryService $service) {}
 
-    public function __construct(CategoryService $service)
+    public function index(Request $request): JsonResponse
     {
-        $this->service = $service;
+        return $this->paginatedSuccess(
+            $this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'],
+            CategoryResource::class,
+            $request,
+        );
+    }
+
+    public function show(Category $category, Request $request): JsonResponse
+    {
+        $result         = $this->service->show($category);
+        $result['data'] = new CategoryResource($result['data']);
+
+        return $this->respondFromService($result, request: $request);
+    }
+
+    public function store(CreateCategoryRequest $request): JsonResponse
+    {
+        $result         = $this->service->store($request->validated());
+        $result['data'] = new CategoryResource($result['data']);
+
+        return $this->respondFromService($result, request: $request);
+    }
+
+    public function update(UpdateCategoryRequest $request, Category $category): JsonResponse
+    {
+        $result         = $this->service->update($category, $request->validated());
+        $result['data'] = new CategoryResource($result['data']);
+
+        return $this->respondFromService($result, request: $request);
+    }
+
+    public function destroy(Category $category, Request $request): JsonResponse
+    {
+        $this->service->destroy($category);
+
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
 }
 ```
 
-**That's it.** Five lines of body. You get pagination, filtering, validation, localization, audit logging, request tracing, and structured error responses for free.
+The model arrives already resolved — route model binding on `uuid`, via
+`HasUuid::getRouteKeyName()`. Neither the controller nor the service ever looks up
+a record by id, and a soft-deleted record simply fails to bind, which is where the
+404 on a deleted resource comes from.
+
+`app/Base/BaseCRUDController` would collapse the five methods above to zero, and
+it exists — but **nothing extends it today**. See section 4 for what it offers and
+why the migration has not happened; copy the hand-written shape above until it
+does, because it is what every reviewer and every neighbouring file expects.
 
 ### Step 8: Routes
 
+Flat, one line per endpoint, with the standard verb names:
+
 ```php
 // routes/api.php
-Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
-    Route::prefix('categories')->controller(CategoryController::class)->group(function () {
-        Route::get('/',      'GetAll');
-        Route::get('/{id}',  'GetOne');
-        Route::post('/',     'Create');
-        Route::put('/{id}',  'Update');
-        Route::delete('/{id}', 'Delete');
+Route::middleware('auth:users')->prefix('cms')->group(function () {
+    // Reads and writes are separately gated, so a reviewer can see the site
+    // without being able to change it. The two Sanctum guards are `users`
+    // (staff) and `guests` — there is no guard literally named `sanctum`.
+    Route::middleware('permission:cms.view')->group(function () {
+        Route::get('/categories',            [AdminCategoryController::class, 'index']);
+        Route::get('/categories/{category}', [AdminCategoryController::class, 'show']);
+    });
+
+    Route::middleware('permission:cms.edit')->group(function () {
+        Route::post  ('/categories',            [AdminCategoryController::class, 'store']);
+        Route::put   ('/categories/{category}', [AdminCategoryController::class, 'update']);
+        Route::delete('/categories/{category}', [AdminCategoryController::class, 'destroy']);
     });
 });
+
+// Public read — no auth, active records only, a separate controller and a
+// separate service method (`indexPublic`) so no query string can reach it.
+Route::prefix('public')->group(function () {
+    Route::get('/categories',            [ApiCategoryController::class, 'index']);
+    Route::get('/categories/{category}', [ApiCategoryController::class, 'show']);
+});
 ```
+
+Note `{category}` — a binding parameter, not `{id}`. Controllers are imported
+under an alias (`AdminCategoryController`, `ApiCategoryController`) because
+`routes/api.php` holds both the admin and the public controller for most
+resources.
 
 Done. The endpoint is live.
 
@@ -328,57 +464,132 @@ Done. The endpoint is live.
 
 ## 4. Controllers
 
+### Method names: `index` / `show` / `store` / `update` / `destroy`
+
+Laravel's resource verbs, everywhere, no exceptions. All 69 controller classes in
+`app/Http/Controllers` use them, `routes/api.php` names them, and
+`BaseIndexController`/`BaseCRUDController` declare them.
+
+> **Correction to earlier versions of this guide.** This document, and the skill
+> that summarises it, used to claim routes call PascalCase methods
+> (`GetAll`/`GetOne`/`Create`/`Update`/`Delete`), and to place the base
+> controllers in `App\Http\Controllers`. Neither has ever been true of this
+> codebase: the verbs are `index`/`show`/`store`/`update`/`destroy` and the base
+> classes are in `App\Base`. The claim actively misled work on this project.
+> PascalCase belongs to other TupCode backends; if you are reading this guide for
+> one of those, the method names are the one thing you must check against that
+> repo rather than take from here.
+
 ### Hierarchy
 
 ```
-Controller (base — sendResponse, sendError, paginatedResponse, transform)
-  └── BaseIndexController  (GetAll, GetOne — read-only)
-        └── BaseCRUDController  (+ Create, Update, Delete)
+Illuminate\Routing\Controller
+  └── App\Base\BaseController        (success, paginatedSuccess, respondFromService,
+  │                                   perPageParam, indexParams; uses AuthorizesRequests)
+        └── App\Base\BaseIndexController   (index, show — read-only)
+              └── App\Base\BaseCRUDController  (+ store, update, destroy)
 ```
 
-### Properties to set on a child controller
+`app/Http/Controllers/Controller.php` also exists — Laravel's generated empty
+stub. Nothing extends it; it is dead weight, not a third base class.
 
-| Property | Type | Purpose |
+### What `BaseController` actually gives you
+
+| Method | Signature | Purpose |
 |---|---|---|
-| `$service` | `BaseService` | Injected via constructor |
-| `$resource` | `?string` (FQCN) | Resource class for response shaping |
-| `$createRequest` | `?string` (FQCN) | FormRequest for `Create` |
-| `$updateRequest` | `?string` (FQCN) | FormRequest for `Update` |
+| `success()` | `(mixed $data, string $messageKey, int $code, ?Request)` | The envelope: `success`, translated `message`, `data`, `request_id`. |
+| `paginatedSuccess()` | `(LengthAwarePaginator, string $resourceClass, Request)` | `data.items` + `data.meta` (`current_page`, `per_page`, `total`, `last_page`). |
+| `respondFromService()` | `(array $result, string $messageKey, ?Request)` | Unwraps `['data' => …, 'code' => …]`; swaps the message key to `custom.messages.created` on 201; renders a paginator through `BaseCollection`. |
+| `perPageParam()` | `(Request): ?int` | The client's `per_page`, or null when absent. The default and the ceiling belong to the service. |
+| `indexParams()` | `(Request): array` | The raw query string, handed to the service's filter. Safe because whitelisting happens in `$safeParms`. |
+
+There is no `sendResponse()`, no `sendError()`, no `transform()`. Earlier versions
+of this guide named all three; none has ever existed.
+
+### The declarative base pair — real, and unused
+
+`BaseIndexController` declares `$resource` and an abstract `service()`, and
+implements `index()` and `show()`. `BaseCRUDController` adds `store()`,
+`update()` and `destroy()`, taking an injected `BaseRequest` and a route-bound
+`Model`:
+
+```php
+// What a controller on the base pair looks like. Nothing in the codebase does
+// this yet — see the note below.
+class CategoryController extends BaseCRUDController
+{
+    protected ?string $resource = CategoryResource::class;
+
+    public function __construct(private readonly CategoryService $service) {}
+
+    protected function service(): BaseService
+    {
+        return $this->service;
+    }
+}
+```
+
+Note what is **not** there: `$createRequest` and `$updateRequest`. Earlier versions
+of this guide listed both as properties to declare; neither exists. `store()` and
+`update()` type-hint the abstract `App\Base\BaseRequest`, and there is no property
+or hook naming the concrete FormRequest a route should validate against — PHP
+forbids narrowing the parameter type in an override, and Laravel cannot resolve an
+abstract class out of the container. So the write half of the base pair is not
+route-ready as written; `BaseControllerPlumbingTest` exercises it by calling
+`store()`/`update()` directly with a concrete `BaseRequest` subclass. Closing that
+gap is part of the migration below.
+
+> **Known outstanding task: nothing extends `BaseCRUDController` or
+> `BaseIndexController`.** All 69 controllers extend `BaseController` directly and
+> hand-copy the bodies — 54 of them repeat the same `index()` one-liner, 50 the
+> same `paginatedSuccess()` call. The base pair was written to end that
+> duplication and is covered by `tests/Unit/BaseControllerPlumbingTest.php`
+> through test-only subclasses, so its `per_page` and filter plumbing is not
+> shipped untested — but the migration of the real controllers has not been done.
+> `BaseIndexController::index()` deliberately makes the same `paginatedSuccess()`
+> call the hand-written controllers make, so a controller that moves onto the base
+> class emits a byte-identical envelope. Until that migration happens, **write new
+> controllers in the hand-written shape** (section 3, step 7): consistency with 69
+> neighbours beats being the only subclass.
 
 ### Adding a custom endpoint
 
-When the base CRUD isn't enough (e.g. a `toggleActive` endpoint), add a method:
+When CRUD isn't enough (e.g. a `toggleActive` endpoint), add a method in the same
+shape as the rest:
 
 ```php
-public function ToggleActive($id)
+public function toggleActive(Category $category, Request $request): JsonResponse
 {
-    $result = $this->service->ToggleActive($id);
-    return $this->sendResponse(
-        data: $this->transform($result['data']),
-        message: __('custom.Success'),
-        code: $result['code'],
-    );
+    $result         = $this->service->toggleActive($category);
+    $result['data'] = new CategoryResource($result['data']);
+
+    return $this->respondFromService($result, request: $request);
 }
 ```
 
 Then add the matching route:
 
 ```php
-Route::patch('/categories/{id}/toggle', [CategoryController::class, 'ToggleActive']);
+Route::patch('/categories/{category}/toggle', [AdminCategoryController::class, 'toggleActive']);
 ```
 
-**Never put business logic in the controller.** Controllers wire requests to services and shape responses. That's it.
+**Never put business logic in the controller.** Controllers wire requests to
+services and shape responses. That's it.
 
-### Folder structure by role
+### Folder structure
 
 ```
 app/Http/Controllers/
-  Admin/       ← admin dashboard endpoints
-  User/        ← customer (mobile + web) endpoints
-  Driver/      ← driver app endpoints
-  Seller/      ← vendor portal endpoints
-  Api/         ← public/unauthenticated endpoints
+  Admin/       ← CMS + staff dashboard endpoints (33 classes)
+  Api/         ← public/unauthenticated endpoints (31 classes)
+  Auth/        ← login, OTP, profile (2 classes)
+  Staff/       ← staff account management (3 classes)
+  Controller.php ← Laravel's empty stub; unused
 ```
+
+There is no `User/`, `Driver/` or `Seller/` here — those are other TupCode
+products. A guest-facing authenticated endpoint lives under `Api/` with the guest
+guard on its route, not in a `User/` folder.
 
 ---
 
@@ -391,20 +602,37 @@ Services return arrays of shape `['data' => ..., 'code' => 200]`. They throw dom
 ### Hierarchy
 
 ```php
-class BaseService
+// app/Base/BaseService.php
+abstract class BaseService
 {
     protected string $model;
     protected ?string $filter = null;
     protected array $with = [];
-    protected int $perPage = 20;
+    protected int $perPage = 15;      // used when the client does not ask
+    protected int $maxPerPage = 100;  // client `per_page` is clamped, not rejected
 
-    public function GetAll() { /* paginated, filtered, eager-loaded */ }
-    public function GetOne($id) { /* throws NotFoundException */ }
-    public function Create($data) { /* DB::transaction */ }
-    public function Update($id, $data) { /* DB::transaction */ }
-    public function Delete($id) { /* DB::transaction */ }
+    public function index(array $params = [], ?BaseFilter $filter = null, ?int $perPage = null): array
+    public function show(Model $model): array
+    public function store(array $data): array                   // DB::transaction, code 201
+    public function update(Model $model, array $data): array    // DB::transaction
+    public function destroy(Model $model): array                // DB::transaction, code 204
+
+    // Recycle bin — only on models using SoftDeletes.
+    public function trashed(array $params = [], ?BaseFilter $filter = null, ?int $perPage = null): array
+    public function restore(Model $model): array
+    public function forceDestroy(Model $model): array
 }
 ```
+
+The verbs match the controllers' and Laravel's: `index`/`show`/`store`/`update`/
+`destroy`. They take a **route-bound model**, not an id — resolving records is the
+router's job, so no service throws `NotFoundException` for a missing primary key.
+`show()` and `store()` call `loadMissing($this->with)` so the response is shaped
+from eager-loaded relations.
+
+Public reads are a separate method, conventionally `indexPublic(?int $perPage)`: it
+takes no filter params at all, so no query string can widen a public list past
+`is_active = true`.
 
 ### Adding custom service methods
 
@@ -413,27 +641,26 @@ class CategoryService extends BaseService
 {
     protected string $model = Category::class;
 
-    public function ToggleActive($id): array
+    public function toggleActive(Category $category): array
     {
-        $category = $this->model::find($id);
-        if (!$category) throw new NotFoundException();
-
-        $category->update(['is_active' => !$category->is_active]);
+        $category->update(['is_active' => ! $category->is_active]);
 
         return ['data' => $category, 'code' => 200];
     }
 
-    public function Reorder(array $orderedIds): array
+    public function reorder(array $orderedUuids): array
     {
-        return DB::transaction(function () use ($orderedIds) {
-            foreach ($orderedIds as $index => $id) {
-                $this->model::where('id', $id)->update(['sort_order' => $index]);
+        return DB::transaction(function () use ($orderedUuids) {
+            foreach (array_values($orderedUuids) as $index => $uuid) {
+                Category::where('uuid', $uuid)->update(['sort_order' => $index]);
             }
             return ['data' => null, 'code' => 200];
         });
     }
 }
 ```
+
+Custom methods are `camelCase`, like the inherited ones.
 
 ### When to call another service
 
@@ -445,9 +672,9 @@ public function __construct(
     protected NotificationService $notifications,
 ) {}
 
-public function MarkPaid($id): array
+public function markPaid(Order $order): array
 {
-    $order = $this->orders->GetOne($id)['data'];
+    $order = $this->orders->show($order)['data'];
     // ...
     $this->notifications->sendOrderPaid($order);
     return ['data' => $order, 'code' => 200];
@@ -521,25 +748,29 @@ Role-level checks belong in route middleware, not in `authorize()`.
 
 ## 7. Resources
 
-All resources extend `BaseResource`, which provides `localized()` for AR/EN fields.
+All resources extend `App\Base\BaseResource`. It is deliberately almost empty: one
+`uuid()` helper, and a standing instruction never to query inside `toArray()`.
+Translatable fields go out as Spatie locale maps — see section 3, step 6.
 
 ### Basic resource
 
 ```php
-namespace App\Http\Resources;
+namespace App\Http\Resources\Cms;
+
+use App\Base\BaseResource;
+use Illuminate\Http\Request;
 
 class ProductResource extends BaseResource
 {
-    public function toArray($request): array
+    public function toArray(Request $request): array
     {
         return [
-            'id'          => $this->id,
-            'name'        => $this->localized('name'),
-            'description' => $this->localized('description'),
-            'price'       => (float) $this->price,
-            'price_syp'   => $this->priceInSyp(),
+            'uuid'        => $this->uuid,
+            'name'        => $this->getTranslations('name'),
+            'description' => $this->getTranslations('description'),
+            'price_usd'   => (float) $this->price_usd,
             'category'    => new CategoryResource($this->whenLoaded('category')),
-            'images'      => $this->whenLoaded('images', fn() => ImageResource::collection($this->images)),
+            'images'      => $this->whenLoaded('images', fn () => MediaResource::collection($this->images)),
             'created_at'  => $this->created_at?->toIso8601String(),
         ];
     }
@@ -548,13 +779,18 @@ class ProductResource extends BaseResource
 
 ### Resource collections
 
-Only create a dedicated `ResourceCollection` class when you need custom collection-level metadata. Otherwise use `ProductResource::collection($paginator)` — the base controller's `transform()` does this automatically.
+`App\Base\BaseCollection` is the one collection class, and it exists only so
+`respondFromService()` can turn a paginator into `{items, meta}`. For a list, the
+controller calls `paginatedSuccess($paginator, ProductResource::class, $request)`
+and the base does `ProductResource::collection(...)` for you. Write a dedicated
+`ResourceCollection` only for genuine collection-level metadata.
 
 ### Common pitfalls
 
 - **Don't query inside `toArray`.** Eager-load relationships in the service. Resources that query lead to N+1 storms.
 - **Use `whenLoaded`** for any relationship — gracefully omits the field if the relation wasn't loaded, instead of triggering a lazy query.
-- **Currency:** values stored in USD in DB. Use a model method like `priceInSyp()` to convert on read.
+- **Don't expose `id`.** The public identifier is `uuid`.
+- **Money is `DECIMAL` in USD.** Cast and convert on read; never store a float.
 
 ---
 
@@ -614,7 +850,10 @@ class ProductFilter extends BaseFilter
 }
 ```
 
-`BaseService::GetAll` calls `apply()` when present, falling back to `transform()` otherwise.
+`BaseService::index()` instantiates the declared `$filter` from the controller's
+query params and calls `apply()` on it. Override `apply()` only for search or
+joins; call `parent::apply($query)` first so the `$safeParms` whitelist, the
+`$searchable`/`$translatable` search and the `$sortable` sort still run.
 
 ---
 
@@ -735,18 +974,16 @@ class CheckoutAction extends BaseAction
 ### Calling from a controller
 
 ```php
-public function Checkout(CheckoutAction $action, CheckoutRequest $request)
+public function checkout(CheckoutAction $action, CheckoutRequest $request): JsonResponse
 {
     $result = $action->execute([
         ...$request->validated(),
-        'user_id' => auth()->id(),
+        'guest_id' => $request->user()->id,
     ]);
 
-    return $this->sendResponse(
-        data: new OrderResource($result['data']),
-        message: __('custom.Success'),
-        code: $result['code'],
-    );
+    $result['data'] = new ReservationResource($result['data']);
+
+    return $this->respondFromService($result, request: $request);
 }
 ```
 
@@ -770,7 +1007,9 @@ Available traits on models. Use them; don't reinvent.
 
 ### `HasTranslations`
 
-Manages AR/EN translations via a polymorphic `translations` table.
+A thin wrapper over `Spatie\Translatable\HasTranslations`. There is **no**
+`translations` table and no custom API: the values live in the column itself as a
+JSON locale map.
 
 ```php
 class Product extends Model
@@ -779,77 +1018,86 @@ class Product extends Model
     protected $translatable = ['name', 'description'];
 }
 
-// usage:
-$product->setArabic('name', 'هاتف');
-$product->arabic('name');               // → 'هاتف'
-$product->localized('name', 'ar');      // → 'هاتف' or English fallback
-$product->setArabicAll(['name' => 'هاتف', 'description' => '...']);
-
-// query Arabic content:
-Product::whereArabic('name', 'هاتف')->get();
-Product::withLocale('ar')->get();       // eager-loads ar translations
+// usage — all of it Spatie's own API:
+$product->setTranslation('name', 'ar', 'هاتف');
+$product->getTranslation('name', 'ar');   // → 'هاتف'
+$product->getTranslations('name');        // → ['en' => 'Phone', 'ar' => 'هاتف']
+$product->name;                           // → the current locale's value
+$product->update(['name' => ['en' => 'Phone', 'ar' => 'هاتف']]);
 ```
+
+The column is `json`. Resources hand out `getTranslations()` maps; only code that
+genuinely needs one string (a folio line description, a bookable's label) calls
+`getTranslation($field, $locale)`.
+
+> `setArabic()`, `arabic()`, `whereArabic()`, `withLocale()` and `localized()` do
+> not exist. Earlier versions of this guide documented all five.
 
 ### `LogsActivity`
 
-Auto-logs create/update/delete to the `activity_logs` table.
+Wraps `Spatie\Activitylog`. Options are fixed in the trait — `logFillable()`,
+`logOnlyDirty()`, `dontLogEmptyChanges()` — so a model declares nothing:
 
 ```php
-class Product extends Model
-{
-    use LogsActivity;
-    protected static string $logName = 'products';
-    protected static array $logExcept = ['updated_at', 'views_count'];
-}
+class Product extends Model { use LogsActivity; }
 ```
 
-Audit entries are queryable through the `ActivityLog` model:
-
-```php
-ActivityLog::forModel($product)->latest()->get();
-ActivityLog::forRequest($requestId)->get();   // every change made in one API call
-ActivityLog::byCauser($admin)->between($from, $to)->get();
-```
+There is no `$logName`, no `$logExcept`, and no `ActivityLog` model of our own —
+entries land in Spatie's `activity_log` table and are read through
+`Spatie\Activitylog\Models\Activity`. Control what is logged by controlling
+`$fillable`.
 
 ### `FileTrait`
 
-Handles uploads with extension whitelisting and collision-safe naming.
+Thin helpers over the `Storage` facade — no extension whitelisting here (that
+belongs in the FormRequest's `mimes:` rule) and no collision-safe renaming beyond
+what Laravel's `store()` already does:
 
 ```php
-class ProductService extends BaseService
-{
-    use FileTrait;
-
-    public function Create($data): array
-    {
-        if (isset($data['image'])) {
-            $data['image_path'] = $this->StoreFile('public', 'products', $data['image']);
-        }
-        return parent::Create($data);
-    }
-}
+$path = $this->storeFile($uploadedFile, 'products');     // → 'products/abc123.jpg'
+$url  = $this->fileUrl($path);                            // → public URL, or null
+$this->deleteFile($path);
 ```
+
+`Media` uses it for its `url` accessor; `MediaService` is the only writer.
 
 ### `HasUuid`
 
-Adds a UUID for public-facing routes (so clients can't enumerate by integer ID):
+Fills `uuid` on create and makes it the route key, so clients cannot enumerate by
+integer id:
 
 ```php
 class Product extends Model { use HasUuid; }
-// route key automatically becomes uuid, not id
+// getRouteKeyName() === 'uuid'
 ```
 
-### `Cacheable`
+### `HasReviews`
 
-Adds memoized `GetOne` caching on services:
+Gives a content model guest reviews plus the denormalized `rating_avg` /
+`rating_count` the mobile list screens read. The aggregates are written only by
+`RecalculateRatingAction` and are never mass-assigned.
 
-```php
-class CategoryService extends BaseService
-{
-    use Cacheable;
-    protected int $cacheTtl = 600;  // 10 min
-}
-```
+### `PurgesMedia`
+
+A record's `media` rows — and the stored files nothing else references — go when
+the record is **permanently** deleted. On a soft-deletable model the hook is
+`forceDeleted`, so a recoverable delete keeps its photography; on any other model
+it stays on `deleting`.
+
+### `CascadesSoftDeletes`
+
+Carries a soft delete down the relations named in `softDeleteCascades()`, and back
+up on restore. Required on any soft-deletable parent with an `ON DELETE CASCADE`
+pointing at it, because the database's own cascade never fires for a soft delete.
+See section 14's soft-delete gotcha.
+
+### `MirrorsToFirestore`
+
+Mirrors a model's writes into Firestore for the ops dashboard's live queues.
+
+> There is no `Cacheable` trait. Earlier versions of this guide described a
+> memoised `GetOne` with a TTL; no such caching layer has ever existed here. Any
+> caching you add needs its own documented invalidation strategy (section 16).
 
 ---
 
@@ -857,46 +1105,58 @@ class CategoryService extends BaseService
 
 ### Method names
 
-Routes call PascalCase controller methods to match our internal style:
+Laravel's resource verbs, and a route parameter that binds a model:
 
 ```php
-Route::get('/', 'GetAll');
-Route::get('/{id}', 'GetOne');
-Route::post('/', 'Create');
-Route::put('/{id}', 'Update');
-Route::delete('/{id}', 'Delete');
+Route::get   ('/categories',            [AdminCategoryController::class, 'index']);
+Route::get   ('/categories/{category}', [AdminCategoryController::class, 'show']);
+Route::post  ('/categories',            [AdminCategoryController::class, 'store']);
+Route::put   ('/categories/{category}', [AdminCategoryController::class, 'update']);
+Route::delete('/categories/{category}', [AdminCategoryController::class, 'destroy']);
 ```
 
-### Prefix by role
+`{category}` binds on `uuid` (via `HasUuid::getRouteKeyName()`), so a sequential id
+never appears in a URL and a soft-deleted record 404s on binding. Bind on another
+column explicitly where the URL is editorial — `{journalPost:slug}`.
+
+`routes/api.php` is a flat list of one-line route declarations, not
+`->controller(...)->group(...)` blocks: `grep` for a path has to land on the file,
+the verb and the controller in one line. Controllers are imported with `Admin`/
+`Api` aliases (`use App\Http\Controllers\Admin\AmenityController as
+AdminAmenityController;`) because both halves of a resource are declared in the
+same file.
+
+### Prefix and gate by audience
 
 ```php
-Route::middleware(['auth:sanctum', 'role:admin'])
-    ->prefix('admin')
-    ->group(function () {
-        Route::prefix('categories')->controller(CategoryController::class)->group(function () {
-            Route::get('/',      'GetAll');
-            Route::get('/{id}',  'GetOne');
-            // ...
-        });
-    });
+// Staff CMS. Reads and writes gated separately — `permission:`, not `role:`,
+// because permissions are per-account and roles are only presets.
+Route::middleware('auth:users')->prefix('cms')->group(function () {
+    Route::middleware('permission:cms.view')->group(function () { /* index, show */ });
+    Route::middleware('permission:cms.edit')->group(function () { /* store, update, destroy */ });
+});
 
-Route::middleware('auth:sanctum')
-    ->prefix('user')
-    ->group(function () {
-        Route::get('/orders', [UserOrderController::class, 'GetAll']);
-        Route::post('/checkout', [UserOrderController::class, 'Checkout']);
-    });
+// Guest app — a second Sanctum guard over its own provider.
+Route::middleware('auth:guests')->group(function () {
+    Route::get('/reservations', [ApiReservationController::class, 'index']);
+});
 ```
 
 ### Public routes
 
-Endpoints that don't require auth go under `Api/`:
+Unauthenticated endpoints sit under the `public` prefix and are served by
+controllers in `app/Http/Controllers/Api`:
 
 ```php
-Route::prefix('api/v1')->group(function () {
-    Route::get('/products', [ApiProductController::class, 'GetAll']);
+Route::prefix('public')->group(function () {
+    Route::get('/room-types',            [ApiRoomTypeController::class, 'index']);
+    Route::get('/room-types/{roomType}', [ApiRoomTypeController::class, 'show']);
 });
 ```
+
+A public controller calls the service's `indexPublic()`, never `index()` — the
+public list must not be reachable by query string. There is no `api/v1` prefix in
+this codebase; the whole file is mounted under `/api`.
 
 ---
 
@@ -930,7 +1190,11 @@ The current locale is set from the `Accept-Language` header (`en` or `ar`). Use 
 
 ### Locale-aware fields on models
 
-Models with `HasTranslations` store English in the main table, Arabic in the `translations` table. Resources call `$this->localized('field')` to pick the right one.
+Models with `HasTranslations` store every locale in the column itself, as a JSON
+map (Spatie). Resources return the whole map via `getTranslations('field')` and let
+the client pick; `Accept-Language` drives `app()->getLocale()`, and therefore
+`__('custom.*')` messages and validation errors, rather than collapsing content
+fields.
 
 ---
 
@@ -938,13 +1202,18 @@ Models with `HasTranslations` store English in the main table, Arabic in the `tr
 
 ### ✅ DO
 
-- Inherit from `BaseCRUDController` or `BaseIndexController` for new controllers.
+- Extend `App\Base\BaseController` and name the methods `index`/`show`/`store`/
+  `update`/`destroy` — the shape all 69 controllers use. (`BaseCRUDController` is
+  where this is heading; nothing extends it yet. Section 4.)
 - Wrap multi-step DB operations in `DB::transaction`.
-- Use API Resources (`$resource = ...`) so the API shape doesn't leak DB columns.
+- Pass every payload through an API Resource so the API shape doesn't leak DB
+  columns — and expose `uuid`, never `id`.
 - Eager-load relationships in `$with` on the service.
-- Throw `NotFoundException` instead of returning 404 manually.
+- Let route model binding produce the 404. Throw domain exceptions for rule
+  violations, not for a key that does not resolve.
 - Add an index when you add a `where` clause that runs frequently.
-- Use `request()->integer('per_page', 20)` for client-controlled page size.
+- Read `per_page` in the controller with `perPageParam($request)` and let
+  `BaseService::resolvePerPage()` apply the default and the ceiling.
 - Put new exceptions in `App\Exceptions\` and add translations.
 
 ### ❌ DON'T
@@ -956,15 +1225,39 @@ Models with `HasTranslations` store English in the main table, Arabic in the `tr
 - Don't catch `Exception` to swallow errors. Let them bubble to the global handler.
 - Don't put business logic in controllers or models. Put it in services or actions.
 - Don't hardcode English strings. Use `__('custom.key')`.
-- Don't duplicate `GetAll`/`GetOne` logic in a child controller — set `$resource` and let the base do it.
+- Don't invent method names. `index`/`show`/`store`/`update`/`destroy` on
+  controllers and services; `camelCase` for anything extra.
 
 ### Gotcha: `unique` validation on update
 
 ```php
-'slug' => ['sometimes', 'string', "unique:categories,slug,{$id}"]
+'slug' => ['sometimes', 'string', Rule::unique('categories', 'slug')->ignore($this->route('category'))]
 ```
 
-The `{$id}` exempts the current record. Without it, every update will fail validation.
+`->ignore()` exempts the current record. Without it, every update fails
+validation. Pass the route-bound model (or `$this->route('category')?->id`) —
+there is no `{id}` segment to read.
+
+### Gotcha: soft deletes, cascades and natural keys
+
+Content models use `SoftDeletes`, which changes three things that are easy to miss:
+
+- **`ON DELETE CASCADE` never fires.** No row is removed, so the referential
+  action does not run and the children stay live. A parent whose children must
+  follow it uses `App\Traits\CascadesSoftDeletes` and lists the relations in
+  `softDeleteCascades()` — one entry per cascading FK. Restoring walks the same
+  edges back up, restoring only children deleted at or after the parent.
+- **Media purging happens on `forceDeleted`, not `deleting`.** A recoverable
+  delete keeps its images so a restore comes back whole; only emptying the bin
+  unlinks files. See `App\Traits\PurgesMedia`.
+- **A trashed row still occupies its natural key.** The unique indexes on `slug`,
+  `rooms.number` and `site_settings (group, key)` are scoped to live rows
+  (partial index on sqlite/pgsql, functional key parts on mysql), and
+  `App\Validation\LiveRowPresenceVerifier` scopes `unique:`/`exists:` to match.
+  Both halves are required — fixing only the rule turns a 422 into a 500.
+
+Adding `softDeletes()` to a table with either a cascading FK pointing at it or a
+natural-key unique index means doing all three.
 
 ### Gotcha: `whenLoaded` vs accessing relations
 
@@ -978,7 +1271,7 @@ The `{$id}` exempts the current record. Without it, every update will fail valid
 
 ### Gotcha: filter pagination + transactions
 
-Don't wrap `GetAll` in a transaction. Long-running SELECTs holding transaction state cause replica lag.
+Don't wrap `index()` in a transaction. Long-running SELECTs holding transaction state cause replica lag.
 
 ### Gotcha: timezone
 
@@ -1047,7 +1340,7 @@ The layer rules in section 1 are SOLID in practice: SRP (one class, one job), Op
 ### Performance & reliability
 
 - **Queues for slow work.** Emails, FCM push, image processing, report generation — dispatch a job, never block the request.
-- **Caching needs an invalidation strategy.** `Cacheable` gives memoized `GetOne` with TTL; anything beyond that must document when and how the cache is busted.
+- **Caching needs an invalidation strategy.** There is no caching layer in this codebase today; anything you add must document when and how the cache is busted.
 - **Idempotency for payment and webhook endpoints.** Gateways retry. Store a processed-callback key (transaction ref) and short-circuit duplicates inside the same transaction that applies the change.
 - **Rate limiting on sensitive endpoints.** OTP request/verify, login, password reset — via Laravel's `throttle` middleware.
 
@@ -1075,17 +1368,19 @@ The layer rules in section 1 are SOLID in practice: SRP (one class, one job), Op
 Before opening a PR, verify:
 
 - [ ] Migration has indexes on every foreign key and every `where`-clause column.
-- [ ] Model uses `HasTranslations` if any user-facing text needs AR/EN.
+- [ ] Model uses `HasTranslations` if any user-facing text needs AR/EN, and `HasUuid` if a route names it.
 - [ ] Model uses `LogsActivity` if changes need an audit trail.
-- [ ] Service extends `BaseService` and declares `$model`, `$with`, optional `$filter`.
-- [ ] Controller extends `BaseCRUDController` or `BaseIndexController`.
-- [ ] Controller declares `$resource`, `$createRequest`, `$updateRequest` as needed.
-- [ ] Requests extend `BaseRequest` and live under `Http/Requests/{Role}/{Domain}/`.
-- [ ] Resource extends `BaseResource` and uses `localized()` for AR/EN fields.
+- [ ] If the table is soft-deletable: cascading FKs handled via `CascadesSoftDeletes`, natural-key uniques scoped to live rows (section 14's soft-delete gotcha).
+- [ ] Service extends `App\Base\BaseService` and declares `$model`, `$with`, optional `$filter`.
+- [ ] Controller extends `App\Base\BaseController` with `index`/`show`/`store`/`update`/`destroy`.
+- [ ] Every payload goes through a Resource; the response exposes `uuid`, not `id`.
+- [ ] Requests extend `App\Base\BaseRequest` and live under `Http/Requests/{Domain}/`.
+- [ ] Resource extends `App\Base\BaseResource` and returns `getTranslations()` maps for translatable fields.
 - [ ] All user-facing strings use `__('custom.key')`; keys exist in both `en` and `ar`.
 - [ ] Multi-write operations are wrapped in `DB::transaction`.
 - [ ] Errors are thrown as domain exceptions, not returned as response arrays.
-- [ ] Routes are grouped by role middleware (`admin`, `user`, `driver`, `seller`).
+- [ ] Routes are grouped by guard (`auth:users`, `auth:guests`) and gated by `permission:` middleware; public reads under the `public` prefix call `indexPublic()`.
+- [ ] Route parameters bind a model (`{category}`), never an `{id}`.
 - [ ] No `Model::all()`, no `request()` inside services, no business logic in controllers.
 - [ ] Eager loads cover every relationship used in the Resource.
 - [ ] If you added a new exception type, the translation key exists.
@@ -1100,53 +1395,73 @@ Before opening a PR, verify:
 
 ## Reference: file layout
 
+**Every base class is in `app/Base`** — not scattered through the layer folders.
+That is the single most common thing to get wrong when importing.
+
 ```
 app/
+  Base/                            ← ALL the base classes live here
+    BaseController.php             ← success, paginatedSuccess, respondFromService,
+    │                                perPageParam, indexParams
+    BaseIndexController.php        ← index, show   (no subclasses yet)
+    BaseCRUDController.php         ← + store, update, destroy (no subclasses yet)
+    BaseService.php                ← index, show, store, update, destroy,
+    │                                trashed, restore, forceDestroy
+    BaseRequest.php                ← authorize() + localized validation messages
+    BaseResource.php               ← uuid() helper; subclasses write toArray()
+    BaseFilter.php                 ← $safeParms whitelist, search, sort
+    BaseCollection.php             ← paginator → {items, meta}
   Actions/
     BaseAction.php
     {Domain}/{Verb}Action.php
+  Enums/
   Exceptions/
-    BaseException.php
+    DomainException.php            ← abstract: errorCode(), statusCode(), context()
     NotFoundException.php
     ... (one per error_code)
   Filters/
-    BaseFilter.php
+    CmsContentFilter.php           ← intermediate for content lists
     {Resource}Filter.php
   Http/
     Controllers/
-      Controller.php              ← sendResponse, sendError, paginatedResponse, transform
-      BaseIndexController.php     ← GetAll, GetOne
-      BaseCRUDController.php      ← + Create, Update, Delete
-      Admin/  User/  Driver/  Seller/  Api/
+      Controller.php               ← Laravel's empty stub; unused
+      Admin/  Api/  Auth/  Staff/
     Middleware/
-      AssignRequestId.php
     Requests/
-      BaseRequest.php
-      {Role}/{Domain}/{Action}Request.php
+      {Domain}/{Action}{Resource}Request.php
     Resources/
-      BaseResource.php
-      {Resource}Resource.php
+      {Domain}/{Resource}Resource.php
+  Jobs/
   Models/
-    ActivityLog.php
-    Translation.php
     {Resource}.php
+  Policies/
+  Providers/
+    AppServiceProvider.php         ← morph map, gates, presence-verifier override
   Services/
-    BaseService.php
-    {Role}/{Resource}Service.php
+    {Domain}/{Resource}Service.php ← Cms, Booking, Auth, Folio, Payment, Review,
+                                     Operations, Service, Events, Chat,
+                                     Notification, Firebase
   Traits/
-    HasTranslations.php
-    LogsActivity.php
-    FileTrait.php
-    HasUuid.php
-    Cacheable.php
+    CascadesSoftDeletes.php  FileTrait.php     HasReviews.php
+    HasTranslations.php      HasUuid.php       LogsActivity.php
+    MirrorsToFirestore.php   PurgesMedia.php
+  Validation/
+    LiveRowPresenceVerifier.php    ← unique:/exists: skip soft-deleted rows
 bootstrap/
   app.php                          ← exception handler, middleware registration
+  providers.php
 lang/
   en/custom.php
   ar/custom.php
+  es/  fr/  tr/
 routes/
   api.php
 ```
+
+Traits the guide has mentioned in the past that do **not** exist: `Cacheable`
+(there is no memoised `show` layer), and any `Translation`/`ActivityLog` model of
+our own — translations are locale maps stored in the column by Spatie, and the
+activity log is Spatie's own table.
 
 ---
 

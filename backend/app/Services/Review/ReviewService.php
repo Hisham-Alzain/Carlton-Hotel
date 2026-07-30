@@ -6,6 +6,7 @@ use App\Actions\Review\SetReviewPublishedAction;
 use App\Actions\Review\SubmitReviewAction;
 use App\Enums\ReviewableType;
 use App\Exceptions\NotFoundException;
+use App\Filters\ReviewFilter;
 use App\Models\Guest;
 use App\Models\Review;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,9 @@ class ReviewService
 {
     protected array $with = ['guest'];
     protected int $perPage = 15;
+
+    /** Same ceiling as `BaseService`, for the same reason. */
+    protected int $maxPerPage = 100;
 
     public function __construct(
         private readonly SubmitReviewAction       $submit,
@@ -51,15 +55,47 @@ class ReviewService
         return ['data' => $data, 'code' => 200];
     }
 
-    public function adminIndex(?bool $isPublished = null): array
+    /**
+     * The moderation queue.
+     *
+     * Filtering goes through `ReviewFilter` instead of a hand-read `?is_published`
+     * boolean. The old signature took a `?bool` the controller produced with
+     * `$request->boolean('is_published')`, which reads an empty `?is_published=`
+     * as `false` — so the "Status: All" option of a select returned only drafts,
+     * and `?is_published=trve` returned the drafts too rather than saying no. The
+     * filter layer already owns those three answers for every other list screen
+     * (see `BaseFilter`'s three rules), and this one now shares them.
+     *
+     * @param  array<string, mixed>  $params   Query-string params from the controller.
+     * @param  int|null              $perPage  Client-requested page size, or null.
+     */
+    public function adminIndex(array $params = [], ?int $perPage = null): array
     {
-        $data = Review::query()
+        $query = Review::query()
             ->with([...$this->with, 'reviewable'])
-            ->when($isPublished !== null, fn ($q) => $q->where('is_published', $isPublished))
-            ->latest()
-            ->paginate($this->perPage);
+            ->latest();
 
-        return ['data' => $data, 'code' => 200];
+        (new ReviewFilter($params))->apply($query);
+
+        return ['data' => $query->paginate($this->resolvePerPage($perPage)), 'code' => 200];
+    }
+
+    /**
+     * Clamp the client's page size into `[1, $maxPerPage]`.
+     *
+     * Mirrors `BaseService::resolvePerPage()`. This service is deliberately not a
+     * `BaseService` — it has no `$model` and every read is a purpose-built
+     * projection rather than declarative CRUD — so the clamp is restated rather
+     * than inherited. Without it `?per_page=100000` is one query for every review
+     * the hotel has ever received, plus its guest and reviewable eager loads.
+     */
+    private function resolvePerPage(?int $perPage): int
+    {
+        if ($perPage === null || $perPage < 1) {
+            return $this->perPage;
+        }
+
+        return min($perPage, $this->maxPerPage);
     }
 
     public function store(Guest $guest, Model $reviewable, array $data): array

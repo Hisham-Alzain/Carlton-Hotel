@@ -14,14 +14,24 @@ class ReviewController extends BaseController
 {
     public function __construct(private readonly ReviewService $service) {}
 
+    /**
+     * The moderation queue.
+     *
+     * Query params are handed down whole (`indexParams`) for `ReviewFilter` to
+     * whitelist, and `per_page` through `perPageParam` — the same two calls every
+     * other index controller makes. It used to read `is_published` itself with
+     * `$request->boolean()`, which made `?is_published=` (empty) mean *false* and
+     * `?is_published=trve` mean false as well, and it dropped `per_page` on the
+     * floor. Reading a filter in the controller is what made all three possible;
+     * the filter layer answers them consistently.
+     */
     public function index(Request $request): JsonResponse
     {
-        $isPublished = $request->has('is_published')
-            ? $request->boolean('is_published')
-            : null;
-
         return $this->paginatedSuccess(
-            $this->service->adminIndex($isPublished)['data'],
+            $this->service->adminIndex(
+                $this->indexParams($request),
+                $this->perPageParam($request),
+            )['data'],
             ReviewResource::class,
             $request,
         );

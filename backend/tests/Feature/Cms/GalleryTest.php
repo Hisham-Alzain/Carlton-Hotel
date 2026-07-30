@@ -403,6 +403,12 @@ class GalleryTest extends TestCase
 
     // ── Media ─────────────────────────────────────────────────────────
 
+    /**
+     * The morph assertions are the point of this test as much as the 201 is: they
+     * prove the request actually reached `MediaController::storeGalleryItem()`
+     * with the route's `GalleryItem` resolved, rather than the upload landing on
+     * some other parent (or the endpoint 500ing on an unresolvable type hint).
+     */
     public function test_admin_can_upload_and_expose_a_gallery_photograph(): void
     {
         Storage::fake('public');
@@ -415,9 +421,42 @@ class GalleryTest extends TestCase
             ->assertStatus(201);
 
         $this->assertDatabaseCount('media', 1);
+
+        $media = Media::firstOrFail();
+        $this->assertSame($item->getMorphClass(), $media->mediable_type);
+        $this->assertSame($item->id, $media->mediable_id);
+        $this->assertTrue($media->mediable instanceof GalleryItem);
+        $this->assertSame(1, $item->images()->count());
+
         $this->assertNotNull(
             $this->getJson('/api/public/gallery')->assertOk()->json('data.items.0.image')
         );
+    }
+
+    /**
+     * The delete half of the media pair, through the item's own route. Without
+     * this the only coverage of `destroyGalleryItem` was the wrong-parent 404,
+     * which never proves the happy path works.
+     */
+    public function test_admin_can_delete_a_gallery_photograph_through_its_own_parent(): void
+    {
+        Storage::fake('public');
+        $item = GalleryItem::factory()->create();
+
+        $this->withToken($this->editorToken())
+            ->postJson("/api/cms/gallery-items/{$item->uuid}/images", [
+                'image' => UploadedFile::fake()->image('suite.jpg'),
+            ])
+            ->assertStatus(201);
+
+        $media = Media::firstOrFail();
+
+        $this->withToken($this->editorToken())
+            ->deleteJson("/api/cms/gallery-items/{$item->uuid}/images/{$media->uuid}")
+            ->assertStatus(204);
+
+        $this->assertDatabaseCount('media', 0);
+        $this->assertNull($this->getJson('/api/public/gallery')->assertOk()->json('data.items.0.image'));
     }
 
     /**

@@ -275,6 +275,13 @@ class ExperienceTest extends TestCase
             ->assertStatus(201);
 
         $this->assertDatabaseCount('media', 1);
+
+        // Proves the request reached `MediaController::storeExperience()` with the
+        // route's `Experience` resolved, not merely that something returned 201.
+        $media = Media::firstOrFail();
+        $this->assertSame($experience->getMorphClass(), $media->mediable_type);
+        $this->assertSame($experience->id, $media->mediable_id);
+
         $this->assertNotNull(
             $this->getJson('/api/public/experiences')->assertOk()->json('data.items.0.image')
         );

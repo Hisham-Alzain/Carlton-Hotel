@@ -14,6 +14,7 @@ use App\Models\MenuItem;
 use App\Models\Promotion;
 use App\Models\Room;
 use App\Models\RoomType;
+use App\Models\Testimonial;
 use App\Services\Cms\MediaService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -123,5 +124,15 @@ class MediaController extends BaseController
     public function destroyPromotion(Request $request, Promotion $promotion, Media $media): JsonResponse
     {
         return $this->delete($request, $promotion, $media);
+    }
+
+    public function storeTestimonial(UploadMediaRequest $request, Testimonial $testimonial): JsonResponse
+    {
+        return $this->upload($request, $testimonial);
+    }
+
+    public function destroyTestimonial(Request $request, Testimonial $testimonial, Media $media): JsonResponse
+    {
+        return $this->delete($request, $testimonial, $media);
     }
 }

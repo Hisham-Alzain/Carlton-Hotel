@@ -42,6 +42,7 @@ use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\PromotionController as AdminPromotionController;
 use App\Http\Controllers\Admin\RoomController as AdminRoomController;
 use App\Http\Controllers\Admin\RoomTypeController as AdminRoomTypeController;
+use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
 use App\Http\Controllers\Api\AvailabilityController;
 use App\Http\Controllers\Api\DiningVenueController as ApiDiningVenueController;
 use App\Http\Controllers\Api\ReservationController;
@@ -51,6 +52,7 @@ use App\Http\Controllers\Api\PageController as ApiPageController;
 use App\Http\Controllers\Api\PromotionController as ApiPromotionController;
 use App\Http\Controllers\Api\RoomController as ApiRoomController;
 use App\Http\Controllers\Api\RoomTypeController as ApiRoomTypeController;
+use App\Http\Controllers\Api\TestimonialController as ApiTestimonialController;
 use App\Http\Controllers\Auth\GuestAuthController;
 use App\Http\Controllers\Auth\StaffAuthController;
 use App\Http\Controllers\Staff\PermissionController;
@@ -123,6 +125,8 @@ Route::prefix('public')->group(function () {
     Route::get('/pages/{slug}',           [ApiPageController::class,       'show']);
     Route::get('/promotions',             [ApiPromotionController::class,  'index']);
     Route::get('/promotions/{promotion}', [ApiPromotionController::class,  'show']);
+    // Curated marketing quotes. Rendered as one section, so there is no `show`.
+    Route::get('/testimonials',           [ApiTestimonialController::class, 'index']);
 
     // P4 — Availability & pricing (public)
     Route::get('/availability', [AvailabilityController::class, 'check']);
@@ -176,6 +180,9 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
 
         Route::get('/promotions',                   [AdminPromotionController::class, 'index']);
         Route::get('/promotions/{promotion}',       [AdminPromotionController::class, 'show']);
+
+        Route::get('/testimonials',                 [AdminTestimonialController::class, 'index']);
+        Route::get('/testimonials/{testimonial}',   [AdminTestimonialController::class, 'show']);
     });
 
     // ── Writes (cms.edit only) ────────────────────────────────────────
@@ -241,6 +248,13 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/promotions/{promotion}',                      [AdminPromotionController::class, 'destroy']);
         Route::post  ('/promotions/{promotion}/images',               [MediaController::class, 'storePromotion']);
         Route::delete('/promotions/{promotion}/images/{media}',       [MediaController::class, 'destroyPromotion']);
+
+        // Testimonials
+        Route::post  ('/testimonials',                                [AdminTestimonialController::class, 'store']);
+        Route::put   ('/testimonials/{testimonial}',                  [AdminTestimonialController::class, 'update']);
+        Route::delete('/testimonials/{testimonial}',                  [AdminTestimonialController::class, 'destroy']);
+        Route::post  ('/testimonials/{testimonial}/images',           [MediaController::class, 'storeTestimonial']);
+        Route::delete('/testimonials/{testimonial}/images/{media}',   [MediaController::class, 'destroyTestimonial']);
     });
 });
 

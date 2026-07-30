@@ -12,6 +12,7 @@ use App\Models\Page;
 use App\Models\Promotion;
 use App\Models\Room;
 use App\Models\RoomType;
+use App\Models\Testimonial;
 use Database\Seeders\Support\GeneratesPlaceholderMedia;
 use Illuminate\Database\Seeder;
 
@@ -28,6 +29,60 @@ class CmsContentSeeder extends Seeder
         $this->pages();
         $this->promotions();
         $this->homeSliders();
+        $this->testimonials();
+    }
+
+    /**
+     * The three quotes the public website currently hardcodes in
+     * `src/app/i18n/translations.ts` under `testimonials.items`.
+     *
+     * No avatars are attached: the site renders these as text only, and seeding
+     * placeholder portraits would invent faces for named guests.
+     *
+     * `author_title` folds the site's separate `origin` and `stay` fields into
+     * the single line the schema carries. If the site ever needs them apart
+     * again, that is a schema addition, not a parsing exercise — do not split
+     * this string on the separator.
+     */
+    private function testimonials(): void
+    {
+        $quotes = [
+            [
+                'author' => 'Sarah & James M.',
+                'title'  => ['en' => 'London, United Kingdom · Grand Suite', 'ar' => 'لندن، المملكة المتحدة · الجناح الكبير'],
+                'quote'  => [
+                    'en' => "From the moment we arrived, every detail felt considered. The staff remembered our names, our preferences, and — somehow — what we didn't yet know we needed.",
+                    'ar' => 'منذ لحظة وصولنا، كانت كل تفصيلة مدروسة ودقيقة. تذكّر الطاقم أسماءنا وتفضيلاتنا — وبطريقة ما — ما لم نكن قد أدركنا أننا نحتاجه بعد.',
+                ],
+            ],
+            [
+                'author' => 'Prof. Henri D.',
+                'title'  => ['en' => 'Paris, France · Premier Terrace', 'ar' => 'باريس، فرنسا · تيراس بريمير'],
+                'quote'  => [
+                    'en' => 'Carlton Syria achieves something rare: it is at once grand and deeply personal. The most beautiful hotel I have stayed in across forty years of travel.',
+                    'ar' => 'يحقق كارلتون سوريا شيئاً نادراً: إنه في آنٍ واحد فاخر وشخصي للغاية. أجمل فندق أقمت فيه خلال أربعين عاماً من السفر.',
+                ],
+            ],
+            [
+                'author' => 'Valentina R.',
+                'title'  => ['en' => 'Milan, Italy · Deluxe Suite', 'ar' => 'ميلانو، إيطاليا · جناح ديلوكس'],
+                'quote'  => [
+                    'en' => 'We came for a week and extended our stay by five days. The cuisine, the light on the private terrace at dusk, the extraordinary attention of the team — we simply could not bring ourselves to leave.',
+                    'ar' => 'أتينا لأسبوع ومدّدنا إقامتنا خمسة أيام. المطبخ والضوء على التراس الخاص عند الغسق والاهتمام الاستثنائي من الفريق — ببساطة لم يكن بوسعنا المغادرة.',
+                ],
+            ],
+        ];
+
+        foreach ($quotes as $i => $q) {
+            Testimonial::create([
+                'author_name'  => $q['author'],
+                'author_title' => $q['title'],
+                'quote'        => $q['quote'],
+                'rating'       => 5,
+                'is_active'    => true,
+                'sort_order'   => $i,
+            ]);
+        }
     }
 
     private function homeSliders(): void

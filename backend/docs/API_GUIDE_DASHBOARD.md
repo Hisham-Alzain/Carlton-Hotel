@@ -3,6 +3,7 @@
 > **Audience:** frontend developers building the staff/admin dashboard.
 > **Surface:** Staff-only, permission-gated. All requests require a staff bearer token obtained via `POST /auth/login`. Permissions control which sections are accessible — read the `permissions` array from the login response to decide what to render.
 > **Try it now:** `php artisan migrate:fresh --seed` populates realistic demo data (staff, guests, bookings, tickets, everything), and `docs/postman/` has a ready-to-import Postman collection + environment pre-loaded with working tokens. See `docs/postman/README.md`.
+> **Seeded logins — development only, never referenced from application code.** All seeded staff share the password `password`. `super@carlton.demo` is the super admin (bypasses every permission check, so testing only as this account proves nothing about gating); `content@carlton.demo` holds `content_editor` and is the account to develop CMS screens against. Also seeded: `reception@`, `kitchen@`, `housekeeping@`, `concierge@`, `events@`, plus `newstaff@` and `trainee@` with no role at all — useful for verifying that your permission gating actually denies. None of these accounts exist in a database that was not seeded.
 
 ---
 
@@ -19,11 +20,21 @@ All paths below are relative to this base.
 | Header | When | Value |
 |---|---|---|
 | `Accept` | Always | `application/json` |
-| `Accept-Language` | Always | `en` or `ar` — controls only `message`/error/validation strings |
+| `Accept-Language` | Always | Any configured CMS locale — currently `en`, `ar`, `fr`, `tr`, `es`. Controls only `message`/error/validation strings. Full browser headers (`fr-FR,fr;q=0.9,en;q=0.8`) are parsed and negotiated. |
 | `Content-Type` | Requests with a body | `application/json` |
 | `Authorization` | All authenticated requests | `Bearer <staff-token>` |
 
-**`Accept-Language` does NOT localize content fields.** Bilingual CMS content (room names, menu items, page bodies, etc.) is always returned as `{ "en": "...", "ar": "..." }` — the header only picks the language of the envelope's `message` and validation error strings. The dashboard is responsible for showing/editing both locales itself.
+**`Accept-Language` does NOT localize content fields.** Translatable CMS content (room names, menu items, page bodies, etc.) is always returned as a locale-keyed object — `{ "en": "...", "ar": "...", "fr": "..." }` — and the header only picks the language of the envelope's `message` and validation error strings. The dashboard is responsible for showing/editing every locale itself.
+
+**The locale set is `config/cms.php`, not a literal.** Currently `locales` is `en, ar, fr, tr, es` and `required_locales` is `en, ar`; both are overridable per environment via `CMS_LOCALES` / `CMS_REQUIRED_LOCALES`. Consequences for the dashboard:
+
+- On **create**, `en` and `ar` are required for every mandatory translatable field; `fr`, `tr` and `es` are nullable and may be back-filled later.
+- On **update**, required locales are `sometimes|required` — omit the field to leave the stored translation alone, but you cannot blank it with `""`.
+- A **read** map contains only the locales that actually hold non-empty content. `name.tr` being absent is normal, not corrupt — fall back (usually to `en`) and treat a missing key in an editor as "needs translating".
+- A **write** merges per locale: `{"name":{"fr":"…"}}` sets `fr` and leaves `en`/`ar` untouched. Sending `{"name":{}}` wipes the whole field.
+- No endpoint publishes the locale list, so the dashboard has to carry it. Re-check `config/cms.php` when the CMS gains a language.
+
+Two exceptions accept **`en` and `ar` only**, regardless of config: the menu module (`/cms/menu-categories`, `/cms/menu-items`) and the P7 service catalog. Extra locale keys are dropped by validation without a warning. See *Module: CMS Content*.
 
 ## Standard response envelope
 
@@ -56,6 +67,8 @@ Every index endpoint (CMS admin and public alike) accepts:
 | `page` | 1-based page number. |
 | `per_page` | Page size. Default `15`, hard cap `100`. Values above the cap are clamped; `0`, negatives and non-numeric values fall back to the default. Never an error. |
 
+Because `per_page` is clamped rather than echoed, always read the effective page size from `data.meta.per_page`. Two endpoints ignore the parameter entirely and are hard-wired to 15: `GET /cms/reviews` and `GET /api/public/dining-venues/{uuid}/menu`.
+
 CMS admin index endpoints (`/api/cms/*`) additionally accept:
 
 | Param | Meaning |
@@ -81,7 +94,14 @@ entity whitelists which ones each column allows.
 
 
 **Public endpoints (`/api/public/*`) take `page` and `per_page` only** — they
-always return `is_active = true` rows in their fixed order.
+always return `is_active = true` rows in their fixed order. The one exception is
+`GET /api/public/dining-venues/{uuid}/menu`, which also reads
+`?type=<menu-category-slug>`.
+
+Two CMS reads sit outside this filter layer and follow their own rules:
+`GET /cms/reviews` (an `is_published` parameter where an **empty** value means
+*unpublished*, not "no filter") and `GET /cms/settings` (not paginated at all).
+Both are documented under *Module: CMS Content*.
 
 **Error:**
 ```json
@@ -98,13 +118,18 @@ always return `is_active = true` rows in their fixed order.
 ```json
 {
   "success": false,
+  "message": "The given data was invalid.",
   "error_code": "validation_failed",
-  "errors": { "field_name": ["message"] },
+  "errors": { "field_name": ["message"], "name.ar": ["The name.ar field is required."] },
   "request_id": "uuid"
 }
 ```
 
-Log `request_id` on every response for support tracing.
+`errors` is keyed by **field path**, not field name. Translatable fields validate per locale, so the key is `"{field}.{locale}"` — `name.en`, `name.ar`, `name.fr` — and there is **never a bare `name` key**, because no request declares a top-level rule for a translatable field. A form with one input per locale must map `errors["name.ar"]` onto the Arabic input; keying the lookup on the field name alone shows nothing. The same convention covers array rows (`amenities.0.uuid`, `settings.3.key`) and rejected filter values (`is_active`, or `capacity.gte` for the operator form). Message *text* is localized by `Accept-Language`; the *keys* are always the English field path.
+
+Branch on `error_code`, never on `message` — `message` is localized and free to be reworded. Treat an unrecognised `error_code` as a generic failure rather than crashing.
+
+Log `request_id` on every response for support tracing. It is also returned as the `X-Request-Id` response header on every request.
 
 ## Permission model
 
@@ -141,7 +166,7 @@ Most are route middleware, which is the norm. Two families are not, and are enfo
 
 `pricing.edit` and `reports.view` are seeded, appear in `GET /api/permissions`, and are enforced **nowhere** — no route middleware, no policy, no service check. Granting either currently permits nothing and withholding either currently blocks nothing. `reports.view` becomes real when P12 ships its report endpoints; `pricing.edit` has no endpoint planned yet. Every other permission in the catalog is enforced somewhere.
 
-**Role presets** (5): `reception`, `kitchen`, `housekeeping`, `concierge`, `events` — see Module: Reference Data below for exactly which permissions each preset grants.
+**Role presets** (6): `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `content_editor` — see Module: Reference Data below for exactly which permissions each preset grants. `content_editor` is the only preset that grants `cms.*`; without it no seeded account except the super admin can reach `/api/cms/*`.
 
 ---
 
@@ -174,31 +199,39 @@ Most are route middleware, which is the norm. Two families are not, and are enfo
 | `email` | string | ✅ |
 | `password` | string | ✅ |
 
+`email` must be a valid email address; `password` is any non-empty string.
+
 **Response `data`:**
 ```json
 {
-  "token": "1|abcdef...",
   "user": {
     "uuid": "...",
     "name": "John Smith",
     "email": "john@carlton.com",
     "type": "staff",
     "is_active": true,
+    "is_super_admin": false,
     "roles": ["reception"],
     "permissions": ["reservations.view", "reservations.create", "folios.view", "folios.settle"]
-  }
+  },
+  "token": "1|abcdef...",
+  "permissions": ["reservations.view", "reservations.create", "folios.view", "folios.settle"]
 }
 ```
 
-`type` is either `staff` or `super_admin`. The `permissions` array lists every permission the account effectively holds (role preset + direct grants − direct revokes).
+`type` is either `staff` or `super_admin`. `data.permissions` and `data.user.permissions` are the same list — either is fine to store. The array lists every permission the account *effectively* holds (role preset + direct grants − direct revokes), and for a `super_admin` it is filled with the **complete** permission catalog even though that account holds zero permission rows, so a plain name check already succeeds for them. Branch on `is_super_admin` only when you want to label the account or unlock a danger zone; never compute permissions from `roles`, since a super admin has no role.
 
 **Failure `error_code`s:**
 
-| Code | HTTP | UI action |
-|---|---|---|
-| `credentials_invalid` | 401 | "Invalid credentials." Do NOT distinguish wrong email from wrong password. |
-| `account_inactive` | 403 | "Account disabled. Contact your administrator." |
-| `validation_failed` | 422 | Missing fields. |
+| Code | HTTP | Message key behind it | UI action |
+|---|---|---|---|
+| `unauthorized` | 401 | `credentials_invalid` — "The provided credentials are incorrect." | "Invalid credentials." The API cannot distinguish wrong email from wrong password, so do not imply it can. |
+| `forbidden` | 403 | `account_inactive` — "This account has been deactivated." | "Account disabled. Contact your administrator." |
+| `validation_failed` | 422 | | Missing or malformed fields. |
+
+> Earlier revisions of this table listed `credentials_invalid` and `account_inactive` as the `error_code`s. Those are the **translation keys behind `message`**, not codes: `AuthStaffService` throws `UnauthorizedException` / `ForbiddenException`, whose `errorCode()` values are `unauthorized` and `forbidden`. A client branching on `credentials_invalid` will never match. Distinguish the two cases by HTTP status (401 vs 403).
+
+**Not rate-limited.** Unlike the guest OTP route, `POST /api/auth/login` carries no `throttle` middleware. Do not auto-retry on `401`.
 
 **State notes:** Store the token. Persist the `permissions` array for local gate checks (server re-enforces on every request). The `user.uuid` is the stable identifier — never use integer IDs.
 
@@ -412,52 +445,159 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
   { "name": "kitchen", "permissions": ["service_requests.view", "service_requests.update"] },
   { "name": "housekeeping", "permissions": ["service_requests.view", "service_requests.update"] },
   { "name": "concierge", "permissions": ["service_requests.view", "service_requests.assign", "service_requests.update"] },
-  { "name": "events", "permissions": ["service_requests.view", "tickets.view", "tickets.assign", "tickets.respond"] }
+  { "name": "events", "permissions": ["service_requests.view", "tickets.view", "tickets.assign", "tickets.respond"] },
+  { "name": "content_editor", "permissions": ["cms.view", "cms.edit"] }
 ]
 ```
+
+6 presets. `content_editor` is the CMS persona — the seeded account
+`content@carlton.demo` holds it, and it is the only non-super-admin login that can
+reach `/api/cms/*`.
 
 ---
 
 ## Module: CMS Content (reads `cms.view|cms.edit` · writes `cms.edit`)
 
-Admin CRUD for the 7 content types the website/app read publicly. Every type follows the same shape: `GET`/`POST` on the collection, `GET`/`PUT`/`DELETE` on `/{uuid}` (Page also gets these — admin addresses pages by uuid even though the public route uses `slug`). All under `auth:users`; the two `GET`s are gated on `permission:cms.view|cms.edit`, and `POST`/`PUT`/`DELETE` on `permission:cms.edit` — see [Permission model](#permission-model).
+Admin CRUD for the **19 CMS modules**, plus the 6 P7 service-catalog resources that sit behind the same gates. Most modules follow one shape: `GET`/`POST` on the collection, `GET`/`PUT`/`DELETE` on `/{uuid}`. All under `auth:users`; the `GET`s are gated on `permission:cms.view|cms.edit` and `POST`/`PUT`/`PATCH`/`DELETE` on `permission:cms.edit` — see [Permission model](#permission-model).
 
-| Type | Base path |
-|---|---|
-| Room types | `/cms/room-types` |
-| Rooms | `/cms/rooms` |
-| Facilities | `/cms/facilities` |
-| Dining venues | `/cms/dining-venues` |
-| Event spaces | `/cms/event-spaces` |
-| Pages | `/cms/pages` |
-| Promotions | `/cms/promotions` |
+Route binding is by **`uuid`** everywhere under `/cms/*`, never by slug or numeric id — including Pages and Journal posts, whose *public* routes use `slug`.
 
-Response shapes are identical to the public read shapes in `API_GUIDE_WEBSITE.md`'s Module: Content — the same Resource class serves both admin and public routes. `destroy` returns HTTP 204, `data: null`.
+| Module | Base path | Media | Notes |
+|---|---|---|---|
+| Room types | `/cms/room-types` | ✅ | Amenity pivot; delete cascades to rooms |
+| Rooms | `/cms/rooms` | ✅ | Not translatable; no `sort_order` |
+| Facilities | `/cms/facilities` | ✅ | |
+| Dining venues | `/cms/dining-venues` | ✅ | Delete cascades to menu categories → items |
+| Menu categories | `/cms/menu-categories` | — | `en`/`ar` only; `PUT`/`PATCH` needs the full payload |
+| Menu items | `/cms/menu-items` | ✅ | `en`/`ar` only; full payload on update; no `sort_order` |
+| Event spaces | `/cms/event-spaces` | ✅ | `amenities` is translatable free text here |
+| Amenities | `/cms/amenities` | — | The vocabulary room types attach to |
+| Home sliders | `/cms/home-sliders` | ✅ | Exposes `photo`, no `images` array |
+| Promotions | `/cms/promotions` | ✅ | |
+| Pages | `/cms/pages` | — | No `images` key at all |
+| Reviews | `/cms/reviews` | — | **Read + publish only** — see below |
+| Testimonials | `/cms/testimonials` | ✅ | |
+| FAQs | `/cms/faqs` | — | |
+| Experiences | `/cms/experiences` | ✅ | |
+| Gallery categories | `/cms/gallery-categories` | — | Delete cascades to its photographs |
+| Gallery items | `/cms/gallery-items` | ✅ | The photograph arrives via the media route |
+| Journal posts | `/cms/journal-posts` | ✅ | `published_on` is a display date, not a schedule |
+| Site settings | `/cms/settings` | — | **`GET` + bulk `PUT` only** — see below |
+
+P7 service catalog, identical gates, full `apiResource` each (`PUT` **or** `PATCH`, full payload required on update, `en`/`ar` only): `/cms/spa-services`, `/cms/pool-cabanas`, `/cms/transfers`, `/cms/restaurant-tables`, `/cms/service-categories`, `/cms/service-items`. Only `/cms/menu-items` in that group takes media.
+
+Response shapes are identical to the public read shapes — the same Resource class serves both admin and public routes, so only the row *selection* differs. `store` returns HTTP 201, `destroy` returns HTTP 204 with `data: null`.
+
+> **There are no soft deletes anywhere in the CMS.** `DELETE` is permanent, and several relations cascade (room type → rooms, dining venue → menu categories → menu items, gallery category → items, menu category → items). Deleting a parent also leaves its media rows and files behind — nothing cleans them up. Confirm destructively and name what else disappears.
+
+### Publishing
+
+`is_active` is the **only** publishing mechanism. There is no draft state, no preview token, no revision history, no `published_at`, and no scheduler.
+
+Its database default is **`true`** on every content table, and the create requests do not force the field — so a `POST` that omits `is_active` publishes immediately. A "save as draft" control must send `is_active: false` explicitly.
+
+`journal_posts.published_on` and `promotions.valid_from`/`valid_until` are **display metadata only** — they order and label content, they never gate visibility. A future-dated active journal post and an expired active promotion are both live right now.
+
+On the CMS content modules `is_active` and `sort_order` are validated as bare `['boolean']` / `['integer','min:0']`: **omit the key to leave the value alone; sending `null` is a `422`.** (The menu module and the P7 catalog use `['nullable', …]` and do accept `null` — an inconsistency, so code for the strict case.)
 
 ### Create/update field reference
 
-**Room type** — `name.en/ar`, `description.en/ar` (required strings), `amenities` (array of strings, optional), `base_occupancy`/`max_occupancy` (int 1–20, `max_occupancy >= base_occupancy`), `size_sqm` (optional numeric), `base_price_usd` (required numeric ≥0), `is_active`, `sort_order`.
+`{loc}` = translatable, submitted and returned as a locale-keyed object. **req** = required in `en`+`ar` on create; **opt** = nullable in every locale.
 
-**Room** — `room_type_uuid` (**not** `room_type_id` — required, must exist), `number` (required, unique), `floor` (optional int 0–200), `status` (`available`/`occupied`/`maintenance`), `is_active`.
+**Room type** — `name` `{loc}` req (max 255), `description` `{loc}` req, `amenities` (optional array of `{ uuid (must exist), is_highlight (bool), sort_order (int ≥0) }`), `view_type` (nullable: `city|garden|pool|courtyard|mountain|interior`), `bed_types` (nullable array of `king|queen|double|twin|single|extra`), `base_occupancy` + `max_occupancy` (required on create, int 1–20, `max_occupancy >= base_occupancy`), `size_sqm` (nullable numeric ≥1), `base_price_usd` (required numeric ≥0), `cancellation_hours` (int 0–8760), `is_active`, `sort_order`.
+`amenities` is a pivot **sync**: send the array to replace the whole set, omit the key to leave it untouched, send `[]`/`null` to detach all; a `uuid` that does not resolve is skipped silently, and a row's `sort_order` defaults to its array index. Read side returns `amenities` as amenity objects plus `highlights` (the `is_highlight` subset) — **not** an array of strings.
+*Known gap:* `UpdateRoomTypeRequest` drops `gte:base_occupancy`, so a `PUT` will accept `max_occupancy` below `base_occupancy`. Validate client-side.
 
-**Facility** — `name.en/ar`, `description.en/ar` (required), `location.en/ar`, `hours.en/ar` (optional), `is_active`, `sort_order`.
+**Room** — `room_type_uuid` (**not** `room_type_id` — required on create, must exist), `number` (required on create, max 10, unique), `floor` (nullable int 0–200), `status` (`available|occupied|maintenance`), `is_active`. No `sort_order`. The nested `room_type` in the response omits `images`/`banner`/`amenities`/`highlights` — those relations are not eager-loaded through the nesting.
 
-**Dining venue** — `name.en/ar`, `description.en/ar` (required), `cuisine_type.en/ar`, `location.en/ar`, `hours.en/ar` (optional), `is_active`, `sort_order`.
+**Facility** — `name` `{loc}` req, `description` `{loc}` req, `location` `{loc}` opt, `hours` `{loc}` opt, `is_active`, `sort_order`.
 
-**Event space** — `name.en/ar`, `description.en/ar` (required), `capacity` (optional int ≥1), `location.en/ar`, `amenities.en/ar` (translatable free text, optional), `is_active`, `sort_order`.
+**Dining venue** — `name` `{loc}` req, `description` `{loc}` req, `cuisine_type` `{loc}` opt, `location` `{loc}` opt, `hours` `{loc}` opt, `is_active`, `sort_order`. Read side adds read-only `rating`/`rating_count` review aggregates.
 
-**Page** — `slug` (required, unique, `^[a-z0-9-]+$`), `title.en/ar`, `content.en/ar` (required), `is_active`, `sort_order`. No image gallery on this type.
+**Menu category** — `dining_venue_uuid` (required, must exist), `slug` (required, max 64 — auto-derived from `name.en` when omitted; **no character or uniqueness constraint**), `name.en` + `name.ar` (both required, max 255), `sort_order` (nullable), `is_active` (nullable). `fr`/`tr`/`es` are **not accepted**. Update reuses the create request — resend the full payload.
 
-**Promotion** — `title.en/ar`, `description.en/ar` (required), `terms.en/ar` (optional), `valid_from`/`valid_until` (optional dates, `valid_until >= valid_from`), `is_active`, `sort_order`.
+**Menu item** — `menu_category_uuid` (required, must exist), `name.en` + `name.ar` (required), `description.en`/`description.ar` (nullable), `price_usd` (required numeric ≥0), `is_vegan` (nullable), `is_active` (nullable). No `sort_order`. `fr`/`tr`/`es` not accepted; full payload on update. Read side exposes `type` (the parent category's slug) and `photo` (first image).
 
-On `update`, all fields become `sometimes` (translatable required fields become `sometimes|required` — you can't submit an incomplete translation, but you can omit the field entirely to leave it unchanged).
+**Event space** — `name` `{loc}` req, `description` `{loc}` req, `capacity` (nullable int ≥1), `location` `{loc}` opt, `amenities` `{loc}` opt — a **translatable free-text string here**, not the array it is on room types. Plus `is_active`, `sort_order`.
+
+**Amenity** — `slug` (required on create, max 255, unique, auto-derived from `name.en` when omitted; **no `^[a-z0-9-]+$` constraint**, unlike every other slug field), `name` `{loc}` req (max 255), `icon` (nullable string max 64 — free-form, no server vocabulary), `is_active`, `sort_order`.
+
+**Home slider** — `header_text` `{loc}` req (max 255), `location` `{loc}` req (max 255), `description_text` `{loc}` req (max 1000), `is_active`, `sort_order`. All three text fields are required in `en`+`ar`. The response exposes `photo` (first image) and **no `images` array**, even though the plural media routes exist — upload exactly one image.
+
+**Promotion** — `title` `{loc}` req, `description` `{loc}` req, `secondary_description` `{loc}` opt, `terms` `{loc}` opt, `valid_from` (nullable date), `valid_until` (nullable date, `>= valid_from`), `is_active`, `sort_order`. Read side adds `banner` (first image).
+
+**Page** — `slug` (required on create, unique, `^[a-z0-9-]+$`), `title` `{loc}` req, `content` `{loc}` req, `is_active`, `sort_order`. No image gallery and no `images` key on this type.
+
+**Review** — no create/update/delete; guests are the only authors. `GET /cms/reviews` is list-only (**there is no `/{uuid}` show route**), newest first, `per_page` ignored (fixed 15), no `search`/`sort`. It takes one optional parameter, `is_published`, read via `$request->boolean()`: omit for all, `true` for published, `false` for unpublished — and **`?is_published=` (empty) means *unpublished*, not "all"**, because this module bypasses the standard filter layer. Moderation is `PATCH /cms/reviews/{uuid}/publish` with `{ "is_published": true|false }` (required boolean). `is_verified_stay` is derived server-side and not editable.
+
+**Testimonial** — `author_name` (required on create, max 255, **plain string, not translatable**), `author_title` `{loc}` opt (max 255), `quote` `{loc}` req, `rating` (nullable int 1–5), `is_active`, `sort_order`. Read side adds `avatar` (first image). Unrelated to guest reviews.
+
+**FAQ** — `category` (nullable plain string max 255, free-form — no server vocabulary), `question` `{loc}` req (max 500), `answer` `{loc}` req, `is_active`, `sort_order`.
+
+**Experience** — `slug` (required on create, unique, `^[a-z0-9-]+$`), `title` `{loc}` req (max 255), `description` `{loc}` req, `category` (required on create, plain string max 255, free-form), `duration_minutes` (nullable int 1–1440), `price_usd` (nullable numeric ≥0), `is_active`, `sort_order`. Read side adds `image` (first) plus `images`.
+
+**Gallery category** — `slug` (required on create, unique, `^[a-z0-9-]+$`), `name` `{loc}` req (max 255), `is_active`, `sort_order`. No media — the photographs live on gallery items. **Delete cascades to every photograph in the category.**
+
+**Gallery item** — `gallery_category_uuid` (required on create, must exist), `caption` `{loc}` req (max 500), `is_active`, `sort_order`. Create the row, then `POST /cms/gallery-items/{uuid}/images` — the row is meaningless without a photograph. Read side adds `category_slug`, the nested `category`, `image` (first) and `images`. Filter the list by chip with **`?category=<category-slug>`** (a bespoke parameter outside the DSL); the whitelisted `gallery_category_id` is the internal integer key the API never exposes and is unusable from a client.
+
+**Journal post** — `slug` (required on create, unique, `^[a-z0-9-]+$`), `title` `{loc}` req (max 255), `excerpt` `{loc}` opt (max 1000), `body` `{loc}` req, `category` `{loc}` opt (max 100 — **translatable here**, unlike FAQ/experience `category`), `published_on` (required date on create, `sometimes|date` on update), `is_active`, `sort_order`. Read side adds `cover_image` (first image) plus `images`. Default order is `published_on` DESC then `sort_order`.
+
+**Site settings** — see the dedicated subsection below.
+
+On `update`, plain fields become `sometimes` and translatable required fields become `sometimes|required` — you cannot submit an incomplete or blanked translation, but you can omit the field entirely to leave it unchanged. **Exceptions:** the menu module and the P7 catalog reuse their create request on update, so those `PUT`/`PATCH` calls require the full payload.
+
+### Site settings — two routes, neither conventional
+
+`GET /cms/settings` is **not paginated**. `data` is an object keyed by group, each holding an array of full rows ordered by `group` then `key`, and it includes `is_active: false` rows:
+
+```json
+{
+  "booking": [
+    { "uuid": "…", "group": "booking", "key": "cta_label",
+      "value": { "en": "Book Now", "ar": "…", "fr": "…" }, "type": "text", "is_active": true }
+  ],
+  "contact": [ … ], "footer": [ … ], "hero": [ … ], "seo": [ … ], "social": [ … ]
+}
+```
+
+`PUT /cms/settings` is a **bulk atomic upsert**:
+
+```json
+{ "settings": [
+  { "group": "hero", "key": "heading", "value": { "en": "…", "ar": "…" }, "type": "text", "is_active": true }
+] }
+```
+
+- `settings` required array (min 1). Per row: `group` required (max 50, `^[a-z][a-z0-9_]*$`), `key` required (max 100, same pattern), `value` `present` (any JSON, including `null`), `type` required — one of `text`, `richtext`, `image`, `url`, `json`, `bool` — and `is_active` optional boolean.
+- Identity is the `(group, key)` pair. A duplicate pair inside one payload is a `422` keyed `settings.{index}.key`.
+- Every row is `updateOrCreate`d in **one transaction** — all of it lands or none does. A `422` on row 7 means rows 1–6 were not written.
+- The response is the **full grouped set**, not an echo of what you sent. Re-render the form from it.
+- `value` is **unvalidated free-form JSON**; `type` is only a hint about which editor widget to render. Locale maps in settings are a convention, not something `TranslatableRules` enforces. Validate client-side.
+- No per-row read, no `POST`, no `DELETE`. A setting can be deactivated but not removed through the API.
+
+Seeded groups/keys (20 rows, values in `en`/`ar`/`fr`): `contact` (`phone`, `email`, `address`, `address_lines:json`, `hours_note`), `social` (`instagram`, `facebook`, `x`, `youtube` — seeded `null` and inactive), `footer` (`tagline`, `copyright`, `newsletter_heading`), `booking` (`cta_label`, `availability_note`), `seo` (`site_title`, `meta_description`), `hero` (`eyebrow`, `heading`, `subheading`, `cta_label`).
+
+The public read of the same data (`GET /api/public/settings`) is a **flat `{group:{key:value}}` map of active rows only** — a different shape. Do not reuse one parser for both.
 
 ### Images
 
-Every type except Page supports a gallery:
+> ⚠️ **In flight:** a media library (parentless upload, a filterable `index`, an
+> `update`, a delete by media uuid alone, `attach`-existing routes per parent, and
+> new `alt_text` (translatable) + `title` fields on every media object) is being
+> added in `MediaController` / `MediaService` / `Media` / `MediaResource` but is
+> **not yet wired into `routes/api.php`**. Everything below is what the API serves
+> today; re-check before building an asset picker.
 
-- `POST /cms/{type}/{uuid}/images` — multipart, `image` (required file, `jpg`/`jpeg`/`png`/`webp`, max 5MB), `sort_order` (optional int, default 0). Returns HTTP 201, the created media object: `{ "uuid", "url", "file_name", "mime_type", "size", "sort_order" }`.
-- `DELETE /cms/{type}/{uuid}/images/{media}` — removes the file and the record. HTTP 204. There's no bulk-delete — each image is removed individually.
+12 modules accept media: `room-types`, `rooms`, `facilities`, `dining-venues`, `event-spaces`, `home-sliders`, `promotions`, `testimonials`, `experiences`, `gallery-items`, `journal-posts`, `menu-items`. Not `amenities`, `faqs`, `pages`, `gallery-categories`, `settings`, `reviews`, or the P7 catalog other than menu items.
+
+- `POST /cms/{module}/{uuid}/images` — multipart, `image` (**required**, a single file, `jpg`/`jpeg`/`png`/`webp`, max 5 MB / `max:5120` KB), `sort_order` (optional int ≥0, default 0). Returns HTTP 201 and the created media object: `{ "uuid", "url", "file_name", "mime_type", "size", "sort_order" }`. One file per request — upload a five-image gallery with five calls.
+- `DELETE /cms/{module}/{uuid}/images/{media}` — removes the file and the record. HTTP 204. No bulk delete.
+
+**The `{uuid}` parent segment scopes the delete.** `MediaService` verifies that the media's owner matches the parent in the URL; deleting a valid media uuid through the wrong parent returns **`404 not_found`** (with `context: { media, parent }`) and deletes nothing. A flat client-side map of media uuids is not enough — you must call with the parent the image actually belongs to.
+
+URLs are **absolute**, built as `APP_URL + /storage/ + path`, so media is served by the API origin and **`php artisan storage:link` must have been run** or every URL is a well-formed 404. Storage layout is `cms/{ModelClassBasename}/{parent-uuid}/{hash}.{ext}`.
+
+The single-image convenience fields — `banner` (room types, promotions), `photo` (home sliders, menu items), `cover_image` (journal posts), `avatar` (testimonials), `image` (experiences, gallery items) — are all `images->first()?->url`, i.e. load order. There is **no designated primary image** and no way to set one; `sort_order` is advisory.
 
 ---
 
@@ -628,7 +768,7 @@ Paginated, newest first.
 
 ## Module: In-Stay Service Catalog (reads `cms.view|cms.edit` · writes `cms.edit`)
 
-Standard `apiResource` CRUD (index/store/show/update/destroy) for the 6 bookable/orderable catalog types staff maintain. Gated exactly like Module: CMS Content — `index`/`show` on `permission:cms.view|cms.edit`, `store`/`update`/`destroy` on `permission:cms.edit`.
+Standard `apiResource` CRUD (index/store/show/update/destroy) for the **8** bookable/orderable catalog types staff maintain. Gated exactly like Module: CMS Content — `index`/`show` on `permission:cms.view|cms.edit`, the mutating verbs on `permission:cms.edit`. The update route accepts `PUT` **or** `PATCH`.
 
 | Type | Base path | Fillable fields |
 |---|---|---|
@@ -636,10 +776,20 @@ Standard `apiResource` CRUD (index/store/show/update/destroy) for the 6 bookable
 | Restaurant tables | `/cms/restaurant-tables` | `dining_venue_uuid` (optional, must exist), `table_number` (required, max 50), `capacity` (required int ≥1), `is_active` — **not translatable, no `name`** |
 | Pool cabanas | `/cms/pool-cabanas` | `name.en/ar` (required), `capacity` (required int ≥1), `price_usd` (required ≥0), `is_active` |
 | Transfers | `/cms/transfers` | `name.en/ar` (required), `price_usd` (required ≥0), `is_active` — no capacity/duration |
-| Menu categories | `/cms/menu-categories` | `name.en/ar` (required), `sort_order` (optional int ≥0), `is_active` |
-| Menu items | `/cms/menu-items` | `menu_category_uuid` (required, must exist), `name.en/ar` (required), `description.en/ar` (optional), `price_usd` (required ≥0), `is_active` |
+| Service categories | `/cms/service-categories` | `code` (required, max 50, unique), `name.en/ar` (required), `description.en/ar` (optional), `kind` (required — `ServiceCategoryKind`), `department` (required when `kind` is `catalog` or `direct` — `Department`), `link_target` (required when `kind` is `link`, max 30), `icon` (optional, max 50), `is_active`, `sort_order` |
+| Service items | `/cms/service-items` | `service_category_uuid` (required, must exist), `name.en/ar` (required), `description.en/ar` (optional), `expected_minutes` (optional int 1–10080), `price_usd` (optional ≥0), `is_default`, `is_active`, `sort_order` |
+| Menu categories | `/cms/menu-categories` | `dining_venue_uuid` (**required**, must exist), `slug` (**required**, max 64 — auto-derived from `name.en` when omitted), `name.en/ar` (required), `sort_order` (optional int ≥0), `is_active` |
+| Menu items | `/cms/menu-items` | `menu_category_uuid` (required, must exist), `name.en/ar` (required), `description.en/ar` (optional), `price_usd` (required ≥0), `is_vegan` (optional bool), `is_active` |
 
-Response shapes mirror the fillable fields 1:1 (bilingual fields as `{en, ar}`, foreign keys exposed as `_uuid`, never the internal integer id). Menu categories nest their items under `items: []` when the relation is loaded.
+Three properties this whole group shares, and which differ from Module: CMS Content:
+
+- **`en` and `ar` only.** These requests hardcode `name.en`/`name.ar` instead of generating rules from `config/cms.php`, so `fr`/`tr`/`es` keys are dropped by validation without any error.
+- **Update requires the full payload.** Each update route reuses its *create* FormRequest, so every `required` field is still required on `PUT`/`PATCH`. A partial update returns `422`.
+- **`is_active` is `['nullable','boolean']` here**, so `null` is accepted — unlike the CMS content modules, where `null` is a `422`.
+
+Response shapes mirror the fillable fields (translatable fields as locale maps, foreign keys exposed as `_uuid`, never the internal integer id). Menu categories nest their items under `items: []` when the relation is loaded; menu items expose `type` (the parent category's slug) and `photo` (first image). **`/cms/menu-items` is the only member of this group with media routes** (`POST`/`DELETE .../{uuid}/images` — same contract as Module: CMS Content).
+
+For the menu module specifically, see also Module: CMS Content — it is documented there as part of the dining content the website reads.
 
 ---
 

@@ -140,7 +140,10 @@ class RefreshPostmanEnvironment extends Command
             'check_in_approval_reservation_uuid' => CheckInApproval::where('status', CheckInApprovalStatus::PENDING)->firstOrFail()->reservation->uuid,
             'staff_target_uuid' => User::where('email', 'reception@carlton.demo')->firstOrFail()->uuid,
             'trainee_staff_uuid' => User::where('email', 'trainee@carlton.demo')->firstOrFail()->uuid,
-            'media_uuid' => Media::first()?->uuid ?? '',
+            // Attached, not just any row: this variable fills the nested
+            // `/{parent}/{uuid}/images/{media}` requests, and a library row
+            // (mediable_type null) would 404 there by design.
+            'media_uuid' => Media::attached()->first()?->uuid ?? '',
             'ahmad_folio_uuid' => Folio::where('reservation_id', $ahmadReservation->id)->firstOrFail()->uuid,
         ];
     }

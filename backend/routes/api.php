@@ -236,16 +236,35 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         // Site settings — one grouped read, no per-row show. Not paginated;
         // see SiteSettingService::grouped().
         Route::get('/settings',                      [AdminSiteSettingController::class, 'index']);
+
+        // Media library — every uploaded asset, attached or not. `?unattached=true`
+        // is the "nothing points at this yet" view; `?mime=` and `?mediable_type=`
+        // narrow by file type and by which entity holds it. Read-only here so a
+        // cms.view reviewer can see what the site is built from.
+        Route::get('/media',                         [MediaController::class, 'index']);
     });
 
     // ── Writes (cms.edit only) ────────────────────────────────────────
     Route::middleware('permission:cms.edit')->group(function () {
+        // Media library — parentless upload, metadata edit, and delete. The
+        // per-parent `/{parent}/{uuid}/images` routes below still exist and are
+        // unchanged; these are the same asset store addressed on its own terms.
+        // DELETE here is unscoped by design — it is the library's own route, so
+        // there is no parent to check against, and the nested delete keeps its
+        // cross-parent guard.
+        Route::post  ('/media',                                        [MediaController::class, 'store']);
+        Route::patch ('/media/{media}',                               [MediaController::class, 'update']);
+        Route::delete('/media/{media}',                               [MediaController::class, 'destroy']);
+
         // Room types
         Route::post  ('/room-types',                                  [AdminRoomTypeController::class, 'store']);
         Route::put   ('/room-types/{roomType}',                       [AdminRoomTypeController::class, 'update']);
         Route::delete('/room-types/{roomType}',                       [AdminRoomTypeController::class, 'destroy']);
         Route::post  ('/room-types/{roomType}/images',                [MediaController::class, 'storeRoomType']);
         Route::delete('/room-types/{roomType}/images/{media}',        [MediaController::class, 'destroyRoomType']);
+        // Attach assets that already exist, so one photograph can serve several
+        // entities without being uploaded once per entity.
+        Route::post  ('/room-types/{roomType}/images/attach',          [MediaController::class, 'attachRoomType']);
 
         // Rooms
         Route::post  ('/rooms',                                       [AdminRoomController::class, 'store']);
@@ -253,6 +272,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/rooms/{room}',                                [AdminRoomController::class, 'destroy']);
         Route::post  ('/rooms/{room}/images',                         [MediaController::class, 'storeRoom']);
         Route::delete('/rooms/{room}/images/{media}',                 [MediaController::class, 'destroyRoom']);
+        Route::post  ('/rooms/{room}/images/attach',                  [MediaController::class, 'attachRoom']);
 
         // Facilities
         Route::post  ('/facilities',                                  [AdminFacilityController::class, 'store']);
@@ -260,6 +280,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/facilities/{facility}',                       [AdminFacilityController::class, 'destroy']);
         Route::post  ('/facilities/{facility}/images',                [MediaController::class, 'storeFacility']);
         Route::delete('/facilities/{facility}/images/{media}',        [MediaController::class, 'destroyFacility']);
+        Route::post  ('/facilities/{facility}/images/attach',          [MediaController::class, 'attachFacility']);
 
         // Dining venues
         Route::post  ('/dining-venues',                               [AdminDiningVenueController::class, 'store']);
@@ -267,6 +288,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/dining-venues/{diningVenue}',                 [AdminDiningVenueController::class, 'destroy']);
         Route::post  ('/dining-venues/{diningVenue}/images',          [MediaController::class, 'storeDiningVenue']);
         Route::delete('/dining-venues/{diningVenue}/images/{media}',  [MediaController::class, 'destroyDiningVenue']);
+        Route::post  ('/dining-venues/{diningVenue}/images/attach',    [MediaController::class, 'attachDiningVenue']);
 
         // Event spaces
         Route::post  ('/event-spaces',                                [AdminEventSpaceController::class, 'store']);
@@ -274,6 +296,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/event-spaces/{eventSpace}',                   [AdminEventSpaceController::class, 'destroy']);
         Route::post  ('/event-spaces/{eventSpace}/images',            [MediaController::class, 'storeEventSpace']);
         Route::delete('/event-spaces/{eventSpace}/images/{media}',    [MediaController::class, 'destroyEventSpace']);
+        Route::post  ('/event-spaces/{eventSpace}/images/attach',      [MediaController::class, 'attachEventSpace']);
 
         // Amenities (in-room amenity catalog joined to room types)
         Route::post  ('/amenities',                                   [AdminAmenityController::class, 'store']);
@@ -286,6 +309,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/home-sliders/{homeSlider}',                   [AdminHomeSliderController::class, 'destroy']);
         Route::post  ('/home-sliders/{homeSlider}/images',            [MediaController::class, 'storeHomeSlider']);
         Route::delete('/home-sliders/{homeSlider}/images/{media}',    [MediaController::class, 'destroyHomeSlider']);
+        Route::post  ('/home-sliders/{homeSlider}/images/attach',      [MediaController::class, 'attachHomeSlider']);
 
         // Reviews — moderation is a write.
         Route::patch ('/reviews/{review}/publish',                    [AdminReviewController::class, 'setPublished']);
@@ -301,6 +325,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/promotions/{promotion}',                      [AdminPromotionController::class, 'destroy']);
         Route::post  ('/promotions/{promotion}/images',               [MediaController::class, 'storePromotion']);
         Route::delete('/promotions/{promotion}/images/{media}',       [MediaController::class, 'destroyPromotion']);
+        Route::post  ('/promotions/{promotion}/images/attach',         [MediaController::class, 'attachPromotion']);
 
         // Testimonials
         Route::post  ('/testimonials',                                [AdminTestimonialController::class, 'store']);
@@ -308,6 +333,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/testimonials/{testimonial}',                  [AdminTestimonialController::class, 'destroy']);
         Route::post  ('/testimonials/{testimonial}/images',           [MediaController::class, 'storeTestimonial']);
         Route::delete('/testimonials/{testimonial}/images/{media}',   [MediaController::class, 'destroyTestimonial']);
+        Route::post  ('/testimonials/{testimonial}/images/attach',     [MediaController::class, 'attachTestimonial']);
 
         // FAQs — text only, no media
         Route::post  ('/faqs',                                        [AdminFaqController::class, 'store']);
@@ -320,6 +346,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/experiences/{experience}',                    [AdminExperienceController::class, 'destroy']);
         Route::post  ('/experiences/{experience}/images',             [MediaController::class, 'storeExperience']);
         Route::delete('/experiences/{experience}/images/{media}',     [MediaController::class, 'destroyExperience']);
+        Route::post  ('/experiences/{experience}/images/attach',       [MediaController::class, 'attachExperience']);
 
         // Gallery categories — deleting one cascades to its photographs.
         Route::post  ('/gallery-categories',                          [AdminGalleryCategoryController::class, 'store']);
@@ -332,6 +359,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/gallery-items/{galleryItem}',                 [AdminGalleryItemController::class, 'destroy']);
         Route::post  ('/gallery-items/{galleryItem}/images',          [MediaController::class, 'storeGalleryItem']);
         Route::delete('/gallery-items/{galleryItem}/images/{media}',  [MediaController::class, 'destroyGalleryItem']);
+        Route::post  ('/gallery-items/{galleryItem}/images/attach',    [MediaController::class, 'attachGalleryItem']);
 
         // Journal posts — first image is the article cover.
         Route::post  ('/journal-posts',                                [AdminJournalPostController::class, 'store']);
@@ -339,6 +367,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/journal-posts/{journalPost}',                  [AdminJournalPostController::class, 'destroy']);
         Route::post  ('/journal-posts/{journalPost}/images',           [MediaController::class, 'storeJournalPost']);
         Route::delete('/journal-posts/{journalPost}/images/{media}',   [MediaController::class, 'destroyJournalPost']);
+        Route::post  ('/journal-posts/{journalPost}/images/attach',     [MediaController::class, 'attachJournalPost']);
 
         // Site settings — a single bulk upsert, atomic, no per-row verbs. PUT
         // rather than PATCH: the CMS submits the whole settings form it holds.
@@ -493,6 +522,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::apiResource('menu-items', MenuItemController::class)->except(['index', 'show'])->parameters(['menu-items' => 'menuItem']);
         Route::post  ('/menu-items/{menuItem}/images',         [MediaController::class, 'storeMenuItem']);
         Route::delete('/menu-items/{menuItem}/images/{media}', [MediaController::class, 'destroyMenuItem']);
+        Route::post  ('/menu-items/{menuItem}/images/attach',   [MediaController::class, 'attachMenuItem']);
     });
 });
 

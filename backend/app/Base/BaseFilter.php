@@ -383,7 +383,7 @@ class BaseFilter
     protected function scalar(mixed $value, string $key): mixed
     {
         if (! is_scalar($value)) {
-            throw $this->reject($key, __('validation.string', ['attribute' => $key]));
+            throw $this->reject($key, __('custom.validation.string', ['attribute' => $key]));
         }
 
         return $value;
@@ -414,7 +414,7 @@ class BaseFilter
             return false;
         }
 
-        throw $this->reject($key, __('validation.boolean', ['attribute' => $key]));
+        throw $this->reject($key, __('custom.validation.boolean', ['attribute' => $key]));
     }
 
     protected function castInt(mixed $value, string $key): int
@@ -427,7 +427,7 @@ class BaseFilter
             return (int) trim($value);
         }
 
-        throw $this->reject($key, __('validation.integer', ['attribute' => $key]));
+        throw $this->reject($key, __('custom.validation.integer', ['attribute' => $key]));
     }
 
     /**

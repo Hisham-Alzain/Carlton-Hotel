@@ -18,14 +18,23 @@ class Experience extends Model
 {
     use HasFactory, HasUuid, HasTranslations, LogsActivity, PurgesMedia;
 
-    protected $translatable = ['title', 'description'];
+    /**
+     * `group_size` and `duration_label` are prose the site prints verbatim
+     * ("2–6 guests", "Half day", "ساعتان – 3 ساعات") — see the migration for why
+     * neither can be a number.
+     */
+    protected $translatable = ['title', 'description', 'group_size', 'duration_label'];
 
     protected $fillable = [
         'slug',
         'title',
         'description',
         'category',
+        'group_size',
+        // The schedulable upper bound, alongside the published range it belongs
+        // to. Both are kept on purpose; the migration explains.
         'duration_minutes',
+        'duration_label',
         'price_usd',
         'is_active',
         'sort_order',

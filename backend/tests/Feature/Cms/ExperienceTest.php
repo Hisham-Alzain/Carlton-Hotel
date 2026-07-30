@@ -385,4 +385,110 @@ class ExperienceTest extends TestCase
             ->assertOk()
             ->assertJsonCount(12, 'data.items');
     }
+
+    /**
+     * The two fields the site used to recover from bundled copy keyed by slug.
+     * They are asserted against the exact published strings, not merely
+     * "non-empty": the whole point of the columns is that the API returns the
+     * hotel's own wording rather than something formatted from a number.
+     */
+    public function test_seeder_populates_group_size_and_duration_label_in_every_seeded_locale(): void
+    {
+        Storage::fake('public');
+        $this->seed(\Database\Seeders\CmsContentSeeder::class);
+
+        $first = Experience::orderBy('sort_order')->firstOrFail();
+
+        $this->assertSame('2–3 hours', $first->getTranslation('duration_label', 'en', false));
+        // The Arabic grammatical dual — one word for "two hours". No numeric
+        // range and no `Intl` formatter can produce this.
+        $this->assertSame('ساعتان – 3 ساعات', $first->getTranslation('duration_label', 'ar', false));
+        $this->assertSame('2–3 heures', $first->getTranslation('duration_label', 'fr', false));
+
+        $this->assertSame('2–6 guests', $first->getTranslation('group_size', 'en', false));
+        $this->assertSame('2–6 ضيوف', $first->getTranslation('group_size', 'ar', false));
+        $this->assertSame('2–6 convives', $first->getTranslation('group_size', 'fr', false));
+
+        // "Half day" is the case a minutes pair cannot express at all: the
+        // schedulable bound is 240, which would format as "4 hours".
+        $halfDay = Experience::where('slug', 'personal-shopping')->firstOrFail();
+        $this->assertSame('Half day', $halfDay->getTranslation('duration_label', 'en', false));
+        $this->assertSame('نصف يوم', $halfDay->getTranslation('duration_label', 'ar', false));
+        $this->assertSame('Demi-journée', $halfDay->getTranslation('duration_label', 'fr', false));
+        $this->assertSame(240, $halfDay->duration_minutes, 'the schedulable bound must survive alongside the label');
+
+        // No record may be blank in a seeded locale — a hole here is exactly the
+        // gap an editor would hit on a new record.
+        foreach (Experience::all() as $experience) {
+            foreach (['en', 'ar', 'fr'] as $locale) {
+                $this->assertNotEmpty(
+                    $experience->getTranslation('group_size', $locale, false),
+                    "{$experience->slug} is missing its {$locale} group_size",
+                );
+                $this->assertNotEmpty(
+                    $experience->getTranslation('duration_label', $locale, false),
+                    "{$experience->slug} is missing its {$locale} duration_label",
+                );
+            }
+        }
+
+        // And the public payload carries both, as whole locale maps.
+        $item = $this->getJson('/api/public/experiences?per_page=100')->assertOk()->json('data.items.0');
+        $this->assertSame('2–3 hours', $item['duration_label']['en']);
+        $this->assertSame('2–6 ضيوف', $item['group_size']['ar']);
+    }
+
+    public function test_group_size_and_duration_label_round_trip_as_locale_maps(): void
+    {
+        $token = $this->editorToken();
+
+        $uuid = $this->withToken($token)
+            ->postJson('/api/cms/experiences', $this->payload([
+                'group_size'     => ['en' => '2–6 guests', 'ar' => '2–6 ضيوف'],
+                'duration_label' => ['en' => 'Half day', 'ar' => 'نصف يوم'],
+            ]))
+            ->assertStatus(201)
+            ->assertJsonPath('data.group_size.ar', '2–6 ضيوف')
+            ->assertJsonPath('data.duration_label.en', 'Half day')
+            // The label does not displace the schedulable bound.
+            ->assertJsonPath('data.duration_minutes', 120)
+            ->json('data.uuid');
+
+        $this->withToken($token)
+            ->putJson("/api/cms/experiences/{$uuid}", [
+                'duration_label' => ['en' => '2–3 hours', 'ar' => 'ساعتان – 3 ساعات'],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.duration_label.en', '2–3 hours')
+            ->assertJsonPath('data.duration_label.ar', 'ساعتان – 3 ساعات');
+
+        $this->getJson('/api/public/experiences')
+            ->assertOk()
+            ->assertJsonPath('data.items.0.group_size.en', '2–6 guests');
+    }
+
+    /**
+     * Both are nullable: an editor who has not written them yet must still be
+     * able to save, and the field has to appear in the payload as an empty map
+     * rather than vanish, so a client can tell "not written" from "not sent".
+     */
+    public function test_group_size_and_duration_label_are_optional(): void
+    {
+        $this->withToken($this->editorToken())
+            ->postJson('/api/cms/experiences', $this->payload())
+            ->assertStatus(201)
+            ->assertJsonPath('data.group_size', [])
+            ->assertJsonPath('data.duration_label', []);
+    }
+
+    public function test_group_size_and_duration_label_are_length_capped(): void
+    {
+        $this->withToken($this->editorToken())
+            ->postJson('/api/cms/experiences', $this->payload([
+                'group_size'     => ['en' => str_repeat('a', 256)],
+                'duration_label' => ['en' => str_repeat('b', 256)],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['group_size.en', 'duration_label.en']);
+    }
 }

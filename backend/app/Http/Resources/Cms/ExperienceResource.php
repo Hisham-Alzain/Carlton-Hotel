@@ -17,7 +17,16 @@ class ExperienceResource extends BaseResource
             'title'            => $this->getTranslations('title'),
             'description'      => $this->getTranslations('description'),
             'category'         => $this->category,
+            // Locale maps like `title`: the site prints these verbatim and
+            // switches language client-side off a single fetch. An unset field
+            // comes back as `{}`, which the site's `pickLocalized` reads as "".
+            'group_size'       => $this->getTranslations('group_size'),
+            // The schedulable upper bound and the published range, side by side.
+            // A client that has `duration_label` should prefer it — it is the
+            // hotel's own copy; `duration_minutes` can only be formatted into a
+            // single value.
             'duration_minutes' => $this->duration_minutes,
+            'duration_label'   => $this->getTranslations('duration_label'),
             'price_usd'        => $this->price_usd,
             'is_active'        => $this->is_active,
             'sort_order'       => $this->sort_order,

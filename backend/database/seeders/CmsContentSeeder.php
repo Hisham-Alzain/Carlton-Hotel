@@ -503,6 +503,13 @@ class CmsContentSeeder extends Seeder
      * because the block of time a concierge reserves has to be the longest the
      * experience can run. "Half day" is read as four hours.
      *
+     * `duration_label` and `group_size` are the site's printed copy, lifted
+     * verbatim from `experiencesPage.items[].duration` and `.group` — including
+     * the en dash and the Arabic dual ("ساعتان – 3 ساعات"). They are copy, not
+     * numbers, which is why they are translatable columns rather than a minutes
+     * pair; the migration has the full argument. Nothing here is
+     * machine-translated: the site already ships human en/ar/fr for all twelve.
+     *
      * `price_usd` stays null everywhere: the site publishes no prices for these
      * and its call to action is "Enquire". A seeded number would be a quote the
      * hotel never gave.
@@ -512,6 +519,8 @@ class CmsContentSeeder extends Seeder
         $items = [
             [
                 'slug' => 'spice-journey', 'category' => 'gastronomy', 'minutes' => 180,
+                'duration_label' => ['en' => '2–3 hours', 'ar' => 'ساعتان – 3 ساعات', 'fr' => '2–3 heures'],
+                'group_size' => ['en' => '2–6 guests', 'ar' => '2–6 ضيوف', 'fr' => '2–6 convives'],
                 'title' => [
                     'en' => 'Private Spice & Herb Journey',
                     'ar' => 'رحلة خاصة في عالم التوابل والأعشاب',
@@ -525,6 +534,8 @@ class CmsContentSeeder extends Seeder
             ],
             [
                 'slug' => 'chefs-table', 'category' => 'gastronomy', 'minutes' => 240,
+                'duration_label' => ['en' => '3–4 hours', 'ar' => '3–4 ساعات', 'fr' => '3–4 heures'],
+                'group_size' => ['en' => '2–4 guests', 'ar' => '2–4 ضيوف', 'fr' => '2–4 convives'],
                 'title' => [
                     'en' => "Chef's Table by Candlelight",
                     'ar' => 'مائدة الشيف على ضوء الشموع',
@@ -538,6 +549,8 @@ class CmsContentSeeder extends Seeder
             ],
             [
                 'slug' => 'bab-sharqi', 'category' => 'culture', 'minutes' => 240,
+                'duration_label' => ['en' => '3–4 hours', 'ar' => '3–4 ساعات', 'fr' => '3–4 heures'],
+                'group_size' => ['en' => '1–6 guests', 'ar' => '1–6 ضيوف', 'fr' => '1–6 convives'],
                 'title' => [
                     'en' => 'Bab Sharqi — Gate of the East',
                     'ar' => 'باب شرقي — بوابة الشرق',
@@ -551,6 +564,10 @@ class CmsContentSeeder extends Seeder
             ],
             [
                 'slug' => 'personal-shopping', 'category' => 'privilege', 'minutes' => 240,
+                // "Half day" is why this is copy and not a number: 240 formats
+                // as "4 hours", which is not what the hotel published.
+                'duration_label' => ['en' => 'Half day', 'ar' => 'نصف يوم', 'fr' => 'Demi-journée'],
+                'group_size' => ['en' => '1–3 guests', 'ar' => '1–3 ضيوف', 'fr' => '1–3 convives'],
                 'title' => [
                     'en' => 'Personal Shopping Concierge',
                     'ar' => 'كونسيرج التسوّق الشخصي',
@@ -564,6 +581,8 @@ class CmsContentSeeder extends Seeder
             ],
             [
                 'slug' => 'in-suite-cinema', 'category' => 'privilege', 'minutes' => 240,
+                'duration_label' => ['en' => '3–4 hours', 'ar' => '3–4 ساعات', 'fr' => '3–4 heures'],
+                'group_size' => ['en' => '2–4 guests', 'ar' => '2–4 ضيوف', 'fr' => '2–4 convives'],
                 'title' => [
                     'en' => 'In-Suite Cinema Evening',
                     'ar' => 'أمسية سينما في الجناح',
@@ -577,6 +596,8 @@ class CmsContentSeeder extends Seeder
             ],
             [
                 'slug' => 'umayyad-mosque', 'category' => 'culture', 'minutes' => 300,
+                'duration_label' => ['en' => '4–5 hours', 'ar' => '4–5 ساعات', 'fr' => '4–5 heures'],
+                'group_size' => ['en' => '1–4 guests', 'ar' => '1–4 ضيوف', 'fr' => '1–4 convives'],
                 'title' => [
                     'en' => 'Umayyad Mosque & Old City Walk',
                     'ar' => 'الجامع الأموي والجولة في المدينة القديمة',
@@ -590,6 +611,8 @@ class CmsContentSeeder extends Seeder
             ],
             [
                 'slug' => 'old-city-bazaar', 'category' => 'culture', 'minutes' => 240,
+                'duration_label' => ['en' => '3–4 hours', 'ar' => '3–4 ساعات', 'fr' => '3–4 heures'],
+                'group_size' => ['en' => '1–6 guests', 'ar' => '1–6 ضيوف', 'fr' => '1–6 convives'],
                 'title' => [
                     'en' => 'Al-Hamidiyah Souq Expedition',
                     'ar' => 'رحلة سوق الحميدية الكبير',
@@ -603,6 +626,8 @@ class CmsContentSeeder extends Seeder
             ],
             [
                 'slug' => 'qasioun-sunset', 'category' => 'culture', 'minutes' => 180,
+                'duration_label' => ['en' => '2–3 hours', 'ar' => '2–3 ساعات', 'fr' => '2–3 heures'],
+                'group_size' => ['en' => '2–6 guests', 'ar' => '2–6 ضيوف', 'fr' => '2–6 convives'],
                 'title' => [
                     'en' => 'Qasioun Mountain at Dusk',
                     'ar' => 'جبل قاسيون عند الغسق',
@@ -616,6 +641,11 @@ class CmsContentSeeder extends Seeder
             ],
             [
                 'slug' => 'azm-palace', 'category' => 'culture', 'minutes' => 180,
+                // Same range as `qasioun-sunset` in en/fr, but the Arabic copy
+                // spells the dual here and uses the numeral there. Lifted as
+                // written — a "consistent" rewrite would be inventing copy.
+                'duration_label' => ['en' => '2–3 hours', 'ar' => 'ساعتان – 3 ساعات', 'fr' => '2–3 heures'],
+                'group_size' => ['en' => '1–6 guests', 'ar' => '1–6 ضيوف', 'fr' => '1–6 convives'],
                 'title' => [
                     'en' => 'Azm Palace & Damascene Heritage',
                     'ar' => 'قصر العظم والتراث الدمشقي',
@@ -629,6 +659,8 @@ class CmsContentSeeder extends Seeder
             ],
             [
                 'slug' => 'calligraphy-workshop', 'category' => 'culture', 'minutes' => 120,
+                'duration_label' => ['en' => '2 hours', 'ar' => 'ساعتان', 'fr' => '2 heures'],
+                'group_size' => ['en' => '1–4 guests', 'ar' => '1–4 ضيوف', 'fr' => '1–4 convives'],
                 'title' => [
                     'en' => 'Arabic Calligraphy with a Master',
                     'ar' => 'الخط العربي مع أستاذ متمرّس',
@@ -642,6 +674,8 @@ class CmsContentSeeder extends Seeder
             ],
             [
                 'slug' => 'meze-masterclass', 'category' => 'gastronomy', 'minutes' => 180,
+                'duration_label' => ['en' => '3 hours', 'ar' => '3 ساعات', 'fr' => '3 heures'],
+                'group_size' => ['en' => '2–8 guests', 'ar' => '2–8 ضيوف', 'fr' => '2–8 convives'],
                 'title' => [
                     'en' => 'Syrian Meze Masterclass',
                     'ar' => 'تحضير المازة السورية',
@@ -655,6 +689,8 @@ class CmsContentSeeder extends Seeder
             ],
             [
                 'slug' => 'rooftop-dawn', 'category' => 'privilege', 'minutes' => 120,
+                'duration_label' => ['en' => '2 hours', 'ar' => 'ساعتان', 'fr' => '2 heures'],
+                'group_size' => ['en' => '1–6 guests', 'ar' => '1–6 ضيوف', 'fr' => '1–6 convives'],
                 'title' => [
                     'en' => 'Rooftop Dawn & Private Breakfast',
                     'ar' => 'سطح الفجر وإفطار خاص',
@@ -674,7 +710,9 @@ class CmsContentSeeder extends Seeder
                 'title'            => $item['title'],
                 'description'      => $item['description'],
                 'category'         => $item['category'],
+                'group_size'       => $item['group_size'],
                 'duration_minutes' => $item['minutes'],
+                'duration_label'   => $item['duration_label'],
                 'price_usd'        => null,
                 'is_active'        => true,
                 'sort_order'       => $i,

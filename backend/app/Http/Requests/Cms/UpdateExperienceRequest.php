@@ -17,7 +17,11 @@ class UpdateExperienceRequest extends BaseRequest
             ...TranslatableRules::sometimes('title', ['string', 'max:255']),
             ...TranslatableRules::sometimes('description', ['string']),
             'category'         => ['sometimes', 'string', 'max:255'],
+            // `optional()`, not `sometimes()`: these are nullable in every locale,
+            // so an editor may legitimately clear one.
+            ...TranslatableRules::optional('group_size', ['string', 'max:255']),
             'duration_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
+            ...TranslatableRules::optional('duration_label', ['string', 'max:255']),
             'price_usd'        => ['nullable', 'numeric', 'min:0'],
             'is_active'        => ['boolean'],
             'sort_order'       => ['integer', 'min:0'],

@@ -84,7 +84,21 @@ Route::get('/health', function (Request $request) {
 
 // Staff auth
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [StaffAuthController::class, 'login']);
+    // Throttled at the same 10/minute as the guest OTP route below, and for the
+    // same reason: this is an unauthenticated endpoint that accepts a secret and
+    // tells the caller whether it was right. Left open it is unlimited
+    // credential stuffing against accounts that hold `cms.edit`, the
+    // reservations verbs and folio settlement — the highest-value accounts in
+    // the system.
+    //
+    // 10/minute per IP, not lower: `throttle` keys on the client IP, and a hotel
+    // back office is one NAT'd address, so a shift change puts reception,
+    // concierge and housekeeping in the same bucket within the same minute. A
+    // tighter cap would lock out a real shift handover, which is the failure
+    // mode that gets throttles deleted again. 10/minute still turns an
+    // unbounded attack into 14,400 guesses a day from one address — useless
+    // against any real password, and loud in the logs long before it succeeds.
+    Route::post('/login', [StaffAuthController::class, 'login'])->middleware('throttle:10,1');
     Route::middleware('auth:users')->group(function () {
         Route::post('/logout', [StaffAuthController::class, 'logout']);
         Route::get('/me', [StaffAuthController::class, 'me']);

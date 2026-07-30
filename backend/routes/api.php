@@ -217,8 +217,12 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::get('/home-sliders',                 [AdminHomeSliderController::class, 'index']);
         Route::get('/home-sliders/{homeSlider}',    [AdminHomeSliderController::class, 'show']);
 
-        // Reviews — read; guests are the only authors.
+        // Reviews — read; guests are the only authors. `show` answers for an
+        // unpublished review too: the queue exists to moderate drafts, so a row
+        // it lists has to be openable. The public projection keeps its
+        // published-only rule (see ReviewService::indexFor).
         Route::get('/reviews',                      [AdminReviewController::class, 'index']);
+        Route::get('/reviews/{review}',             [AdminReviewController::class, 'show']);
 
         Route::get('/pages',                        [AdminPageController::class, 'index']);
         Route::get('/pages/{page}',                 [AdminPageController::class, 'show']);

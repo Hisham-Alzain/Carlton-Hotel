@@ -37,6 +37,23 @@ class ReviewController extends BaseController
         );
     }
 
+    /**
+     * One review from the queue — the `show` every other CMS module has and this
+     * one did not, which left the moderation screen able to list a comment but
+     * not open it.
+     *
+     * Behind the same `cms.view|cms.edit` read gate as every other CMS `show`:
+     * reading a guest's comment is a read, and the publish toggle beside it is
+     * the write. Drafts are visible here on purpose — see `ReviewService::show()`.
+     */
+    public function show(Request $request, Review $review): JsonResponse
+    {
+        $result = $this->service->show($review);
+        $result['data'] = new ReviewResource($result['data']);
+
+        return $this->respondFromService($result, request: $request);
+    }
+
     public function setPublished(SetReviewPublishedRequest $request, Review $review): JsonResponse
     {
         $result = $this->service->publish($review, $request->boolean('is_published'));

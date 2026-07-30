@@ -6,6 +6,7 @@ use App\Exceptions\NotFoundException;
 use App\Filters\MediaFilter;
 use App\Models\Media;
 use App\Traits\FileTrait;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
@@ -41,11 +42,51 @@ class MediaService
      */
     public function index(array $params = [], ?int $perPage = null): array
     {
-        $query = Media::query()->orderByDesc('created_at')->orderByDesc('id');
+        $query = Media::query()
+            // The row's parent, so a picker can say *which* record an asset sits
+            // on and not merely that it sits on some room type — see
+            // `MediaResource`. One extra query per distinct morph type for the
+            // whole page, which is what `with()` on a `morphTo` costs; the
+            // resource guards it with `whenLoaded`, so nested renders (a room
+            // type's own `images`) neither pay for it nor break without it.
+            ->with('mediable')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
+
+        $this->selectUsageCount($query);
 
         (new MediaFilter($params))->apply($query);
 
         return ['data' => $query->paginate($this->resolvePerPage($perPage)), 'code' => 200];
+    }
+
+    /**
+     * Add `usage_count`: how many rows point at the same stored file.
+     *
+     * `attachExisting()` copies rows rather than moving them, so a file can be
+     * named by several `media` rows and the only expression of "how many
+     * placements share this file" is `count(*) where disk = ? and path = ?`. A
+     * client cannot compute that from a page of results — the other placements
+     * may be on any page — so the library's delete button had no way to warn
+     * that a delete is about to take the file with it. At `usage_count = 1` this
+     * row is the last referent and the file goes (see
+     * `Media::purgeFileIfUnreferenced()`); at 3 the file survives and two other
+     * records keep rendering it.
+     *
+     * One correlated subquery for the whole page, not a lookup per row. It has
+     * to live here rather than in `MediaResource`: a resource must never query,
+     * and a per-row count would be one query per item on every page of the
+     * library. `paginate()` drops select columns and their bindings when it
+     * builds the count query, so the subquery costs nothing there.
+     */
+    private function selectUsageCount(Builder $query): void
+    {
+        $query->addSelect([
+            'usage_count' => DB::table('media as media_usage')
+                ->selectRaw('count(*)')
+                ->whereColumn('media_usage.disk', 'media.disk')
+                ->whereColumn('media_usage.path', 'media.path'),
+        ]);
     }
 
     /**
@@ -106,9 +147,10 @@ class MediaService
      * which every delete path runs through). Each placement then
      * owns its `sort_order` independently, and the library entry survives.
      *
-     * Idempotent per parent: a uuid whose file is already on this parent returns
-     * that row instead of adding a second copy, so a double-submitted form
-     * cannot put the same photograph on a page twice.
+     * Idempotent per parent, within one request as well as across two: a uuid
+     * whose file is already on this parent returns that row instead of adding a
+     * second copy, so neither a double-submitted form nor a single payload
+     * naming one photograph twice over can put it on a page twice.
      *
      * The source may itself be attached elsewhere — copying a room type's hero
      * onto a promotion is the whole point, and requiring a library round-trip
@@ -141,23 +183,35 @@ class MediaService
             $next = $existing->max('sort_order');
             $next = $next === null ? 0 : (int) $next + 1;
 
+            // Keyed by the file a row points at, not by the row's uuid, and
+            // *mutated as we go*. Two different `media_uuids` in one payload can
+            // resolve to two rows that name the same `disk` + `path` — a library
+            // entry and the copy of it already placed on some other entity are
+            // exactly that, and reuse across entities is the feature. The
+            // request's `distinct` rule only rejects the same uuid twice, and a
+            // membership test against the snapshot taken above cannot see a row
+            // this same loop has just written, so the second uuid used to add a
+            // second placement of one photograph. Folding each new row back into
+            // the index closes that: idempotency now holds inside a request as
+            // well as between two of them.
+            $placed = $existing->keyBy(
+                fn (Media $row): string => $this->fileKey($row)
+            );
+
             $rows = new Collection();
 
             foreach ($uuids as $uuid) {
                 /** @var Media $source */
                 $source = $sources[$uuid];
+                $key    = $this->fileKey($source);
 
-                $already = $existing->first(
-                    fn (Media $row): bool => $row->disk === $source->disk && $row->path === $source->path
-                );
-
-                if ($already !== null) {
-                    $rows->push($already);
+                if ($placed->has($key)) {
+                    $rows->push($placed->get($key));
 
                     continue;
                 }
 
-                $rows->push(Media::create([
+                $created = Media::create([
                     'mediable_type' => $parent->getMorphClass(),
                     'mediable_id'   => $parent->getKey(),
                     'disk'          => $source->disk,
@@ -168,13 +222,28 @@ class MediaService
                     'mime_type'     => $source->mime_type,
                     'size'          => $source->size,
                     'sort_order'    => $next++,
-                ]));
+                ]);
+
+                $placed->put($key, $created);
+                $rows->push($created);
             }
 
             return $rows;
         });
 
         return ['data' => $attached, 'code' => 201];
+    }
+
+    /**
+     * The stored file a row points at — `disk` + `path`, the same pair
+     * `Media::purgeFileIfUnreferenced()` and `usage_count` compare on.
+     *
+     * `\0` as the separator because it cannot occur in either component, so no
+     * disk/path combination can be spelled two ways or collide with another.
+     */
+    private function fileKey(Media $media): string
+    {
+        return $media->disk."\0".$media->path;
     }
 
     /** Editor metadata only — never the file, the parent, or the stored path. */

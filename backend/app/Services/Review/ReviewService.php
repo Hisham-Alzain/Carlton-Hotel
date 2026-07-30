@@ -98,6 +98,27 @@ class ReviewService
         return min($perPage, $this->maxPerPage);
     }
 
+    /**
+     * One review, opened from the moderation queue.
+     *
+     * No `is_published` condition, unlike `indexFor()`: an unpublished review is
+     * precisely the kind a moderator opens this route to read, and hiding it
+     * would make the drafts the queue lists unopenable — moderation is the point
+     * of the endpoint. The read gate (`cms.view|cms.edit`) is what keeps it off
+     * the public site; the published-only rule belongs to the public projection,
+     * not to this one.
+     *
+     * `loadMissing` rather than a fresh lookup — the route already resolved the
+     * model by uuid — and it is not optional: `ReviewResource` guards `author`
+     * with `whenLoaded('guest')`, so without the eager load the moderator gets a
+     * comment with nobody attached to it. `reviewable` matches `adminIndex()`,
+     * which the same screen renders.
+     */
+    public function show(Review $review): array
+    {
+        return ['data' => $review->loadMissing([...$this->with, 'reviewable']), 'code' => 200];
+    }
+
     public function store(Guest $guest, Model $reviewable, array $data): array
     {
         return $this->submit->handle($guest, $reviewable, $data);

@@ -7,6 +7,18 @@ use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 abstract class TestCase extends BaseTestCase
 {
     /**
+     * The token this process suffixes every fake-disk root with. Minted once by
+     * `fakeDiskToken()` and memoised here.
+     */
+    private static ?string $fakeDiskToken = null;
+
+    /**
+     * The separator Laravel puts between a fake disk's name and its run token
+     * (`Storage::fake()` builds `"{$root}_test_{$token}"`).
+     */
+    private const TOKEN_MARKER = '_test_';
+
+    /**
      * Absolute path to the directory Laravel roots every `Storage::fake()` disk in.
      *
      * Resolved from __DIR__ rather than storage_path() so it is usable before the
@@ -26,45 +38,155 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
-     * Delete every fake-disk artifact left behind by a previous test or a
-     * previous run.
+     * The token every `Storage::fake()` root in this process is suffixed with.
+     *
+     * `Storage::fake('public')` roots the disk at
+     * `…/testing/disks/public_test_{ParallelTesting::token()}` and **cleans that
+     * directory** on the way in. With no token the root is `…/disks/public` —
+     * one directory shared by every process on the machine — so two plain
+     * `php artisan test` runs (two terminals, two agents; no `--parallel`
+     * involved) delete each other's uploads mid-test. That is what produced
+     * repeated false failures in `MediaLibraryTest`, `GalleryTest` and
+     * `MediaCleanupTest` which passed the moment they were run on their own.
+     *
+     * `--parallel` already exports one `TEST_TOKEN` per worker; that value is
+     * reused rather than replaced, so a parallel run keeps the roots Laravel
+     * gave it. Otherwise one is minted here — pid **plus** random bytes, because
+     * a pid on its own repeats after a wrap or a reboot — and published on
+     * `$_SERVER`/`$_ENV`, which is the same channel `--parallel` uses and
+     * therefore the same code path inside `ParallelTesting::token()` rather than
+     * a second mechanism to keep working.
+     *
+     * Publishing `TEST_TOKEN` does not make the framework think it is running in
+     * parallel: `ParallelTesting::inParallel()` reads
+     * `LARAVEL_PARALLEL_TESTING_IN_PARALLEL`, and the only caller of `token()`
+     * besides `Storage::fake()` is `Testing\Concerns\TestDatabases`, which runs
+     * from the parallel runner and is gated on `inParallel()`. The database needs
+     * no such treatment anyway — `phpunit.xml` pins sqlite `:memory:`, which is
+     * already private to a process.
+     */
+    public static function fakeDiskToken(): string
+    {
+        if (self::$fakeDiskToken !== null) {
+            return self::$fakeDiskToken;
+        }
+
+        $token = $_SERVER['TEST_TOKEN'] ?? $_ENV['TEST_TOKEN'] ?? null;
+
+        if (! is_string($token) || $token === '') {
+            $token = getmypid().'x'.bin2hex(random_bytes(4));
+
+            $_SERVER['TEST_TOKEN'] = $token;
+            $_ENV['TEST_TOKEN']    = $token;
+
+            // A run that mints its own token owns its own directories, so it
+            // takes them with it on the way out — otherwise `storage/` grows by
+            // one root per run forever. Not registered when `--parallel` handed
+            // us the token: those roots belong to the runner's lifecycle.
+            register_shutdown_function(static function (): void {
+                self::purgeTestingDisks();
+            });
+        }
+
+        return self::$fakeDiskToken = $token;
+    }
+
+    /**
+     * Delete this run's fake-disk artifacts, and any untokenised residue.
      *
      * `Storage::fake('public')` only cleans the one disk it is given, so files
      * written to any other disk — or written by a test that crashed before its
-     * assertions — survive on disk and are still there when the next run starts.
-     * That residue makes storage-sensitive tests pass or fail depending on what
-     * ran before them: a suite that is 432/438 on the first run and 438/438 on
-     * every run after the directory is deleted by hand. A suite that fails
-     * randomly trains people to ignore failures, so this runs unconditionally
-     * before every test.
+     * assertions — survive on disk and are still there when the next test
+     * starts. That residue makes storage-sensitive tests pass or fail depending
+     * on what ran before them: a suite that is 432/438 on the first run and
+     * 438/438 on every run after the directory is deleted by hand. A suite that
+     * fails randomly trains people to ignore failures, so this still runs before
+     * every test.
      *
-     * Skipped under `--parallel`, where each process owns a token-suffixed root
-     * that `Storage::fake()` already cleans; a blanket purge there would let one
-     * process delete another's disk mid-test.
+     * What it no longer does is delete another run's disks. It used to remove
+     * `…/testing/disks` whole and guard only on `TEST_TOKEN`, i.e. only under
+     * `--parallel` — the exact hazard its own docblock described but did not
+     * cover, because two ordinary `php artisan test` processes share that
+     * directory and every `setUp()` deleted the other one's fake disks mid-test.
+     * Every fake-disk root now carries `fakeDiskToken()` in its name, so the
+     * purge keeps the residue fix while staying inside its own run: a child of
+     * `disks/` suffixed with somebody else's token is left alone.
+     *
+     * Untokenised children are still removed. Nothing writes them any more —
+     * every `Storage::fake()` root is tokenised — so they are either residue
+     * from a run predating this change, or planted deliberately by a test that
+     * asserts this purge happens (`MediaScopingTest`).
      */
     public static function purgeTestingDisks(): void
     {
-        if (($_SERVER['TEST_TOKEN'] ?? $_ENV['TEST_TOKEN'] ?? null) !== null) {
-            return;
-        }
-
         $root = static::fakeDisksRoot();
 
         if (! is_dir($root)) {
             return;
         }
 
-        // Materialise the whole listing before deleting anything. Removing
-        // entries while RecursiveIteratorIterator is still descending makes it
-        // re-stat directories that are already gone, which throws
-        // "RecursiveDirectoryIterator::__construct(...): The system cannot find
-        // the path" — trading one flaky failure for another.
+        foreach (static::purgeableDisks($root) as $target) {
+            static::deleteTree($target);
+        }
+
+        // Succeeds only once every run has cleaned up after itself, which is the
+        // point: a concurrent run's disks have to still be there.
+        @rmdir($root);
+    }
+
+    /**
+     * The direct children of the fake-disk root this run may delete.
+     *
+     * A name ending in `_test_{token}` belongs to whichever run owns that token;
+     * only ours is returned. A disk literally named `…_test_…` and faked without
+     * a token would be skipped here, which no disk in this project is.
+     *
+     * @return list<string>
+     */
+    private static function purgeableDisks(string $root): array
+    {
+        $mine    = self::TOKEN_MARKER.static::fakeDiskToken();
+        $entries = @scandir($root);
+        $targets = [];
+
+        foreach ($entries === false ? [] : $entries as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+
+            if (str_contains($entry, self::TOKEN_MARKER) && ! str_ends_with($entry, $mine)) {
+                continue;
+            }
+
+            $targets[] = $root.DIRECTORY_SEPARATOR.$entry;
+        }
+
+        return $targets;
+    }
+
+    /**
+     * Remove one file or directory tree, never failing a test to do it.
+     *
+     * The whole listing is materialised before anything is deleted. Removing
+     * entries while RecursiveIteratorIterator is still descending makes it
+     * re-stat directories that are already gone, which throws
+     * "RecursiveDirectoryIterator::__construct(...): The system cannot find
+     * the path" — trading one flaky failure for another.
+     */
+    private static function deleteTree(string $target): void
+    {
+        if (! is_dir($target) || is_link($target)) {
+            @unlink($target);
+
+            return;
+        }
+
         $files = [];
         $dirs  = [];
 
         try {
             $items = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS),
+                new \RecursiveDirectoryIterator($target, \FilesystemIterator::SKIP_DOTS),
                 \RecursiveIteratorIterator::CHILD_FIRST
             );
 
@@ -93,11 +215,15 @@ abstract class TestCase extends BaseTestCase
             @rmdir($dir);
         }
 
-        @rmdir($root);
+        @rmdir($target);
     }
 
     protected function setUp(): void
     {
+        // Before the purge and before anything can call `Storage::fake()`, so
+        // both agree on which roots belong to this run.
+        static::fakeDiskToken();
+
         static::purgeTestingDisks();
 
         parent::setUp();

@@ -7,6 +7,7 @@ use App\Enums\RoomView;
 use App\Models\DiningVenue;
 use App\Models\EventSpace;
 use App\Models\Facility;
+use App\Models\Faq;
 use App\Models\HomeSlider;
 use App\Models\Page;
 use App\Models\Promotion;
@@ -30,6 +31,130 @@ class CmsContentSeeder extends Seeder
         $this->promotions();
         $this->homeSliders();
         $this->testimonials();
+        $this->faqs();
+    }
+
+    /**
+     * The eight questions the public website hardcodes in
+     * `src/app/i18n/translations.ts` under `faq.items`.
+     *
+     * Seeded in en/ar/fr because the site already has human translations for all
+     * three. `tr` and `es` are left for editors — the locale config makes them
+     * optional, and machine-translating hotel policy (cancellation windows,
+     * dietary handling) is how a hotel ends up committed to something it did not
+     * mean in a language nobody on the team reads.
+     *
+     * `category` stays null: the site renders one flat list today.
+     */
+    private function faqs(): void
+    {
+        $items = [
+            [
+                'q' => [
+                    'en' => 'What are the check-in and check-out times?',
+                    'ar' => 'ما أوقات تسجيل الوصول والمغادرة؟',
+                    'fr' => "Quels sont les horaires d'arrivée et de départ ?",
+                ],
+                'a' => [
+                    'en' => 'Check-in is from 3:00 pm and check-out is by 12:00 noon. Early arrivals and late departures are accommodated whenever possible — please contact our concierge team in advance and we will do our utmost to arrange it.',
+                    'ar' => 'تسجيل الوصول من الساعة 3:00 مساءً وتسجيل المغادرة بحلول الساعة 12:00 ظهراً. يُراعَى الوصول المبكر والمغادرة المتأخرة كلما أمكن ذلك — يُرجى التواصل مع فريق الكونسيرج مسبقاً وسنبذل قصارى جهدنا.',
+                    'fr' => "L'arrivée est possible à partir de 15h00 et le départ est à 12h00. Les arrivées anticipées et les départs tardifs sont accommodés dans la mesure du possible — veuillez contacter notre équipe de conciergerie à l'avance.",
+                ],
+            ],
+            [
+                'q' => [
+                    'en' => 'Is airport transfer available?',
+                    'ar' => 'هل يتوفر نقل من المطار؟',
+                    'fr' => 'Le transfert aéroport est-il disponible ?',
+                ],
+                'a' => [
+                    'en' => 'Yes. We offer private chauffeur transfers from Damascus International Airport in our house fleet of Mercedes-Benz vehicles. The journey takes approximately 20 minutes. Grand Suite guests receive complimentary transfers; all other guests may book at a preferential rate.',
+                    'ar' => 'نعم. نقدم خدمة نقل خاص مع سائق من مطار دمشق الدولي بأسطول مركباتنا من طراز مرسيدس-بنز. تستغرق الرحلة نحو 20 دقيقة. يحصل ضيوف الجناح الكبير على النقل مجاناً؛ ويمكن لسائر الضيوف الحجز بأسعار مفضّلة.',
+                    'fr' => "Oui. Nous proposons des transferts privés avec chauffeur depuis l'aéroport international de Damas avec notre flotte de véhicules Mercedes-Benz. Le trajet dure environ 20 minutes. Les clients de la Grande Suite bénéficient de transferts gratuits ; tous les autres clients peuvent réserver à un tarif préférentiel.",
+                ],
+            ],
+            [
+                'q' => [
+                    'en' => 'What dining options are available?',
+                    'ar' => 'ما خيارات تناول الطعام المتاحة؟',
+                    'fr' => 'Quelles options de restauration sont disponibles ?',
+                ],
+                'a' => [
+                    'en' => 'Carlton Syria is home to four distinct dining venues: Le Rocher (gastronomic tasting menu, Tues–Sun evenings), Al-Qamar Rooftop Lounge (artisanal beverages and light dining, daily), Private Dining in our jasmine garden courtyard (by reservation), and Al-Sabah Terrace (breakfast and brunch, daily). In-room dining is available around the clock.',
+                    'ar' => 'يضم كارلتون سوريا أربعة صالات طعام: لو روشيه (قائمة تذوق غاسترونومية، مساء الثلاثاء حتى الأحد)، وصالة القمر على السطح (مشروبات حرفية وطعام خفيف، يومياً)، وتناول الطعام الخاص في فناء حديقة الياسمين (بالحجز)، وتراس الصباح (إفطار وبرانش، يومياً). خدمة الطعام داخل الغرف متوفرة على مدار الساعة.',
+                    'fr' => 'Carlton Syria abrite quatre restaurants distincts : Le Rocher (menu dégustation gastronomique, mar–dim soirs), Al-Qamar Lounge sur la terrasse (boissons artisanales et restauration légère, tous les jours), Dîner Privé dans notre patio au jardin de jasmin (sur réservation), et la Terrasse Al-Sabah (petit-déjeuner et brunch, tous les jours). Le service en chambre est disponible 24h/24.',
+                ],
+            ],
+            [
+                'q' => [
+                    'en' => 'Do you accommodate dietary requirements and allergies?',
+                    'ar' => 'هل تراعون الاحتياجات الغذائية الخاصة والحساسية؟',
+                    'fr' => 'Prenez-vous en compte les exigences alimentaires et les allergies ?',
+                ],
+                'a' => [
+                    'en' => 'Absolutely. Please inform us of any dietary requirements, allergies, or preferences at the time of booking. Chef Karim Nassar and his team are experienced in accommodating all needs — including vegan, gluten-free, halal, and bespoke medically-advised diets — without compromise to the dining experience.',
+                    'ar' => 'بالتأكيد. يُرجى إخبارنا بأي متطلبات غذائية أو حساسية أو تفضيلات عند الحجز. الشيف كريم نصار وفريقه متمرسون في تلبية جميع الاحتياجات — بما فيها النظام النباتي وخالي الغلوتين والحلال والأنظمة الغذائية الطبية المخصصة.',
+                    'fr' => "Absolument. Veuillez nous informer de toute exigence alimentaire, allergie ou préférence au moment de la réservation. Le chef Karim Nassar et son équipe ont l'expérience nécessaire pour répondre à tous les besoins — végétalien, sans gluten, halal et régimes médicaux personnalisés.",
+                ],
+            ],
+            [
+                'q' => [
+                    'en' => 'What is the cancellation policy?',
+                    'ar' => 'ما سياسة الإلغاء؟',
+                    'fr' => "Quelle est la politique d'annulation ?",
+                ],
+                'a' => [
+                    'en' => 'Standard reservations may be cancelled or modified up to 48 hours before arrival without charge. Cancellations made within 48 hours will incur a one-night fee. Package reservations and Grand Suite bookings are subject to a 7-day cancellation policy. Full details are provided at the time of booking.',
+                    'ar' => 'يمكن إلغاء الحجوزات العادية أو تعديلها حتى 48 ساعة قبل الوصول دون أي رسوم. الإلغاءات خلال 48 ساعة تستوجب رسوم ليلة واحدة. تخضع حجوزات الباقات والجناح الكبير لسياسة إلغاء مدتها 7 أيام.',
+                    'fr' => "Les réservations standard peuvent être annulées ou modifiées jusqu'à 48 heures avant l'arrivée sans frais. Les annulations effectuées dans les 48 heures entraînent des frais d'une nuit. Les réservations de packages et de la Grande Suite sont soumises à une politique d'annulation de 7 jours.",
+                ],
+            ],
+            [
+                'q' => [
+                    'en' => 'Are children welcome at Carlton Syria?',
+                    'ar' => 'هل الأطفال مرحّب بهم في كارلتون سوريا؟',
+                    'fr' => 'Les enfants sont-ils les bienvenus au Carlton Syria ?',
+                ],
+                'a' => [
+                    'en' => "Children are warmly welcomed. We offer a dedicated children's welcome amenity, a babysitting service (available on request), and child-friendly menus across all dining venues. The pool is open to all ages, with designated shallow sections and a lifeguard on duty.",
+                    'ar' => 'الأطفال مرحّب بهم بحفاوة. نقدّم هدية ترحيبية مخصصة للأطفال وخدمة جليسة أطفال (بناءً على الطلب) وقوائم طعام ملائمة للأطفال. المسبح مفتوح لجميع الأعمار مع مقاطع ضحلة مخصصة ومنقذ حياة في الخدمة.',
+                    'fr' => "Les enfants sont chaleureusement accueillis. Nous proposons une attention de bienvenue dédiée aux enfants, un service de baby-sitting (sur demande) et des menus adaptés aux enfants. La piscine est ouverte à tous les âges, avec des zones peu profondes désignées et un maître-nageur en service.",
+                ],
+            ],
+            [
+                'q' => [
+                    'en' => 'Is parking available?',
+                    'ar' => 'هل يتوفر موقف للسيارات؟',
+                    'fr' => 'Y a-t-il un parking disponible ?',
+                ],
+                'a' => [
+                    'en' => 'Yes. Secure underground valet parking is available to resident and restaurant guests. Our team will collect and return your vehicle. Please advise us upon arrival if you are travelling by car.',
+                    'ar' => 'نعم. تتوفر خدمة صف السيارات في موقف أرضي آمن لضيوف المقيمين والمطاعم. يتولى فريقنا استلام سيارتك وإعادتها. يُرجى إخبارنا عند وصولك إذا كنت مسافراً بسيارة خاصة.',
+                    'fr' => "Oui. Un service de voiturier en parking souterrain sécurisé est disponible pour les clients résidents et les visiteurs des restaurants. Notre équipe récupère et restitue votre véhicule. Veuillez nous informer à votre arrivée si vous voyagez en voiture.",
+                ],
+            ],
+            [
+                'q' => [
+                    'en' => 'Can you arrange cultural or private excursions?',
+                    'ar' => 'هل يمكنكم تنظيم رحلات ثقافية أو خاصة؟',
+                    'fr' => 'Pouvez-vous organiser des excursions culturelles ou privées ?',
+                ],
+                'a' => [
+                    'en' => 'This is one of our great pleasures. Our concierge team has deep connections across Damascus and Syria — from private after-hours access to the Umayyad Mosque to bespoke journeys to Palmyra or Krak des Chevaliers. No request is too specific. Contact us before your arrival and we will begin curating.',
+                    'ar' => 'هذا من أعظم متعنا. يملك فريق الكونسيرج شبكة علاقات واسعة في دمشق وسوريا — من دخول خاص بعد ساعات الزيارة إلى الجامع الأموي إلى رحلات مخصصة إلى تدمر أو قلعة الحصن. لا طلب يبدو مبالغاً فيه. تواصل معنا قبل وصولك وسنبدأ التخطيط.',
+                    'fr' => "C'est l'un de nos grands plaisirs. Notre équipe de conciergerie dispose de connexions profondes dans toute Damas et la Syrie — de l'accès privé après fermeture à la Grande Mosquée des Omeyyades aux voyages sur mesure à Palmyre ou au Krak des Chevaliers. Contactez-nous avant votre arrivée et nous commencerons à préparer votre itinéraire.",
+                ],
+            ],
+        ];
+
+        foreach ($items as $i => $item) {
+            Faq::create([
+                'question'   => $item['q'],
+                'answer'     => $item['a'],
+                'is_active'  => true,
+                'sort_order' => $i,
+            ]);
+        }
     }
 
     /**

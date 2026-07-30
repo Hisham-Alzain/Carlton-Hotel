@@ -41,6 +41,7 @@ use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\PromotionController as AdminPromotionController;
 use App\Http\Controllers\Admin\RoomController as AdminRoomController;
+use App\Http\Controllers\Admin\FaqController as AdminFaqController;
 use App\Http\Controllers\Admin\RoomTypeController as AdminRoomTypeController;
 use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
 use App\Http\Controllers\Api\AvailabilityController;
@@ -51,6 +52,7 @@ use App\Http\Controllers\Api\FacilityController as ApiFacilityController;
 use App\Http\Controllers\Api\PageController as ApiPageController;
 use App\Http\Controllers\Api\PromotionController as ApiPromotionController;
 use App\Http\Controllers\Api\RoomController as ApiRoomController;
+use App\Http\Controllers\Api\FaqController as ApiFaqController;
 use App\Http\Controllers\Api\RoomTypeController as ApiRoomTypeController;
 use App\Http\Controllers\Api\TestimonialController as ApiTestimonialController;
 use App\Http\Controllers\Auth\GuestAuthController;
@@ -127,6 +129,8 @@ Route::prefix('public')->group(function () {
     Route::get('/promotions/{promotion}', [ApiPromotionController::class,  'show']);
     // Curated marketing quotes. Rendered as one section, so there is no `show`.
     Route::get('/testimonials',           [ApiTestimonialController::class, 'index']);
+    // One accordion on the site, so likewise no `show`.
+    Route::get('/faqs',                   [ApiFaqController::class,        'index']);
 
     // P4 — Availability & pricing (public)
     Route::get('/availability', [AvailabilityController::class, 'check']);
@@ -183,6 +187,9 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
 
         Route::get('/testimonials',                 [AdminTestimonialController::class, 'index']);
         Route::get('/testimonials/{testimonial}',   [AdminTestimonialController::class, 'show']);
+
+        Route::get('/faqs',                         [AdminFaqController::class, 'index']);
+        Route::get('/faqs/{faq}',                   [AdminFaqController::class, 'show']);
     });
 
     // ── Writes (cms.edit only) ────────────────────────────────────────
@@ -255,6 +262,11 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/testimonials/{testimonial}',                  [AdminTestimonialController::class, 'destroy']);
         Route::post  ('/testimonials/{testimonial}/images',           [MediaController::class, 'storeTestimonial']);
         Route::delete('/testimonials/{testimonial}/images/{media}',   [MediaController::class, 'destroyTestimonial']);
+
+        // FAQs — text only, no media
+        Route::post  ('/faqs',                                        [AdminFaqController::class, 'store']);
+        Route::put   ('/faqs/{faq}',                                  [AdminFaqController::class, 'update']);
+        Route::delete('/faqs/{faq}',                                  [AdminFaqController::class, 'destroy']);
     });
 });
 

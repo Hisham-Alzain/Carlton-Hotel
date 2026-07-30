@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Base\BaseController;
 use App\Http\Requests\Service\StoreMenuCategoryRequest;
+use App\Http\Requests\Service\UpdateMenuCategoryRequest;
 use App\Http\Resources\Service\MenuCategoryResource;
 use App\Models\MenuCategory;
 use App\Services\Service\MenuCategoryService;
@@ -33,7 +34,7 @@ class MenuCategoryController extends BaseController
         return $this->respondFromService($result, request: $request);
     }
 
-    public function update(StoreMenuCategoryRequest $request, MenuCategory $menuCategory): JsonResponse
+    public function update(UpdateMenuCategoryRequest $request, MenuCategory $menuCategory): JsonResponse
     {
         $result = $this->service->update($menuCategory, $request->validated());
         $result['data'] = new MenuCategoryResource($result['data']);

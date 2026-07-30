@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Base\BaseController;
 use App\Http\Requests\Service\StoreMenuItemRequest;
+use App\Http\Requests\Service\UpdateMenuItemRequest;
 use App\Http\Resources\Service\MenuItemResource;
 use App\Models\MenuItem;
 use App\Services\Service\MenuItemService;
@@ -33,7 +34,7 @@ class MenuItemController extends BaseController
         return $this->respondFromService($result, request: $request);
     }
 
-    public function update(StoreMenuItemRequest $request, MenuItem $menuItem): JsonResponse
+    public function update(UpdateMenuItemRequest $request, MenuItem $menuItem): JsonResponse
     {
         $result = $this->service->update($menuItem, $request->validated());
         $result['data'] = new MenuItemResource($result['data']);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Base\BaseController;
 use App\Http\Requests\Service\StoreServiceCategoryRequest;
+use App\Http\Requests\Service\UpdateServiceCategoryRequest;
 use App\Http\Resources\Service\ServiceCategoryResource;
 use App\Models\ServiceCategory;
 use App\Services\Service\ServiceCategoryService;
@@ -33,7 +34,7 @@ class ServiceCategoryController extends BaseController
         return $this->respondFromService($result, request: $request);
     }
 
-    public function update(StoreServiceCategoryRequest $request, ServiceCategory $serviceCategory): JsonResponse
+    public function update(UpdateServiceCategoryRequest $request, ServiceCategory $serviceCategory): JsonResponse
     {
         $result = $this->service->update($serviceCategory, $request->validated());
         $result['data'] = new ServiceCategoryResource($result['data']);

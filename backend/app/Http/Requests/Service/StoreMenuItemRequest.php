@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Service;
 
 use App\Base\BaseRequest;
+use App\Support\TranslatableRules;
 
 class StoreMenuItemRequest extends BaseRequest
 {
@@ -10,10 +11,8 @@ class StoreMenuItemRequest extends BaseRequest
     {
         return [
             'menu_category_uuid' => ['required', 'string', 'exists:menu_categories,uuid'],
-            'name.en'            => ['required', 'string', 'max:255'],
-            'name.ar'            => ['required', 'string', 'max:255'],
-            'description.en'     => ['nullable', 'string'],
-            'description.ar'     => ['nullable', 'string'],
+            ...TranslatableRules::for('name', ['string', 'max:255']),
+            ...TranslatableRules::optional('description', ['string']),
             'price_usd'          => ['required', 'numeric', 'min:0'],
             'is_vegan'           => ['nullable', 'boolean'],
             'is_active'          => ['nullable', 'boolean'],

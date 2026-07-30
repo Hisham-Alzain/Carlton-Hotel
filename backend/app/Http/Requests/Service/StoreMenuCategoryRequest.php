@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Service;
 
 use App\Base\BaseRequest;
+use App\Support\TranslatableRules;
 use Illuminate\Support\Str;
 
 class StoreMenuCategoryRequest extends BaseRequest
@@ -19,8 +20,11 @@ class StoreMenuCategoryRequest extends BaseRequest
         return [
             'dining_venue_uuid' => ['required', 'string', 'exists:dining_venues,uuid'],
             'slug'              => ['required', 'string', 'max:64'],
-            'name.en'           => ['required', 'string', 'max:255'],
-            'name.ar'           => ['required', 'string', 'max:255'],
+            // en/ar required, fr/tr/es accepted and optional — `config/cms.php`
+            // decides, not this file. Hardcoded `name.en` / `name.ar` keys were
+            // why a French menu category was a 422 while a French room type was
+            // fine.
+            ...TranslatableRules::for('name', ['string', 'max:255']),
             'sort_order'        => ['nullable', 'integer', 'min:0'],
             'is_active'         => ['nullable', 'boolean'],
         ];

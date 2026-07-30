@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Service;
 
 use App\Base\BaseRequest;
+use App\Support\TranslatableRules;
 
 class StoreServiceItemRequest extends BaseRequest
 {
@@ -10,10 +11,8 @@ class StoreServiceItemRequest extends BaseRequest
     {
         return [
             'service_category_uuid' => ['required', 'string', 'exists:service_categories,uuid'],
-            'name.en'          => ['required', 'string', 'max:255'],
-            'name.ar'          => ['required', 'string', 'max:255'],
-            'description.en'   => ['nullable', 'string'],
-            'description.ar'   => ['nullable', 'string'],
+            ...TranslatableRules::for('name', ['string', 'max:255']),
+            ...TranslatableRules::optional('description', ['string']),
             'expected_minutes' => ['nullable', 'integer', 'min:1', 'max:10080'],
             // Null = complimentary; a value is charged to the folio.
             'price_usd'        => ['nullable', 'numeric', 'min:0'],

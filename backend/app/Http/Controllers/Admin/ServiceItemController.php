@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Base\BaseController;
 use App\Http\Requests\Service\StoreServiceItemRequest;
+use App\Http\Requests\Service\UpdateServiceItemRequest;
 use App\Http\Resources\Service\ServiceItemResource;
 use App\Models\ServiceItem;
 use App\Services\Service\ServiceItemService;
@@ -33,7 +34,7 @@ class ServiceItemController extends BaseController
         return $this->respondFromService($result, request: $request);
     }
 
-    public function update(StoreServiceItemRequest $request, ServiceItem $serviceItem): JsonResponse
+    public function update(UpdateServiceItemRequest $request, ServiceItem $serviceItem): JsonResponse
     {
         $result = $this->service->update($serviceItem, $request->validated());
         $result['data'] = new ServiceItemResource($result['data']);

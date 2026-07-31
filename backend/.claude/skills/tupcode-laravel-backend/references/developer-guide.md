@@ -216,8 +216,9 @@ That's the whole service for basic CRUD. No methods needed — the base class ha
 Two things to note about the paths, because they are easy to get wrong:
 
 - The base classes live in **`App\Base`**, not in the layer folders. `BaseService`,
-  `BaseController`, `BaseIndexController`, `BaseCRUDController`, `BaseRequest`,
-  `BaseResource`, `BaseFilter` and `BaseCollection` are all `app/Base/*.php`.
+  `BaseController`, `BaseIndexController`, `BaseCRUDController`,
+  `BasePublicIndexController`, `BaseRequest`, `BaseResource`, `BaseFilter`,
+  `BaseCollection` and the `HandlesRecycleBin` trait are all `app/Base/*.php`.
 - Service subfolders are named by **domain**, not by role: `app/Services/Cms`,
   `Booking`, `Auth`, `Folio`, `Payment`, `Review`, `Operations`, `Service`,
   `Events`, `Chat`, `Notification`, `Firebase`. One `CategoryService` serves the
@@ -360,15 +361,17 @@ Resources are grouped by domain, mirroring the requests: `Http/Resources/Cms`,
 
 ### Step 7: Controller
 
-Write it the way all 69 controllers in this codebase are written: extend
-`App\Base\BaseController`, inject the service, and name the methods
-`index`/`show`/`store`/`update`/`destroy`.
+Extend `App\Base\BaseCRUDController`, declare `$resource`, return the injected
+service from `service()`, and write one typed line per write verb. `index()` is
+inherited whole.
 
 ```php
 // app/Http/Controllers/Admin/CategoryController.php
 namespace App\Http\Controllers\Admin;
 
-use App\Base\BaseController;
+use App\Base\BaseCRUDController;
+use App\Base\BaseService;
+use App\Base\HandlesRecycleBin;
 use App\Http\Requests\Cms\CreateCategoryRequest;
 use App\Http\Requests\Cms\UpdateCategoryRequest;
 use App\Http\Resources\Cms\CategoryResource;
@@ -377,48 +380,51 @@ use App\Services\Cms\CategoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class CategoryController extends BaseController
+class CategoryController extends BaseCRUDController
 {
+    use HandlesRecycleBin;              // only if the model is soft-deletable
+
+    protected ?string $resource = CategoryResource::class;
+
     public function __construct(private readonly CategoryService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess(
-            $this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'],
-            CategoryResource::class,
-            $request,
-        );
+        return $this->service;
     }
+
+    // `index()` and `trashed()` are inherited. The verbs below exist only to
+    // carry the concrete type-hints route-model binding and FormRequest
+    // resolution read; the bodies live on the base pair.
 
     public function show(Category $category, Request $request): JsonResponse
     {
-        $result         = $this->service->show($category);
-        $result['data'] = new CategoryResource($result['data']);
-
-        return $this->respondFromService($result, request: $request);
+        return $this->showResponse($category, $request);
     }
 
     public function store(CreateCategoryRequest $request): JsonResponse
     {
-        $result         = $this->service->store($request->validated());
-        $result['data'] = new CategoryResource($result['data']);
-
-        return $this->respondFromService($result, request: $request);
+        return $this->storeResponse($request);
     }
 
     public function update(UpdateCategoryRequest $request, Category $category): JsonResponse
     {
-        $result         = $this->service->update($category, $request->validated());
-        $result['data'] = new CategoryResource($result['data']);
-
-        return $this->respondFromService($result, request: $request);
+        return $this->updateResponse($request, $category);
     }
 
     public function destroy(Category $category, Request $request): JsonResponse
     {
-        $this->service->destroy($category);
+        return $this->destroyResponse($category, $request);
+    }
 
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    public function restore(Category $category, Request $request): JsonResponse
+    {
+        return $this->restoreResponse($category, $request);
+    }
+
+    public function forceDestroy(Category $category, Request $request): JsonResponse
+    {
+        return $this->forceDestroyResponse($category, $request);
     }
 }
 ```
@@ -426,12 +432,12 @@ class CategoryController extends BaseController
 The model arrives already resolved — route model binding on `uuid`, via
 `HasUuid::getRouteKeyName()`. Neither the controller nor the service ever looks up
 a record by id, and a soft-deleted record simply fails to bind, which is where the
-404 on a deleted resource comes from.
+404 on a deleted resource comes from. **That is exactly why the concrete
+type-hints stay in the controller** and are not hoisted onto the base class:
+implicit binding reads *this* signature. Section 4 has the full reasoning.
 
-`app/Base/BaseCRUDController` would collapse the five methods above to zero, and
-it exists — but **nothing extends it today**. See section 4 for what it offers and
-why the migration has not happened; copy the hand-written shape above until it
-does, because it is what every reviewer and every neighbouring file expects.
+The public half of the same resource extends `App\Base\BasePublicIndexController`
+instead — see section 4.
 
 ### Step 8: Routes
 
@@ -478,7 +484,7 @@ Done. The endpoint is live.
 
 Laravel's resource verbs, everywhere, no exceptions. All 69 controller classes in
 `app/Http/Controllers` use them, `routes/api.php` names them, and
-`BaseIndexController`/`BaseCRUDController` declare them.
+`BaseIndexController`/`BaseCRUDController` implement them.
 
 > **Correction to earlier versions of this guide.** This document, and the skill
 > that summarises it, used to claim routes call PascalCase methods
@@ -496,9 +502,23 @@ Laravel's resource verbs, everywhere, no exceptions. All 69 controller classes i
 Illuminate\Routing\Controller
   └── App\Base\BaseController        (success, paginatedSuccess, respondFromService,
   │                                   perPageParam, indexParams; uses AuthorizesRequests)
-        └── App\Base\BaseIndexController   (index, show — read-only)
-              └── App\Base\BaseCRUDController  (+ store, update, destroy)
+        └── App\Base\BaseIndexController        (index; $resource, service(),
+              │                                  showResponse, paginatedResponse)
+              ├── App\Base\BaseCRUDController   (+ storeResponse, updateResponse,
+              │                                    destroyResponse)
+              └── App\Base\BasePublicIndexController
+                                                (index over indexPublic() — no filters)
+
+App\Base\HandlesRecycleBin  (trait: trashed; restoreResponse, forceDestroyResponse)
 ```
+
+Current split of the 69 controllers:
+
+| Base | Count | What they are |
+|---|---|---|
+| `BaseCRUDController` | 23 | The CMS/service resources with full CRUD (17 of them `use HandlesRecycleBin`). |
+| `BasePublicIndexController` | 12 | The public lists under `/api/public`. |
+| `BaseController` | 34 | Everything with a bespoke shape — auth, staff/RBAC, reservations, folios, payments, ops queue, chat, stays, media. See "what is deliberately not on the base pair" below. |
 
 `app/Http/Controllers/Controller.php` also exists — Laravel's generated empty
 stub. Nothing extends it; it is dead weight, not a third base class.
@@ -516,17 +536,73 @@ stub. Nothing extends it; it is dead weight, not a third base class.
 There is no `sendResponse()`, no `sendError()`, no `transform()`. Earlier versions
 of this guide named all three; none has ever existed.
 
-### The declarative base pair — real, and unused
+### The declarative base pair
 
 `BaseIndexController` declares `$resource` and an abstract `service()`, and
-implements `index()` and `show()`. `BaseCRUDController` adds `store()`,
-`update()` and `destroy()`, taking an injected `BaseRequest` and a route-bound
-`Model`:
+implements `index()` whole. `BaseCRUDController` adds the bodies of the write
+verbs. The division is: **the base owns the body, the controller owns the
+signature.**
+
+| Inherited whole | Body on the base, signature in the child |
+|---|---|
+| `index()` (`BaseIndexController`, and the `indexPublic()` override on `BasePublicIndexController`) | `showResponse()` |
+| `trashed()` (`HandlesRecycleBin`) | `storeResponse()`, `updateResponse()`, `destroyResponse()` |
+| | `restoreResponse()`, `forceDestroyResponse()` (`HandlesRecycleBin`) |
+
+`index()` and `trashed()` take neither a route-bound model nor a FormRequest, so
+nothing stands between them and a live route. The other six do, and that is not
+an accident of style — it is forced:
+
+- **The model.** `ImplicitRouteBinding::resolveForRoute()` reflects the
+  *controller method*, matches the route parameter name to the method parameter
+  name, and calls `$container->make()` on the declared class. A base-class
+  `show(Model $model)` fails twice over: `{category}` never matches `$model`, and
+  `Illuminate\Database\Eloquent\Model` is abstract so it cannot be made. A child
+  cannot patch it, because PHP's parameter contravariance rule makes
+  `show(Category $c)` overriding `show(Model $m)` a fatal error — so is
+  reordering the parameters, and so is adding a required one. (Renaming a
+  parameter is legal; that alone does not help.)
+- **The FormRequest.** `store(BaseRequest $request)` names no concrete request,
+  so no route could declare what it validates against, and narrowing it in the
+  child is the same fatal error. Naming it in the child's signature is also the
+  only shape in which Laravel resolves and validates the request before the body
+  runs. There are no `$createRequest`/`$updateRequest` properties — earlier
+  versions of this guide listed both; neither has ever existed.
+
+Both used to be declared on the base pair, which is why nothing could extend it.
+They were removed in favour of the `*Response()` helpers.
+
+**Two alternatives were considered and rejected**, and are worth knowing about so
+they are not re-proposed:
+
+- *Global `Route::model()` bindings.* Would have let `show`/`update`/`destroy` be
+  inherited whole. But `RouteBinding::forModel()` calls
+  `resolveRouteBinding($value)` with **no binding field**, so
+  `/public/journal/{journalPost:slug}` would have silently started resolving
+  slugs as uuids and 404ing the whole public journal. It also loses scoped
+  bindings for every route using that parameter name, everywhere.
+- *Renaming every route parameter to `{model}`* so the inherited signature
+  matches. Breaks every FormRequest that calls `$this->route('roomType')` /
+  `$this->route('journalPost')` / `$this->route('user')`, and makes
+  `routes/api.php` unreadable.
+
+What the child writes is one line per verb. `AmenityController` went from 67
+lines to 60 and names `AmenityResource` once instead of six times; the
+four-line `$result['data'] = new XResource(...)` body is gone from all 23.
+
+Two tests cover the pair. `tests/Unit/BaseControllerPlumbingTest.php` calls the
+methods directly (`per_page`, filters, sort, search, envelope shape).
+`tests/Feature/BaseControllerRoutingTest.php` drives them **through the real
+router** — binding, 404 on unknown and soft-deleted keys, a `{widget:slug}`
+binding field, FormRequest validation, `Rule::unique()->ignore()` against the
+route-bound record, the `->withTrashed()` restore and force routes, and envelope
+parity. The unit test alone stayed green while the pair was unroutable, which is
+why the routed one exists.
+
+### Public lists: `BasePublicIndexController`
 
 ```php
-// What a controller on the base pair looks like. Nothing in the codebase does
-// this yet — see the note below.
-class CategoryController extends BaseCRUDController
+class CategoryController extends BasePublicIndexController   // app/Http/Controllers/Api
 {
     protected ?string $resource = CategoryResource::class;
 
@@ -536,46 +612,72 @@ class CategoryController extends BaseCRUDController
     {
         return $this->service;
     }
+
+    // Optional. A public `show` is a read *plus* a visibility check, so the base
+    // does not provide one: a draft must 404, not merely be absent from the list.
+    public function show(Category $category, Request $request): JsonResponse
+    {
+        if (! $category->is_active) {
+            throw new NotFoundException();
+        }
+
+        return $this->showResponse($category, $request);
+    }
 }
 ```
 
-Note what is **not** there: `$createRequest` and `$updateRequest`. Earlier versions
-of this guide listed both as properties to declare; neither exists. Two abstract
-type-hints stand between the base pair and a live route, and both have to be
-closed before anything can extend it:
+It extends `BaseIndexController` and **overrides `index()`** to call
+`indexPublic()`, which takes a page size and nothing else. Do not wire a public
+route to `BaseIndexController::index()`: that one hands the raw query string to
+the filter, and on an anonymous route `?is_active=false` widens the list to
+unpublished content. `tests/Feature/PublicIndexBoundaryTest.php` pins it — wiring
+the base back to the filtering `index()` fails three of its five cases, one of
+them by returning three unpublished rows to an anonymous caller.
 
-- `store()` and `update()` type-hint the abstract `App\Base\BaseRequest`, and
-  nothing names the concrete FormRequest a route should validate against. PHP
-  forbids narrowing a parameter type in an override, and Laravel cannot resolve an
-  abstract class out of the container.
-- `show()`, `update()` and `destroy()` type-hint the abstract
-  `Illuminate\Database\Eloquent\Model`. Implicit route-model binding needs a
-  concrete model class to bind, so `{category}` would arrive unresolved.
+### What is deliberately not on the base pair
 
-`BaseControllerPlumbingTest` therefore exercises them by calling
-`store()`/`update()`/`show()` directly, passing a concrete `BaseRequest` subclass
-and an already-loaded model. The read path (`index()`) has no such problem and is
-route-ready today.
+34 of the 69 controllers still extend `BaseController`, and should. A controller
+belongs on the base pair when its verbs are the plain service verbs; when they
+are not, forcing it there means adding a hook to the base for every deviation,
+at which point the base is no longer simpler than the line it replaced. The
+edges, concretely:
 
-> **Known outstanding task: nothing extends `BaseCRUDController` or
-> `BaseIndexController`.** All 69 controllers extend `BaseController` directly and
-> hand-copy the bodies — 54 of them repeat the same `index()` one-liner, 50 the
-> same `paginatedSuccess()` call. The base pair was written to end that
-> duplication and is covered by `tests/Unit/BaseControllerPlumbingTest.php`
-> through test-only subclasses, so its `per_page` and filter plumbing is not
-> shipped untested — but the migration of the real controllers has not been done,
-> and the two abstract type-hints above have to be resolved first. Roughly a day
-> and a half of mechanical work once they are.
-> `BaseIndexController::index()` deliberately makes the same `paginatedSuccess()`
-> call the hand-written controllers make, so a controller that moves onto the base
-> class emits a byte-identical envelope. Until that migration happens, **write new
-> controllers in the hand-written shape** (section 3, step 7): consistency with 69
-> neighbours beats being the only subclass.
+- **A different service method.** `Admin/ReviewController` and
+  `Admin/EventInquiryController` list through `adminIndex()`, with different
+  signatures again (`adminIndex($params, $perPage)` vs `adminIndex()`).
+  `Admin/ReservationController`, `Admin/CheckInApprovalController` and
+  `Admin/ConversationController` likewise.
+- **Verbs that are not CRUD at all.** `confirm`, `cancel`, `assignRoom`,
+  `settle`, `approve`, `setPublished`, `updateStatus`, `assign`, `setDnd`,
+  `receiptPdf`, `verifyGuestBooking`, `requestOtp`, `linkBookingCode`,
+  `assignPermissions`, `deactivate`.
+- **Two collections, not one paginator.** `Api/GalleryController` and
+  `Api/MenuController` return categories *and* items.
+- **Parent-scoped, deliberately not resource controllers.**
+  `Admin/MediaController` — `storeRoomType`, `destroyRoomType`, … across 9
+  parents. Leave it alone.
+- **One atomic bulk write.** `Admin/SiteSettingController` (`UpsertSiteSettingsAction`).
+
+That list is the honest edge of the migration, not a backlog.
 
 ### Adding a custom endpoint
 
-When CRUD isn't enough (e.g. a `toggleActive` endpoint), add a method in the same
-shape as the rest:
+When CRUD isn't enough (e.g. a `toggleActive` endpoint), add a method beside the
+inherited verbs. There is no base helper for a custom verb, so it wires the
+service and shapes the response itself — `shapeResource()` saves naming the
+Resource again:
+
+```php
+public function toggleActive(Category $category, Request $request): JsonResponse
+{
+    return $this->respondFromService(
+        $this->shapeResource($this->service()->toggleActive($category)),
+        request: $request,
+    );
+}
+```
+
+On a controller still extending `BaseController`, the same thing written out:
 
 ```php
 public function toggleActive(Category $category, Request $request): JsonResponse
@@ -1233,9 +1335,10 @@ fields.
 
 ### ✅ DO
 
-- Extend `App\Base\BaseController` and name the methods `index`/`show`/`store`/
-  `update`/`destroy` — the shape all 69 controllers use. (`BaseCRUDController` is
-  where this is heading; nothing extends it yet. Section 4.)
+- Extend `App\Base\BaseCRUDController` (or `BasePublicIndexController`) and name
+  the methods `index`/`show`/`store`/`update`/`destroy` — 35 of the 69 do.
+  Drop to `BaseController` only when the verbs are not the plain service verbs;
+  section 4 lists the cases that qualify.
 - Wrap multi-step DB operations in `DB::transaction`.
 - Pass every payload through an API Resource so the API shape doesn't leak DB
   columns — and expose `uuid`, never `id`.
@@ -1436,8 +1539,12 @@ app/
     │                                plain classes with a handle() method.
     BaseController.php             ← success, paginatedSuccess, respondFromService,
     │                                perPageParam, indexParams
-    BaseIndexController.php        ← index, show   (no subclasses yet)
-    BaseCRUDController.php         ← + store, update, destroy (no subclasses yet)
+    BaseIndexController.php        ← index (inherited); $resource, service(),
+    │                                showResponse, paginatedResponse, shapeResource
+    BaseCRUDController.php         ← + storeResponse, updateResponse, destroyResponse
+    BasePublicIndexController.php  ← index over indexPublic() — no filter surface
+    HandlesRecycleBin.php          ← trait: trashed (inherited); restoreResponse,
+    │                                forceDestroyResponse
     BaseService.php                ← index, show, store, update, destroy,
     │                                trashed, restore, forceDestroy
     BaseRequest.php                ← authorize() + localized validation messages

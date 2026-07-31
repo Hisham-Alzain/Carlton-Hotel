@@ -22,8 +22,9 @@ Route → Controller → FormRequest (validation) → Service → Model
 ```
 
 **All base classes live in `App\Base`** — `BaseController`, `BaseIndexController`,
-`BaseCRUDController`, `BaseService`, `BaseRequest`, `BaseResource`, `BaseFilter`,
-`BaseCollection`. Not in the layer folders. There is no `BaseAction`.
+`BaseCRUDController`, `BasePublicIndexController`, `BaseService`, `BaseRequest`,
+`BaseResource`, `BaseFilter`, `BaseCollection`, plus the `HandlesRecycleBin`
+trait. Not in the layer folders. There is no `BaseAction`.
 
 Each layer knows only the layer below it:
 
@@ -43,27 +44,37 @@ The big rule: **services and actions never return HTTP responses, never throw HT
 Declare what differs; the base layer does the wire shaping:
 
 - Service extends `App\Base\BaseService`, declares `$model`, `$with` (eager loads), optional `$filter`. Verbs are `index`/`show`/`store`/`update`/`destroy`, plus `trashed`/`restore`/`forceDestroy` on soft-deletable models. They take a **route-bound model**, not an id — no service looks a record up by primary key, and none throws `NotFoundException` for a missing one. Public reads are a separate `indexPublic(?int $perPage)` that accepts no filter params, so no query string can widen a public list.
-- Controller extends `App\Base\BaseController`, injects the service, and defines `index`/`show`/`store`/`update`/`destroy`. `paginatedSuccess()` for lists, `respondFromService()` for a single record, `success(null, 'custom.messages.deleted', 204, $request)` for a delete, `perPageParam()`/`indexParams()` to read the query string. There is no `sendResponse()`, `sendError()` or `transform()`.
-- Requests extend `App\Base\BaseRequest`, live at `Http/Requests/{Domain}/{Action}{Resource}Request.php` (domain, not role+domain), contain rules only. `unique` on update uses `Rule::unique(...)->ignore($this->route('model'))` — there is no `{id}` segment.
+- Controller extends `App\Base\BaseCRUDController` (or `BaseIndexController` for a read-only staff list, `BasePublicIndexController` for a public one), declares `$resource`, returns its service from `service()`, and adds `use HandlesRecycleBin;` when the model is soft-deletable. `index()` and `trashed()` are inherited whole. `show`/`store`/`update`/`destroy`/`restore`/`forceDestroy` are one typed line each over the base's `showResponse()`/`storeResponse()`/`updateResponse()`/`destroyResponse()`/`restoreResponse()`/`forceDestroyResponse()` — the signature stays in the controller because implicit route-model binding and FormRequest resolution both read *it*, and PHP forbids narrowing a parameter type in an override. A controller whose verbs are not the plain service verbs stays on `App\Base\BaseController` and uses `paginatedSuccess()` / `respondFromService()` / `success(null, 'custom.messages.deleted', 204, $request)` / `perPageParam()` / `indexParams()` directly. There is no `sendResponse()`, `sendError()` or `transform()`.
+- Requests extend `App\Base\BaseRequest`, live at `Http/Requests/{Domain}/{Action}{Resource}Request.php` (domain, not role+domain), contain rules only. `unique` on update uses `Rule::unique(...)->ignore($this->route('roomType'))` — the route parameter's own name (`roomType`, `journalPost`, `serviceCategory`, `user`, …), never a literal `'model'` and never an `{id}` segment.
 - Resource extends `App\Base\BaseResource`, exposes `uuid` and never `id`, returns `getTranslations('field')` locale maps for translatable fields, and `whenLoaded()` for every relation. Never query inside `toArray()`. There is no `localized()` helper — it has never existed here.
 - Filter extends `App\Base\BaseFilter`, or `App\Filters\CmsContentFilter` for a content list (it merges in the `is_active` whitelist entry and its cast). `$safeParms` is an operator whitelist (`'slug' => ['eq','like','in']`, `'price' => ['gte','lte']`). Override `apply()` only for search/joins.
 - Routes are a flat one-line-per-endpoint list in `routes/api.php` using the Laravel resource verbs `index`, `show`, `store`, `update`, `destroy`, with a model-binding parameter (`{roomType}`, or `{journalPost:slug}` where the URL is editorial). Grouped by guard — `auth:users` (staff) and `auth:guests`; there is no guard named `sanctum` — and gated by `permission:` middleware, reads and writes separately. Public reads sit under the `public` prefix and are served from `app/Http/Controllers/Api`. Controllers are imported with `Admin`/`Api` aliases because both halves of a resource are declared in the same file. There is no `User/`, `Driver/` or `Seller/` folder and no `api/v1` prefix.
 
 **Method names are Laravel's resource verbs, not PascalCase.** Earlier versions of this skill and of guide §3/§4 said routes call `GetAll`/`GetOne`/`Create`/`Update`/`Delete`, and put the base controllers in `App\Http\Controllers`. Neither has ever been true of this codebase, and the claim actively misled work on this project. Custom endpoints are `camelCase`. See guide §3–§8 for the full Category walkthrough and §4 for the base pair.
 
-> **Current state of this codebase, so the next reader is not misled:** no
-> controller extends `BaseCRUDController` or `BaseIndexController`. All 69
-> controllers extend `BaseController` and hand-copy the bodies — 54 repeat the
-> same one-line `index()`, 50 the same `paginatedSuccess()` call. The base classes
-> are real and tested (`tests/Unit/BaseControllerPlumbingTest.php` drives them
-> through test-only subclasses), and migrating onto them is a known outstanding
-> task (~1–1.5 days, mechanical) — but two things have to be fixed first: their
-> `show`/`update`/`destroy` type-hint the abstract `Model`, so implicit
-> route-model binding cannot resolve, and `store`/`update` type-hint the abstract
-> `BaseRequest`, so there is no way to name the concrete FormRequest a route
-> validates against (`$createRequest`/`$updateRequest` are not properties that
-> exist). Write new controllers the way the existing 69 are written until that
-> lands — consistency with 69 neighbours beats being the only subclass.
+> **Current state of this codebase, so the next reader is not misled:** 35 of the
+> 69 controllers are on the base pair — 23 on `BaseCRUDController` (17 of those
+> with `HandlesRecycleBin`) and 12 on `BasePublicIndexController`. The remaining
+> 34 stay on `BaseController` **on purpose**: their verbs are not the plain
+> service verbs (a different service method such as `adminIndex()`, non-CRUD
+> verbs like `confirm`/`settle`/`approve`, two collections instead of one
+> paginator, the parent-scoped `MediaController`, the atomic bulk
+> `SiteSettingController`). Forcing those onto the base would mean a hook per
+> deviation, at which point the base stops being simpler than the line it
+> replaces. Guide §4 lists the edges by name.
+>
+> The two blockers that used to make the pair unextendable are fixed: it no
+> longer declares `show`/`update`/`destroy` with the abstract `Model`, nor
+> `store`/`update` with the abstract `BaseRequest`. The base owns the body
+> (`showResponse()`, `storeResponse()`, …) and the controller owns the signature,
+> because implicit route-model binding and FormRequest resolution both read the
+> controller's signature and PHP forbids narrowing a parameter type in an
+> override. `$createRequest`/`$updateRequest` still do not exist and never did.
+> `tests/Feature/BaseControllerRoutingTest.php` drives the pair through the real
+> router; `tests/Feature/PublicIndexBoundaryTest.php` pins the public list
+> boundary.
+>
+> **Write new controllers on the base pair.** Guide §3 step 7 has the shape.
 
 ## When to use an Action instead of a service method
 

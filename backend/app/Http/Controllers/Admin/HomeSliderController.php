@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Base\BaseController;
+use App\Base\BaseCRUDController;
+use App\Base\BaseService;
+use App\Base\HandlesRecycleBin;
 use App\Http\Requests\Cms\CreateHomeSliderRequest;
 use App\Http\Requests\Cms\UpdateHomeSliderRequest;
 use App\Http\Resources\Cms\HomeSliderResource;
@@ -11,57 +13,46 @@ use App\Services\Cms\HomeSliderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class HomeSliderController extends BaseController
+class HomeSliderController extends BaseCRUDController
 {
+    use HandlesRecycleBin;
+
+    protected ?string $resource = HomeSliderResource::class;
+
     public function __construct(private readonly HomeSliderService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], HomeSliderResource::class, $request);
+        return $this->service;
     }
 
     public function show(HomeSlider $homeSlider, Request $request): JsonResponse
     {
-        $result = $this->service->show($homeSlider);
-        $result['data'] = new HomeSliderResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->showResponse($homeSlider, $request);
     }
 
     public function store(CreateHomeSliderRequest $request): JsonResponse
     {
-        $result = $this->service->store($request->validated());
-        $result['data'] = new HomeSliderResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->storeResponse($request);
     }
 
     public function update(UpdateHomeSliderRequest $request, HomeSlider $homeSlider): JsonResponse
     {
-        $result = $this->service->update($homeSlider, $request->validated());
-        $result['data'] = new HomeSliderResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->updateResponse($request, $homeSlider);
     }
 
     public function destroy(HomeSlider $homeSlider, Request $request): JsonResponse
     {
-        $this->service->destroy($homeSlider);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
-    }
-
-    public function trashed(Request $request): JsonResponse
-    {
-        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], HomeSliderResource::class, $request);
+        return $this->destroyResponse($homeSlider, $request);
     }
 
     public function restore(HomeSlider $homeSlider, Request $request): JsonResponse
     {
-        $result = $this->service->restore($homeSlider);
-        $result['data'] = new HomeSliderResource($result['data']);
-        return $this->respondFromService($result, 'custom.messages.restored', $request);
+        return $this->restoreResponse($homeSlider, $request);
     }
 
     public function forceDestroy(HomeSlider $homeSlider, Request $request): JsonResponse
     {
-        $this->service->forceDestroy($homeSlider);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
+        return $this->forceDestroyResponse($homeSlider, $request);
     }
 }

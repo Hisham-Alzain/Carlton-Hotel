@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Base\BaseController;
+use App\Base\BaseCRUDController;
+use App\Base\BaseService;
+use App\Base\HandlesRecycleBin;
 use App\Http\Requests\Cms\CreateFacilityRequest;
 use App\Http\Requests\Cms\UpdateFacilityRequest;
 use App\Http\Resources\Cms\FacilityResource;
@@ -11,57 +13,46 @@ use App\Services\Cms\FacilityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class FacilityController extends BaseController
+class FacilityController extends BaseCRUDController
 {
+    use HandlesRecycleBin;
+
+    protected ?string $resource = FacilityResource::class;
+
     public function __construct(private readonly FacilityService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], FacilityResource::class, $request);
+        return $this->service;
     }
 
     public function show(Facility $facility, Request $request): JsonResponse
     {
-        $result = $this->service->show($facility);
-        $result['data'] = new FacilityResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->showResponse($facility, $request);
     }
 
     public function store(CreateFacilityRequest $request): JsonResponse
     {
-        $result = $this->service->store($request->validated());
-        $result['data'] = new FacilityResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->storeResponse($request);
     }
 
     public function update(UpdateFacilityRequest $request, Facility $facility): JsonResponse
     {
-        $result = $this->service->update($facility, $request->validated());
-        $result['data'] = new FacilityResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->updateResponse($request, $facility);
     }
 
     public function destroy(Facility $facility, Request $request): JsonResponse
     {
-        $this->service->destroy($facility);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
-    }
-
-    public function trashed(Request $request): JsonResponse
-    {
-        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], FacilityResource::class, $request);
+        return $this->destroyResponse($facility, $request);
     }
 
     public function restore(Facility $facility, Request $request): JsonResponse
     {
-        $result = $this->service->restore($facility);
-        $result['data'] = new FacilityResource($result['data']);
-        return $this->respondFromService($result, 'custom.messages.restored', $request);
+        return $this->restoreResponse($facility, $request);
     }
 
     public function forceDestroy(Facility $facility, Request $request): JsonResponse
     {
-        $this->service->forceDestroy($facility);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
+        return $this->forceDestroyResponse($facility, $request);
     }
 }

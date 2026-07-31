@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Base\BaseController;
+use App\Base\BaseCRUDController;
+use App\Base\BaseService;
+use App\Base\HandlesRecycleBin;
 use App\Http\Requests\Cms\CreateFaqRequest;
 use App\Http\Requests\Cms\UpdateFaqRequest;
 use App\Http\Resources\Cms\FaqResource;
@@ -11,57 +13,46 @@ use App\Services\Cms\FaqService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class FaqController extends BaseController
+class FaqController extends BaseCRUDController
 {
+    use HandlesRecycleBin;
+
+    protected ?string $resource = FaqResource::class;
+
     public function __construct(private readonly FaqService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], FaqResource::class, $request);
+        return $this->service;
     }
 
     public function show(Faq $faq, Request $request): JsonResponse
     {
-        $result = $this->service->show($faq);
-        $result['data'] = new FaqResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->showResponse($faq, $request);
     }
 
     public function store(CreateFaqRequest $request): JsonResponse
     {
-        $result = $this->service->store($request->validated());
-        $result['data'] = new FaqResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->storeResponse($request);
     }
 
     public function update(UpdateFaqRequest $request, Faq $faq): JsonResponse
     {
-        $result = $this->service->update($faq, $request->validated());
-        $result['data'] = new FaqResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->updateResponse($request, $faq);
     }
 
     public function destroy(Faq $faq, Request $request): JsonResponse
     {
-        $this->service->destroy($faq);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
-    }
-
-    public function trashed(Request $request): JsonResponse
-    {
-        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], FaqResource::class, $request);
+        return $this->destroyResponse($faq, $request);
     }
 
     public function restore(Faq $faq, Request $request): JsonResponse
     {
-        $result = $this->service->restore($faq);
-        $result['data'] = new FaqResource($result['data']);
-        return $this->respondFromService($result, 'custom.messages.restored', $request);
+        return $this->restoreResponse($faq, $request);
     }
 
     public function forceDestroy(Faq $faq, Request $request): JsonResponse
     {
-        $this->service->forceDestroy($faq);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
+        return $this->forceDestroyResponse($faq, $request);
     }
 }

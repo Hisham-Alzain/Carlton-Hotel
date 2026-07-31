@@ -46,4 +46,22 @@ class JournalPostController extends BaseController
         $this->service->destroy($journalPost);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], JournalPostResource::class, $request);
+    }
+
+    public function restore(JournalPost $journalPost, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($journalPost);
+        $result['data'] = new JournalPostResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(JournalPost $journalPost, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($journalPost);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

@@ -46,4 +46,22 @@ class EventSpaceController extends BaseController
         $this->service->destroy($eventSpace);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], EventSpaceResource::class, $request);
+    }
+
+    public function restore(EventSpace $eventSpace, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($eventSpace);
+        $result['data'] = new EventSpaceResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(EventSpace $eventSpace, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($eventSpace);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

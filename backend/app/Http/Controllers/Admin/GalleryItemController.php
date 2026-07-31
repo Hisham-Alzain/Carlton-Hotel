@@ -46,4 +46,22 @@ class GalleryItemController extends BaseController
         $this->service->destroy($galleryItem);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], GalleryItemResource::class, $request);
+    }
+
+    public function restore(GalleryItem $galleryItem, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($galleryItem);
+        $result['data'] = new GalleryItemResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(GalleryItem $galleryItem, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($galleryItem);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

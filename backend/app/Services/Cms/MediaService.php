@@ -54,10 +54,53 @@ class MediaService
             ->orderByDesc('id');
 
         $this->selectUsageCount($query);
+        $this->scopeToLiveParents($query);
 
         (new MediaFilter($params))->apply($query);
 
         return ['data' => $query->paginate($this->resolvePerPage($perPage)), 'code' => 200];
+    }
+
+    /**
+     * Hide placements whose parent is sitting in the recycle bin.
+     *
+     * `media` has no `deleted_at` of its own and `PurgesMedia` deliberately no
+     * longer fires on a soft delete — a restore has to come back with its
+     * photography — so deleting a room type leaves its placements live rows in
+     * this table. The library listed them: an editor browsing the picker saw
+     * images belonging to records that appear in no index, no show route and no
+     * public page.
+     *
+     * Two ways to answer that. Publish the parent's trashed state and let a
+     * picker grey the row out, or scope the list. This scopes it, because a
+     * placement on a trashed parent is not a row a client can do anything with:
+     * `mediable_uuid` already comes back `null` (the `mediable` relation
+     * resolves through the parent's own soft-delete scope, so `whenLoaded` hands
+     * out nothing), the nested `DELETE /{parent}/{uuid}/images/{media}` route
+     * 404s on binding the parent, and nothing else in the API will name it. A
+     * greyed-out row would advertise an asset the rest of the API denies exists,
+     * which is the same inconsistency one layer down.
+     *
+     * The row is not lost, and this is not a purge: restore the parent and the
+     * placement is back in the library unchanged. `DELETE /{resource}/{uuid}/force`
+     * is what finally removes it, via `PurgesMedia` on `forceDeleted` — the
+     * media rows and the unreferenced files go with the record.
+     *
+     * Library assets with no parent at all (`mediable_type IS NULL`) are the
+     * point of the library and are kept unconditionally — `whereHasMorph` over
+     * `'*'` enumerates the morph types actually present and would otherwise drop
+     * every unattached row, including when there are no attached rows at all.
+     *
+     * Not in `MediaFilter`: a filter is what the client asked for and may switch
+     * off, and this is an invariant of the list. Placing it here also keeps it
+     * off the nested `images` relations, where the parent is by definition live.
+     */
+    private function scopeToLiveParents(Builder $query): void
+    {
+        $query->where(function (Builder $scoped): void {
+            $scoped->whereNull('mediable_type')
+                ->orWhereHasMorph('mediable', '*');
+        });
     }
 
     /**

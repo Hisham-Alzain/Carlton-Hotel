@@ -46,4 +46,22 @@ class ExperienceController extends BaseController
         $this->service->destroy($experience);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], ExperienceResource::class, $request);
+    }
+
+    public function restore(Experience $experience, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($experience);
+        $result['data'] = new ExperienceResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(Experience $experience, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($experience);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

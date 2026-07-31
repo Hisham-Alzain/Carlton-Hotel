@@ -137,7 +137,7 @@ After login, the `permissions` array in the user object is the source of truth f
 
 A `super_admin` account bypasses all permission checks on the server.
 
-**Full permission catalog** (seeded since P0, 8 modules): `reservations.view|create|cancel`, `folios.view|settle`, `cms.view|edit`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`.
+**Full permission catalog** (8 modules, 18 permissions): `reservations.view|create|cancel`, `folios.view|settle`, `cms.view|edit|restore|purge`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`.
 
 ### `cms.view` is enforced — gate read-only navigation on it
 
@@ -150,6 +150,20 @@ CMS routes are split by verb. Every **read** (`GET` on a collection and on `/{uu
 | neither | ❌ `403` | ❌ `403` |
 
 So a `cms.view`-only account is a genuine read-only reviewer, and an editor never needs both rows. **Show a read-only CMS section when the account holds `cms.view` *or* `cms.edit`; show the create/edit/delete controls only for `cms.edit`.**
+
+### `cms.restore` and `cms.purge` — the recycle bin is not part of `cms.edit`
+
+`DELETE /cms/{module}/{uuid}` is a **soft delete**. The three verbs that address the bin sit outside the read/write split above, on their own permissions, because undoing a delete and destroying a record permanently are not edits:
+
+| Route | Gate |
+|---|---|
+| `GET /cms/{module}/trashed` | `cms.restore\|cms.purge` |
+| `POST /cms/{module}/{uuid}/restore` | `cms.restore` |
+| `DELETE /cms/{module}/{uuid}/force` | `cms.purge` |
+
+`cms.edit` alone gets a `403` on all three — an account that can delete cannot necessarily undo it, and certainly cannot empty the bin. The bin **listing** admits either bin permission, because it is only useful to someone who can act on a row in it; a `cms.view`-only reviewer gets a `403` there and should not be shown a "Trash" nav item at all.
+
+**Gate the UI as:** show "Trash" when the account holds `cms.restore` *or* `cms.purge`; show "Restore" only for `cms.restore`; show "Delete permanently" only for `cms.purge`.
 
 The split is structural, so it also holds for content types added after this revision — gate on the rule above rather than on a route list. At the time of writing that was 48 routes gated `cms.view|cms.edit` and 95 gated `cms.edit`, but each new content type adds several more; run `php artisan route:list --path=api/cms -v` for the live figure rather than trusting a number in a document.
 
@@ -166,7 +180,9 @@ Most are route middleware, which is the norm. Two families are not, and are enfo
 
 `pricing.edit` and `reports.view` are seeded, appear in `GET /api/permissions`, and are enforced **nowhere** — no route middleware, no policy, no service check. Granting either currently permits nothing and withholding either currently blocks nothing. `reports.view` becomes real when P12 ships its report endpoints; `pricing.edit` has no endpoint planned yet. Every other permission in the catalog is enforced somewhere.
 
-**Role presets** (6): `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `content_editor` — see Module: Reference Data below for exactly which permissions each preset grants. `content_editor` is the only preset that grants `cms.*`; without it no seeded account except the super admin can reach `/api/cms/*`.
+### Role presets
+
+Seven presets: `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `content_editor`, `content_manager` — see Module: Reference Data below for exactly which permissions each preset grants. The last two are the only presets that grant `cms.*`; without one of them no seeded account except the super admin can reach `/api/cms/*`. `content_manager` is `content_editor` plus `cms.purge`, and is the only preset that may empty the recycle bin.
 
 ---
 
@@ -446,19 +462,21 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
   { "name": "housekeeping", "permissions": ["service_requests.view", "service_requests.update"] },
   { "name": "concierge", "permissions": ["service_requests.view", "service_requests.assign", "service_requests.update"] },
   { "name": "events", "permissions": ["service_requests.view", "tickets.view", "tickets.assign", "tickets.respond"] },
-  { "name": "content_editor", "permissions": ["cms.view", "cms.edit"] }
+  { "name": "content_editor", "permissions": ["cms.view", "cms.edit", "cms.restore"] },
+  { "name": "content_manager", "permissions": ["cms.view", "cms.edit", "cms.restore", "cms.purge"] }
 ]
 ```
 
-6 presets. `content_editor` is the CMS persona — the seeded account
-`content@carlton.demo` holds it, and it is the only non-super-admin login that can
-reach `/api/cms/*`.
+7 presets. `content_editor` is the everyday CMS persona — the seeded account
+`content@carlton.demo` holds it — and `content_manager` is the same persona plus
+`cms.purge`, the authority to empty the recycle bin. Those two are the only
+non-super-admin logins that can reach `/api/cms/*`.
 
 ---
 
 ## Module: CMS Content (reads `cms.view|cms.edit` · writes `cms.edit`)
 
-Admin CRUD for the **19 CMS modules**, plus the 6 P7 service-catalog resources that sit behind the same gates. Most modules follow one shape: `GET`/`POST` on the collection, `GET`/`PUT`/`DELETE` on `/{uuid}`. All under `auth:users`; the `GET`s are gated on `permission:cms.view|cms.edit` and `POST`/`PUT`/`PATCH`/`DELETE` on `permission:cms.edit` — see [Permission model](#permission-model).
+Admin CRUD for the **19 CMS modules**, plus the 6 P7 service-catalog resources that sit behind the same gates. Most modules follow one shape: `GET`/`POST` on the collection, `GET`/`PUT`/`DELETE` on `/{uuid}`, plus the three recycle-bin verbs (`GET /trashed`, `POST /{uuid}/restore`, `DELETE /{uuid}/force`) documented under **The recycle bin** below. All under `auth:users`; the `GET`s are gated on `permission:cms.view|cms.edit` and `POST`/`PUT`/`PATCH`/`DELETE` on `permission:cms.edit`, with the bin verbs on `cms.restore` / `cms.purge` — see [Permission model](#permission-model).
 
 Route binding is by **`uuid`** everywhere under `/cms/*`, never by slug or numeric id — including Pages and Journal posts, whose *public* routes use `slug`.
 
@@ -490,7 +508,30 @@ P7 service catalog, identical gates, full `apiResource` each (`PUT` **or** `PATC
 
 Response shapes are identical to the public read shapes — the same Resource class serves both admin and public routes, so only the row *selection* differs. `store` returns HTTP 201, `destroy` returns HTTP 204 with `data: null`.
 
-> **There are no soft deletes anywhere in the CMS.** `DELETE` is permanent, and several relations cascade (room type → rooms, dining venue → menu categories → menu items, gallery category → items, menu category → items). **Deleting a parent now also deletes its media** — the `PurgesMedia` trait drops the record's `media` rows and its cascade descendants' rows before the database cascade fires, so a dining venue takes its menu categories, their dishes, and every photograph on any of them. Confirm destructively and name what else disappears, images included. (Earlier revisions of this guide said media survived the parent; that was true before the trait landed.) File unlinks are queued (`PurgeMediaFile`, dispatched after commit, re-checked before deleting), so storage is reclaimed shortly after the request rather than during it — and not at all on a host with no queue worker.
+> **`DELETE` is a soft delete and is recoverable.** Earlier revisions of this guide said "there are no soft deletes anywhere in the CMS" and that `DELETE` was permanent. That is no longer true and has not been since the recycle bin landed — 17 of the 18 soft-deletable CMS models now answer `DELETE` by stamping `deleted_at` rather than removing the row. **The wire contract of `DELETE` itself has not moved:** still HTTP 204, still gone from every index, every `/{uuid}` show and every public route, and its slug/room number/`(group,key)` freed for reuse. What changed is that the record can now be listed, restored, or destroyed for good — see **The recycle bin** below. Confirmation copy should say "moved to trash", not "permanently deleted".
+>
+> Several relations cascade, on the way down and on the way back: room type → rooms, dining venue → menu categories → menu items, gallery category → items, menu category → items. A restore brings back exactly the children that went down *with* the parent — a dish retired last week, before its venue was deleted, stays retired.
+>
+> **Media survives a `DELETE` and is destroyed by a force delete.** `PurgesMedia` fires on `forceDeleted`, not on the recoverable delete, so a soft-deleted record keeps its `media` rows and its files and comes back whole. `DELETE /cms/{module}/{uuid}/force` is what finally drops those rows — the record's own, and its cascade descendants' — and the files nothing else references. File unlinks are queued (`PurgeMediaFile`, dispatched after commit, re-checked before deleting), so storage is reclaimed shortly after the request rather than during it — and not at all on a host with no queue worker.
+
+### The recycle bin
+
+Every module in the table above (all except **Site settings**, which has no `DELETE` at all) carries three extra verbs. Reviews are read-and-publish only and have no `DELETE` either, so they have no bin.
+
+| Verb | Path | Gate | Returns |
+|---|---|---|---|
+| `GET` | `/cms/{module}/trashed` | `cms.restore\|cms.purge` | Paginated `items` + `meta`, **most recently deleted first** |
+| `POST` | `/cms/{module}/{uuid}/restore` | `cms.restore` | HTTP 200, the restored record in the module's normal shape |
+| `DELETE` | `/cms/{module}/{uuid}/force` | `cms.purge` | HTTP 204, `data: null` |
+
+Notes the dashboard has to get right:
+
+- **`/trashed` is a literal segment, not a uuid.** It is declared ahead of `/{uuid}`, so `GET /cms/pages/trashed` is the bin and never a lookup for a page whose uuid is the word "trashed".
+- **The bin ordering is `deleted_at DESC`, and it overrides the module's editorial `sort_order`.** A bin is read chronologically — "what did I just delete" — so `?sort=` is not honoured here.
+- **`restore` and `force` take the uuid of a *deleted* record**, and only those two routes resolve one. Every other route in this guide, `GET /{uuid}` included, still `404`s on a deleted uuid. A uuid that names nothing at all is a `404` from these two as well.
+- **Restore is idempotent-ish, not a toggle.** Restoring a record that is already live answers 200 and changes nothing; there is no "un-restore" — use `DELETE` again.
+- **Force delete needs the record to be in the bin first.** There is no one-step permanent delete: `DELETE` then `DELETE …/force`.
+- A restored parent brings back its cascade children **and its images**; a force-deleted parent takes both with it, permanently.
 
 ### Publishing
 
@@ -625,6 +666,8 @@ Upload once with no parent, then place the same asset on as many records as you 
 #### `GET /cms/media`
 
 Standard paginated envelope — `data.items[]` + `data.meta`. `per_page` defaults to **15**, **clamped to 100** rather than rejected.
+
+**Placements whose parent is in the recycle bin are not listed.** A row attached to a soft-deleted record is filtered out of the library — including from `data.meta.total` — and no filter switches it back on. It is not deleted: restore the parent and the asset reappears in the library unchanged; `DELETE /cms/{module}/{uuid}/force` is what finally removes it. The alternative was to keep listing it with a "parent is trashed" flag for a picker to grey out, and that was rejected because nothing else in the API will admit such a row exists: its parent `404`s on every read route, the nested `DELETE /{module}/{uuid}/images/{media}` route `404`s on binding that parent, and `mediable_uuid` already comes back `null` for it. A greyed-out row would advertise an asset the rest of the API denies. **Parentless library uploads (`mediable_type: null`) are never affected** — they are the point of the library and are always listed.
 
 **Newest-first by default:** `created_at DESC, id DESC`. The `id` tiebreak is load-bearing — `created_at` has one-second resolution, so a batch uploaded together would otherwise come back in an arbitrary, unstably-paginated order. A picker opens on what the editor just uploaded with no `sort` param.
 

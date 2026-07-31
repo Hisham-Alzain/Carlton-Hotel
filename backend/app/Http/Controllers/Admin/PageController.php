@@ -46,4 +46,22 @@ class PageController extends BaseController
         $this->service->destroy($page);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], PageResource::class, $request);
+    }
+
+    public function restore(Page $page, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($page);
+        $result['data'] = new PageResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(Page $page, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($page);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

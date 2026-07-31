@@ -324,10 +324,13 @@ class CmsAccessControlTest extends TestCase
 
         $this->assertFalse($res->json('data.is_super_admin'));
         $this->assertSame(
-            ['cms.edit', 'cms.view'],
+            ['cms.edit', 'cms.restore', 'cms.view'],
             collect($res->json('data.permissions'))->sort()->values()->all(),
         );
         $this->assertNotContains('staff.manage', $res->json('data.permissions'));
+        // The preset stops short of the bin's destructive half; content_manager
+        // is the preset that carries it.
+        $this->assertNotContains('cms.purge', $res->json('data.permissions'));
     }
 
     public function test_role_less_staff_reports_no_permissions(): void

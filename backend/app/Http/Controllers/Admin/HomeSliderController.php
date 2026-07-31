@@ -46,4 +46,22 @@ class HomeSliderController extends BaseController
         $this->service->destroy($homeSlider);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], HomeSliderResource::class, $request);
+    }
+
+    public function restore(HomeSlider $homeSlider, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($homeSlider);
+        $result['data'] = new HomeSliderResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(HomeSlider $homeSlider, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($homeSlider);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

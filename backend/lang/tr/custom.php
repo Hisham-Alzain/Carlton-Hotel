@@ -5,6 +5,7 @@ return [
         'success'             => 'İşlem başarılı.',
         'created'             => 'Başarıyla oluşturuldu.',
         'deleted'             => 'Başarıyla silindi.',
+        'restored'            => 'Başarıyla geri yüklendi.',
         'staff_created'       => 'Personel hesabı oluşturuldu.',
         'staff_updated'       => 'Personel hesabı güncellendi.',
         'staff_deactivated'   => 'Personel hesabı devre dışı bırakıldı.',

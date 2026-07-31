@@ -46,4 +46,22 @@ class MenuItemController extends BaseController
         $this->service->destroy($menuItem);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], MenuItemResource::class, $request);
+    }
+
+    public function restore(MenuItem $menuItem, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($menuItem);
+        $result['data'] = new MenuItemResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(MenuItem $menuItem, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($menuItem);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

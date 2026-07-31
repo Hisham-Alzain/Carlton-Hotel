@@ -46,4 +46,22 @@ class MenuCategoryController extends BaseController
         $this->service->destroy($menuCategory);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], MenuCategoryResource::class, $request);
+    }
+
+    public function restore(MenuCategory $menuCategory, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($menuCategory);
+        $result['data'] = new MenuCategoryResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(MenuCategory $menuCategory, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($menuCategory);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

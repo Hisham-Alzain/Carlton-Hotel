@@ -46,4 +46,22 @@ class PromotionController extends BaseController
         $this->service->destroy($promotion);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], PromotionResource::class, $request);
+    }
+
+    public function restore(Promotion $promotion, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($promotion);
+        $result['data'] = new PromotionResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(Promotion $promotion, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($promotion);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

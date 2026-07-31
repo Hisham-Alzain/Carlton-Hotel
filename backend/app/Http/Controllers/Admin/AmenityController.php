@@ -46,4 +46,22 @@ class AmenityController extends BaseController
         $this->service->destroy($amenity);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], AmenityResource::class, $request);
+    }
+
+    public function restore(Amenity $amenity, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($amenity);
+        $result['data'] = new AmenityResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(Amenity $amenity, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($amenity);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

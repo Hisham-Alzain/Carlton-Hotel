@@ -5,6 +5,7 @@ return [
         'success'             => 'Success.',
         'created'             => 'Created successfully.',
         'deleted'             => 'Deleted successfully.',
+        'restored'            => 'Restored successfully.',
         'staff_created'       => 'Staff account created.',
         'staff_updated'       => 'Staff account updated.',
         'staff_deactivated'   => 'Staff account deactivated.',

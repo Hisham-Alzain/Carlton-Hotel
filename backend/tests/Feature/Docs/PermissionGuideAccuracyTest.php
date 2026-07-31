@@ -108,6 +108,73 @@ class PermissionGuideAccuracyTest extends TestCase
     }
 
     /**
+     * The claim that went stale the moment the recycle bin landed.
+     *
+     * "`DELETE` is permanent" is the single most dangerous sentence this guide
+     * can carry once it is false: a dashboard built on it writes destructive
+     * confirmation copy for an action that is now recoverable, and never builds
+     * the trash screen that would let anyone get the record back.
+     */
+    public function test_the_guide_no_longer_calls_delete_permanent(): void
+    {
+        $guide = $this->guide();
+
+        foreach ([
+            'There are no soft deletes anywhere in the CMS',
+            '`DELETE` is permanent',
+        ] as $stale) {
+            $this->assertStringNotContainsString($stale, $guide, "The guide still says: {$stale}");
+        }
+
+        foreach ([
+            '/trashed',
+            '/restore',
+            '/force',
+            'cms.restore',
+            'cms.purge',
+        ] as $documented) {
+            $this->assertStringContainsString(
+                $documented,
+                $guide,
+                "The guide does not document {$documented}, so the dashboard cannot build against it.",
+            );
+        }
+    }
+
+    /**
+     * The bin gates the guide tells the UI to branch on must be the gates the
+     * router actually carries — the same falsifiability the read/write split
+     * above gets, for the three verbs that can destroy data.
+     */
+    public function test_the_bin_gates_the_guide_publishes_match_the_router(): void
+    {
+        foreach ([
+            'permission:cms.restore|cms.purge' => self::READ_VERBS,
+            'permission:cms.restore'           => ['POST'],
+            'permission:cms.purge'             => ['DELETE'],
+        ] as $gate => $expectedVerbs) {
+            $routes = $this->routesGatedOn($gate);
+
+            $this->assertNotEmpty($routes, "No route gates on {$gate}, but the guide tells the UI to.");
+
+            foreach ($routes as $uri => $verbs) {
+                $this->assertSame(
+                    [],
+                    array_diff($verbs, $expectedVerbs),
+                    implode('|', $verbs)." {$uri} is behind {$gate}, which the guide describes as "
+                    .implode('/', $expectedVerbs).' only.',
+                );
+            }
+
+            // The guide spells a pipe-separated gate `a\|b` inside a markdown
+            // table, so match on the permission names rather than the raw gate.
+            foreach (explode('|', str_replace('permission:', '', $gate)) as $permission) {
+                $this->assertStringContainsString($permission, $this->guide());
+            }
+        }
+    }
+
+    /**
      * The set of permissions the guide calls inert must be exactly the set that
      * really is. Naming an enforced permission as inert tells the UI team to
      * ignore a real `403`; omitting an inert one invites a screen gated on

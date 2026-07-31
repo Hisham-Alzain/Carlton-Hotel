@@ -50,4 +50,23 @@ class GalleryCategoryController extends BaseController
         $this->service->destroy($galleryCategory);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], GalleryCategoryResource::class, $request);
+    }
+
+    /** Restoring a chip brings back the photographs the cascade took with it. */
+    public function restore(GalleryCategory $galleryCategory, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($galleryCategory);
+        $result['data'] = new GalleryCategoryResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(GalleryCategory $galleryCategory, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($galleryCategory);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

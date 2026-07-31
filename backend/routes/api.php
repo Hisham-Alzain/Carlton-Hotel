@@ -194,6 +194,96 @@ Route::prefix('public')->group(function () {
 // ──────────────────────────────────────────────────────────────────────
 Route::middleware('auth:users')->prefix('cms')->group(function () {
 
+    // ── The recycle bin (cms.restore / cms.purge) ─────────────────────
+    //
+    // `DELETE /cms/{resource}/{uuid}` marks a row rather than removing it. Until
+    // these routes existed nothing reached `BaseService::trashed/restore/
+    // forceDestroy`, so an editor could not undo a delete and no row could ever
+    // leave the table — which also meant `PurgesMedia` (now hooked on
+    // `forceDeleted`) never fired and every deleted record's photography stayed
+    // on disk forever.
+    //
+    // Declared FIRST inside the prefix, and deliberately so: routes match in
+    // registration order, and `/room-types/{roomType}` registered above would
+    // swallow `/room-types/trashed` and try to resolve "trashed" as a uuid.
+    //
+    // `->withTrashed()` on restore and force is load-bearing, not decoration.
+    // Implicit binding resolves through the model's `SoftDeletes` global scope,
+    // so without it the two verbs whose entire purpose is to address a deleted
+    // record 404 on every record they can be given. It goes per route because
+    // `withTrashed()` lives on `Route`, not on `RouteRegistrar` — there is no
+    // group-level form of it.
+    //
+    // Permissions are split off `cms.edit` because these are not edits.
+    // `cms.restore` is undo and belongs with editing (the `content_editor`
+    // preset holds it); `cms.purge` destroys data no backup of the API can
+    // return and belongs to `content_manager`. The bin listing admits either,
+    // since it is only useful to someone who can act on a row in it.
+    //
+    // 17 of the 18 soft-deletable models are here. `SiteSetting` is not: it has
+    // no per-row delete route at all (settings are one atomic bulk PUT through
+    // `UpsertSiteSettingsAction`), so nothing an API client can do puts a
+    // setting in the bin and the three verbs would address an empty set.
+    Route::middleware('permission:cms.restore|cms.purge')->group(function () {
+        Route::get('/room-types/trashed',         [AdminRoomTypeController::class, 'trashed']);
+        Route::get('/rooms/trashed',              [AdminRoomController::class, 'trashed']);
+        Route::get('/facilities/trashed',         [AdminFacilityController::class, 'trashed']);
+        Route::get('/dining-venues/trashed',      [AdminDiningVenueController::class, 'trashed']);
+        Route::get('/event-spaces/trashed',       [AdminEventSpaceController::class, 'trashed']);
+        Route::get('/amenities/trashed',          [AdminAmenityController::class, 'trashed']);
+        Route::get('/home-sliders/trashed',       [AdminHomeSliderController::class, 'trashed']);
+        Route::get('/pages/trashed',              [AdminPageController::class, 'trashed']);
+        Route::get('/promotions/trashed',         [AdminPromotionController::class, 'trashed']);
+        Route::get('/testimonials/trashed',       [AdminTestimonialController::class, 'trashed']);
+        Route::get('/faqs/trashed',               [AdminFaqController::class, 'trashed']);
+        Route::get('/experiences/trashed',        [AdminExperienceController::class, 'trashed']);
+        Route::get('/gallery-categories/trashed', [AdminGalleryCategoryController::class, 'trashed']);
+        Route::get('/gallery-items/trashed',      [AdminGalleryItemController::class, 'trashed']);
+        Route::get('/journal-posts/trashed',      [AdminJournalPostController::class, 'trashed']);
+        Route::get('/menu-categories/trashed',    [MenuCategoryController::class, 'trashed']);
+        Route::get('/menu-items/trashed',         [MenuItemController::class, 'trashed']);
+    });
+
+    Route::middleware('permission:cms.restore')->group(function () {
+        Route::post('/room-types/{roomType}/restore',              [AdminRoomTypeController::class, 'restore'])->withTrashed();
+        Route::post('/rooms/{room}/restore',                       [AdminRoomController::class, 'restore'])->withTrashed();
+        Route::post('/facilities/{facility}/restore',              [AdminFacilityController::class, 'restore'])->withTrashed();
+        Route::post('/dining-venues/{diningVenue}/restore',        [AdminDiningVenueController::class, 'restore'])->withTrashed();
+        Route::post('/event-spaces/{eventSpace}/restore',          [AdminEventSpaceController::class, 'restore'])->withTrashed();
+        Route::post('/amenities/{amenity}/restore',                [AdminAmenityController::class, 'restore'])->withTrashed();
+        Route::post('/home-sliders/{homeSlider}/restore',          [AdminHomeSliderController::class, 'restore'])->withTrashed();
+        Route::post('/pages/{page}/restore',                       [AdminPageController::class, 'restore'])->withTrashed();
+        Route::post('/promotions/{promotion}/restore',             [AdminPromotionController::class, 'restore'])->withTrashed();
+        Route::post('/testimonials/{testimonial}/restore',         [AdminTestimonialController::class, 'restore'])->withTrashed();
+        Route::post('/faqs/{faq}/restore',                         [AdminFaqController::class, 'restore'])->withTrashed();
+        Route::post('/experiences/{experience}/restore',           [AdminExperienceController::class, 'restore'])->withTrashed();
+        Route::post('/gallery-categories/{galleryCategory}/restore',[AdminGalleryCategoryController::class, 'restore'])->withTrashed();
+        Route::post('/gallery-items/{galleryItem}/restore',        [AdminGalleryItemController::class, 'restore'])->withTrashed();
+        Route::post('/journal-posts/{journalPost}/restore',        [AdminJournalPostController::class, 'restore'])->withTrashed();
+        Route::post('/menu-categories/{menuCategory}/restore',     [MenuCategoryController::class, 'restore'])->withTrashed();
+        Route::post('/menu-items/{menuItem}/restore',              [MenuItemController::class, 'restore'])->withTrashed();
+    });
+
+    Route::middleware('permission:cms.purge')->group(function () {
+        Route::delete('/room-types/{roomType}/force',              [AdminRoomTypeController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/rooms/{room}/force',                       [AdminRoomController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/facilities/{facility}/force',              [AdminFacilityController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/dining-venues/{diningVenue}/force',        [AdminDiningVenueController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/event-spaces/{eventSpace}/force',          [AdminEventSpaceController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/amenities/{amenity}/force',                [AdminAmenityController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/home-sliders/{homeSlider}/force',          [AdminHomeSliderController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/pages/{page}/force',                       [AdminPageController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/promotions/{promotion}/force',             [AdminPromotionController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/testimonials/{testimonial}/force',         [AdminTestimonialController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/faqs/{faq}/force',                         [AdminFaqController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/experiences/{experience}/force',           [AdminExperienceController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/gallery-categories/{galleryCategory}/force',[AdminGalleryCategoryController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/gallery-items/{galleryItem}/force',        [AdminGalleryItemController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/journal-posts/{journalPost}/force',        [AdminJournalPostController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/menu-categories/{menuCategory}/force',     [MenuCategoryController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/menu-items/{menuItem}/force',              [MenuItemController::class, 'forceDestroy'])->withTrashed();
+    });
+
     // ── Reads (cms.view, or cms.edit which implies it) ────────────────
     Route::middleware('permission:cms.view|cms.edit')->group(function () {
         Route::get('/room-types',                   [AdminRoomTypeController::class, 'index']);

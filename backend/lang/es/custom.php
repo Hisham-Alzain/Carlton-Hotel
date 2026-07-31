@@ -5,6 +5,7 @@ return [
         'success'             => 'Operación realizada con éxito.',
         'created'             => 'Creado correctamente.',
         'deleted'             => 'Eliminado correctamente.',
+        'restored'            => 'Restaurado correctamente.',
         'staff_created'       => 'Cuenta de personal creada.',
         'staff_updated'       => 'Cuenta de personal actualizada.',
         'staff_deactivated'   => 'Cuenta de personal desactivada.',

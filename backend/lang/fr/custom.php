@@ -5,6 +5,7 @@ return [
         'success'             => 'Opération réussie.',
         'created'             => 'Créé avec succès.',
         'deleted'             => 'Supprimé avec succès.',
+        'restored'            => 'Restauré avec succès.',
         'staff_created'       => 'Compte du personnel créé.',
         'staff_updated'       => 'Compte du personnel mis à jour.',
         'staff_deactivated'   => 'Compte du personnel désactivé.',

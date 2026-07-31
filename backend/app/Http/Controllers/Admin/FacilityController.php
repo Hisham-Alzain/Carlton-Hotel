@@ -46,4 +46,22 @@ class FacilityController extends BaseController
         $this->service->destroy($facility);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], FacilityResource::class, $request);
+    }
+
+    public function restore(Facility $facility, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($facility);
+        $result['data'] = new FacilityResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(Facility $facility, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($facility);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

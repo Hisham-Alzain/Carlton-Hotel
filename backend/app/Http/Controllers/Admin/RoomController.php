@@ -46,4 +46,22 @@ class RoomController extends BaseController
         $this->service->destroy($room);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], RoomResource::class, $request);
+    }
+
+    public function restore(Room $room, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($room);
+        $result['data'] = new RoomResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(Room $room, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($room);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

@@ -46,4 +46,22 @@ class FaqController extends BaseController
         $this->service->destroy($faq);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], FaqResource::class, $request);
+    }
+
+    public function restore(Faq $faq, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($faq);
+        $result['data'] = new FaqResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(Faq $faq, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($faq);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

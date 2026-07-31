@@ -46,4 +46,22 @@ class DiningVenueController extends BaseController
         $this->service->destroy($diningVenue);
         return $this->success(null, 'custom.messages.deleted', 204, $request);
     }
+
+    public function trashed(Request $request): JsonResponse
+    {
+        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], DiningVenueResource::class, $request);
+    }
+
+    public function restore(DiningVenue $diningVenue, Request $request): JsonResponse
+    {
+        $result = $this->service->restore($diningVenue);
+        $result['data'] = new DiningVenueResource($result['data']);
+        return $this->respondFromService($result, 'custom.messages.restored', $request);
+    }
+
+    public function forceDestroy(DiningVenue $diningVenue, Request $request): JsonResponse
+    {
+        $this->service->forceDestroy($diningVenue);
+        return $this->success(null, 'custom.messages.deleted', 204, $request);
+    }
 }

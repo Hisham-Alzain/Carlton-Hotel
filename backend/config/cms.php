@@ -58,10 +58,67 @@ $list = static function (mixed $value, array $default) use ($localePattern): arr
     return array_values(array_unique($parsed));
 };
 
+/*
+|--------------------------------------------------------------------------
+| Recycle bin retention
+|--------------------------------------------------------------------------
+|
+| `DELETE` on CMS content is recoverable: the row is marked, its media rows and
+| the stored files are kept deliberately so a restore comes back whole, and only
+| `DELETE …/{uuid}/force` removes any of it. Nothing ever called that verb on the
+| bin's behalf, so a deleted record — and every photograph on it — sat in the
+| database and on the disk for good. "Recoverable" quietly meant "permanent", and
+| storage only grew.
+|
+| `cms:purge-bin` closes that: it force-deletes, through Eloquent, everything
+| binned longer than `retention_days`, so `CascadesSoftDeletes` takes the
+| descendants and `PurgesMedia` unlinks the files.
+|
+| `retention_days` — how long a binned record stays recoverable.
+| `chunk`          — rows held in memory per pass of the purge.
+|
+| ## Why 90 days
+|
+| The window has to cover how long a hotel plausibly takes to NOTICE a mistake,
+| which is set by the hotel's calendar and not by the developer's. Editorial
+| content here is seasonal: a terrace page, a summer menu, a campaign promotion
+| and the photography on a room type are looked at when the next season is
+| prepared or when the quarterly content review comes round. The realistic worst
+| case is not "the editor deletes the wrong row and gasps" — that is undone in
+| minutes through the bin — it is "the F&B manager asks in October why the
+| summer terrace page is gone". Thirty days is shorter than one editorial cycle
+| and would have destroyed it, silently, before anyone with the authority to
+| care had looked. A week is barely longer than a public holiday plus the annual
+| leave of the one person who knew.
+|
+| Pulling the other way: a year means an object store carrying the full
+| photography of content nobody has asked about across four quarterly reviews,
+| and a bin that in practice is never emptied — which is the state this setting
+| exists to leave.
+|
+| 90 days is one full editorial quarter plus the review that closes it. Long
+| enough that the seasonal question gets asked while the answer still exists,
+| short enough that the disk is bounded by a quarter of deletions rather than by
+| the age of the property.
+|
+| Deliberately NOT tuned for convenience of testing — the command takes `--days`
+| for that, and the tests pass it explicitly rather than shortening the default.
+|
+*/
+
+$positiveInt = static function (mixed $value, int $default): int {
+    return is_numeric($value) && (int) $value > 0 ? (int) $value : $default;
+};
+
 return [
 
     'locales' => $list(env('CMS_LOCALES'), ['en', 'ar', 'fr', 'tr', 'es']),
 
     'required_locales' => $list(env('CMS_REQUIRED_LOCALES'), ['en', 'ar']),
+
+    'recycle_bin' => [
+        'retention_days' => $positiveInt(env('CMS_BIN_RETENTION_DAYS'), 90),
+        'chunk'          => $positiveInt(env('CMS_BIN_PURGE_CHUNK'), 200),
+    ],
 
 ];

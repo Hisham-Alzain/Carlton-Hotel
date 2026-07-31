@@ -64,6 +64,7 @@ return [
         'no_active_reservation'    => 'This action requires an active reservation.',
         'no_table_available'       => 'No table is available for that time and party size.',
         'verified_contact_immutable' => 'This contact detail is already verified. Verify the new one with a code to change it.',
+        'ancestor_trashed'         => 'This item cannot be restored while the record it belongs to is still in the recycle bin. Restore that one first.',
     ],
     'auth'       => [
         'otp_sent'       => 'A verification code has been sent.',

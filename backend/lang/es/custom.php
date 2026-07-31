@@ -64,6 +64,7 @@ return [
         'no_active_reservation'    => 'Esta acción requiere una reserva activa.',
         'no_table_available'       => 'No hay ninguna mesa disponible para esa hora y ese número de comensales.',
         'verified_contact_immutable' => 'Este dato de contacto ya está verificado. Verifique el nuevo con un código para cambiarlo.',
+        'ancestor_trashed'         => 'Este elemento no se puede restaurar mientras el registro al que pertenece siga en la papelera. Restaure primero ese registro.',
     ],
     'auth'       => [
         'otp_sent'       => 'Se ha enviado un código de verificación.',

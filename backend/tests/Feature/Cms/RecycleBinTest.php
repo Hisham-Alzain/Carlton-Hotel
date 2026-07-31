@@ -8,6 +8,7 @@ use App\Models\GalleryItem;
 use App\Models\MenuCategory;
 use App\Models\MenuItem;
 use App\Models\Page;
+use App\Models\Room;
 use App\Models\RoomType;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -515,6 +516,149 @@ class RecycleBinTest extends TestCase
 
         $this->assertDatabaseMissing('media', ['uuid' => $mediaUuid]);
         $this->assertSame([], $this->withToken($editor)->getJson('/api/cms/media')->json('data.items.*.uuid'));
+    }
+
+    // ── 5. A restore may not create the orphan the cascade prevents ───────
+
+    /**
+     * The delete cascade takes children down with the parent; nothing brought
+     * them back up on their own. Restoring one directly answered 200 and
+     * produced exactly what `CascadesSoftDeletes` exists to stop — a live,
+     * bookable room under a room type that appears in no index, no show route
+     * and no public page.
+     */
+    public function test_restoring_a_child_while_its_parent_is_still_binned_is_refused(): void
+    {
+        $editor   = $this->editorToken();
+        $roomType = RoomType::factory()->create();
+        $room     = Room::factory()->create(['room_type_id' => $roomType->id]);
+
+        $this->withToken($editor)->deleteJson("/api/cms/room-types/{$roomType->uuid}")->assertStatus(204);
+        $this->assertNotNull($room->refresh()->deleted_at);
+
+        $this->withToken($editor)
+            ->postJson("/api/cms/rooms/{$room->uuid}/restore")
+            ->assertStatus(409)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error_code', 'ancestor_trashed');
+
+        $this->assertNotNull($room->refresh()->deleted_at);
+    }
+
+    /**
+     * "Cannot restore", with nothing named, is a dead end an editor answers by
+     * clicking again. The payload has to say which record to restore first and
+     * carry enough for a dashboard to offer that as a button.
+     */
+    public function test_the_refusal_names_the_ancestor_that_must_be_restored_first(): void
+    {
+        $editor   = $this->editorToken();
+        $roomType = RoomType::factory()->create();
+        $room     = Room::factory()->create(['room_type_id' => $roomType->id]);
+
+        $this->withToken($editor)->deleteJson("/api/cms/room-types/{$roomType->uuid}")->assertStatus(204);
+
+        $this->withToken($editor)
+            ->postJson("/api/cms/rooms/{$room->uuid}/restore")
+            ->assertStatus(409)
+            ->assertJsonPath('context.ancestor.type', 'room_type')
+            ->assertJsonPath('context.ancestor.uuid', $roomType->uuid)
+            ->assertJsonPath('context.trashed_ancestors', [
+                ['type' => 'room_type', 'uuid' => $roomType->uuid],
+            ]);
+    }
+
+    /**
+     * The check is to the root, not one level.
+     *
+     * A dish whose category is live but whose venue is binned is still an
+     * orphan, and the live category is precisely what makes it look restorable.
+     * The state is built the only way it occurs: the dish went to the bin on its
+     * own an hour before the venue did, so the venue's cascade did not touch it
+     * and restoring the category — which restores only what went down *with* it
+     * — left it behind.
+     */
+    public function test_the_ancestor_check_walks_to_the_root_not_just_one_level(): void
+    {
+        $editor   = $this->editorToken();
+        $venue    = DiningVenue::factory()->create();
+        $category = MenuCategory::factory()->forVenue($venue)->create();
+        $item     = MenuItem::factory()->create(['menu_category_id' => $category->id]);
+
+        $this->travelTo(now()->subHour());
+        $item->delete();
+        $this->travelBack();
+
+        $venue->delete();
+        $category->refresh()->restore();
+
+        // The shape under test: venue binned, category live, dish binned.
+        $this->assertNotNull($venue->refresh()->deleted_at);
+        $this->assertNull($category->refresh()->deleted_at);
+        $this->assertNotNull($item->refresh()->deleted_at);
+
+        $this->withToken($editor)
+            ->postJson("/api/cms/menu-items/{$item->uuid}/restore")
+            ->assertStatus(409)
+            ->assertJsonPath('error_code', 'ancestor_trashed')
+            ->assertJsonPath('context.ancestor.type', 'dining_venue')
+            ->assertJsonPath('context.ancestor.uuid', $venue->uuid)
+            ->assertJsonPath('context.trashed_ancestors', [
+                ['type' => 'dining_venue', 'uuid' => $venue->uuid],
+            ]);
+
+        $this->assertNotNull($item->refresh()->deleted_at);
+    }
+
+    /**
+     * Refused, not blocked. Restoring the named ancestor clears the way, which
+     * is what makes the error actionable rather than a wall.
+     */
+    public function test_restoring_the_named_ancestor_first_lets_the_child_come_back(): void
+    {
+        $editor   = $this->editorToken();
+        $roomType = RoomType::factory()->create();
+        $room     = Room::factory()->create(['room_type_id' => $roomType->id]);
+
+        // The room goes on its own first, so the type's cascade neither takes it
+        // nor gives it back — otherwise restoring the type would resurrect it
+        // and there would be nothing left to prove.
+        $this->travelTo(now()->subHour());
+        $room->delete();
+        $this->travelBack();
+
+        $this->withToken($editor)->deleteJson("/api/cms/room-types/{$roomType->uuid}")->assertStatus(204);
+
+        $this->withToken($editor)->postJson("/api/cms/rooms/{$room->uuid}/restore")->assertStatus(409);
+
+        $this->withToken($editor)->postJson("/api/cms/room-types/{$roomType->uuid}/restore")->assertOk();
+        $this->assertNotNull($room->refresh()->deleted_at, 'the room was a separate decision and stays binned');
+
+        $this->withToken($editor)
+            ->postJson("/api/cms/rooms/{$room->uuid}/restore")
+            ->assertOk()
+            ->assertJsonPath('data.uuid', $room->uuid);
+
+        $this->assertNull($room->refresh()->deleted_at);
+    }
+
+    /**
+     * The guard narrows to trashed ancestors and nothing else: an ordinary
+     * child restore under a live parent is untouched, as is a record with no
+     * parent at all.
+     */
+    public function test_a_child_under_a_live_parent_still_restores(): void
+    {
+        $editor   = $this->editorToken();
+        $roomType = RoomType::factory()->create();
+        $room     = Room::factory()->create(['room_type_id' => $roomType->id]);
+
+        $this->withToken($editor)->deleteJson("/api/cms/rooms/{$room->uuid}")->assertStatus(204);
+
+        $this->withToken($editor)->postJson("/api/cms/rooms/{$room->uuid}/restore")->assertOk();
+
+        $this->assertNull($room->refresh()->deleted_at);
+        $this->assertNull($roomType->refresh()->deleted_at);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

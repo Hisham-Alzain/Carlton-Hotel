@@ -2,6 +2,8 @@
 
 namespace App\Base;
 
+use App\Exceptions\TrashedAncestorException;
+use App\Support\RecycleBin;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -108,6 +110,7 @@ abstract class BaseService
     public function restore(Model $model): array
     {
         $this->assertSoftDeletable($model);
+        $this->assertNoTrashedAncestor($model);
 
         DB::transaction(fn () => $model->restore());
         $model->refresh()->loadMissing($this->with);
@@ -129,6 +132,52 @@ abstract class BaseService
         DB::transaction(fn () => $model->forceDelete());
 
         return ['data' => null, 'code' => 204];
+    }
+
+    /**
+     * Refuse a restore that would leave a live row under a binned one.
+     *
+     * The cascade takes children down with their parent; nothing took them back
+     * up on their own. `POST /cms/rooms/{uuid}/restore` on a room whose room type
+     * is still in the bin used to answer 200 and produce exactly that: a room
+     * live and bookable under a type that appears in no index, no show route and
+     * no public page — the orphan the cascade exists to prevent, created by the
+     * verb that undoes it.
+     *
+     * Checked to the root, not one level. A dish under a live category under a
+     * binned venue is still an orphan, and the category being live is precisely
+     * what makes it look restorable.
+     *
+     * ## Why there is no `?with_ancestors=true`
+     *
+     * It was considered and rejected. Restoring an ancestor is not a quiet
+     * side-effect: `cascadeRestore()` brings back *every* child that went down
+     * with it, so `with_ancestors` on one dish would resurrect the venue, all its
+     * categories and every other dish on the menu — a blast radius the caller
+     * asked for one row of, hidden behind a query parameter, under a permission
+     * check made against the dish. The `context` payload already names the
+     * ancestor and its uuid, which is all a dashboard needs to offer "restore the
+     * venue too" as a second, visible call to that venue's own restore endpoint —
+     * same effect, but the actor sees what they are undoing and the audit trail
+     * records it against the record actually restored.
+     */
+    protected function assertNoTrashedAncestor(Model $model): void
+    {
+        $trashed = RecycleBin::trashedAncestors($model);
+
+        if ($trashed === []) {
+            return;
+        }
+
+        $chain = array_map(static fn (Model $ancestor): array => [
+            'type' => RecycleBin::typeToken($ancestor),
+            'uuid' => $ancestor->getAttribute('uuid'),
+        ], $trashed);
+
+        throw new TrashedAncestorException(
+            __('custom.errors.ancestor_trashed'),
+            ['ancestor' => $chain[0], 'trashed_ancestors' => $chain],
+        );
     }
 
     /**

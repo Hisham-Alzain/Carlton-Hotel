@@ -521,7 +521,7 @@ Every module in the table above (all except **Site settings**, which has no `DEL
 | Verb | Path | Gate | Returns |
 |---|---|---|---|
 | `GET` | `/cms/{module}/trashed` | `cms.restore\|cms.purge` | Paginated `items` + `meta`, **most recently deleted first** |
-| `POST` | `/cms/{module}/{uuid}/restore` | `cms.restore` | HTTP 200, the restored record in the module's normal shape |
+| `POST` | `/cms/{module}/{uuid}/restore` | `cms.restore` | HTTP 200, the restored record in the module's normal shape — or **409 `ancestor_trashed`**, below |
 | `DELETE` | `/cms/{module}/{uuid}/force` | `cms.purge` | HTTP 204, `data: null` |
 
 Notes the dashboard has to get right:
@@ -532,6 +532,34 @@ Notes the dashboard has to get right:
 - **Restore is idempotent-ish, not a toggle.** Restoring a record that is already live answers 200 and changes nothing; there is no "un-restore" — use `DELETE` again.
 - **Force delete needs the record to be in the bin first.** There is no one-step permanent delete: `DELETE` then `DELETE …/force`.
 - A restored parent brings back its cascade children **and its images**; a force-deleted parent takes both with it, permanently.
+- **A child cannot be restored while an ancestor is still in the bin — HTTP 409, `error_code: "ancestor_trashed"`.** This is the only domain error code a CMS endpoint raises. Restoring a room whose room type is still binned used to answer 200 and produce a live, bookable room under a type visible on no screen and no public page; the same held for menu categories and dishes under a binned dining venue and photographs under a binned gallery category. The check walks the **whole chain to the root**, so a dish under a live category under a binned venue is refused too.
+
+  ```json
+  {
+    "success": false,
+    "message": "This item cannot be restored while the record it belongs to is still in the recycle bin. Restore that one first.",
+    "error_code": "ancestor_trashed",
+    "context": {
+      "ancestor": { "type": "dining_venue", "uuid": "…" },
+      "trashed_ancestors": [
+        { "type": "dining_venue",  "uuid": "…" },
+        { "type": "menu_category", "uuid": "…" }
+      ]
+    },
+    "request_id": "…"
+  }
+  ```
+
+  `context.ancestor` is the one to restore **first** — the outermost binned ancestor, whose own restore cascades back down and in the ordinary case returns the record you asked for with it. `context.trashed_ancestors` is the full chain outermost-first, always non-empty, longer than one entry only where an ancestor was deleted separately from its parent and so fell outside that parent's cascade. `type` uses the same token vocabulary as `mediable_type` on the media library (`room_type`, `dining_venue`, `menu_category`, `gallery_category`), so `type` + `uuid` is enough to build that ancestor's own restore call.
+
+  **There is deliberately no `?with_ancestors=true`.** Restoring an ancestor brings back *every* child that went down with it, so a flag on one dish would silently resurrect the whole venue, its categories and every other dish on the menu — under a permission check made against the dish. Show the ancestor from `context` and let the user restore it as a second, explicit call; the audit trail then records it against the record actually restored.
+
+- **The bin empties itself after 90 days.** A nightly scheduled job (`cms:purge-bin`) force-deletes everything binned longer than `config('cms.recycle_bin.retention_days')` — rows, cascade descendants, `media` rows and the stored files — with exactly the effect of `DELETE …/force`. Before this existed a soft-deleted record and its photography sat on disk indefinitely and "recoverable" quietly meant "permanent". There is **no API surface** for it: no endpoint, no expiry field on the trashed object, and nothing in the `/trashed` response shape changed. The consequence for the dashboard is that the bin is not an archive — a uuid that was in `/trashed` last quarter may now `404`, which is a normal outcome and not an error state. If you want to show "expires in N days", derive it from `deleted_at` plus the window; do not hard-code "90" into copy without checking the deployment's config. Operators can run it by hand, and `--dry-run` reports what would go without destroying anything:
+
+  ```
+  php artisan cms:purge-bin --dry-run
+  php artisan cms:purge-bin --days=180
+  ```
 
 ### Publishing
 

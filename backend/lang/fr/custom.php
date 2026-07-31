@@ -64,6 +64,7 @@ return [
         'no_active_reservation'    => 'Cette action nécessite une réservation active.',
         'no_table_available'       => "Aucune table n'est disponible pour cet horaire et ce nombre de personnes.",
         'verified_contact_immutable' => 'Ce moyen de contact est déjà vérifié. Vérifiez le nouveau avec un code pour le modifier.',
+        'ancestor_trashed'         => "Cet élément ne peut pas être restauré tant que la fiche à laquelle il appartient est encore dans la corbeille. Restaurez d'abord celle-ci.",
     ],
     'auth'       => [
         'otp_sent'       => 'Un code de vérification a été envoyé.',

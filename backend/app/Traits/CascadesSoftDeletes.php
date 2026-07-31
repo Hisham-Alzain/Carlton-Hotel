@@ -93,6 +93,24 @@ trait CascadesSoftDeletes
     }
 
     /**
+     * The same edges, readable from outside the model.
+     *
+     * `softDeleteCascades()` stays `protected` — subclasses declare it that way
+     * and PHP forbids widening on override — but the edge list is no longer only
+     * this trait's business. `App\Support\RecycleBin` inverts it into a
+     * child → parent map so a restore can refuse to leave a live row under a
+     * binned one, and orders the retention purge leaves-first. Both read it from
+     * here rather than restating it, because a second copy of these four edges
+     * is a second thing to forget when a fifth is added.
+     *
+     * @return list<string>
+     */
+    public function cascadeRelations(): array
+    {
+        return $this->softDeleteCascades();
+    }
+
+    /**
      * Soft-delete the children, recursing through their own hooks so a
      * two-level cascade (venue → categories → dishes) needs no special case.
      */

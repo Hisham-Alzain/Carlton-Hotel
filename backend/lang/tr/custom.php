@@ -64,6 +64,7 @@ return [
         'no_active_reservation'    => 'Bu işlem için aktif bir rezervasyon gerekir.',
         'no_table_available'       => 'Bu saat ve kişi sayısı için uygun masa yok.',
         'verified_contact_immutable' => 'Bu iletişim bilgisi zaten doğrulanmış. Değiştirmek için yenisini bir kodla doğrulayın.',
+        'ancestor_trashed'         => 'Bu kayıt, bağlı olduğu kayıt geri dönüşüm kutusundayken geri yüklenemez. Önce onu geri yükleyin.',
     ],
     'auth'       => [
         'otp_sent'       => 'Doğrulama kodu gönderildi.',

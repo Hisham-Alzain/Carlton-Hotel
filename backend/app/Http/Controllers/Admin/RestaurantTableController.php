@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Base\BaseController;
+use App\Base\BaseCRUDController;
+use App\Base\BaseService;
 use App\Http\Requests\Service\StoreRestaurantTableRequest;
 use App\Http\Resources\Service\RestaurantTableResource;
 use App\Models\RestaurantTable;
@@ -10,39 +11,34 @@ use App\Services\Service\RestaurantTableService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class RestaurantTableController extends BaseController
+class RestaurantTableController extends BaseCRUDController
 {
+    protected ?string $resource = RestaurantTableResource::class;
+
     public function __construct(private readonly RestaurantTableService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], RestaurantTableResource::class, $request);
+        return $this->service;
     }
 
     public function show(RestaurantTable $restaurantTable, Request $request): JsonResponse
     {
-        $result = $this->service->show($restaurantTable);
-        $result['data'] = new RestaurantTableResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->showResponse($restaurantTable, $request);
     }
 
     public function store(StoreRestaurantTableRequest $request): JsonResponse
     {
-        $result = $this->service->store($request->validated());
-        $result['data'] = new RestaurantTableResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->storeResponse($request);
     }
 
     public function update(StoreRestaurantTableRequest $request, RestaurantTable $restaurantTable): JsonResponse
     {
-        $result = $this->service->update($restaurantTable, $request->validated());
-        $result['data'] = new RestaurantTableResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->updateResponse($request, $restaurantTable);
     }
 
     public function destroy(RestaurantTable $restaurantTable, Request $request): JsonResponse
     {
-        $this->service->destroy($restaurantTable);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
+        return $this->destroyResponse($restaurantTable, $request);
     }
 }

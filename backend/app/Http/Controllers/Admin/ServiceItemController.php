@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Base\BaseController;
+use App\Base\BaseCRUDController;
+use App\Base\BaseService;
 use App\Http\Requests\Service\StoreServiceItemRequest;
 use App\Http\Requests\Service\UpdateServiceItemRequest;
 use App\Http\Resources\Service\ServiceItemResource;
@@ -11,39 +12,34 @@ use App\Services\Service\ServiceItemService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class ServiceItemController extends BaseController
+class ServiceItemController extends BaseCRUDController
 {
+    protected ?string $resource = ServiceItemResource::class;
+
     public function __construct(private readonly ServiceItemService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], ServiceItemResource::class, $request);
+        return $this->service;
     }
 
     public function show(ServiceItem $serviceItem, Request $request): JsonResponse
     {
-        $result = $this->service->show($serviceItem);
-        $result['data'] = new ServiceItemResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->showResponse($serviceItem, $request);
     }
 
     public function store(StoreServiceItemRequest $request): JsonResponse
     {
-        $result = $this->service->store($request->validated());
-        $result['data'] = new ServiceItemResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->storeResponse($request);
     }
 
     public function update(UpdateServiceItemRequest $request, ServiceItem $serviceItem): JsonResponse
     {
-        $result = $this->service->update($serviceItem, $request->validated());
-        $result['data'] = new ServiceItemResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->updateResponse($request, $serviceItem);
     }
 
     public function destroy(ServiceItem $serviceItem, Request $request): JsonResponse
     {
-        $this->service->destroy($serviceItem);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
+        return $this->destroyResponse($serviceItem, $request);
     }
 }

@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Base\BaseController;
+use App\Base\BaseCRUDController;
+use App\Base\BaseService;
 use App\Http\Requests\Service\StorePoolCabanaRequest;
 use App\Http\Resources\Service\PoolCabanaResource;
 use App\Models\PoolCabana;
@@ -10,39 +11,39 @@ use App\Services\Service\PoolCabanaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class PoolCabanaController extends BaseController
+/**
+ * No `HandlesRecycleBin`: `PoolCabana` is not soft-deletable and has no bin
+ * routes, so the three bin verbs would be unreachable methods over a service
+ * that throws `LogicException` for them.
+ */
+class PoolCabanaController extends BaseCRUDController
 {
+    protected ?string $resource = PoolCabanaResource::class;
+
     public function __construct(private readonly PoolCabanaService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], PoolCabanaResource::class, $request);
+        return $this->service;
     }
 
     public function show(PoolCabana $poolCabana, Request $request): JsonResponse
     {
-        $result = $this->service->show($poolCabana);
-        $result['data'] = new PoolCabanaResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->showResponse($poolCabana, $request);
     }
 
     public function store(StorePoolCabanaRequest $request): JsonResponse
     {
-        $result = $this->service->store($request->validated());
-        $result['data'] = new PoolCabanaResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->storeResponse($request);
     }
 
     public function update(StorePoolCabanaRequest $request, PoolCabana $poolCabana): JsonResponse
     {
-        $result = $this->service->update($poolCabana, $request->validated());
-        $result['data'] = new PoolCabanaResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->updateResponse($request, $poolCabana);
     }
 
     public function destroy(PoolCabana $poolCabana, Request $request): JsonResponse
     {
-        $this->service->destroy($poolCabana);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
+        return $this->destroyResponse($poolCabana, $request);
     }
 }

@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Base\BaseController;
+use App\Base\BaseCRUDController;
+use App\Base\BaseService;
 use App\Http\Requests\Service\StoreServiceCategoryRequest;
 use App\Http\Requests\Service\UpdateServiceCategoryRequest;
 use App\Http\Resources\Service\ServiceCategoryResource;
@@ -11,39 +12,34 @@ use App\Services\Service\ServiceCategoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class ServiceCategoryController extends BaseController
+class ServiceCategoryController extends BaseCRUDController
 {
+    protected ?string $resource = ServiceCategoryResource::class;
+
     public function __construct(private readonly ServiceCategoryService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], ServiceCategoryResource::class, $request);
+        return $this->service;
     }
 
     public function show(ServiceCategory $serviceCategory, Request $request): JsonResponse
     {
-        $result = $this->service->show($serviceCategory);
-        $result['data'] = new ServiceCategoryResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->showResponse($serviceCategory, $request);
     }
 
     public function store(StoreServiceCategoryRequest $request): JsonResponse
     {
-        $result = $this->service->store($request->validated());
-        $result['data'] = new ServiceCategoryResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->storeResponse($request);
     }
 
     public function update(UpdateServiceCategoryRequest $request, ServiceCategory $serviceCategory): JsonResponse
     {
-        $result = $this->service->update($serviceCategory, $request->validated());
-        $result['data'] = new ServiceCategoryResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->updateResponse($request, $serviceCategory);
     }
 
     public function destroy(ServiceCategory $serviceCategory, Request $request): JsonResponse
     {
-        $this->service->destroy($serviceCategory);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
+        return $this->destroyResponse($serviceCategory, $request);
     }
 }

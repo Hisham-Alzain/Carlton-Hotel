@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Base\BaseController;
+use App\Base\BaseCRUDController;
+use App\Base\BaseService;
+use App\Base\HandlesRecycleBin;
 use App\Http\Requests\Service\StoreMenuCategoryRequest;
 use App\Http\Requests\Service\UpdateMenuCategoryRequest;
 use App\Http\Resources\Service\MenuCategoryResource;
@@ -11,57 +13,46 @@ use App\Services\Service\MenuCategoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class MenuCategoryController extends BaseController
+class MenuCategoryController extends BaseCRUDController
 {
+    use HandlesRecycleBin;
+
+    protected ?string $resource = MenuCategoryResource::class;
+
     public function __construct(private readonly MenuCategoryService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], MenuCategoryResource::class, $request);
+        return $this->service;
     }
 
     public function show(MenuCategory $menuCategory, Request $request): JsonResponse
     {
-        $result = $this->service->show($menuCategory);
-        $result['data'] = new MenuCategoryResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->showResponse($menuCategory, $request);
     }
 
     public function store(StoreMenuCategoryRequest $request): JsonResponse
     {
-        $result = $this->service->store($request->validated());
-        $result['data'] = new MenuCategoryResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->storeResponse($request);
     }
 
     public function update(UpdateMenuCategoryRequest $request, MenuCategory $menuCategory): JsonResponse
     {
-        $result = $this->service->update($menuCategory, $request->validated());
-        $result['data'] = new MenuCategoryResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->updateResponse($request, $menuCategory);
     }
 
     public function destroy(MenuCategory $menuCategory, Request $request): JsonResponse
     {
-        $this->service->destroy($menuCategory);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
-    }
-
-    public function trashed(Request $request): JsonResponse
-    {
-        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], MenuCategoryResource::class, $request);
+        return $this->destroyResponse($menuCategory, $request);
     }
 
     public function restore(MenuCategory $menuCategory, Request $request): JsonResponse
     {
-        $result = $this->service->restore($menuCategory);
-        $result['data'] = new MenuCategoryResource($result['data']);
-        return $this->respondFromService($result, 'custom.messages.restored', $request);
+        return $this->restoreResponse($menuCategory, $request);
     }
 
     public function forceDestroy(MenuCategory $menuCategory, Request $request): JsonResponse
     {
-        $this->service->forceDestroy($menuCategory);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
+        return $this->forceDestroyResponse($menuCategory, $request);
     }
 }

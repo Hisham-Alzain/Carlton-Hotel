@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Base\BaseController;
+use App\Base\BaseCRUDController;
+use App\Base\BaseService;
+use App\Base\HandlesRecycleBin;
 use App\Http\Requests\Cms\CreateTestimonialRequest;
 use App\Http\Requests\Cms\UpdateTestimonialRequest;
 use App\Http\Resources\Cms\TestimonialResource;
@@ -11,57 +13,46 @@ use App\Services\Cms\TestimonialService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class TestimonialController extends BaseController
+class TestimonialController extends BaseCRUDController
 {
+    use HandlesRecycleBin;
+
+    protected ?string $resource = TestimonialResource::class;
+
     public function __construct(private readonly TestimonialService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], TestimonialResource::class, $request);
+        return $this->service;
     }
 
     public function show(Testimonial $testimonial, Request $request): JsonResponse
     {
-        $result = $this->service->show($testimonial);
-        $result['data'] = new TestimonialResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->showResponse($testimonial, $request);
     }
 
     public function store(CreateTestimonialRequest $request): JsonResponse
     {
-        $result = $this->service->store($request->validated());
-        $result['data'] = new TestimonialResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->storeResponse($request);
     }
 
     public function update(UpdateTestimonialRequest $request, Testimonial $testimonial): JsonResponse
     {
-        $result = $this->service->update($testimonial, $request->validated());
-        $result['data'] = new TestimonialResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->updateResponse($request, $testimonial);
     }
 
     public function destroy(Testimonial $testimonial, Request $request): JsonResponse
     {
-        $this->service->destroy($testimonial);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
-    }
-
-    public function trashed(Request $request): JsonResponse
-    {
-        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], TestimonialResource::class, $request);
+        return $this->destroyResponse($testimonial, $request);
     }
 
     public function restore(Testimonial $testimonial, Request $request): JsonResponse
     {
-        $result = $this->service->restore($testimonial);
-        $result['data'] = new TestimonialResource($result['data']);
-        return $this->respondFromService($result, 'custom.messages.restored', $request);
+        return $this->restoreResponse($testimonial, $request);
     }
 
     public function forceDestroy(Testimonial $testimonial, Request $request): JsonResponse
     {
-        $this->service->forceDestroy($testimonial);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
+        return $this->forceDestroyResponse($testimonial, $request);
     }
 }

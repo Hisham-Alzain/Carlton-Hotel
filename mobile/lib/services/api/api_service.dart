@@ -59,7 +59,7 @@ class ApiService extends GetxService {
   /// (`10.0.2.2` is emulator-only and is unreachable from a real phone.)
   static const String host = String.fromEnvironment(
     'API_HOST',
-    defaultValue: 'http://localhost:8000',
+    defaultValue: 'http://10.208.207.51:8000 ',
   );
 
   static const String baseUrl = '$host/api';

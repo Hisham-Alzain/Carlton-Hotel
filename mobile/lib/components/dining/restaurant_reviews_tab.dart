@@ -1,10 +1,10 @@
+import 'package:carlton/components/cards/custom_rating_label.dart';
 import 'package:carlton/components/reviews/review_submit_sheet.dart';
 import 'package:carlton/components/reviews/review_tile.dart';
 import 'package:carlton/controllers/dining/restaurant_controller.dart';
 import 'package:carlton/controllers/reviews/review_controller.dart';
 import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
-import 'package:carlton/customWidgets/custom_rating_component.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/middleware_service.dart';
@@ -47,21 +47,20 @@ class RestaurantReviewsTab extends StatelessWidget {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.all(10),
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppColors.black06),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 12,
+              spacing: 10,
               children: [
-                CustomRatingComponent(
+                CustomRatingLabel(
                   rating: c.restaurant.rating,
-                  reviewCount: c.restaurant.reviews,
+                  reviews: c.restaurant.reviews,
                 ),
                 CustomFilledButton(
                   width: double.infinity,
@@ -78,10 +77,12 @@ class RestaurantReviewsTab extends StatelessWidget {
             if (reviews.loading.value) {
               return const Center(child: CircularProgressIndicator());
             }
+
+            //TODO: use custom place holder instead
             if (reviews.hasError.value) {
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(10),
                   child: Text(
                     'Could not load reviews. Please try again.',
                     textAlign: TextAlign.center,
@@ -95,7 +96,7 @@ class RestaurantReviewsTab extends StatelessWidget {
             if (reviews.items.isEmpty) {
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(10),
                   child: Text(
                     'No reviews yet — be the first',
                     textAlign: TextAlign.center,
@@ -107,19 +108,21 @@ class RestaurantReviewsTab extends StatelessWidget {
               );
             }
             final showLoadingMore = reviews.loadingMore.value;
-            return ListView.separated(
+            return ListView.builder(
               controller: reviews.scrollController,
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding: const EdgeInsets.all(10),
               itemCount: reviews.items.length + (showLoadingMore ? 1 : 0),
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (_, index) {
                 if (index >= reviews.items.length) {
                   return const Padding(
-                    padding: EdgeInsets.all(16),
+                    padding: EdgeInsets.all(10),
                     child: Center(child: CircularProgressIndicator()),
                   );
                 }
-                return ReviewTile(review: reviews.items[index]);
+                return Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: ReviewTile(review: reviews.items[index]),
+                );
               },
             );
           }),

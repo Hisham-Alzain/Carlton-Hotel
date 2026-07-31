@@ -1,3 +1,4 @@
+import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -9,6 +10,11 @@ import 'package:get/get.dart';
 /// solid teal card (with a faint room photo behind it) carrying a gold room
 /// badge, the room name + dates + nights-left, a translucent Do-Not-Disturb
 /// row, and four quick actions.
+///
+/// The decorated boxes here are [PillContainer] where they size to their child,
+/// and [CustomIconChip] for the fixed-size centred icon badges — those need
+/// centring and, in one case, a circle, neither of which a radius-based
+/// [PillContainer] can express.
 class CustomActiveBookingCard extends StatelessWidget {
   final Stay stay;
   final bool doNotDisturb;
@@ -39,147 +45,143 @@ class CustomActiveBookingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: ColoredBox(
-        color: AppColors.primary,
-        child: Stack(
-          children: [
-            if (stay.imagePath != null)
-              Positioned.fill(
-                child: Opacity(
-                  opacity: 0.10,
-                  child: CustomImage(
-                    source: stay.imagePath!,
-                    fit: BoxFit.cover,
+    return Card(
+      // Matches the other reservation-state sections: the parent SliverPadding
+      // owns the inset, so the card carries no margin of its own.
+      margin: const EdgeInsets.all(10),
+      // cardTheme defaults to featherGrey and sets no surfaceTintColor, so both
+      // must be explicit or M3 tints the teal.
+      color: AppColors.primary,
+      surfaceTintColor: Colors.transparent,
+      elevation: 1,
+      // Does the job the old ClipRRect did — without it the 10%-opacity
+      // background image spills past the rounded corners.
+      clipBehavior: Clip.antiAlias,
+      // No black06 side, unlike the white siblings: that hairline defines a
+      // white card against a near-white page, and on teal it just dirties the
+      // edge.
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Stack(
+        children: [
+          if (stay.imagePath != null)
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0.10,
+                child: CustomImage(source: stay.imagePath!, fit: BoxFit.cover),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              spacing: 10,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (stay.subtitle != null)
+                      // radius 6 and EdgeInsets.all(10) are already the
+                      // PillContainer defaults.
+                      PillContainer(
+                        backgroundColor: AppColors.antiqueGold,
+                        child: Text(
+                          stay.subtitle!.toUpperCase(),
+                          style: textStyle.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${stay.nightsRemaining ?? 0}',
+                          style: textStyle.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.white,
+                          ),
+                        ),
+                        Text(
+                          'nights left',
+                          style: textStyle.labelSmall?.copyWith(
+                            fontFamily: 'DM Sans',
+                            color: Colors.white.withValues(alpha: 0.55),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                Text(
+                  stay.roomName,
+                  style: textStyle.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white,
                   ),
                 ),
-              ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                Text(
+                  '${stay.dateRangeLabel ?? '${stay.checkInLabel} – ${stay.checkOutLabel}'}'
+                  ' · ${stay.nightsRemaining} ${interactive ? 'nights remaining' : 'nights'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textStyle.labelSmall?.copyWith(
+                    fontFamily: 'DM Sans',
+                    color: Colors.white.withValues(alpha: 0.6),
+                  ),
+                ),
+                // Pre-arrival (interactive == false): same layout, but the
+                // in-stay controls are greyed and non-tappable — DND, Request,
+                // Concierge, My Bill and Checkout only apply once checked in.
+                Opacity(
+                  opacity: interactive ? 1 : 0.45,
+                  child: IgnorePointer(
+                    ignoring: !interactive,
+                    child: Column(
+                      spacing: 10,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _DndRow(
+                          doNotDisturb: doNotDisturb,
+                          onChanged: onDndChanged,
+                        ),
+                        Row(
+                          spacing: 5,
                           children: [
-                            if (stay.subtitle != null)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.antiqueGold,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  stay.subtitle!.toUpperCase(),
-                                  style: textStyle.labelSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.white,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ),
-                            const SizedBox(height: 6),
-                            Text(
-                              stay.roomName,
-                              style: textStyle.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.white,
-                              ),
+                            _QuickAction(
+                              iconAsset: 'assets/icons/act_request.svg',
+                              label: 'Request',
+                              onTap: onRequest,
                             ),
-                            Text(
-                              '${stay.dateRangeLabel ?? '${stay.checkInLabel} – ${stay.checkOutLabel}'}'
-                              ' · ${stay.nightsRemaining} ${interactive ? 'nights remaining' : 'nights'}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: textStyle.labelMedium?.copyWith(
-                                fontFamily: 'DM Sans',
-                                fontSize: 12,
-                                color: Colors.white.withValues(alpha: 0.6),
-                              ),
+                            _QuickAction(
+                              iconAsset: 'assets/icons/act_concierge.svg',
+                              label: 'Concierge',
+                              onTap: onConcierge,
+                            ),
+                            _QuickAction(
+                              iconAsset: 'assets/icons/act_bill.svg',
+                              label: 'My Bill',
+                              onTap: onBill,
+                            ),
+                            _QuickAction(
+                              iconAsset: 'assets/icons/act_checkout.svg',
+                              label: 'Checkout',
+                              onTap: onCheckout,
                             ),
                           ],
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${stay.nightsRemaining ?? 0}',
-                            style: textStyle.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.white,
-                            ),
-                          ),
-                          Text(
-                            'nights left',
-                            style: textStyle.labelSmall?.copyWith(
-                              fontFamily: 'DM Sans',
-                              color: Colors.white.withValues(alpha: 0.55),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Pre-arrival (interactive == false): same layout, but the
-                  // in-stay controls are greyed and non-tappable — DND, Request,
-                  // Concierge, My Bill and Checkout only apply once checked in.
-                  Opacity(
-                    opacity: interactive ? 1 : 0.45,
-                    child: IgnorePointer(
-                      ignoring: !interactive,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _DndRow(
-                            doNotDisturb: doNotDisturb,
-                            onChanged: onDndChanged,
-                          ),
-                          const SizedBox(height: 14),
-                          Row(
-                            spacing: 8,
-                            children: [
-                              _QuickAction(
-                                iconAsset: 'assets/icons/act_request.svg',
-                                label: 'Request',
-                                onTap: onRequest,
-                              ),
-                              _QuickAction(
-                                iconAsset: 'assets/icons/act_concierge.svg',
-                                label: 'Concierge',
-                                onTap: onConcierge,
-                              ),
-                              _QuickAction(
-                                iconAsset: 'assets/icons/act_bill.svg',
-                                label: 'My Bill',
-                                onTap: onBill,
-                              ),
-                              _QuickAction(
-                                iconAsset: 'assets/icons/act_checkout.svg',
-                                label: 'Checkout',
-                                onTap: onCheckout,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -195,42 +197,31 @@ class _DndRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-      ),
+    return PillContainer(
+      backgroundColor: Colors.white.withValues(alpha: 0.08),
+      radius: 10,
       child: Row(
+        spacing: 10,
         children: [
-          Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: SvgPicture.asset(
-              'assets/icons/dnd_bell.svg',
-              width: 14,
-              height: 14,
-              colorFilter: const ColorFilter.mode(
-                AppColors.white,
-                BlendMode.srcIn,
-              ),
+          CustomIconChip(
+            size: 30,
+            radius: 8,
+            backgroundColor: Colors.white.withValues(alpha: 0.10),
+            child: const Icon(
+              Icons.notifications_outlined,
+              color: Colors.white,
+              size: 15,
             ),
           ),
-          const SizedBox(width: 10),
           Expanded(
             child: Column(
+              spacing: 10,
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Do Not Disturb',
-                  style: textStyle.labelLarge?.copyWith(
-                    fontSize: 13,
+                  style: textStyle.labelMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: AppColors.white,
                   ),
@@ -243,23 +234,13 @@ class _DndRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: textStyle.labelSmall?.copyWith(
                     fontFamily: 'DM Sans',
-                    fontSize: 10,
                     color: Colors.white.withValues(alpha: 0.5),
                   ),
                 ),
               ],
             ),
           ),
-          Switch(
-            value: doNotDisturb,
-            onChanged: onChanged,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            activeThumbColor: AppColors.white,
-            activeTrackColor: AppColors.antiqueGold,
-            inactiveThumbColor: AppColors.white,
-            inactiveTrackColor: Colors.white.withValues(alpha: 0.2),
-            trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
-          ),
+          Switch(value: doNotDisturb, onChanged: onChanged),
         ],
       ),
     );
@@ -280,31 +261,23 @@ class _QuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: GestureDetector(
+      child: InkWell(
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.only(top: 11, bottom: 9),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-          ),
+        child: PillContainer(
+          backgroundColor: Colors.white.withValues(alpha: 0.10),
+          radius: 10,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            spacing: 5,
+            spacing: 10,
             children: [
-              Container(
-                width: 32,
-                height: 32,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
+              CustomIconChip.circle(
+                size: 30,
+                backgroundColor: Colors.white.withValues(alpha: 0.15),
                 child: SvgPicture.asset(
                   iconAsset,
-                  width: 17,
-                  height: 17,
+                  width: 16,
+                  height: 16,
                   colorFilter: const ColorFilter.mode(
                     AppColors.white,
                     BlendMode.srcIn,
@@ -316,9 +289,8 @@ class _QuickAction extends StatelessWidget {
                 style: Get.textTheme.labelSmall?.copyWith(
                   fontFamily: 'DM Sans',
                   fontWeight: FontWeight.w500,
-                  fontSize: 9,
-                  letterSpacing: 0.3,
                   color: Colors.white.withValues(alpha: 0.75),
+                  fontSize: 8,
                 ),
               ),
             ],

@@ -15,7 +15,7 @@ class FindBookingController extends GetxController {
   final codeController = TextEditingController();
   final lastNameController = TextEditingController();
 
-  bool isSubmitting = false;
+  final RxBool isSubmitting = false.obs;
 
   Future<void> submit() async {
     if (!formKey.currentState!.validate()) return;
@@ -23,15 +23,13 @@ class FindBookingController extends GetxController {
     final bookingCode = codeController.text.trim();
     final lastName = lastNameController.text.trim();
 
-    isSubmitting = true;
-    update();
+    isSubmitting.value = true;
     final response = await ApiService.find.post<Map<String, dynamic>>(
       path: '/auth/guest/link-booking-code',
       data: {'booking_code': bookingCode, 'last_name': lastName},
     );
     if (isClosed) return;
-    isSubmitting = false;
-    update();
+    isSubmitting.value = false;
 
     if (response.statusCode != 200 || response.data == null) return;
 

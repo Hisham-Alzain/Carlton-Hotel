@@ -1,9 +1,10 @@
+import 'package:carlton/components/custom_logo_avatar.dart';
+import 'package:carlton/customWidgets/custom_containers.dart';
+import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
-import 'package:carlton/customWidgets/custom_pill_button.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// AI Concierge entry banner on the reservation-state Home (Figma 2197:3322):
@@ -19,56 +20,50 @@ class CustomAiConciergeBanner extends StatelessWidget {
     final TextTheme textStyle = Get.textTheme;
 
     return Card(
-      margin: EdgeInsets.zero,
+      // No self-margin: the parent owns the inset, so this sits flush in Home's
+      // SliverPadding alongside the other reservation-state cards.
+      margin: const EdgeInsets.all(10),
       color: AppColors.white,
       surfaceTintColor: Colors.transparent,
-      elevation: 0.5,
+      elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: const BorderSide(color: AppColors.black06),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 16,
+          spacing: 10,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
-              spacing: 12,
+              spacing: 10,
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 10,
                     children: [
-                      Container(
+                      PillContainer(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary.withValues(alpha: 0.2),
+                            AppColors.dustyTeal.withValues(alpha: 0.2),
+                          ],
+                        ),
+                        radius: 22,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 5,
                         ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.primary.withValues(alpha: 0.2),
-                              AppColors.dustyTeal.withValues(alpha: 0.2),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(22),
-                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          spacing: 4,
+                          spacing: 10,
                           children: [
-                            SvgPicture.asset(
-                              'assets/icons/concierge_spark.svg',
-                              width: 14,
-                              height: 14,
-                              colorFilter: const ColorFilter.mode(
-                                AppColors.primary,
-                                BlendMode.srcIn,
-                              ),
-                            ),
+                            // No ring: the badge sits on the pill's own tint,
+                            // where a white border would read as a halo.
+                            const CustomLogoAvatar(size: 25, borderWidth: 0),
                             Text(
                               'AI Concierge',
                               style: textStyle.labelSmall?.copyWith(
@@ -96,53 +91,50 @@ class CustomAiConciergeBanner extends StatelessWidget {
                     ],
                   ),
                 ),
-                const _PhotoCluster(),
+                SizedBox(
+                  width: 100,
+                  height: 80,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Positioned(
+                        left: 0,
+                        child: Transform.rotate(
+                          angle: -0.3,
+                          child: _photo(
+                            'assets/images/room_classic_courtyard.jpg',
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        child: Transform.rotate(
+                          angle: 0.25,
+                          child: _photo('assets/images/room_deluxe_city.jpg'),
+                        ),
+                      ),
+                      _photo('assets/images/room_premier_terrace.jpg'),
+                    ],
+                  ),
+                ),
               ],
             ),
-            CustomPillButton(
-              label: 'Ask the Concierge',
-              onTap: onTap,
+            CustomFilledButton(
+              width: double.infinity,
+              height: 50,
+              onPressed: onTap,
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.white,
-              radius: 6,
-              height: 44,
-              expand: true,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+              textStyle: textStyle.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+              child: const Text('Ask the Concierge'),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// The three tilted, overlapping room photos in the top-right of the banner.
-class _PhotoCluster extends StatelessWidget {
-  const _PhotoCluster();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 96,
-      height: 76,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            left: 0,
-            child: Transform.rotate(
-              angle: -0.27,
-              child: _photo('assets/images/room_classic_courtyard.jpg'),
-            ),
-          ),
-          Positioned(
-            right: 0,
-            child: Transform.rotate(
-              angle: 0.24,
-              child: _photo('assets/images/room_deluxe_city.jpg'),
-            ),
-          ),
-          _photo('assets/images/room_premier_terrace.jpg'),
-        ],
       ),
     );
   }
@@ -151,7 +143,7 @@ class _PhotoCluster extends StatelessWidget {
     borderRadius: BorderRadius.circular(4),
     child: CustomImage(
       source: source,
-      width: 40,
+      width: 50,
       height: 50,
       fit: BoxFit.cover,
     ),

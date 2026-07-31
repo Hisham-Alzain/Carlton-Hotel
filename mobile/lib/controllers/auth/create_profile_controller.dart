@@ -15,7 +15,7 @@ class CreateProfileController extends GetxController {
   final lastNameController = TextEditingController();
 
   late final bool isEdit;
-  bool isSubmitting = false;
+  final RxBool isSubmitting = false.obs;
 
   @override
   void onInit() {
@@ -31,8 +31,7 @@ class CreateProfileController extends GetxController {
   Future<void> submit() async {
     if (!formKey.currentState!.validate()) return;
 
-    isSubmitting = true;
-    update();
+    isSubmitting.value = true;
     final response = await ApiService.find.put<Map<String, dynamic>>(
       path: '/auth/guest/profile',
       data: {
@@ -41,8 +40,7 @@ class CreateProfileController extends GetxController {
       },
     );
     if (isClosed) return;
-    isSubmitting = false;
-    update();
+    isSubmitting.value = false;
 
     if (response.statusCode != 200 || response.data == null) return;
 

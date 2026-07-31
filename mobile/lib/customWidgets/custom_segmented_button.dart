@@ -21,6 +21,13 @@ class CustomSegmentedButton extends StatelessWidget {
   /// Null = no track (plain adjoined-outline look).
   final Color? trackColor;
 
+  /// Fill the available width, splitting it evenly between the segments.
+  ///
+  /// Default false keeps the control sized to its widest label. Note that when
+  /// expanded each segment is capped at `maxWidth / segments.length`, so a long
+  /// label that used to set the width will now wrap or clip instead.
+  final bool expanded;
+
   const CustomSegmentedButton({
     required this.segments,
     required this.selectedIndex,
@@ -33,6 +40,7 @@ class CustomSegmentedButton extends StatelessWidget {
     this.unselectedBorderSide,
     this.shape,
     this.trackColor,
+    this.expanded = false,
     super.key,
   });
 
@@ -41,6 +49,7 @@ class CustomSegmentedButton extends StatelessWidget {
     required this.selectedIndex,
     required this.onChanged,
     this.height = 60,
+    this.expanded = false,
     super.key,
   }) : backgroundColor = Colors.transparent,
        foregroundColor = AppColors.ashGrey,
@@ -67,6 +76,9 @@ class CustomSegmentedButton extends StatelessWidget {
         ),
       ),
       selected: {selectedIndex},
+      // Non-null is what flips SegmentedButton into its expanded layout
+      // (childWidth = maxWidth / count); zero adds no inset on top of that.
+      expandedInsets: expanded ? EdgeInsets.zero : null,
       showSelectedIcon: false,
       emptySelectionAllowed: false,
       multiSelectionEnabled: false,

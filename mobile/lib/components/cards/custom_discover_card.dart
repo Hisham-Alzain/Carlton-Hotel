@@ -37,8 +37,6 @@ class CustomDiscoverCard extends StatelessWidget {
   final String? secondaryLabel;
   final VoidCallback? onSecondary;
 
-  final EdgeInsetsGeometry margin;
-
   const CustomDiscoverCard({
     required this.imagePath,
     required this.title,
@@ -53,7 +51,6 @@ class CustomDiscoverCard extends StatelessWidget {
     this.onPrimary,
     this.secondaryLabel,
     this.onSecondary,
-    this.margin = const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
     super.key,
   });
 
@@ -73,110 +70,106 @@ class CustomDiscoverCard extends StatelessWidget {
         shape: ContinuousRectangleBorder(
           borderRadius: BorderRadiusGeometry.circular(14),
         ),
-        margin: margin,
+        margin: const EdgeInsets.all(10),
         elevation: 1,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                CustomImage(
-                  source: imagePath,
-                  width: double.infinity,
-                  height: 150,
-                  fit: BoxFit.cover,
-                ),
-                if (badge != null)
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: PillContainer(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      backgroundColor: AppColors.white88,
-                      radius: 20,
-                      child: Text(
-                        badge!,
-                        style: textStyle.labelSmall?.copyWith(
-                          fontFamily: 'DM Sans',
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                spacing: 10,
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: SizedBox(
+          width: 300,
+          child: Column(
+            spacing: 10,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
                 children: [
-                  Row(
-                    spacing: 10,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
+                  CustomImage(
+                    source: imagePath,
+                    width: double.infinity,
+                    height: 150,
+                    fit: BoxFit.cover,
+                  ),
+                  if (badge != null)
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: PillContainer(
+                        backgroundColor: AppColors.white88,
+                        radius: 20,
                         child: Text(
-                          title,
-                          style: textStyle.labelLarge?.copyWith(
+                          badge!,
+                          style: textStyle.labelSmall?.copyWith(
+                            fontFamily: 'DM Sans',
                             fontWeight: FontWeight.w600,
-                            color: AppColors.inkBlack,
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
-                      CustomRatingLabel(rating: rating, reviews: reviews),
-                    ],
-                  ),
-                  if (meta.isNotEmpty)
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 6,
-                      children: meta
-                          .map(
-                            (m) => RowTextComponent(
-                              iconPath: m.$1,
-                              iconColor: AppColors.graphite,
-                              iconSize: 12,
-                              spacing: 4,
-                              text: m.$2,
-                              textStyle: metaStyle,
-                            ),
-                          )
-                          .toList(),
                     ),
-                  if (chips.isNotEmpty)
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: chips
-                          .map(
-                            (label) => PillContainer(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              backgroundColor: AppColors.pearlCream,
-                              radius: 4,
-                              child: Text(
-                                label,
-                                style: textStyle.labelSmall?.copyWith(
-                                  fontFamily: 'DM Sans',
-                                  color: AppColors.cocoaGold,
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ..._footer(textStyle),
                 ],
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  spacing: 10,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      spacing: 10,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: textStyle.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.inkBlack,
+                            ),
+                          ),
+                        ),
+                        CustomRatingLabel(rating: rating, reviews: reviews),
+                      ],
+                    ),
+                    if (meta.isNotEmpty)
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: meta
+                            .map(
+                              (m) => RowTextComponent(
+                                iconPath: m.$1,
+                                iconColor: AppColors.graphite,
+                                iconSize: 12,
+                                spacing: 4,
+                                text: m.$2,
+                                textStyle: metaStyle,
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    if (chips.isNotEmpty)
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: chips
+                            .map(
+                              (label) => PillContainer(
+                                backgroundColor: AppColors.pearlCream,
+                                radius: 4,
+                                child: Text(
+                                  label,
+                                  style: textStyle.labelSmall?.copyWith(
+                                    fontFamily: 'DM Sans',
+                                    color: AppColors.cocoaGold,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ..._footer(textStyle),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -214,7 +207,7 @@ class CustomDiscoverCard extends StatelessWidget {
             ),
             if (primaryLabel != null && onPrimary != null)
               CustomFilledButton(
-                height: 48,
+                height: 50,
                 backgroundColor: AppColors.lagoonTeal,
                 foregroundColor: AppColors.white,
                 onPressed: onPrimary,
@@ -234,7 +227,7 @@ class CustomDiscoverCard extends StatelessWidget {
             Expanded(
               child: CustomFilledButton(
                 width: double.infinity,
-                height: 48,
+                height: 50,
                 backgroundColor: AppColors.pearlCream,
                 foregroundColor: AppColors.primary,
                 onPressed: onSecondary,
@@ -244,7 +237,7 @@ class CustomDiscoverCard extends StatelessWidget {
             Expanded(
               child: CustomFilledButton(
                 width: double.infinity,
-                height: 48,
+                height: 50,
                 backgroundColor: AppColors.lagoonTeal,
                 foregroundColor: AppColors.white,
                 onPressed: onPrimary,
@@ -261,7 +254,7 @@ class CustomDiscoverCard extends StatelessWidget {
       return [
         CustomFilledButton(
           width: double.infinity,
-          height: 48,
+          height: 50,
           backgroundColor: AppColors.lagoonTeal,
           foregroundColor: AppColors.white,
           onPressed: onPrimary,

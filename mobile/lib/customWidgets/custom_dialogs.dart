@@ -1,4 +1,5 @@
 import 'package:carlton/customWidgets/custom_elevated_button.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
 import 'package:carlton/enums/enums.dart';
 import 'package:carlton/l10n/app_translations.dart';
@@ -205,9 +206,13 @@ class CustomDialogs {
     _showDialog(
       type: AppDialogType.info,
       title: AppTranslations.loading,
+      // The dialog Material has no explicit colour (see _showDialog), so it
+      // sits on the light theme surface — the indicator's default white logo
+      // would be invisible. AppColors.primary matches what the bare
+      // CircularProgressIndicator picked up from progressIndicatorTheme.
       body: const Padding(
         padding: EdgeInsets.all(10),
-        child: CircularProgressIndicator(),
+        child: SpinningIconIndicator(size: 50, color: AppColors.primary),
       ),
       showActions: false,
       showIcon: false,

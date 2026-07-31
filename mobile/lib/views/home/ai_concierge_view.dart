@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:carlton/components/chat/custom_agent_header.dart';
 import 'package:carlton/components/chat/custom_chat_bubble.dart';
 import 'package:carlton/constants/demo_data.dart';
@@ -47,6 +46,7 @@ class AiConciergeView extends GetView<AiConciergeController> {
             spacing: 10,
             children: [
               CustomSegmentedButton.track(
+                expanded: true,
                 selectedIndex: controller.tabIndex,
                 onChanged: controller.switchTab,
                 segments: [

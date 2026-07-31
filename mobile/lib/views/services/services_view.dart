@@ -95,11 +95,17 @@ class _ActiveStayServices extends StatelessWidget {
                     onPrimary: () => controller.switchTab(0),
                   ),
                 if (controller.activeRequests.isNotEmpty)
-                  CustomActiveRequestsCard(
-                    requests: controller.activeRequests,
-                    showHeading: false,
-                    onOpen: controller.editRequest,
-                    onNewRequest: () => controller.switchTab(0),
+                  // The card no longer carries its own margin, so hold its
+                  // inset here: 10 from this Padding on top of the scroll
+                  // view's 10 keeps it exactly where it has always sat.
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: CustomActiveRequestsCard(
+                      requests: controller.activeRequests,
+                      showHeading: false,
+                      onOpen: controller.editRequest,
+                      onNewRequest: () => controller.switchTab(0),
+                    ),
                   ),
               ],
             ),

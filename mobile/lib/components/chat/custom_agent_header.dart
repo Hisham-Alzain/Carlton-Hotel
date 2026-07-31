@@ -1,7 +1,8 @@
 import 'package:carlton/components/custom_initial_avatar.dart';
-import 'package:carlton/customWidgets/custom_pill_button.dart';
+import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// Customer Service conversation header (Figma): agent avatar · a "role" pill
@@ -63,18 +64,37 @@ class CustomAgentHeader extends StatelessWidget {
             ],
           ),
         ),
-        CustomPillButton(
-          label: 'Call',
-          onTap: onCall,
-          iconAsset: 'assets/icons/call.svg',
+        CustomFilledButton(
+          // Was padding-driven (vertical: 8); CustomFilledButton sizes by
+          // height and defaults to 50, which would tower over this header row.
+          height: 34,
+          onPressed: onCall,
           backgroundColor: AppColors.snowGrey,
           foregroundColor: AppColors.primary,
-          borderColor: AppColors.black06,
-          radius: 30,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          iconSize: 14,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+            side: const BorderSide(color: AppColors.black06),
+          ),
+          textStyle: textStyle.labelLarge?.copyWith(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 6,
+            children: [
+              SvgPicture.asset(
+                'assets/icons/call.svg',
+                width: 14,
+                height: 14,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
+              ),
+              const Text('Call'),
+            ],
+          ),
         ),
       ],
     );

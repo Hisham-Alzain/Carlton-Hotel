@@ -20,17 +20,22 @@ class CustomRatingLabel extends StatelessWidget {
     final TextTheme textStyle = Get.textTheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
-      spacing: 3,
+      spacing: 10,
       children: [
-        const Icon(Icons.star, color: AppColors.antiqueGold, size: 14),
-        Text(
-          rating.toStringAsFixed(1),
-          style: textStyle.labelMedium?.copyWith(
-            fontFamily: 'DM Sans',
-            fontWeight: FontWeight.w600,
-            color: AppColors.inkBlack,
-          ),
+        Row(
+          children: [
+            const Icon(Icons.star, color: AppColors.antiqueGold, size: 15),
+            Text(
+              rating.toStringAsFixed(1),
+              style: textStyle.labelMedium?.copyWith(
+                fontFamily: 'DM Sans',
+                fontWeight: FontWeight.w600,
+                color: AppColors.inkBlack,
+              ),
+            ),
+          ],
         ),
+
         Text(
           '($reviews)',
           style: textStyle.labelSmall?.copyWith(

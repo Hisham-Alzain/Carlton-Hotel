@@ -27,10 +27,11 @@ import 'package:video_player/video_player.dart';
 class HomeController extends GetxController with WidgetsBindingObserver {
   // Rooms + dining come from the public content API (mapped to the UI models at
   // this boundary so the cards stay unchanged); experiences stay demo-only.
-  List<RoomItem> rooms = [];
-  List<RestaurantItem> restaurants = [];
+  final RxList<RoomItem> rooms = <RoomItem>[].obs;
+  final RxList<RestaurantItem> restaurants = <RestaurantItem>[].obs;
+  // Demo-only and never mutated, so it stays a plain list.
   final List<ExperienceItem> experiences = DemoData.experiences;
-  bool contentLoading = true;
+  final RxBool contentLoading = true.obs;
 
   // ── Active-booking dashboard (shown when the guest has a reservation) ──────
   /// When true, Home renders the active-booking dashboard instead of the
@@ -40,28 +41,28 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
   /// The guest's active (checked-in) stay, or null when they have a booking but
   /// aren't checked in yet. Fetched from `GET /stays/active`.
-  Stay? activeStay;
+  final Rx<Stay?> activeStay = Rx<Stay?>(null);
 
   /// The guest's next reservation when they have a booking but aren't checked in
   /// yet (`GET /stays/upcoming`). Rendered on Home in place of the in-stay
   /// dashboard so a booked-not-yet-arrived guest still sees their reservation.
-  Stay? upcomingStay;
+  final Rx<Stay?> upcomingStay = Rx<Stay?>(null);
 
   /// The guest's in-house service requests (`GET /service-requests`, tier-3b).
-  List<ServiceRequest> activeRequests = [];
+  final RxList<ServiceRequest> activeRequests = <ServiceRequest>[].obs;
 
   /// Running bill (`GET /folio`, tier-3b) — line items + total.
-  List<(String, String)> billLines = [];
-  String billTotal = r'$0';
+  static const _emptyBillTotal = r'$0';
+  final RxList<(String, String)> billLines = <(String, String)>[].obs;
+  final RxString billTotal = _emptyBillTotal.obs;
 
   /// Do Not Disturb — optimistic toggle backed by `PATCH /stays/active/dnd`
   /// (tier-3b). Stored server-side as an expiry, not a flag, and never creates a
   /// service request. Reverts on failure.
-  bool doNotDisturb = false;
+  final RxBool doNotDisturb = false.obs;
   Future<void> toggleDoNotDisturb(bool value) async {
-    final previous = doNotDisturb;
-    doNotDisturb = value;
-    update();
+    final previous = doNotDisturb.value;
+    doNotDisturb.value = value;
     final res = await ApiService.find.patch<Map<String, dynamic>>(
       path: '/stays/active/dnd',
       data: {'enabled': value},
@@ -69,8 +70,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     );
     if (isClosed) return;
     if (!res.ok) {
-      doNotDisturb = previous;
-      update();
+      doNotDisturb.value = previous;
       final message = res.error?.errorCode == ErrorCodes.noActiveReservation
           ? 'Do Not Disturb needs an active stay.'
           : 'Could not update Do Not Disturb.';
@@ -98,7 +98,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   void checkout() => CustomDialogs.showConfirmationDialog(
     title: 'Express Checkout',
     message:
-        "Check out of ${activeStay?.subtitle ?? 'your stay'} now? "
+        "Check out of ${activeStay.value?.subtitle ?? 'your stay'} now? "
         "We'll email your final statement.",
     icon: 'assets/icons/act_checkout.svg',
     accentColor: AppColors.primary,
@@ -130,19 +130,35 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   /// once checked in, `GET /folio` (bill) and `GET /service-requests`. A booked-
   /// but-not-checked-in guest has no active stay/folio, so the hero/bill stay
   /// hidden and only the Dining/Experiences rails show.
+  ///
+  /// Re-runs whenever the guest's entitlements change — see the [ever] in
+  /// [onInit]. Every branch *assigns* rather than only writing on success, so
+  /// signing out or switching guest can never strand the previous guest's stay
+  /// on screen.
   Future<void> _loadActiveBooking() async {
+    // Nothing to load while signed out — and hitting /stays/active without a
+    // token 401s, which ErrorInterceptor escalates to signOut() plus a redirect
+    // to Sign In. `showErrorDialog: false` silences the dialog, not the
+    // interceptor, so this guard is what keeps a browsing guest on Home.
+    if (!MiddlewareService.find.isAuthenticated) {
+      _clearActiveBooking();
+      return;
+    }
+
     final activeRes = await ApiService.find.get<Map<String, dynamic>?>(
       path: '/stays/active',
       showErrorDialog: false,
     );
     if (isClosed) return;
-    if (activeRes.ok && activeRes.data != null) {
-      activeStay = _toStay(ActiveStay.fromJson(activeRes.data!));
+    if (activeRes.ok) {
+      activeStay.value = activeRes.data != null
+          ? _toStay(ActiveStay.fromJson(activeRes.data!))
+          : null;
     }
     // Booked but not yet checked in: surface the upcoming reservation card in
     // place of the (absent) in-stay dashboard. Only the guest's booking state
     // reaches here, so a no-booking guest never pays for this call.
-    if (activeStay == null && MiddlewareService.find.hasBooking) {
+    if (activeStay.value == null && MiddlewareService.find.hasBooking) {
       final upRes = await ApiService.find.get<List<dynamic>>(
         path: '/stays/upcoming',
         showErrorDialog: false,
@@ -150,8 +166,12 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       if (isClosed) return;
       if (upRes.statusCode == 200 && upRes.data != null) {
         final list = UpcomingStay.listFromJson(upRes.data);
-        if (list.isNotEmpty) upcomingStay = _upcomingToStay(list.first);
+        upcomingStay.value = list.isNotEmpty
+            ? _upcomingToStay(list.first)
+            : null;
       }
+    } else {
+      upcomingStay.value = null;
     }
     if (MiddlewareService.find.isCheckedIn) {
       final folioF = ApiService.find.get<Map<String, dynamic>>(
@@ -167,16 +187,41 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       if (isClosed) return;
       if (folioRes.statusCode == 200 && folioRes.data != null) {
         final folio = Folio.fromJson(folioRes.data!);
-        billLines = folio.items
-            .map((i) => (i.description, _usd(i.amountUsd)))
-            .toList();
-        billTotal = _usd(folio.totalUsd);
+        billLines.assignAll(
+          folio.items.map((i) => (i.description, _usd(i.amountUsd))),
+        );
+        billTotal.value = _usd(folio.totalUsd);
       }
       if (reqRes.statusCode == 200 && reqRes.data != null) {
-        activeRequests = ServiceRequest.listFromJson(reqRes.data!);
+        activeRequests.assignAll(ServiceRequest.listFromJson(reqRes.data!));
       }
+    } else {
+      // Checked out (or never checked in): the bill and in-stay requests are
+      // no longer this guest's, so drop them rather than leaving them stale.
+      billLines.clear();
+      billTotal.value = _emptyBillTotal;
+      activeRequests.clear();
     }
-    update();
+  }
+
+  /// Drops every stay-scoped value, so a signed-out guest — or the next guest
+  /// to sign in on this device — never sees the previous one's cards.
+  void _clearActiveBooking() {
+    activeStay.value = null;
+    upcomingStay.value = null;
+    activeRequests.clear();
+    billLines.clear();
+    billTotal.value = _emptyBillTotal;
+    doNotDisturb.value = false;
+  }
+
+  /// Identity of the currently-loaded dashboard. Changes exactly when a reload
+  /// is warranted, which is narrower than "the guest object changed".
+  String _entitlementKey() {
+    final middleware = MiddlewareService.find;
+    return '${middleware.isAuthenticated}'
+        '|${middleware.hasBooking}'
+        '|${middleware.isCheckedIn}';
   }
 
   Stay _toStay(ActiveStay s) => Stay(
@@ -218,8 +263,11 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     return '\$${whole ? v.toStringAsFixed(0) : v.toStringAsFixed(2)}';
   }
 
+  /// Plain, not Rx: it is reassigned on asset-load failure *before*
+  /// [isVideoReady] flips, so the rebuild that flag triggers always reads the
+  /// current instance.
   late VideoPlayerController videoController;
-  bool isVideoReady = false;
+  final RxBool isVideoReady = false.obs;
 
   // The hero video only decodes while it's actually watchable: on the Home
   // tab (the keep-alive shell would otherwise keep it playing on every tab)
@@ -227,12 +275,33 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   bool _tabVisible = true;
   bool _appForeground = true;
 
+  /// Watches the guest for entitlement changes; disposed in [onClose].
+  Worker? _entitlementWorker;
+
   @override
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
     _loadContent();
     _loadActiveBooking();
+
+    // This controller outlives sign-in. The auth flow is launched from the
+    // Services tab of this same Main shell, and _KeepAlive + `fenix: true` hold
+    // the instance across it, so onInit never runs a second time. Without this
+    // watcher the layout flips to the reservation sections the moment the guest
+    // arrives (hasReservation is reactive) while the stay, bill and requests
+    // remain at their signed-out values — three sections rendering as
+    // SizedBox.shrink() on an otherwise-correct screen.
+    //
+    // Keyed on the entitlements, not the guest object: a profile edit reassigns
+    // `guest` too, and that must not refetch the whole dashboard.
+    var entitlements = _entitlementKey();
+    _entitlementWorker = ever(MiddlewareService.find.guest, (_) {
+      final next = _entitlementKey();
+      if (next == entitlements) return;
+      entitlements = next;
+      _loadActiveBooking();
+    });
     // Prefer the bundled hotel promo clip; if it isn't in the bundle yet,
     // fall back to the demo network clip; failing both, the hero keeps its
     // poster image.
@@ -258,16 +327,15 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     vc
       ..setLooping(true)
       ..setVolume(0);
-    isVideoReady = true;
+    isVideoReady.value = true;
     _syncPlayback();
-    update();
   }
 
   /// The user may switch tabs or background the app while the video is still
   /// initializing, so play/pause is always derived from current visibility
   /// rather than decided once at startup.
   void _syncPlayback() {
-    if (!isVideoReady) return;
+    if (!isVideoReady.value) return;
     if (_tabVisible && _appForeground) {
       videoController.play();
     } else {
@@ -332,25 +400,27 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     final roomsRes = results[0];
     final diningRes = results[1];
     if (roomsRes.statusCode == 200 && roomsRes.data != null) {
-      rooms = roomsRes.data!
-          .whereType<Map<String, dynamic>>()
-          .map(RoomType.fromJson)
-          .map(RoomItem.fromRoomType)
-          .toList();
+      rooms.assignAll(
+        roomsRes.data!
+            .whereType<Map<String, dynamic>>()
+            .map(RoomType.fromJson)
+            .map(RoomItem.fromRoomType),
+      );
     }
     if (diningRes.statusCode == 200 && diningRes.data != null) {
-      restaurants = diningRes.data!
-          .whereType<Map<String, dynamic>>()
-          .map(DiningVenue.fromJson)
-          .map(RestaurantItem.fromDiningVenue)
-          .toList();
+      restaurants.assignAll(
+        diningRes.data!
+            .whereType<Map<String, dynamic>>()
+            .map(DiningVenue.fromJson)
+            .map(RestaurantItem.fromDiningVenue),
+      );
     }
-    contentLoading = false;
-    update();
+    contentLoading.value = false;
   }
 
   @override
   void onClose() {
+    _entitlementWorker?.dispose();
     WidgetsBinding.instance.removeObserver(this);
     videoController.dispose();
     super.onClose();

@@ -9,18 +9,19 @@ import 'package:get/get.dart';
 /// Returning-guest sign-in — sends a `login` OTP via
 /// `POST /auth/guest/request-otp` on the phone or email branch the user chose.
 class SignInController extends GetxController {
-  SignInMethod method = SignInMethod.phone;
+  /// Reactive: the view's segmented button and the phone/email field ternary
+  /// both read this inside their own Obx.
+  final Rx<SignInMethod> method = SignInMethod.phone.obs;
 
   final formKey = GlobalKey<FormState>();
   final phone = PhoneFieldState();
   final emailController = TextEditingController();
 
-  bool isSubmitting = false;
+  final RxBool isSubmitting = false.obs;
 
   void switchMethod(SignInMethod value) {
-    if (method == value) return;
-    method = value;
-    update();
+    if (method.value == value) return;
+    method.value = value;
   }
 
   Future<void> submit() async {
@@ -28,12 +29,11 @@ class SignInController extends GetxController {
     // the Form, so this validates exactly the shown field.
     if (!formKey.currentState!.validate()) return;
 
-    final byEmail = method == SignInMethod.email;
+    final byEmail = method.value == SignInMethod.email;
     final email = emailController.text.trim();
     final channel = byEmail ? 'email' : 'sms';
 
-    isSubmitting = true;
-    update();
+    isSubmitting.value = true;
     final response = await ApiService.find.post<Map<String, dynamic>>(
       path: '/auth/guest/request-otp',
       data: {
@@ -43,8 +43,7 @@ class SignInController extends GetxController {
       },
     );
     if (isClosed) return;
-    isSubmitting = false;
-    update();
+    isSubmitting.value = false;
 
     if (response.statusCode != 200 || response.data == null) return;
 

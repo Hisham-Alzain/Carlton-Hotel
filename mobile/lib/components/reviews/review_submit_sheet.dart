@@ -5,7 +5,6 @@ import 'package:carlton/customWidgets/custom_text_field.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// "Write a Review" bottom-sheet body, shared verbatim by the restaurant Reviews
@@ -22,6 +21,7 @@ class ReviewSubmitSheet extends StatefulWidget {
 }
 
 class _ReviewSubmitSheetState extends State<ReviewSubmitSheet> {
+  //TODO: move logic to controller
   int _rating = 5;
   // Held in state, not build(): opening the keyboard rebuilds the sheet, and a
   // controller created in build() would drop whatever was typed.
@@ -56,7 +56,7 @@ class _ReviewSubmitSheetState extends State<ReviewSubmitSheet> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 12,
+      spacing: 10,
       children: [
         Text(
           'Your Rating'.toUpperCase(),
@@ -71,12 +71,11 @@ class _ReviewSubmitSheetState extends State<ReviewSubmitSheet> {
             minRating: 1,
             allowHalfRating: false,
             itemCount: 5,
-            itemSize: 40,
+            itemSize: 30,
             glow: false,
             unratedColor: AppColors.pearlGrey,
-            itemPadding: const EdgeInsets.symmetric(horizontal: 4),
             itemBuilder: (context, _) =>
-                SvgPicture.asset('assets/icons/star.svg'),
+                const Icon(Icons.star, color: AppColors.antiqueGold),
             onRatingUpdate: (value) => setState(() => _rating = value.toInt()),
           ),
         ),

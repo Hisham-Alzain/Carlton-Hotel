@@ -1,4 +1,4 @@
-import 'package:carlton/controllers/booking/reservation_choice_controller.dart';
+import 'package:carlton/controllers/auth/reservation_choice_controller.dart';
 import 'package:carlton/components/custom_auth_background.dart';
 import 'package:carlton/components/cards/custom_choice_card.dart';
 import 'package:carlton/l10n/app_translations.dart';

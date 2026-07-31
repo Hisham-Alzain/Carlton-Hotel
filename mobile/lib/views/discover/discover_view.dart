@@ -17,18 +17,14 @@ class DiscoverView extends GetView<DiscoverController> {
     return CustomScaffold(
       appBar: AppBar(
         iconTheme: const IconThemeData(color: AppColors.inkBlack),
-        title: Text(
-          controller.title,
-          style: Get.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: AppColors.inkBlack,
-          ),
-        ),
+        title: Text(controller.title),
       ),
+      //TODO: do not use get builder
+      //TODO: needs filter
       body: GetBuilder<DiscoverController>(
         builder: (_) => controller.loading
             ? const Center(child: CircularProgressIndicator())
-            : Padding(padding: const EdgeInsets.only(top: 12), child: _list()),
+            : _list(),
       ),
     );
   }

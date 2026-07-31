@@ -2,7 +2,7 @@ import 'package:carlton/bindings/binding.dart';
 import 'package:carlton/views/auth/create_profile_view.dart';
 import 'package:carlton/views/auth/find_booking_view.dart';
 import 'package:carlton/views/auth/otp_verify_view.dart';
-import 'package:carlton/views/auth/phone_entry_view.dart';
+import 'package:carlton/views/auth/contact_entry_view.dart';
 import 'package:carlton/views/auth/reservation_choice_view.dart';
 import 'package:carlton/views/book/add_ons_view.dart';
 import 'package:carlton/views/book/booking_confirmed_view.dart';
@@ -90,7 +90,7 @@ abstract class Pages {
     ),
     GetPage(
       name: Routes.phoneEntry,
-      page: () => const PhoneEntryView(),
+      page: () => const ContactEntryView(),
       binding: PhoneEntryBinding(),
     ),
     GetPage(

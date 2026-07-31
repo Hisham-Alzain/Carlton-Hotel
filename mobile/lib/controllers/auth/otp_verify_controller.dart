@@ -15,17 +15,19 @@ import 'package:get/get.dart';
 /// the session ([MiddlewareService.saveSession]) and routes a named guest to
 /// Welcome Back, or a nameless (new) guest to Create Profile.
 class OtpVerifyController extends GetxController {
-  /// GetBuilder id for the resend-countdown label (ticks once a second).
-  static const countdownId = 'countdown';
   static const _resendSeconds = 60;
 
   late final OtpVerifyArgs args;
   final formKey = GlobalKey<FormState>();
   final pinController = TextEditingController();
 
-  bool hasError = false;
-  bool isVerifying = false;
-  int secondsRemaining = _resendSeconds;
+  /// Set on a failed verify, but nothing reads it yet — it's here for the
+  /// eventual CustomPinput error styling.
+  final RxBool hasError = false.obs;
+  final RxBool isVerifying = false.obs;
+
+  /// Drives the resend-countdown label; ticks once a second.
+  final RxInt secondsRemaining = _resendSeconds.obs;
   Timer? _timer;
 
   /// Contact string shown in the "code sent to …" subtitle.
@@ -42,15 +44,13 @@ class OtpVerifyController extends GetxController {
 
   void _startCountdown() {
     _timer?.cancel();
-    secondsRemaining = _resendSeconds;
-    update([countdownId]);
+    secondsRemaining.value = _resendSeconds;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      secondsRemaining--;
-      if (secondsRemaining <= 0) {
-        secondsRemaining = 0;
+      secondsRemaining.value--;
+      if (secondsRemaining.value <= 0) {
+        secondsRemaining.value = 0;
         timer.cancel();
       }
-      update([countdownId]);
     });
   }
 
@@ -81,8 +81,7 @@ class OtpVerifyController extends GetxController {
       );
     }
     pinController.clear();
-    hasError = false;
-    update();
+    hasError.value = false;
     _startCountdown();
   }
 
@@ -91,9 +90,8 @@ class OtpVerifyController extends GetxController {
 
     final code = pinController.text;
 
-    isVerifying = true;
-    hasError = false;
-    update();
+    isVerifying.value = true;
+    hasError.value = false;
 
     final response = await ApiService.find.post<Map<String, dynamic>>(
       path: '/auth/guest/verify-otp',
@@ -113,7 +111,7 @@ class OtpVerifyController extends GetxController {
       showErrorDialog: false,
     );
     if (isClosed) return;
-    isVerifying = false;
+    isVerifying.value = false;
 
     if (response.statusCode == 200 && response.data != null) {
       final token = response.data!['token'] as String;
@@ -128,14 +126,12 @@ class OtpVerifyController extends GetxController {
       // see the default Home instead of their reservation until the next launch.
       if (guest.hasName) await MiddlewareService.find.checkToken();
       if (isClosed) return;
-      update();
       // A returning guest already has a name → greet; a new guest completes it.
       Get.offNamed(guest.hasName ? Routes.welcomeBack : Routes.createProfile);
       return;
     }
 
-    hasError = true;
-    update();
+    hasError.value = true;
     _reportError(response.error?.errorCode);
   }
 

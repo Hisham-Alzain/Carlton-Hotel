@@ -4,11 +4,11 @@ import 'package:carlton/controllers/dining/restaurant_controller.dart';
 import 'package:carlton/controllers/reviews/review_controller.dart';
 import 'package:carlton/controllers/auth/create_profile_controller.dart';
 import 'package:carlton/controllers/stays/stays_controller.dart';
-import 'package:carlton/controllers/booking/find_booking_controller.dart';
+import 'package:carlton/controllers/auth/find_booking_controller.dart';
 import 'package:carlton/controllers/booking/pre_arrival_documents_controller.dart';
-import 'package:carlton/controllers/booking/reservation_choice_controller.dart';
+import 'package:carlton/controllers/auth/reservation_choice_controller.dart';
 import 'package:carlton/controllers/auth/otp_verify_controller.dart';
-import 'package:carlton/controllers/auth/phone_entry_controller.dart';
+import 'package:carlton/controllers/auth/contact_entry_controller.dart';
 import 'package:carlton/controllers/home/ai_concierge_controller.dart';
 import 'package:carlton/controllers/home/discover_controller.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
@@ -129,7 +129,7 @@ class ReservationChoiceBinding implements Bindings {
 class PhoneEntryBinding implements Bindings {
   @override
   void dependencies() {
-    Get.lazyPut(() => PhoneEntryController());
+    Get.lazyPut(() => ContactEntryController());
   }
 }
 

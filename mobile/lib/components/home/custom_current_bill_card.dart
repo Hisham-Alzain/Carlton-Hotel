@@ -21,10 +21,10 @@ class CustomCurrentBillCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.zero,
+      margin: const EdgeInsets.all(10),
       color: AppColors.white,
       surfaceTintColor: Colors.transparent,
-      elevation: 0.5,
+      elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: const BorderSide(color: AppColors.black06),

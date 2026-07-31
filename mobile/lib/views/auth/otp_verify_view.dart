@@ -18,64 +18,65 @@ class OtpVerifyView extends GetView<OtpVerifyController> {
     return CustomAuthBackground(
       title: AppTranslations.verifyIdentityTitle,
       subtitle: AppTranslations.otpSentTo(controller.destination),
-      child: GetBuilder<OtpVerifyController>(
-        builder: (controller) => Padding(
-          padding: const EdgeInsets.all(10),
-          child: Form(
-            key: controller.formKey,
-            child: Column(
-              spacing: 20,
-              children: [
-                CustomPinput(
-                  controller: controller.pinController,
-                  digitCount: 6,
-                  //TODO: change to otp validation when connecting api
-                  validator: (enteredOtp) =>
-                      CustomValidation().validateRequiredField(enteredOtp),
-                  // onComplete: (_) => controller.verify(),
-                ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Form(
+          key: controller.formKey,
+          child: Column(
+            spacing: 20,
+            children: [
+              CustomPinput(
+                controller: controller.pinController,
+                digitCount: 6,
+                //TODO: change to otp validation when connecting api
+                validator: (enteredOtp) =>
+                    CustomValidation().validateRequiredField(enteredOtp),
+                // onComplete: (_) => controller.verify(),
+              ),
 
-                GetBuilder<OtpVerifyController>(
-                  id: OtpVerifyController.countdownId,
-                  builder: (controller) => Center(
-                    child: controller.secondsRemaining > 0
-                        ? Text(
-                            AppTranslations.resendIn(
-                              '${controller.secondsRemaining}s',
-                            ),
+              // Ticks once a second off the controller's Timer; flips to the
+              // Resend link at zero.
+              Obx(
+                () => Center(
+                  child: controller.secondsRemaining.value > 0
+                      ? Text(
+                          AppTranslations.resendIn(
+                            '${controller.secondsRemaining.value}s',
+                          ),
+                          style: textStyle.labelLarge?.copyWith(
+                            fontFamily: 'DM Sans',
+                            color: AppColors.white50,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        )
+                      : TextButton(
+                          onPressed: controller.resend,
+                          child: Text(
+                            AppTranslations.resendCodeLink,
                             style: textStyle.labelLarge?.copyWith(
                               fontFamily: 'DM Sans',
-                              color: AppColors.white50,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          )
-                        : TextButton(
-                            onPressed: controller.resend,
-                            child: Text(
-                              AppTranslations.resendCodeLink,
-                              style: textStyle.labelLarge?.copyWith(
-                                fontFamily: 'DM Sans',
-                                color: AppColors.antiqueGold,
-                                fontWeight: FontWeight.w500,
-                                decoration: TextDecoration.underline,
-                                decorationColor: AppColors.antiqueGold,
-                              ),
+                              color: AppColors.antiqueGold,
+                              fontWeight: FontWeight.w500,
+                              decoration: TextDecoration.underline,
+                              decorationColor: AppColors.antiqueGold,
                             ),
                           ),
-                  ),
+                        ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: CustomFilledButton(
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Obx(
+                  () => CustomFilledButton(
                     width: 350,
                     backgroundColor: AppColors.lagoonTeal,
-                    isLoading: controller.isVerifying,
+                    isLoading: controller.isVerifying.value,
                     onPressed: controller.verify,
                     child: Text(AppTranslations.verifyButtonLabel),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

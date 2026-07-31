@@ -3,7 +3,6 @@ import 'package:carlton/controllers/dining/restaurant_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// Restaurant "menu" tab: category chips + dish list + Download Full Menu.
@@ -22,29 +21,23 @@ class RestaurantMenuTab extends StatelessWidget {
 
     final categories = c.menuCategories;
     final items = c.visibleMenuItems;
-    final lastCategory = categories.length - 1;
-    final lastItem = items.length - 1;
 
     return Column(
       children: [
         if (categories.isNotEmpty)
           SizedBox(
-            height: 44,
+            height: 50,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: categories.length,
               itemBuilder: (context, i) {
                 final selected = c.categoryIndex == i;
                 return Padding(
-                  padding: EdgeInsets.only(right: i == lastCategory ? 0 : 8),
+                  padding: const EdgeInsets.all(10),
                   child: ChoiceChip(
                     label: Text(categories[i].name.value),
                     selected: selected,
                     onSelected: (_) => c.selectCategory(i),
-                    showCheckmark: false,
-                    backgroundColor: AppColors.white,
-                    selectedColor: AppColors.primary,
                     labelStyle: Get.textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: selected ? AppColors.white : AppColors.inkBlack,
@@ -68,35 +61,27 @@ class RestaurantMenuTab extends StatelessWidget {
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(10),
                   itemCount: items.length,
                   itemBuilder: (context, i) => Padding(
-                    padding: EdgeInsets.only(bottom: i == lastItem ? 0 : 12),
+                    padding: EdgeInsets.all(10),
                     child: CustomMenuItemTile(item: items[i]),
                   ),
                 ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          padding: const EdgeInsets.all(10),
           child: CustomFilledButton(
             width: double.infinity,
-            height: 48,
+            height: 50,
             backgroundColor: AppColors.whisperGrey,
             foregroundColor: AppColors.inkBlack,
             onPressed: c.downloadMenu,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              spacing: 6,
+              spacing: 10,
               children: [
-                SvgPicture.asset(
-                  'assets/icons/download.svg',
-                  width: 18,
-                  height: 18,
-                  colorFilter: const ColorFilter.mode(
-                    AppColors.inkBlack,
-                    BlendMode.srcIn,
-                  ),
-                ),
+                const Icon(Icons.download),
                 Text(
                   'Download Full Menu',
                   style: Get.textTheme.labelLarge?.copyWith(

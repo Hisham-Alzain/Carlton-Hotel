@@ -15,15 +15,15 @@ class WelcomeBackView extends GetView<WelcomeBackController> {
     return CustomAuthBackground(
       child: CustomEmptyPlaceholder(
         iconWidget: Container(
-          width: 64,
-          height: 64,
+          width: 65,
+          height: 65,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: AppColors.antiqueGold,
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.slateTeal, width: 1.5),
           ),
-          child: const Icon(Icons.check, color: Colors.white, size: 28),
+          child: const Icon(Icons.check, color: Colors.white, size: 30),
         ),
         title: AppTranslations.welcomeBackTitle,
         subtitle: AppTranslations.welcomeBackSubtitle,

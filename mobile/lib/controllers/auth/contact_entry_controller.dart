@@ -9,12 +9,12 @@ import 'package:get/get.dart';
 /// `POST /auth/guest/request-otp {channel, phone|email, purpose: register}`,
 /// then routes to the OTP screen with the E.164 identifier the server echoes
 /// back. Field validation is handled by [formKey].
-class PhoneEntryController extends GetxController {
+class ContactEntryController extends GetxController {
   final formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final phone = PhoneFieldState();
 
-  bool isSubmitting = false;
+  final RxBool isSubmitting = false.obs;
 
   Future<void> submit() async {
     if (!formKey.currentState!.validate()) return;
@@ -24,8 +24,7 @@ class PhoneEntryController extends GetxController {
     final useEmail = !hasPhone && email.isNotEmpty;
     final channel = useEmail ? 'email' : 'sms';
 
-    isSubmitting = true;
-    update();
+    isSubmitting.value = true;
     final response = await ApiService.find.post<Map<String, dynamic>>(
       path: '/auth/guest/request-otp',
       data: {
@@ -35,8 +34,7 @@ class PhoneEntryController extends GetxController {
       },
     );
     if (isClosed) return;
-    isSubmitting = false;
-    update();
+    isSubmitting.value = false;
 
     if (response.statusCode != 200 || response.data == null) return;
 

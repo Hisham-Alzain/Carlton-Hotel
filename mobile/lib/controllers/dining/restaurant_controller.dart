@@ -9,19 +9,18 @@ import 'package:carlton/models/menu.dart';
 import 'package:carlton/models/service_booking.dart';
 import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/middleware_service.dart';
-import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// Drives one restaurant detail screen: the menu/info/reserve tabs, the menu
 /// category filter, the gallery, and the reservation form. The restaurant
 /// arrives via `Get.arguments`; falls back to the first demo restaurant.
-class RestaurantController extends GetxController
-    with GetSingleTickerProviderStateMixin {
+/// The Menu/Info/Reserve/Reviews TabController deliberately does **not** live
+/// here — [RestaurantDetailView] owns it via `DefaultTabController`, so it is
+/// tied to the widget's lifetime rather than this controller's.
+class RestaurantController extends GetxController {
   late final RestaurantItem restaurant;
 
-  /// Drives the Material TabBar (Menu / Info / Reserve / Reviews).
-  late final TabController tabController;
   int categoryIndex = 0;
   int galleryIndex = 0;
 
@@ -56,7 +55,6 @@ class RestaurantController extends GetxController
     super.onInit();
     final arg = Get.arguments;
     restaurant = arg is RestaurantItem ? arg : DemoData.restaurants.first;
-    tabController = TabController(length: 4, vsync: this);
     _loadMenu();
   }
 
@@ -109,7 +107,6 @@ class RestaurantController extends GetxController
 
   @override
   void onClose() {
-    tabController.dispose();
     specialRequests.dispose();
     super.onClose();
   }
@@ -134,6 +131,8 @@ class RestaurantController extends GetxController
     update();
   }
 
+  /// The picker's branding (cream surface, primary header, gold today ring)
+  /// comes from `Themes.theme`'s datePickerTheme — nothing to override here.
   Future<void> pickDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -142,35 +141,12 @@ class RestaurantController extends GetxController
       initialDate: reserveDate.isBefore(now) ? now : reserveDate,
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
-      // Brand the picker: primary header/selection on a clean cream surface.
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: AppColors.primary,
-            onPrimary: AppColors.white,
-            surface: AppColors.ivoryCream,
-            onSurface: AppColors.inkBlack,
-          ),
-          datePickerTheme: DatePickerThemeData(
-            backgroundColor: AppColors.ivoryCream,
-            headerBackgroundColor: AppColors.primary,
-            headerForegroundColor: AppColors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            todayBorder: const BorderSide(color: AppColors.antiqueGold),
-          ),
-        ),
-        child: child!,
-      ),
     );
     if (picked != null) {
       reserveDate = picked;
       update();
     }
   }
-
-  void goToReserveTab() => tabController.animateTo(2);
 
   void downloadMenu() =>
       CustomSnackbars.showInfo(message: 'Full menu download coming soon');

@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Base\BaseController;
+use App\Base\BasePublicIndexController;
+use App\Base\BaseService;
 use App\Http\Resources\Cms\AmenityResource;
 use App\Services\Cms\AmenityService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
-class AmenityController extends BaseController
+class AmenityController extends BasePublicIndexController
 {
+    protected ?string $resource = AmenityResource::class;
+
     public function __construct(private readonly AmenityService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->indexPublic($this->perPageParam($request))['data'], AmenityResource::class, $request);
+        return $this->service;
     }
 }

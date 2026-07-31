@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Base\BaseController;
+use App\Base\BasePublicIndexController;
+use App\Base\BaseService;
 use App\Http\Resources\Cms\TestimonialResource;
 use App\Services\Cms\TestimonialService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
-class TestimonialController extends BaseController
+/**
+ * The website renders testimonials as one section, so there is no public `show`
+ * — no route needs a single quote by uuid. Add one only when a page actually
+ * deep-links to it.
+ */
+class TestimonialController extends BasePublicIndexController
 {
+    protected ?string $resource = TestimonialResource::class;
+
     public function __construct(private readonly TestimonialService $service) {}
 
-    /**
-     * The website renders testimonials as one section, so there is no public
-     * `show` — no route needs a single quote by uuid. Add one only when a page
-     * actually deep-links to it.
-     */
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->indexPublic($this->perPageParam($request))['data'], TestimonialResource::class, $request);
+        return $this->service;
     }
 }

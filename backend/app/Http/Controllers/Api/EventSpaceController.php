@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Base\BaseController;
+use App\Base\BasePublicIndexController;
+use App\Base\BaseService;
 use App\Exceptions\NotFoundException;
 use App\Http\Resources\Cms\EventSpaceResource;
 use App\Models\EventSpace;
@@ -10,22 +11,23 @@ use App\Services\Cms\EventSpaceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class EventSpaceController extends BaseController
+class EventSpaceController extends BasePublicIndexController
 {
+    protected ?string $resource = EventSpaceResource::class;
+
     public function __construct(private readonly EventSpaceService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->indexPublic($this->perPageParam($request))['data'], EventSpaceResource::class, $request);
+        return $this->service;
     }
 
     public function show(EventSpace $eventSpace, Request $request): JsonResponse
     {
-        if (!$eventSpace->is_active) {
+        if (! $eventSpace->is_active) {
             throw new NotFoundException();
         }
-        $result = $this->service->show($eventSpace);
-        $result['data'] = new EventSpaceResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+
+        return $this->showResponse($eventSpace, $request);
     }
 }

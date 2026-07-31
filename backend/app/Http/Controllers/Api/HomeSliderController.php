@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Base\BaseController;
+use App\Base\BasePublicIndexController;
+use App\Base\BaseService;
 use App\Http\Resources\Cms\HomeSliderResource;
 use App\Services\Cms\HomeSliderService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
-class HomeSliderController extends BaseController
+class HomeSliderController extends BasePublicIndexController
 {
+    protected ?string $resource = HomeSliderResource::class;
+
     public function __construct(private readonly HomeSliderService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->indexPublic($this->perPageParam($request))['data'], HomeSliderResource::class, $request);
+        return $this->service;
     }
 }

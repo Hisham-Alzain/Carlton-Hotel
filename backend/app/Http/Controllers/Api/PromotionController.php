@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Base\BaseController;
+use App\Base\BasePublicIndexController;
+use App\Base\BaseService;
 use App\Exceptions\NotFoundException;
 use App\Http\Resources\Cms\PromotionResource;
 use App\Models\Promotion;
@@ -10,22 +11,23 @@ use App\Services\Cms\PromotionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class PromotionController extends BaseController
+class PromotionController extends BasePublicIndexController
 {
+    protected ?string $resource = PromotionResource::class;
+
     public function __construct(private readonly PromotionService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->indexPublic($this->perPageParam($request))['data'], PromotionResource::class, $request);
+        return $this->service;
     }
 
     public function show(Promotion $promotion, Request $request): JsonResponse
     {
-        if (!$promotion->is_active) {
+        if (! $promotion->is_active) {
             throw new NotFoundException();
         }
-        $result = $this->service->show($promotion);
-        $result['data'] = new PromotionResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+
+        return $this->showResponse($promotion, $request);
     }
 }

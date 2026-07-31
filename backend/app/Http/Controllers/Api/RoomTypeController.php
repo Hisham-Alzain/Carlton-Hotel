@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Base\BaseController;
+use App\Base\BasePublicIndexController;
+use App\Base\BaseService;
 use App\Exceptions\NotFoundException;
 use App\Http\Resources\Cms\RoomTypeResource;
 use App\Models\RoomType;
@@ -10,22 +11,23 @@ use App\Services\Cms\RoomTypeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class RoomTypeController extends BaseController
+class RoomTypeController extends BasePublicIndexController
 {
+    protected ?string $resource = RoomTypeResource::class;
+
     public function __construct(private readonly RoomTypeService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->indexPublic($this->perPageParam($request))['data'], RoomTypeResource::class, $request);
+        return $this->service;
     }
 
     public function show(RoomType $roomType, Request $request): JsonResponse
     {
-        if (!$roomType->is_active) {
+        if (! $roomType->is_active) {
             throw new NotFoundException();
         }
-        $result = $this->service->show($roomType);
-        $result['data'] = new RoomTypeResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+
+        return $this->showResponse($roomType, $request);
     }
 }

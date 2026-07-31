@@ -14,13 +14,16 @@ use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /**
- * Test-only fixtures. `BaseCRUDController` and `BaseIndexController` are the
- * architecture the `tupcode-laravel-backend` skill mandates, but no controller
- * in `app/` extends them yet — every one of the 25 hand-copies the index
- * one-liner instead. That left the `per_page` and filter plumbing inside the
- * base classes never executed and never tested, so a change to it could break
- * the mandated path with a green suite. These fixtures make the base classes
- * run for real.
+ * Test-only fixtures that drive `BaseCRUDController` and `BaseIndexController`
+ * by calling their methods directly — the unit-level counterpart to
+ * `tests/Feature/BaseControllerRoutingTest.php`, which drives the same classes
+ * over HTTP.
+ *
+ * These exist because the `per_page` and filter plumbing inside the base
+ * classes would otherwise never execute, and a change to it could break the
+ * mandated path with a green suite. Note the shape of the controllers below:
+ * the write verbs carry concrete type-hints and delegate to the base's
+ * `*Response()` bodies, which is the shape every migrated controller uses.
  */
 class PlumbingWidget extends Model
 {
@@ -52,8 +55,39 @@ class PlumbingWidgetService extends BaseService
     protected ?string $filter = PlumbingWidgetFilter::class;
 }
 
+/**
+ * The concrete signatures a real route needs, over the base's shared bodies.
+ * `PlumbingWidgetRequest` and `PlumbingWidget` are concrete on purpose: the
+ * abstract `BaseRequest`/`Model` type-hints these used to inherit were what made
+ * the base pair unroutable.
+ */
+trait PlumbingWriteVerbs
+{
+    public function show(PlumbingWidget $widget, Request $request): \Illuminate\Http\JsonResponse
+    {
+        return $this->showResponse($widget, $request);
+    }
+
+    public function store(PlumbingWidgetRequest $request): \Illuminate\Http\JsonResponse
+    {
+        return $this->storeResponse($request);
+    }
+
+    public function update(PlumbingWidgetRequest $request, PlumbingWidget $widget): \Illuminate\Http\JsonResponse
+    {
+        return $this->updateResponse($request, $widget);
+    }
+
+    public function destroy(PlumbingWidget $widget, Request $request): \Illuminate\Http\JsonResponse
+    {
+        return $this->destroyResponse($widget, $request);
+    }
+}
+
 class PlumbingCrudController extends BaseCRUDController
 {
+    use PlumbingWriteVerbs;
+
     public function __construct(private readonly PlumbingWidgetService $widgets) {}
 
     protected function service(): BaseService
@@ -69,6 +103,11 @@ class PlumbingReadOnlyController extends BaseIndexController
     protected function service(): BaseService
     {
         return $this->widgets;
+    }
+
+    public function show(PlumbingWidget $widget, Request $request): \Illuminate\Http\JsonResponse
+    {
+        return $this->showResponse($widget, $request);
     }
 }
 
@@ -87,6 +126,8 @@ class PlumbingWidgetResource extends \App\Base\BaseResource
 /** The shape the skill actually prescribes: declare `$resource`, inherit the rest. */
 class PlumbingResourceController extends BaseCRUDController
 {
+    use PlumbingWriteVerbs;
+
     protected ?string $resource = PlumbingWidgetResource::class;
 
     public function __construct(private readonly PlumbingWidgetService $widgets) {}

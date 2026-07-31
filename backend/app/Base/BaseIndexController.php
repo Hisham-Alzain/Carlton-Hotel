@@ -5,15 +5,30 @@ namespace App\Base;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
- * Read-only half of the declarative controller pair: `index` + `show`, no write
- * verbs. A child declares `$resource` and returns its service from `service()`.
+ * Read-only half of the declarative controller pair. A child declares
+ * `$resource` and returns its service from `service()`.
  *
- * NOTE: nothing in `app/Http/Controllers` extends this yet — all 25 controllers
- * hand-copy the index one-liner instead. See `tests/Unit/BaseControllerPlumbingTest.php`,
- * which exercises this class through a test-only subclass so the `per_page` and
- * filter plumbing is not shipped untested.
+ * `index()` is inherited whole — it takes no route-bound model and no
+ * FormRequest, so nothing stands between it and a live route.
+ *
+ * `show()` is **not** declared here, and that is deliberate. It used to be, with
+ * an `Illuminate\Database\Eloquent\Model` type-hint, which made the class
+ * impossible to extend for a real route: implicit route-model binding resolves
+ * `{amenity}` by matching the *route* parameter name to the *method* parameter
+ * name and then calling `$container->make()` on the declared class — and
+ * `Model` is abstract, so it cannot be made. A child could not fix that by
+ * narrowing the type either: PHP's parameter contravariance rule makes
+ * `show(Amenity $a)` overriding `show(Model $m)` a fatal error, as does
+ * renaming/reordering the parameters into the shape the routes use.
+ *
+ * So the base owns the *body* (`showResponse()`) and the child owns the
+ * *signature*. The child's `show(Amenity $amenity, Request $request)` keeps
+ * implicit binding, `{journalPost:slug}` binding fields, `->withTrashed()` and
+ * scoped bindings working exactly as Laravel intends, and the duplicated
+ * resource-wrapping body disappears.
  */
 abstract class BaseIndexController extends BaseController
 {
@@ -34,22 +49,38 @@ abstract class BaseIndexController extends BaseController
             perPage: $this->perPageParam($request),
         )['data'];
 
-        // `paginatedSuccess()` is the same call the hand-written controllers
-        // make, so a controller that moves onto this base class emits a
-        // byte-identical envelope.
-        if ($this->resource !== null) {
-            return $this->paginatedSuccess($paginator, $this->resource, $request);
-        }
-
-        return $this->respondFromService(['data' => $paginator, 'code' => 200], request: $request);
+        return $this->paginatedResponse($paginator, $request);
     }
 
-    public function show(Model $model, Request $request): JsonResponse
+    /**
+     * The body of a `show()` route. The child declares the concrete signature
+     * and calls this:
+     *
+     *     public function show(Amenity $amenity, Request $request): JsonResponse
+     *     {
+     *         return $this->showResponse($amenity, $request);
+     *     }
+     */
+    protected function showResponse(Model $model, Request $request): JsonResponse
     {
         return $this->respondFromService(
             $this->shapeResource($this->service()->show($model)),
             request: $request,
         );
+    }
+
+    /**
+     * `paginatedSuccess()` is the same call the hand-written controllers make,
+     * so a controller that moves onto this base class emits a byte-identical
+     * envelope.
+     */
+    protected function paginatedResponse(LengthAwarePaginator $paginator, Request $request): JsonResponse
+    {
+        if ($this->resource !== null) {
+            return $this->paginatedSuccess($paginator, $this->resource, $request);
+        }
+
+        return $this->respondFromService(['data' => $paginator, 'code' => 200], request: $request);
     }
 
     /**

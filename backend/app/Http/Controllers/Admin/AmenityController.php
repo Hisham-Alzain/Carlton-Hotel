@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Base\BaseController;
+use App\Base\BaseCRUDController;
+use App\Base\BaseService;
+use App\Base\HandlesRecycleBin;
 use App\Http\Requests\Cms\CreateAmenityRequest;
 use App\Http\Requests\Cms\UpdateAmenityRequest;
 use App\Http\Resources\Cms\AmenityResource;
@@ -11,57 +13,50 @@ use App\Services\Cms\AmenityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class AmenityController extends BaseController
+class AmenityController extends BaseCRUDController
 {
+    use HandlesRecycleBin;
+
+    protected ?string $resource = AmenityResource::class;
+
     public function __construct(private readonly AmenityService $service) {}
 
-    public function index(Request $request): JsonResponse
+    protected function service(): BaseService
     {
-        return $this->paginatedSuccess($this->service->index($this->indexParams($request), perPage: $this->perPageParam($request))['data'], AmenityResource::class, $request);
+        return $this->service;
     }
+
+    // `index()` and `trashed()` are inherited whole. The verbs below exist only
+    // to carry the concrete type-hints implicit route-model binding and
+    // FormRequest resolution read; the bodies live on the base pair.
 
     public function show(Amenity $amenity, Request $request): JsonResponse
     {
-        $result = $this->service->show($amenity);
-        $result['data'] = new AmenityResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->showResponse($amenity, $request);
     }
 
     public function store(CreateAmenityRequest $request): JsonResponse
     {
-        $result = $this->service->store($request->validated());
-        $result['data'] = new AmenityResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->storeResponse($request);
     }
 
     public function update(UpdateAmenityRequest $request, Amenity $amenity): JsonResponse
     {
-        $result = $this->service->update($amenity, $request->validated());
-        $result['data'] = new AmenityResource($result['data']);
-        return $this->respondFromService($result, request: $request);
+        return $this->updateResponse($request, $amenity);
     }
 
     public function destroy(Amenity $amenity, Request $request): JsonResponse
     {
-        $this->service->destroy($amenity);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
-    }
-
-    public function trashed(Request $request): JsonResponse
-    {
-        return $this->paginatedSuccess($this->service->trashed($this->indexParams($request), perPage: $this->perPageParam($request))['data'], AmenityResource::class, $request);
+        return $this->destroyResponse($amenity, $request);
     }
 
     public function restore(Amenity $amenity, Request $request): JsonResponse
     {
-        $result = $this->service->restore($amenity);
-        $result['data'] = new AmenityResource($result['data']);
-        return $this->respondFromService($result, 'custom.messages.restored', $request);
+        return $this->restoreResponse($amenity, $request);
     }
 
     public function forceDestroy(Amenity $amenity, Request $request): JsonResponse
     {
-        $this->service->forceDestroy($amenity);
-        return $this->success(null, 'custom.messages.deleted', 204, $request);
+        return $this->forceDestroyResponse($amenity, $request);
     }
 }

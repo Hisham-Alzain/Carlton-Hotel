@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:carlton/routes/routes.dart';
-import 'package:carlton/services/session_service.dart';
+import 'package:carlton/services/middleware_service.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -74,10 +74,13 @@ class SplashScreenController extends GetxController
 
     animationController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        final skipsReservationQuestion =
-            SessionService.isSignedIn || SessionService.hasReservation;
+        // Refresh entitlements from /me in the background; route on the cached
+        // session so the splash isn't network-blocked on cold start.
+        MiddlewareService.find.checkToken();
         Get.offAllNamed(
-          skipsReservationQuestion ? Routes.main : Routes.reservationChoice,
+          MiddlewareService.find.isAuthenticated
+              ? Routes.main
+              : Routes.reservationChoice,
         );
       }
     });

@@ -122,12 +122,18 @@ class PaymentView extends StatelessWidget {
   static Widget _methodBody(BookingFlowController controller) {
     switch (controller.paymentMethod) {
       case PaymentMethod.card:
-        return CustomCardForm(
-          cardNumberController: controller.cardNumberCtrl,
-          expiryController: controller.cardExpiryCtrl,
-          cvvController: controller.cardCvvCtrl,
-          cardholderNameController: controller.cardNameCtrl,
-          onChanged: controller.onPaymentFieldChanged,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            CustomCardForm(
+              cardNumberController: controller.cardNumberCtrl,
+              expiryController: controller.cardExpiryCtrl,
+              cvvController: controller.cardCvvCtrl,
+              cardholderNameController: controller.cardNameCtrl,
+              onChanged: controller.onPaymentFieldChanged,
+            ),
+            const _ComingSoonNote(),
+          ],
         );
       case PaymentMethod.applePay:
         return const CustomWalletPanel(
@@ -142,7 +148,7 @@ class PaymentView extends StatelessWidget {
             'No card details shared with Apple Pay',
           ],
           footerNote:
-              "You'll be redirected to Apple Pay to complete authorization.",
+              "Apple Pay isn't available yet — choose Pay at Hotel to confirm.",
         );
       case PaymentMethod.googlePay:
         return const CustomWalletPanel(
@@ -157,10 +163,44 @@ class PaymentView extends StatelessWidget {
             'Instant payment confirmation',
           ],
           footerNote:
-              "You'll be redirected to Google Pay to complete authorization.",
+              "Google Pay isn't available yet — choose Pay at Hotel to confirm.",
         );
       case PaymentMethod.payAtHotel:
         return const CustomPayAtHotelPanel();
     }
+  }
+}
+
+/// Shown under the card form: card payments have no gateway yet, so the booking
+/// can only be confirmed with Pay at Hotel (see decision #1).
+class _ComingSoonNote extends StatelessWidget {
+  const _ComingSoonNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.whisperGrey,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        spacing: 8,
+        children: [
+          const Icon(Icons.info_outline, size: 18, color: AppColors.dimGrey),
+          Expanded(
+            child: Text(
+              "Card payments aren't available yet — choose Pay at Hotel to "
+              'confirm your booking.',
+              style: Get.textTheme.labelMedium?.copyWith(
+                fontFamily: 'DM Sans',
+                color: AppColors.dimGrey,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:carlton/customWidgets/custom_elevated_button.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
 import 'package:carlton/enums/enums.dart';
 import 'package:carlton/l10n/app_translations.dart';
@@ -12,12 +13,12 @@ import 'package:url_launcher/url_launcher.dart';
 // ─── Type → Color/Icon lookup tables ──────────────────────────────────────────
 
 final _kDefaultColors = {
-  AppDialogType.success: Colors.green.shade900,
-  AppDialogType.error: Colors.red.shade900,
-  AppDialogType.warning: Colors.yellow.shade900,
+  AppDialogType.success: AppColors.primary,
+  AppDialogType.error: AppColors.brickRed,
+  AppDialogType.warning: AppColors.bronzeGold,
   AppDialogType.info: AppColors.primary,
-  AppDialogType.confirmation: Colors.red.shade900,
-  AppDialogType.destructive: Colors.red.shade900,
+  AppDialogType.confirmation: AppColors.brickRed,
+  AppDialogType.destructive: AppColors.brickRed,
 };
 
 const _kDefaultIcons = {
@@ -72,7 +73,7 @@ class CustomDialogs {
                   Transform.scale(scale: scaleFactor, child: child),
               child: Material(
                 // color: AppColors.backgroundColor,
-                borderRadius: BorderRadius.circular(0),
+                borderRadius: BorderRadius.circular(10),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(
                     minWidth: 300,
@@ -205,9 +206,13 @@ class CustomDialogs {
     _showDialog(
       type: AppDialogType.info,
       title: AppTranslations.loading,
+      // The dialog Material has no explicit colour (see _showDialog), so it
+      // sits on the light theme surface — the indicator's default white logo
+      // would be invisible. AppColors.primary matches what the bare
+      // CircularProgressIndicator picked up from progressIndicatorTheme.
       body: const Padding(
         padding: EdgeInsets.all(10),
-        child: CircularProgressIndicator(),
+        child: SpinningIconIndicator(size: 50, color: AppColors.primary),
       ),
       showActions: false,
       showIcon: false,
@@ -345,6 +350,7 @@ class CustomDialogs {
           prefixIcon: Icons.edit_note,
           hintText: hintText,
           maxLines: 3,
+          fillColor: AppColors.whisperGrey,
         ),
       ),
     );

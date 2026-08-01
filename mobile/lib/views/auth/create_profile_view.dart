@@ -16,44 +16,40 @@ class CreateProfileView extends GetView<CreateProfileController> {
     return CustomAuthBackground(
       title: AppTranslations.createProfileTitle,
       subtitle: AppTranslations.createProfileSubtitle,
-      //TODO: use obx instead  of getbuilder
-      child: GetBuilder<CreateProfileController>(
-        builder: (controller) => Padding(
-          padding: const EdgeInsets.all(10),
-          child: Form(
-            key: controller.formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 20,
-              children: [
-                CustomTextField(
-                  controller: controller.firstNameController,
-                  textInputType: TextInputType.name,
-                  hintText: AppTranslations.firstNameHint,
-                  captionLabel: AppTranslations.firstNameLabel,
-                  validator: (enteredFirstName) => CustomValidation()
-                      .validateRequiredField(enteredFirstName),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Form(
+          key: controller.formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 20,
+            children: [
+              CustomTextField(
+                controller: controller.firstNameController,
+                textInputType: TextInputType.name,
+                hintText: AppTranslations.firstNameHint,
+                captionLabel: AppTranslations.firstNameLabel,
+                validator: (enteredFirstName) =>
+                    CustomValidation().validateRequiredField(enteredFirstName),
+              ),
+              CustomTextField(
+                controller: controller.lastNameController,
+                textInputType: TextInputType.name,
+                hintText: AppTranslations.lastNameHint,
+                captionLabel: AppTranslations.lastNameLabel,
+                validator: (enteredLastName) =>
+                    CustomValidation().validateRequiredField(enteredLastName),
+              ),
+              Obx(
+                () => CustomFilledButton(
+                  width: double.infinity,
+                  backgroundColor: AppColors.lagoonTeal,
+                  isLoading: controller.isSubmitting.value,
+                  onPressed: controller.submit,
+                  child: Text(AppTranslations.continueButtonLabel),
                 ),
-                CustomTextField(
-                  controller: controller.lastNameController,
-                  textInputType: TextInputType.name,
-                  hintText: AppTranslations.lastNameHint,
-                  captionLabel: AppTranslations.lastNameLabel,
-                  validator: (enteredLastName) =>
-                      CustomValidation().validateRequiredField(enteredLastName),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: CustomFilledButton(
-                    width: 350,
-                    backgroundColor: AppColors.lagoonTeal,
-                    isLoading: controller.isSubmitting,
-                    onPressed: controller.submit,
-                    child: Text(AppTranslations.continueButtonLabel),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

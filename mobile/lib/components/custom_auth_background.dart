@@ -5,7 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 const _backgroundImage = 'assets/images/backgroundimg2.png';
-const _logoImage = 'assets/images/white_logo.svg';
+const _logoImage = 'assets/icons/white_logo.svg';
 
 class CustomAuthBackground extends StatelessWidget {
   final Widget child;

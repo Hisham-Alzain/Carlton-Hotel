@@ -1,3 +1,4 @@
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:flutter/material.dart';
 
 class CustomFilledButton extends StatelessWidget {
@@ -12,7 +13,6 @@ class CustomFilledButton extends StatelessWidget {
   final double? elevation;
   final bool isLoading;
 
-  //TODO: check if able to send custom text style
   const CustomFilledButton({
     this.height,
     this.width,
@@ -48,16 +48,8 @@ class CustomFilledButton extends StatelessWidget {
         elevation: WidgetStatePropertyAll(elevation),
       ),
       onPressed: isLoading ? null : onPressed,
-      //TODO: make this a custom indicator using the icon
       child: isLoading
-          ? const SizedBox(
-              height: 18,
-              width: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
+          ? const SpinningIconIndicator(size: 22, color: Colors.white)
           : child,
     );
 

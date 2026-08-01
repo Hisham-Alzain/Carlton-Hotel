@@ -1,5 +1,4 @@
 import 'package:carlton/components/dining/custom_gallery_grid.dart';
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/dining/restaurant_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -18,80 +17,89 @@ class RestaurantInfoTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          'About',
-          style: textStyle.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppColors.inkBlack,
+    // Scrollable because this tab lives in a TabBarView inside an Expanded —
+    // the height is bounded, so a bare Column would overflow instead of scroll.
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        spacing: 10,
+        // ListView stretched its children to full width for free; a Column
+        // centres them by default, which would shrink the info card, the
+        // gallery and the CTA to their content width.
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'About',
+            style: textStyle.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.inkBlack,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          DemoData.restaurantAbout,
-          style: textStyle.labelMedium?.copyWith(
-            fontFamily: 'DM Sans',
-            height: 1.5,
-            color: AppColors.dimGrey,
+          Text(
+            c.about.isNotEmpty ? c.about : 'Details coming soon.',
+            style: textStyle.labelMedium?.copyWith(
+              fontFamily: 'DM Sans',
+              height: 1.5,
+              color: AppColors.dimGrey,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.black06),
+
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.black06),
+            ),
+            child: Column(
+              spacing: 14,
+              children: [
+                _InfoRow(
+                  icon: 'assets/icons/clock.svg',
+                  label: 'Hours',
+                  value: c.restaurant.hours,
+                ),
+                _InfoRow(
+                  icon: 'assets/icons/location.svg',
+                  label: 'Location',
+                  value: c.restaurant.location,
+                ),
+                _InfoRow(
+                  icon: 'assets/icons/cuisine.svg',
+                  label: 'Cuisine',
+                  value: c.restaurant.cuisine,
+                ),
+                _InfoRow(
+                  icon: 'assets/icons/rating.svg',
+                  label: 'Rating',
+                  value:
+                      '${c.restaurant.rating} / 5.0 · '
+                      '${c.restaurant.reviews} reviews',
+                ),
+              ],
+            ),
           ),
-          child: Column(
-            spacing: 14,
-            children: [
-              _InfoRow(
-                icon: 'assets/icons/clock.svg',
-                label: 'Hours',
-                value: c.restaurant.hours,
+          if (c.gallery.isNotEmpty) ...[
+            Text(
+              'Gallery',
+              style: textStyle.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.inkBlack,
               ),
-              _InfoRow(
-                icon: 'assets/icons/location.svg',
-                label: 'Location',
-                value: c.restaurant.location,
-              ),
-              _InfoRow(
-                icon: 'assets/icons/cuisine.svg',
-                label: 'Cuisine',
-                value: c.restaurant.cuisine,
-              ),
-              _InfoRow(
-                icon: 'assets/icons/rating.svg',
-                label: 'Rating',
-                value:
-                    '${DemoData.restaurantRating} / 5.0 · '
-                    '${DemoData.restaurantReviews} reviews',
-              ),
-            ],
+            ),
+            CustomGalleryGrid(images: c.gallery),
+          ],
+          CustomFilledButton(
+            width: double.infinity,
+            height: 50,
+            backgroundColor: AppColors.primary,
+            // This tab renders inside the detail view's TabBarView, so the
+            // DefaultTabController is above us in the tree.
+            onPressed: () => DefaultTabController.of(context).animateTo(2),
+            child: const Text('Reserve a table'),
           ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          'Gallery',
-          style: textStyle.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppColors.inkBlack,
-          ),
-        ),
-        const SizedBox(height: 10),
-        CustomGalleryGrid(images: DemoData.restaurantGallery),
-        const SizedBox(height: 20),
-        CustomFilledButton(
-          width: double.infinity,
-          height: 52,
-          backgroundColor: AppColors.primary,
-          onPressed: c.goToReserveTab,
-          child: const Text('Reserve a table'),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -112,12 +120,12 @@ class _InfoRow extends StatelessWidget {
     final TextTheme textStyle = Get.textTheme;
 
     return Row(
-      spacing: 12,
+      spacing: 10,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 32,
-          height: 32,
+          width: 30,
+          height: 30,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: AppColors.pearlCream,
@@ -136,14 +144,11 @@ class _InfoRow extends StatelessWidget {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 2,
             children: [
               Text(
                 label.toUpperCase(),
                 style: textStyle.labelSmall?.copyWith(
                   fontFamily: 'DM Sans',
-                  fontSize: 10,
-                  letterSpacing: 0.5,
                   color: AppColors.walnutGold,
                 ),
               ),

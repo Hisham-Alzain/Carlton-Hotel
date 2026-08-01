@@ -1,12 +1,13 @@
 import 'package:carlton/components/dining/custom_menu_item_tile.dart';
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/dining/restaurant_controller.dart';
-import 'package:carlton/customWidgets/custom_pill_button.dart';
+import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// Restaurant "menu" tab: category chips + dish list + Download Full Menu.
+/// Categories and dishes come from the public content API (see
+/// [RestaurantController]); a venue with no menu shows an empty state.
 class RestaurantMenuTab extends StatelessWidget {
   final RestaurantController c;
 
@@ -14,59 +15,82 @@ class RestaurantMenuTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final category = DemoData.restaurantMenu[c.categoryIndex];
+    if (c.menuLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final categories = c.menuCategories;
+    final items = c.visibleMenuItems;
 
     return Column(
       children: [
-        SizedBox(
-          height: 44,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: DemoData.restaurantMenu.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
-            itemBuilder: (context, i) {
-              final selected = c.categoryIndex == i;
-              return ChoiceChip(
-                label: Text(DemoData.restaurantMenu[i].name),
-                selected: selected,
-                onSelected: (_) => c.selectCategory(i),
-                showCheckmark: false,
-                backgroundColor: AppColors.white,
-                selectedColor: AppColors.primary,
-                labelStyle: Get.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: selected ? AppColors.white : AppColors.inkBlack,
-                ),
-                side: BorderSide(
-                  color: selected ? AppColors.primary : AppColors.black10,
-                ),
-              );
-            },
+        if (categories.isNotEmpty)
+          SizedBox(
+            height: 50,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: categories.length,
+              itemBuilder: (context, i) {
+                final selected = c.categoryIndex == i;
+                return Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: ChoiceChip(
+                    label: Text(categories[i].name.value),
+                    selected: selected,
+                    onSelected: (_) => c.selectCategory(i),
+                    labelStyle: Get.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: selected ? AppColors.white : AppColors.inkBlack,
+                    ),
+                    side: BorderSide(
+                      color: selected ? AppColors.primary : AppColors.black10,
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
         Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: category.items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder: (context, i) =>
-                CustomMenuItemTile(item: category.items[i]),
-          ),
+          child: items.isEmpty
+              ? Center(
+                  child: Text(
+                    'Menu coming soon',
+                    style: Get.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.dimGrey,
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(10),
+                  itemCount: items.length,
+                  itemBuilder: (context, i) => Padding(
+                    padding: EdgeInsets.all(10),
+                    child: CustomMenuItemTile(item: items[i]),
+                  ),
+                ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-          child: CustomPillButton(
-            label: 'Download Full Menu',
-            onTap: c.downloadMenu,
-            iconAsset: 'assets/icons/download.svg',
+          padding: const EdgeInsets.all(10),
+          child: CustomFilledButton(
+            width: double.infinity,
+            height: 50,
             backgroundColor: AppColors.whisperGrey,
             foregroundColor: AppColors.inkBlack,
-            height: 48,
-            expand: true,
-            iconSize: 18,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'DM Sans',
+            onPressed: c.downloadMenu,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 10,
+              children: [
+                const Icon(Icons.download),
+                Text(
+                  'Download Full Menu',
+                  style: Get.textTheme.labelLarge?.copyWith(
+                    fontFamily: 'DM Sans',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],

@@ -26,7 +26,6 @@ class StaysView extends StatelessWidget {
               Tab(text: 'Past'),
             ],
           ),
-          //TODO: do not pass controller excplictely when wireing up apis
           Expanded(
             child: TabBarView(
               controller: controller.tabController,
@@ -49,6 +48,14 @@ class _ActiveTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (controller.activeLoading) return const _Loading();
+    if (controller.activeError) {
+      return _Retry(
+        title: "Couldn't load your stay",
+        subtitle: 'Please check your connection and try again.',
+        onRetry: controller.reloadActive,
+      );
+    }
     final activeStay = controller.active;
     if (activeStay == null) {
       return const _Empty(
@@ -75,6 +82,14 @@ class _UpcomingTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (controller.upcomingLoading) return const _Loading();
+    if (controller.upcomingError) {
+      return _Retry(
+        title: "Couldn't load your reservations",
+        subtitle: 'Please check your connection and try again.',
+        onRetry: controller.reloadUpcoming,
+      );
+    }
     if (controller.upcoming.isEmpty) {
       return _Empty(
         title: 'No upcoming stays',
@@ -109,29 +124,85 @@ class _UpcomingTab extends StatelessWidget {
   }
 }
 
+/// The one Obx island in this otherwise-GetBuilder view — the Past tab reads the
+/// Rx state of [PaginatedControllerMixin] (items / loading / hasError /
+/// loadingMore) and scrolls via the mixin's scrollController.
 class _PastTab extends StatelessWidget {
   final StaysController controller;
   const _PastTab({required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    if (controller.past.isEmpty) {
-      return const _Empty(
-        title: 'No past stays',
-        subtitle: 'Completed stays and receipts will appear here.',
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: controller.past.length,
-      itemBuilder: (_, index) {
-        final stay = controller.past[index];
-        return CustomPastStayCard(
-          stay: stay,
-          onViewReceipt: () => controller.showReceipt(stay),
-          onBookAgain: controller.startBooking,
+    return Obx(() {
+      if (controller.loading.value) return const _Loading();
+      if (controller.hasError.value) {
+        return _Retry(
+          title: "Couldn't load past stays",
+          subtitle: 'Please check your connection and try again.',
+          onRetry: controller.reloadPast,
         );
-      },
+      }
+      if (controller.items.isEmpty) {
+        return const _Empty(
+          title: 'No past stays',
+          subtitle: 'Completed stays and receipts will appear here.',
+        );
+      }
+      final showLoadingMore = controller.loadingMore.value;
+      return ListView.builder(
+        controller: controller.scrollController,
+        padding: const EdgeInsets.all(20),
+        itemCount: controller.items.length + (showLoadingMore ? 1 : 0),
+        itemBuilder: (_, index) {
+          if (index >= controller.items.length) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          final stay = controller.items[index];
+          return CustomPastStayCard(
+            stay: stay,
+            onViewReceipt: () => controller.showReceipt(stay),
+            onBookAgain: controller.startBooking,
+          );
+        },
+      );
+    });
+  }
+}
+
+class _Loading extends StatelessWidget {
+  const _Loading();
+
+  @override
+  Widget build(BuildContext context) =>
+      const Center(child: CircularProgressIndicator());
+}
+
+class _Retry extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final VoidCallback onRetry;
+
+  const _Retry({
+    required this.title,
+    required this.subtitle,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomEmptyPlaceholder(
+      iconWidget: const Icon(
+        Icons.cloud_off_outlined,
+        size: 50,
+        color: AppColors.primary,
+      ),
+      title: title,
+      subtitle: subtitle,
+      primaryLabel: 'Retry',
+      onPrimary: onRetry,
     );
   }
 }

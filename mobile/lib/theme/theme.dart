@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 const _mainFontFamily = 'Plus Jakarta Sans';
 
 class Themes {
-  //TODO: add static when done
-  ThemeData get theme => ThemeData(
+  static ThemeData get theme => ThemeData(
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primary,
       // The color of the spinning arrow/arc
@@ -344,6 +343,7 @@ class Themes {
       backgroundColor: AppColors.primary08,
       selectedColor: AppColors.primary,
       showCheckmark: false,
+      labelPadding: EdgeInsets.zero,
       labelStyle: const TextStyle(
         fontFamily: _mainFontFamily,
         fontSize: 12,
@@ -391,7 +391,40 @@ class Themes {
       }),
     ),
 
-    datePickerTheme: DatePickerThemeData(),
+    // Branded calendar: primary header over a clean cream surface. This lives
+    // here rather than in a per-call `builder:` so every showDatePicker in the
+    // app gets the same picker without restating it.
+    datePickerTheme: DatePickerThemeData(
+      backgroundColor: AppColors.ivoryCream,
+      headerBackgroundColor: AppColors.primary,
+      headerForegroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      dayBackgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        if (states.contains(WidgetState.selected)) return AppColors.primary;
+        return null; // Transparent — only the selection is filled.
+      }),
+      dayForegroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        if (states.contains(WidgetState.selected)) return Colors.white;
+        if (states.contains(WidgetState.disabled)) return Colors.grey;
+        return AppColors.inkBlack;
+      }),
+      // Today is marked by a gold ring rather than a fill, so it keeps the
+      // plain day colours until it is also the selected date.
+      todayBorder: const BorderSide(color: AppColors.antiqueGold),
+      todayForegroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        if (states.contains(WidgetState.selected)) return Colors.white;
+        return AppColors.primary;
+      }),
+      yearBackgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        if (states.contains(WidgetState.selected)) return AppColors.primary;
+        return null;
+      }),
+      yearForegroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        if (states.contains(WidgetState.selected)) return Colors.white;
+        if (states.contains(WidgetState.disabled)) return Colors.grey;
+        return AppColors.inkBlack;
+      }),
+    ),
 
     searchBarTheme: SearchBarThemeData(
       shape: WidgetStatePropertyAll(
@@ -442,6 +475,7 @@ class Themes {
       // inactiveTrackColor:
       thumbColor: Colors.white,
     ),
+
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
         if (states.contains(WidgetState.selected)) {
@@ -449,14 +483,17 @@ class Themes {
         }
         return Colors.white; // Transparent when unchecked
       }),
-      // trackColor: WidgetStateProperty.resolveWith<Color?>((states) {
-      //   if (states.contains(WidgetState.selected)) {
-      //     return  // Color when checked
-      //   }
-      //   return  // Transparent when unchecked
-      // }),
+      trackColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        if (states.contains(WidgetState.selected)) {
+          return AppColors.antiqueGold; // Color when checked
+        }
+        return Colors.white.withValues(
+          alpha: 0.2,
+        ); // Transparent when unchecked
+      }),
       trackOutlineColor: WidgetStatePropertyAll(Colors.transparent),
       trackOutlineWidth: WidgetStatePropertyAll(0),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     ),
     menuButtonTheme: MenuButtonThemeData(
       style: ButtonStyle(

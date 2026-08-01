@@ -12,4 +12,9 @@ extension DateExtensions on DateTime {
   String formatDatePicker() {
     return DateFormat('MMM d, yyyy').format(this);
   }
+
+  /// `yyyy-MM-dd` — the `date` field the table-reservation endpoint expects.
+  String formatApiDate() {
+    return DateFormat('yyyy-MM-dd').format(this);
+  }
 }

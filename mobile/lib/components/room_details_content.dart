@@ -1,9 +1,9 @@
+import 'package:carlton/components/cards/custom_rating_label.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_image_carousel.dart';
 import 'package:carlton/components/custom_info_banner.dart';
 import 'package:carlton/components/custom_price_summary.dart';
-import 'package:carlton/customWidgets/custom_rating_component.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -80,9 +80,9 @@ class RoomDetailsContent extends StatelessWidget {
                     _meta('assets/icons/king_bed.svg', room.bed),
                   ],
                 ),
-                CustomRatingComponent(
+                CustomRatingLabel(
                   rating: room.rating,
-                  reviewCount: room.reviewCount,
+                  reviews: room.reviewCount,
                 ),
                 Text(
                   room.description,
@@ -206,6 +206,7 @@ class RoomDetailsContent extends StatelessWidget {
     ),
   );
 
+  //check spacing between tiles
   Widget _amenityTile(IconLabel amenity) {
     final TextTheme textStyle = Get.textTheme;
     return SizedBox(

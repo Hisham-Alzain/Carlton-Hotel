@@ -1,4 +1,5 @@
 import 'package:carlton/components/custom_initial_avatar.dart';
+import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/models/chat_message.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -52,13 +53,34 @@ class CustomChatBubble extends StatelessWidget {
                 bottomRight: Radius.circular(isAgent ? 14 : 4),
               ),
             ),
-            child: Text(
-              message.text,
-              style: textStyle.labelMedium?.copyWith(
-                fontFamily: 'DM Sans',
-                height: 1.4,
-                color: isAgent ? AppColors.inkBlack : AppColors.white,
-              ),
+            child: Column(
+              crossAxisAlignment: isAgent
+                  ? CrossAxisAlignment.start
+                  : CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              spacing: 8,
+              children: [
+                if (message.attachmentUrl != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CustomImage(
+                      source: message.attachmentUrl!,
+                      width: 200,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                // Attachment-only messages carry an empty body — skip the Text.
+                if (message.text.isNotEmpty)
+                  Text(
+                    message.text,
+                    style: textStyle.labelMedium?.copyWith(
+                      fontFamily: 'DM Sans',
+                      height: 1.4,
+                      color: isAgent ? AppColors.inkBlack : AppColors.white,
+                    ),
+                  ),
+              ],
             ),
           ),
           Text(

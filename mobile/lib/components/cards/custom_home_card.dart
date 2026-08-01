@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-class CustomListingCard extends StatelessWidget {
+class CustomHomeCard extends StatelessWidget {
   final String imagePath;
   final String title;
   final String subtitle;
@@ -15,7 +15,7 @@ class CustomListingCard extends StatelessWidget {
   final VoidCallback? onTap;
   final double? width;
 
-  const CustomListingCard({
+  const CustomHomeCard({
     required this.imagePath,
     required this.title,
     required this.subtitle,
@@ -23,7 +23,7 @@ class CustomListingCard extends StatelessWidget {
     this.metaInRow = false,
     this.priceAmount,
     this.onTap,
-    this.width = 280,
+    this.width = 300,
     super.key,
   });
 
@@ -56,6 +56,7 @@ class CustomListingCard extends StatelessWidget {
           ),
         )
         .toList();
+
     return InkWell(
       onTap: onTap,
       child: Card(

@@ -1,47 +1,63 @@
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/enums/enums.dart';
+import 'package:carlton/models/otp_verify_args.dart';
 import 'package:carlton/routes/routes.dart';
+import 'package:carlton/services/api/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Demo-only: no backend is wired up yet. Empty-field errors match the exact
-/// Figma copy; a valid submission simulates a network delay then routes into
-/// the real OTP screen with the destination (phone/email) it "sent" to.
+/// Returning-guest sign-in — sends a `login` OTP via
+/// `POST /auth/guest/request-otp` on the phone or email branch the user chose.
 class SignInController extends GetxController {
-  SignInMethod method = SignInMethod.phone;
+  /// Reactive: the view's segmented button and the phone/email field ternary
+  /// both read this inside their own Obx.
+  final Rx<SignInMethod> method = SignInMethod.phone.obs;
 
   final formKey = GlobalKey<FormState>();
   final phone = PhoneFieldState();
   final emailController = TextEditingController();
 
-  bool isSubmitting = false;
+  final RxBool isSubmitting = false.obs;
 
   void switchMethod(SignInMethod value) {
-    if (method == value) return;
-    method = value;
-    update();
+    if (method.value == value) return;
+    method.value = value;
   }
 
   Future<void> submit() async {
-    // Only the currently mounted branch of the phone/email ternary is
-    // registered with the Form, so this validates exactly the visible field.
+    // Only the visible branch of the phone/email ternary is registered with
+    // the Form, so this validates exactly the shown field.
     if (!formKey.currentState!.validate()) return;
 
-    // Captured before the await: the user can pop this screen during the
-    // delay, which disposes the TextEditingControllers.
-    final destination = method == SignInMethod.phone
-        ? phone.controller.text.trim()
-        : emailController.text.trim();
+    final byEmail = method.value == SignInMethod.email;
+    final email = emailController.text.trim();
+    final channel = byEmail ? 'email' : 'sms';
 
-    isSubmitting = true;
-    update();
-    await Future.delayed(DemoData.networkDelay);
+    isSubmitting.value = true;
+    final response = await ApiService.find.post<Map<String, dynamic>>(
+      path: '/auth/guest/request-otp',
+      data: {
+        'channel': channel,
+        if (byEmail) 'email': email else 'phone': phone.controller.text.trim(),
+        'purpose': 'login',
+      },
+    );
     if (isClosed) return;
-    isSubmitting = false;
-    update();
+    isSubmitting.value = false;
 
-    Get.toNamed(Routes.otpVerify, arguments: destination);
+    if (response.statusCode != 200 || response.data == null) return;
+
+    final identifier =
+        response.data!['identifier'] as String? ??
+        (byEmail ? email : phone.controller.text.trim());
+    Get.toNamed(
+      Routes.otpVerify,
+      arguments: OtpVerifyArgs(
+        channel: response.data!['channel'] as String? ?? channel,
+        purpose: 'login',
+        identifier: identifier,
+      ),
+    );
   }
 
   @override

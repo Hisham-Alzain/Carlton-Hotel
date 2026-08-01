@@ -15,6 +15,14 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
 }
 
+/// Pure builder for the `POST /device-tokens` body (`{token, platform}`).
+/// Extracted so it can be asserted hermetically — reverting to the old CartX
+/// `{device_token}` shape fails the Phase-6 test.
+Map<String, dynamic> deviceTokenPayload(
+  String token, {
+  required String platform,
+}) => {'token': token, 'platform': platform};
+
 class NotificationService extends GetxService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
@@ -167,21 +175,21 @@ class NotificationService extends GetxService {
 
     if (authToken == null) return; // <-- critical
 
-    try {
-      await apiService.post(
-        path: '/user/device-token',
-        data: {'device_token': token},
-      );
-    } catch (_) {}
+    // Background best-effort call: suppress the default error dialog. (The old
+    // bare try/catch was dead — ApiService.post never throws, it returns.)
+    final platform = kIsWeb ? 'web' : (Platform.isIOS ? 'ios' : 'android');
+    await apiService.post(
+      path: '/device-tokens',
+      data: deviceTokenPayload(token, platform: platform),
+      showErrorDialog: false,
+    );
   }
 
   Future<void> removeToken() async {
-    final authToken = StorageService.getString(StorageKeys.token);
-
+    // Server-side push-token cleanup on logout has no documented endpoint in
+    // the guide's Notifications module (the old DELETE /user/device-token was a
+    // CartX leftover) — confirm with backend if push cleanup becomes required.
     try {
-      if (authToken != null) {
-        await apiService.delete(path: '/user/device-token', showLoading: true);
-      }
       await _messaging.deleteToken();
     } catch (_) {}
   }

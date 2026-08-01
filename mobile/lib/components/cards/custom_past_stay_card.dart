@@ -100,17 +100,23 @@ class CustomPastStayCard extends StatelessWidget {
             Row(
               spacing: 10,
               children: [
-                CustomFilledButton(
-                  backgroundColor: AppColors.pearlCream,
-                  foregroundColor: AppColors.inkBlack,
-                  onPressed: onViewReceipt,
-                  child: Text('View Receipt'),
+                Expanded(
+                  child: CustomFilledButton(
+                    width: double.infinity,
+                    backgroundColor: AppColors.pearlCream,
+                    foregroundColor: AppColors.inkBlack,
+                    onPressed: onViewReceipt,
+                    child: Text('View Receipt'),
+                  ),
                 ),
-                CustomFilledButton(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  onPressed: onBookAgain,
-                  child: Text('Book Again'),
+                Expanded(
+                  child: CustomFilledButton(
+                    width: double.infinity,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    onPressed: onBookAgain,
+                    child: Text('Book Again'),
+                  ),
                 ),
               ],
             ),

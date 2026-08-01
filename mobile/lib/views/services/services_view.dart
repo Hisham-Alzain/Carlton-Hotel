@@ -1,6 +1,6 @@
 import 'package:carlton/components/cards/custom_service_card.dart';
 import 'package:carlton/components/cards/custom_stay_card.dart';
-import 'package:carlton/components/cards/custom_request_card.dart';
+import 'package:carlton/components/home/custom_active_requests_card.dart';
 import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/home/services_controller.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
@@ -53,10 +53,10 @@ class _ActiveStayServices extends StatelessWidget {
         spacing: 20,
         children: [
           CustomStayCard(
-            roomName: DemoData.room,
-            checkedInTime: DemoData.checkedInTime,
-            nightsRemaining: DemoData.nightsRemaining,
-            imagePath: DemoData.stayImagePath,
+            roomName: controller.room,
+            checkedInTime: controller.checkedInTime,
+            nightsRemaining: controller.nightsRemaining,
+            imagePath: controller.stayImagePath,
           ),
           TabBar(
             tabs: const [Text('All Services'), Text('Active Requests')],
@@ -75,7 +75,7 @@ class _ActiveStayServices extends StatelessWidget {
               ),
               itemBuilder: (context, index) => GestureDetector(
                 onTap: () => controller.openServiceCategory(
-                  controller.services[index].title,
+                  controller.services[index].code,
                 ),
                 child: CustomServiceCard(service: controller.services[index]),
               ),
@@ -95,17 +95,16 @@ class _ActiveStayServices extends StatelessWidget {
                     onPrimary: () => controller.switchTab(0),
                   ),
                 if (controller.activeRequests.isNotEmpty)
-                  ...controller.activeRequests.map(
-                    (request) => CustomRequestCard(
-                      title: request.title,
-                      subtitle: request.detail,
-                      iconPath: request.status.iconPath,
-                      iconBackgroundColor: request.status.iconBgColor,
-                      statusLabel: request.status.label,
-                      statusTextColor: request.status.textColor,
-                      statusBackgroundColor: request.status.bgColor,
-                      onEdit: () => controller.editRequest(request),
-                      onCancel: () => controller.cancelRequest(request),
+                  // The card no longer carries its own margin, so hold its
+                  // inset here: 10 from this Padding on top of the scroll
+                  // view's 10 keeps it exactly where it has always sat.
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: CustomActiveRequestsCard(
+                      requests: controller.activeRequests,
+                      showHeading: false,
+                      onOpen: controller.editRequest,
+                      onNewRequest: () => controller.switchTab(0),
                     ),
                   ),
               ],

@@ -92,7 +92,7 @@ class GuestDetailsView extends StatelessWidget {
                     CustomValidation().validateEmail(enteredEmail),
               ),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 spacing: 10,
                 children: [
                   CustomCountryCodePicker(

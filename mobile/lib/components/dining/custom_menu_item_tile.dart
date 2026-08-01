@@ -1,5 +1,6 @@
 import 'package:carlton/customWidgets/custom_containers.dart';
-import 'package:carlton/models/menu_item.dart';
+import 'package:carlton/customWidgets/custom_image.dart';
+import 'package:carlton/models/menu.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -28,8 +29,8 @@ class CustomMenuItemTile extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              item.imagePath,
+            child: CustomImage(
+              source: item.photo ?? '',
               width: 70,
               height: 85,
               fit: BoxFit.cover,
@@ -41,14 +42,14 @@ class CustomMenuItemTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.name,
+                  item.name.value,
                   style: textStyle.labelLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.inkBlack,
                   ),
                 ),
                 Text(
-                  item.description,
+                  item.description.value,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: textStyle.labelMedium?.copyWith(
@@ -59,14 +60,15 @@ class CustomMenuItemTile extends StatelessWidget {
                 Row(
                   spacing: 10,
                   children: [
-                    Text(
-                      item.price,
-                      style: textStyle.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                    if (item.priceUsd != null)
+                      Text(
+                        '\$${item.priceUsd}',
+                        style: textStyle.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
                       ),
-                    ),
-                    if (item.tag != null)
+                    if (item.isVegan)
                       PillContainer(
                         backgroundColor: AppColors.successGreen07,
                         radius: 6,
@@ -75,7 +77,7 @@ class CustomMenuItemTile extends StatelessWidget {
                           vertical: 3,
                         ),
                         child: Text(
-                          item.tag!,
+                          'Vegan',
                           style: textStyle.labelSmall?.copyWith(
                             fontFamily: 'DM Sans',
                             fontWeight: FontWeight.w600,

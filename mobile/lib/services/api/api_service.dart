@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:carlton/constants/error_codes.dart';
 import 'package:carlton/constants/storage_keys.dart';
 import 'package:carlton/models/api/api_response.dart';
+import 'package:carlton/routes/routes.dart';
+import 'package:carlton/services/middleware_service.dart';
 import 'package:carlton/services/api/upload_donwload/file_download.dart';
 import 'package:carlton/services/api/upload_donwload/file_upload.dart';
 import 'package:carlton/services/get_storage_service.dart';
@@ -47,15 +49,17 @@ import 'ui/api_dialog_handler.dart';
 /// Loading dialogs are opt-in via `showLoading: true`.
 class ApiService extends GetxService {
   /// Backend host root. Set at compile time via:
-  ///   flutter run --dart-define=API_HOST=http://10.0.2.2:8000        (Android emulator, no adb reverse)
+  ///   flutter run --dart-define=API_HOST=http://localhost:8000        (physical device + `adb reverse tcp:8000 tcp:8000`, or emulator with the same reverse) ← DEFAULT
+  ///   flutter run --dart-define=API_HOST=http://10.0.2.2:8000         (Android emulator without adb reverse — 10.0.2.2 = host loopback)
   ///   flutter run --dart-define=API_HOST=http://192.168.1.X:8000      (physical device over LAN)
-  ///   flutter build apk --dart-define=API_HOST=https://api.offershi.com (production)
-  /// Default is loopback, which works on BOTH physical devices and emulators
-  /// as long as the adb tunnel is up:  adb reverse tcp:8000 tcp:8000
-  /// (re-run that after replugging the USB cable).
+  ///   flutter build apk --dart-define=API_HOST=https://api.carltonhotel.com (production)
+  /// Default is `localhost:8000`, which works on a physical device (the common
+  /// dev setup here) as long as `adb reverse tcp:8000 tcp:8000` is active — so a
+  /// plain `flutter run` needs no flag. Re-run adb reverse after replugging USB.
+  /// (`10.0.2.2` is emulator-only and is unreachable from a real phone.)
   static const String host = String.fromEnvironment(
     'API_HOST',
-    defaultValue: 'https://api.offershi.com/',
+    defaultValue: 'http://10.208.207.51:8000 ',
   );
 
   static const String baseUrl = '$host/api';
@@ -85,9 +89,21 @@ class ApiService extends GetxService {
   String _locale() => Get.find<SettingsService>().locale.value.languageCode;
 
   /// Fired once on a 401 / revoked token: clears the local session and
-  /// bounces the user to sign-in.
-  /// TODO
-  void _handleUnauthorized() {}
+  /// bounces the user to sign-in. Guards against re-entry when several
+  /// in-flight requests 401 at once (the interceptor already fires once, but a
+  /// second navigation would still stack).
+  void _handleUnauthorized() {
+    // Clear token + guest identity. MiddlewareService owns both; fall back to a
+    // raw token wipe if it isn't registered yet (very early startup).
+    if (Get.isRegistered<MiddlewareService>()) {
+      MiddlewareService.find.signOut();
+    } else {
+      StorageService.remove(StorageKeys.token);
+      StorageService.remove(StorageKeys.guest);
+    }
+    if (Get.currentRoute == Routes.signIn) return;
+    Get.offAllNamed(Routes.signIn);
+  }
 
   @override
   void onInit() {
@@ -170,6 +186,26 @@ class ApiService extends GetxService {
   }) {
     return _request<T>(
       () => dio.put(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        cancelToken: cancelToken,
+      ),
+      showLoading: showLoading,
+      showErrorDialog: showErrorDialog,
+    );
+  }
+
+  Future<ApiResponse<T>> patch<T>({
+    required String path,
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    bool showLoading = false,
+    bool showErrorDialog = true,
+    CancelToken? cancelToken,
+  }) {
+    return _request<T>(
+      () => dio.patch(
         path,
         data: data,
         queryParameters: queryParameters,

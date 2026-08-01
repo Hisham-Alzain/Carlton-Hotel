@@ -1,7 +1,10 @@
 abstract class StorageKeys {
   static const token = 'token';
   static const fcmToken = 'fcmToken';
-  static const user = 'user';
+
+  /// Cached authenticated guest JSON — hydrated on splash so the session
+  /// renders before the `/auth/guest/me` refresh returns.
+  static const guest = 'guest';
   static const isFirstTime = 'isFirstTime';
   static const language = 'language';
   static const currency = 'currency';

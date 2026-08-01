@@ -2,6 +2,11 @@ class ServiceItem {
   final String title;
   final String subtitle;
 
+  /// Stable service-catalog category code (e.g. `room_service`, `laundry`) so a
+  /// hub grid tile maps to its `/public/service-catalog` item by code rather
+  /// than by fragile title matching. Empty for tiles with no catalog match.
+  final String code;
+
   /// Decorative photo that bleeds off the tile's bottom-right corner. Sizes
   /// and opacity are taken 1:1 from the Figma tiles.
   final String imagePath;
@@ -16,5 +21,6 @@ class ServiceItem {
     required this.imageWidth,
     required this.imageHeight,
     required this.imageOpacity,
+    this.code = '',
   });
 }

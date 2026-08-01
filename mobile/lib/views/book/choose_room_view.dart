@@ -23,9 +23,8 @@ class ChooseRoomView extends StatelessWidget {
               shape: BoxShape.circle,
               color: AppColors.whisperGrey,
             ),
-            //TODO: implement this
             child: IconButton(
-              onPressed: () {},
+              onPressed: Get.back,
               icon: const Icon(Icons.close, color: AppColors.inkBlack),
             ),
           ),
@@ -82,21 +81,29 @@ class ChooseRoomView extends StatelessWidget {
                   ),
                 ),
               ),
-              SliverPadding(
-                padding: const EdgeInsets.all(10),
-                sliver: SliverList.builder(
-                  itemCount: controller.rooms.length,
-                  itemBuilder: (_, index) {
-                    final room = controller.rooms[index];
-                    return CustomRoomResultCard(
-                      room: room,
-                      nights: controller.nights,
-                      onSelect: () => controller.selectRoom(room),
-                      onTap: () => controller.openRoomDetails(room),
-                    );
-                  },
+              if (controller.roomsLoading)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 60),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.all(10),
+                  sliver: SliverList.builder(
+                    itemCount: controller.rooms.length,
+                    itemBuilder: (_, index) {
+                      final room = controller.rooms[index];
+                      return CustomRoomResultCard(
+                        room: room,
+                        nights: controller.nights,
+                        onSelect: () => controller.selectRoom(room),
+                        onTap: () => controller.openRoomDetails(room),
+                      );
+                    },
+                  ),
                 ),
-              ),
             ],
           );
         },

@@ -3,7 +3,6 @@ import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 
@@ -57,7 +56,22 @@ class CustomHomeContainer extends StatelessWidget {
               ),
             ),
           ),
-          _ctaGlow(),
+          Positioned(
+            left: -50,
+            right: -50,
+            bottom: -60,
+            height: 210,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.whisperGrey.withValues(alpha: 0.9),
+                    blurRadius: 25,
+                  ),
+                ],
+              ),
+            ),
+          ),
           ConstrainedBox(
             constraints: BoxConstraints(minHeight: height),
             child: Column(
@@ -73,10 +87,9 @@ class CustomHomeContainer extends StatelessWidget {
                       Row(
                         spacing: 10,
                         children: [
-                          SvgPicture.asset(
-                            'assets/icons/pin.svg',
-                            width: 12,
-                            height: 12,
+                          const Icon(
+                            Icons.location_on_outlined,
+                            color: Colors.white,
                           ),
                           Text(
                             location.toUpperCase(),
@@ -108,7 +121,32 @@ class CustomHomeContainer extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 20),
-                  child: _ctas(),
+                  child: Column(
+                    spacing: 10,
+                    children: [
+                      DecoratedBox(
+                        decoration: const BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.mistGrey,
+                              blurRadius: 4,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: CustomFilledButton(
+                          width: 300,
+                          onPressed: onPrimary,
+                          child: Text(primaryLabel.toUpperCase()),
+                        ),
+                      ),
+                      CustomOutlinedButton(
+                        width: 300,
+                        onPressed: onSecondary,
+                        child: Text(secondaryLabel.toUpperCase()),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -158,56 +196,5 @@ class CustomHomeContainer extends StatelessWidget {
       );
     }
     return CustomImage(source: imagePath, fit: BoxFit.cover);
-  }
-
-  /// Soft light glow sitting behind the CTAs so the dark photo fades into a
-  /// lighter patch there instead of the buttons floating on a hard edge.
-  /// Clipped to the card's rounded corners by the outer Container.
-  Widget _ctaGlow() {
-    return Positioned(
-      left: -50,
-      right: -50,
-      bottom: -60,
-      height: 220,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.whisperGrey.withValues(alpha: 0.9),
-              blurRadius: 25,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _ctas() {
-    return Column(
-      spacing: 10,
-      children: [
-        DecoratedBox(
-          decoration: const BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.mistGrey,
-                blurRadius: 4,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: CustomFilledButton(
-            width: 300,
-            onPressed: onPrimary,
-            child: Text(primaryLabel.toUpperCase()),
-          ),
-        ),
-        CustomOutlinedButton(
-          width: 300,
-          onPressed: onSecondary,
-          child: Text(secondaryLabel.toUpperCase()),
-        ),
-      ],
-    );
   }
 }

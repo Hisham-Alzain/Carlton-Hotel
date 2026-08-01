@@ -22,7 +22,7 @@ Future<void> main() async {
   await StorageService.init();
   Get.put(SettingsService(), permanent: true);
   Get.put(ApiService(), permanent: true);
-  // await Get.put(NotificationService(), permanent: true).setup();
+  // await Get.put(NotificationService(), permanent: trugage).setup();
   Get.put(MiddlewareService(), permanent: true);
   Get.put(PermissionService(), permanent: true);
   Get.put(BookingFlowController(), permanent: true);
@@ -41,7 +41,7 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: Routes.splashScreen,
       getPages: Pages.getPages,
-      theme: Themes().theme,
+      theme: Themes.theme,
       supportedLocales: const [Locale('en'), Locale('ar')],
       locale: settings.locale.value,
       onReady: () async {

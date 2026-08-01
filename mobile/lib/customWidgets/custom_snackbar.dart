@@ -21,17 +21,17 @@ class _SnackbarConfig {
 final _kConfig = {
   SnackbarType.success: _SnackbarConfig(
     backgroundColor: Colors.green.shade50,
-    accentColor: Colors.green.shade900, // Colors.green.shade800 equivalent
+    accentColor: AppColors.primary, // Colors.green.shade800 equivalent
     icon: Icons.check_circle_outline,
   ),
   SnackbarType.error: _SnackbarConfig(
     backgroundColor: Colors.red.shade50,
-    accentColor: Colors.red.shade900, // Colors.red.shade800 equivalent
+    accentColor: AppColors.brickRed, // Colors.red.shade800 equivalent
     icon: Icons.error_outline,
   ),
   SnackbarType.warning: _SnackbarConfig(
     backgroundColor: Colors.yellow.shade50,
-    accentColor: Colors.yellow.shade900, // Colors.orange.shade900 equivalent
+    accentColor: AppColors.bronzeGold, // Colors.orange.shade900 equivalent
     icon: Icons.warning_amber_rounded,
   ),
   SnackbarType.info: _SnackbarConfig(
@@ -88,13 +88,13 @@ class CustomSnackbars {
       padding: const EdgeInsets.all(10),
       snackPosition: SnackPosition.TOP,
       duration: duration,
-      boxShadows: [
-        BoxShadow(
-          color: snackbarStyle.accentColor,
-          blurRadius: 0, // hard edge, no softness
-          offset: const Offset(4, 4), // same as button's left: 4, top: 4
-        ),
-      ],
+      // boxShadows: [
+      //   BoxShadow(
+      //     color: snackbarStyle.accentColor,
+      //     blurRadius: 0, // hard edge, no softness
+      //     offset: const Offset(4, 4), // same as button's left: 4, top: 4
+      //   ),
+      // ],
     );
   }
 

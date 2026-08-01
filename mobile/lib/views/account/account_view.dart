@@ -2,7 +2,7 @@ import 'package:carlton/components/account/custom_list_row.dart';
 import 'package:carlton/components/account/custom_settings_section.dart';
 import 'package:carlton/components/custom_initial_avatar.dart';
 import 'package:carlton/controllers/account/account_controller.dart';
-import 'package:carlton/customWidgets/custom_pill_button.dart';
+import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +24,7 @@ class AccountView extends GetView<AccountController> {
             children: [
               CustomInitialAvatar(
                 initial: controller.name,
-                backgroundColor: AppColors.inkBlack,
+                backgroundColor: AppColors.primary,
               ),
               Expanded(
                 child: Column(
@@ -98,16 +98,24 @@ class AccountView extends GetView<AccountController> {
             ],
           ),
           const SizedBox(height: 28),
-          CustomPillButton(
-            label: 'Sign Out',
-            onTap: controller.confirmSignOut,
-            icon: Icons.logout,
+          CustomFilledButton(
+            width: double.infinity,
+            height: 52,
+            onPressed: controller.confirmSignOut,
             backgroundColor: AppColors.white,
             foregroundColor: AppColors.brickRed,
-            borderColor: AppColors.brickRed,
-            height: 52,
-            expand: true,
-            iconSize: 18,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: const BorderSide(color: AppColors.brickRed),
+            ),
+            textStyle: textStyle.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 6,
+              children: [Icon(Icons.logout, size: 18), Text('Sign Out')],
+            ),
           ),
         ],
       ),

@@ -3,11 +3,9 @@ import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
-import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 /// Final booking-flow screen (Figma "Booking / Step 17"): a room-photo hero
@@ -16,15 +14,8 @@ import 'package:get/get.dart';
 class BookingConfirmedView extends StatelessWidget {
   const BookingConfirmedView({super.key});
 
-  //TODO: move to controller
-  void _copyCode(String code) {
-    Clipboard.setData(ClipboardData(text: code));
-    CustomSnackbars.showSuccess(message: 'Code copied');
-  }
-
   @override
   Widget build(BuildContext context) {
-    //TODO:move to controller
     final TextTheme textStyle = Get.textTheme;
     final controller = Get.find<BookingFlowController>();
     final code = controller.confirmationCode ?? '';
@@ -161,7 +152,7 @@ class BookingConfirmedView extends StatelessWidget {
                           radius: 10,
                           backgroundColor: AppColors.pearlSilver,
                           child: IconButton(
-                            onPressed: () => _copyCode(code),
+                            onPressed: controller.copyConfirmationCode,
                             icon: RowTextComponent(
                               text: 'Copy',
                               icon: Icons.copy,

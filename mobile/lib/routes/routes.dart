@@ -1,4 +1,6 @@
 import 'package:carlton/bindings/binding.dart';
+import 'package:carlton/views/check_in/check_in_view.dart';
+import 'package:carlton/views/check_in/scan_id_view.dart';
 import 'package:carlton/views/auth/create_profile_view.dart';
 import 'package:carlton/views/auth/find_booking_view.dart';
 import 'package:carlton/views/auth/otp_verify_view.dart';
@@ -49,6 +51,8 @@ abstract class Routes {
   static const reviewBooking = '/booking/review';
   static const bookingConfirmed = '/booking/confirmed';
   static const preArrivalDocuments = '/booking/pre-arrival-documents';
+  static const checkIn = '/check-in';
+  static const scanId = '/check-in/scan-id';
 }
 
 abstract class Pages {
@@ -145,6 +149,16 @@ abstract class Pages {
       name: Routes.preArrivalDocuments,
       page: () => const PreArrivalDocumentsView(),
       binding: PreArrivalDocumentsBinding(),
+    ),
+    GetPage(
+      name: Routes.checkIn,
+      page: () => const CheckInView(),
+      binding: CheckInBinding(),
+    ),
+    GetPage(
+      name: Routes.scanId,
+      page: () => const ScanIdView(),
+      binding: ScanIdBinding(),
     ),
   ];
 }

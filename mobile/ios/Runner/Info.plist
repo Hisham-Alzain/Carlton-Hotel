@@ -26,6 +26,12 @@
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
+		<!-- Both are load-bearing: iOS terminates the process rather than
+		     denying access when a usage description is missing. -->
+		<key>NSCameraUsageDescription</key>
+		<string>Carlton uses the camera to scan your passport or ID during pre-arrival check-in.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Carlton needs photo access so you can upload an existing photo of your passport or ID.</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>

@@ -5,6 +5,8 @@ import 'package:carlton/components/home/custom_active_booking_card.dart';
 import 'package:carlton/components/home/custom_active_requests_card.dart';
 import 'package:carlton/components/home/custom_ai_concierge_banner.dart';
 import 'package:carlton/components/home/custom_current_bill_card.dart';
+import 'package:carlton/components/home/pre_arrival_sections.dart';
+import 'package:carlton/services/check_in_service.dart';
 import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
@@ -31,7 +33,7 @@ class HomeView extends GetView<HomeController> {
 
   /// Reservation-state sections. `gap: 20` reproduces the dashboard's spacing;
   /// a hidden section contributes none because the gap lives inside it.
-  static const _reservationSections = <Widget>[
+  static const reservationSections = <Widget>[
     _ActiveStaySection(),
     _ActiveRequestsSection(),
     _CurrentBillSection(),
@@ -42,7 +44,7 @@ class HomeView extends GetView<HomeController> {
 
   /// Explore-state sections. No gaps — these carry their own internal padding
   /// and butt up against each other by design.
-  static const _exploreSections = <Widget>[
+  static const exploreSections = <Widget>[
     _VideoHeroSection(),
     _RoomsCarousel(),
     _DiningHeroSection(),
@@ -50,18 +52,44 @@ class HomeView extends GetView<HomeController> {
     _ExperiencesHeroSection(),
   ];
 
+  /// Pre-arrival sections (Figma `75:133`) — booked but not checked in. Half
+  /// the list is existing widgets; only the top three are new.
+  static const preArrivalSections = <Widget>[
+    PreArrivalStaySection(),
+    PreArrivalChecklistSection(),
+    AirportTransferSection(),
+    _AiConciergeSection(),
+    _DiningCarousel(),
+    _ExperiencesCarousel(),
+  ];
+
+  /// Pure selector, extracted so it is testable without pumping a widget.
+  ///
+  /// MUST keep returning the same const list instances: `Element.updateChild`
+  /// short-circuits the whole subtree when the identical const list comes
+  /// back, which is what stops an unrelated profile edit from rebuilding every
+  /// carousel. Do not replace these with computed lists.
+  static List<Widget> sectionsFor({
+    required bool hasReservation,
+    required bool isPreArrival,
+  }) {
+    if (!hasReservation) return exploreSections;
+    return isPreArrival ? preArrivalSections : reservationSections;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       // This Obx subscribes only to the guest (hasReservation reads
-      // MiddlewareService.guest.value through a getter), so no data change
-      // reaches it. When it does fire without hasBooking actually flipping —
-      // a profile edit reassigns guest — it hands back the same const section
-      // instances and Element.updateChild short-circuits the whole subtree.
+      // MiddlewareService.guest.value through a getter) and the pre-arrival
+      // flag. When it fires without either actually flipping — a profile edit
+      // reassigns guest — it hands back the same const section instances and
+      // Element.updateChild short-circuits the whole subtree.
       body: Obx(() {
-        final sections = controller.hasReservation
-            ? _reservationSections
-            : _exploreSections;
+        final sections = sectionsFor(
+          hasReservation: controller.hasReservation,
+          isPreArrival: CheckInService.find.isPreArrival.value,
+        );
         return CustomScrollView(
           slivers: [
             SliverPadding(

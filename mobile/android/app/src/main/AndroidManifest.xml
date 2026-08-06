@@ -1,5 +1,16 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- ID scanner (check-in). camera_android_camerax merges CAMERA in on its
+         own, but permission_handler only compiles the matching runtime check
+         when the permission is declared here. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <!-- camera_android_camerax declares RECORD_AUDIO for video capture. The ID
+         scanner is stills-only (enableAudio: false), so drop it rather than ask
+         a hotel guest for microphone access at install. Re-add if the app ever
+         records video through the camera plugin. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" tools:node="remove"/>
     <application
         android:label="Carlton"
         android:name="${applicationName}"

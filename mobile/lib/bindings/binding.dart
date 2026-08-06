@@ -6,6 +6,8 @@ import 'package:carlton/controllers/auth/create_profile_controller.dart';
 import 'package:carlton/controllers/stays/stays_controller.dart';
 import 'package:carlton/controllers/auth/find_booking_controller.dart';
 import 'package:carlton/controllers/booking/pre_arrival_documents_controller.dart';
+import 'package:carlton/controllers/check_in/check_in_controller.dart';
+import 'package:carlton/controllers/check_in/scan_id_controller.dart';
 import 'package:carlton/controllers/auth/reservation_choice_controller.dart';
 import 'package:carlton/controllers/auth/otp_verify_controller.dart';
 import 'package:carlton/controllers/auth/contact_entry_controller.dart';
@@ -151,6 +153,20 @@ class PreArrivalDocumentsBinding implements Bindings {
   @override
   void dependencies() {
     Get.lazyPut(() => PreArrivalDocumentsController());
+  }
+}
+
+class CheckInBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => CheckInController());
+  }
+}
+
+class ScanIdBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => ScanIdController());
   }
 }
 

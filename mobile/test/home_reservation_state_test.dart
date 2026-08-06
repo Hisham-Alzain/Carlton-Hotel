@@ -1,5 +1,8 @@
 import 'package:carlton/models/folio.dart';
+import 'package:carlton/services/check_in_service.dart';
+import 'package:carlton/views/home/home_view.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 
 /// Guards the folio (running-bill) DTO that now backs the Home active-booking
 /// dashboard's bill (`GET /folio`) — the demo bill was retired. Hermetic: no
@@ -39,5 +42,55 @@ void main() {
     });
     expect(folio.items, isEmpty);
     expect(folio.totalUsd, '0');
+  });
+
+  // ── Pre-arrival section selection ──
+  // Guards the three-way selector. Reverting it would send a pre-arrival guest
+  // to the in-house dashboard, which shows a bill they have not incurred.
+  group('home section selection', () {
+    setUp(() {
+      Get.reset();
+      Get.put(CheckInService());
+    });
+
+    tearDown(Get.reset);
+
+    test('pre-arrival guest gets the pre-arrival section list', () {
+      expect(CheckInService.find.isPreArrival.value, isTrue);
+      expect(
+        HomeView.sectionsFor(hasReservation: true, isPreArrival: true),
+        same(HomeView.preArrivalSections),
+      );
+    });
+
+    test('checked-in guest falls back to the reservation list', () {
+      expect(
+        HomeView.sectionsFor(hasReservation: true, isPreArrival: false),
+        same(HomeView.reservationSections),
+      );
+    });
+
+    test('no reservation still gets the explore list', () {
+      expect(
+        HomeView.sectionsFor(hasReservation: false, isPreArrival: false),
+        same(HomeView.exploreSections),
+      );
+      expect(
+        HomeView.sectionsFor(hasReservation: false, isPreArrival: true),
+        same(HomeView.exploreSections),
+      );
+    });
+
+    test('completeCheckIn flips Home out of the pre-arrival list', () {
+      final service = CheckInService.find;
+      service.completeCheckIn();
+      expect(
+        HomeView.sectionsFor(
+          hasReservation: true,
+          isPreArrival: service.isPreArrival.value,
+        ),
+        same(HomeView.reservationSections),
+      );
+    });
   });
 }

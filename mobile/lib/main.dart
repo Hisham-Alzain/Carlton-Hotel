@@ -2,6 +2,7 @@ import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/l10n/local.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/api/api_service.dart';
+import 'package:carlton/services/check_in_service.dart';
 import 'package:carlton/services/middleware_service.dart';
 import 'package:carlton/services/permission_service.dart';
 import 'package:carlton/services/settings_service.dart';
@@ -26,6 +27,8 @@ Future<void> main() async {
   Get.put(MiddlewareService(), permanent: true);
   Get.put(PermissionService(), permanent: true);
   Get.put(BookingFlowController(), permanent: true);
+  // Shared by the Home pre-arrival state and the check-in wizard.
+  Get.put(CheckInService(), permanent: true);
 
   runApp(const MainApp());
 }
@@ -39,7 +42,10 @@ class MainApp extends StatelessWidget {
 
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: Routes.splashScreen,
+      // DEV PREVIEW: opens straight on the check-in wizard so the new screens
+      // can be walked without signing in. Restore Routes.splashScreen before
+      // shipping.
+      initialRoute: Routes.checkIn,
       getPages: Pages.getPages,
       theme: Themes.theme,
       supportedLocales: const [Locale('en'), Locale('ar')],

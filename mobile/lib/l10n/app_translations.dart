@@ -376,4 +376,99 @@ class AppTranslations {
   static const String updateAvailable = 'updateAvailable';
   static const String later = 'later';
   static const String updateNow = 'updateNow';
+
+  // ── Check-in wizard ──
+  static String get checkInTitle => 'checkIn.title'.tr;
+  static String get checkInTabIdentity => 'checkIn.tabIdentity'.tr;
+  static String get checkInTabPreferences => 'checkIn.tabPreferences'.tr;
+  static String get checkInTabRoomKey => 'checkIn.tabRoomKey'.tr;
+  static String get identityTitle => 'checkIn.identityTitle'.tr;
+  static String get identitySubtitle => 'checkIn.identitySubtitle'.tr;
+  static String get yourBooking => 'checkIn.yourBooking'.tr;
+  static String get guestLabel => 'checkIn.guest'.tr;
+  static String get roomLabel => 'checkIn.room'.tr;
+  static String get checkInLabel => 'checkIn.checkInLabel'.tr;
+  static String get checkOutLabel => 'checkIn.checkOutLabel'.tr;
+  static String get tapToScanId => 'checkIn.tapToScanId'.tr;
+  static String get passportOrNationalId => 'checkIn.passportOrNationalId'.tr;
+  static String get scanId => 'checkIn.scanId'.tr;
+  static String get identitySecurityNote => 'checkIn.securityNote'.tr;
+  static String get continueToPreferences => 'checkIn.continueToPreferences'.tr;
+  static String get identityVerified => 'checkIn.identityVerified'.tr;
+  static String get scanYourId => 'checkIn.scanYourId'.tr;
+  static String get positionIdInFrame => 'checkIn.positionIdInFrame'.tr;
+  static String get scanningLabel => 'checkIn.scanning'.tr;
+  static String get dontMoveId => 'checkIn.dontMoveId'.tr;
+  static String get scanSuccessful => 'checkIn.scanSuccessful'.tr;
+  static String get capturedIdDetails => 'checkIn.capturedIdDetails'.tr;
+  static String get frontOfId => 'checkIn.frontOfId'.tr;
+  static String get editLabel => 'checkIn.edit'.tr;
+  static String get makeSureDetailsClear => 'checkIn.makeSureDetailsClear'.tr;
+  static String get continueLabel => 'checkIn.continueLabel'.tr;
+  static String get scanAgain => 'checkIn.scanAgain'.tr;
+  static String get startingCamera => 'checkIn.startingCamera'.tr;
+  static String get cameraUnavailable => 'checkIn.cameraUnavailable'.tr;
+  static String get cameraPermissionDenied =>
+      'checkIn.cameraPermissionDenied'.tr;
+  static String get cameraNoDevice => 'checkIn.cameraNoDevice'.tr;
+  static String get cameraFailed => 'checkIn.cameraFailed'.tr;
+  static String get cameraCaptureFailed => 'checkIn.cameraCaptureFailed'.tr;
+  static String get openSettings => 'checkIn.openSettings'.tr;
+  static String get tryAgain => 'checkIn.tryAgain'.tr;
+  static String get flashLabel => 'checkIn.flash'.tr;
+  static String get scanLabel => 'checkIn.scan'.tr;
+  static String get uploadLabel => 'checkIn.upload'.tr;
+  static String get bedType => 'checkIn.bedType'.tr;
+  static String get pillowLabel => 'checkIn.pillow'.tr;
+  static String get mattressType => 'checkIn.mattressType'.tr;
+  static String get roomType => 'checkIn.roomType'.tr;
+  static String get smokingRoom => 'checkIn.smokingRoom'.tr;
+  static String get smokingRoomSubtitle => 'checkIn.smokingRoomSubtitle'.tr;
+  static String get earlyCheckIn => 'checkIn.earlyCheckIn'.tr;
+  static String get earlyCheckInSubtitle => 'checkIn.earlyCheckInSubtitle'.tr;
+  static String get lateCheckOut => 'checkIn.lateCheckOut'.tr;
+  static String get lateCheckOutSubtitle => 'checkIn.lateCheckOutSubtitle'.tr;
+  static String get extraPillows => 'checkIn.extraPillows'.tr;
+  static String get extraPillowsSubtitle => 'checkIn.extraPillowsSubtitle'.tr;
+  static String get specialRequestsTitle => 'checkIn.specialRequests'.tr;
+  static String get specialRequestsHint => 'checkIn.specialRequestsHint'.tr;
+  static String get yourRoomKey => 'checkIn.yourRoomKey'.tr;
+  static String get roomKeySubtitle => 'checkIn.roomKeySubtitle'.tr;
+  static String get keyCardWaitingTitle => 'checkIn.keyCardWaitingTitle'.tr;
+  static String get keyCardWaitingBody => 'checkIn.keyCardWaitingBody'.tr;
+  static String get addDigitalKey => 'checkIn.addDigitalKey'.tr;
+  static String get activatingDigitalKey => 'checkIn.activatingDigitalKey'.tr;
+  static String get activatedDigitalKey => 'checkIn.activatedDigitalKey'.tr;
+  static String get digitalKeyHint => 'checkIn.digitalKeyHint'.tr;
+  static String get completeCheckIn => 'checkIn.completeCheckIn'.tr;
+  static String get selectArrivalTime => 'checkIn.selectArrivalTime'.tr;
+  static String get saveLabel => 'checkIn.save'.tr;
+
+  // ── Home pre-arrival ──
+  static String get preCheckInAvailable => 'preArrival.available'.tr;
+  static String roomChip(String number) =>
+      'preArrival.roomChip'.trParams({'number': number});
+  static String get bookingRefLabel => 'preArrival.bookingRef'.tr;
+  static String get preArrivalProgress => 'preArrival.progress'.tr;
+  static String completeFraction(int done, int total) =>
+      'preArrival'
+              '.completeFraction'
+          .trParams({'done': '$done', 'total': '$total'});
+  static String get checkInNow => 'preArrival.checkInNow'.tr;
+  static String get preArrivalChecklist => 'preArrival.checklist'.tr;
+  static String get confirmContactDetails =>
+      'preArrival.confirmContactDetails'.tr;
+  static String get completedLabel => 'preArrival.completed'.tr;
+  static String get uploadIdOrPassport => 'preArrival.uploadIdOrPassport'.tr;
+  static String get requiredForCheckIn => 'preArrival.requiredForCheckIn'.tr;
+  static String get setArrivalTime => 'preArrival.setArrivalTime'.tr;
+  static String get tapToAddEta => 'preArrival.tapToAddEta'.tr;
+  static String get preArrivalSpecialRequests =>
+      'preArrival.specialRequests'.tr;
+  static String get optionalPreferences => 'preArrival.optionalPreferences'.tr;
+  static String get confirmedStatus => 'preArrival.confirmedStatus'.tr;
+  static String get airportTransfer => 'preArrival.airportTransfer'.tr;
+  static String get airportTransferBody => 'preArrival.airportTransferBody'.tr;
+  static String get requestAirportTransfer =>
+      'preArrival.requestAirportTransfer'.tr;
 }

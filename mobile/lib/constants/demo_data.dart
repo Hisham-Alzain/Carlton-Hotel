@@ -1,4 +1,6 @@
 import 'package:carlton/models/booking_models.dart';
+import 'package:carlton/models/check_in/reservation_summary.dart';
+import 'package:carlton/models/check_in/stay_preferences.dart';
 import 'package:carlton/models/home_models.dart';
 import 'package:carlton/models/preference_option.dart';
 import 'package:carlton/models/service_item.dart';
@@ -402,4 +404,37 @@ abstract class DemoData {
       price: 45,
     ),
   ];
+
+  // ── Pre-arrival / check-in (Figma cpln3bQzXRnpkItKQkJCVs) ──
+  static const preArrivalReservation = ReservationSummary(
+    guestName: 'Ahmed Al-Hassan',
+    suiteName: 'Grand Damascus Suite',
+    roomNumber: '812',
+    floorLabel: '3rd floor',
+    checkInDate: 'Aug 14',
+    checkInTime: 'From 3:00 PM',
+    checkOutDate: 'Aug 16',
+    checkOutTime: 'By 12:00 PM',
+    stayRangeLabel: 'Grand Damascus Suite · Aug 14 – 16, 2026',
+    bookingRef: '#CLT-0082',
+  );
+
+  /// Seeds the Preferences tab. Ids exist in bedOptions/pillowOptions/
+  /// mattressOptions above.
+  static const defaultStayPreferences = StayPreferences(
+    bedTypeId: 'king',
+    pillowId: 'firm',
+    mattressId: 'medium',
+    smokingRoom: false,
+    earlyCheckIn: true,
+    lateCheckOut: false,
+    extraPillows: false,
+    notes: '',
+  );
+
+  /// Passport still shown by the mocked scanner and the verified card.
+  static const demoPassportNumber = 'SY-20480831';
+  static const demoPassportAsset = 'assets/images/demo_passport.png';
+  static const scanDuration = Duration(milliseconds: 1800);
+  static const digitalKeyActivationDuration = Duration(seconds: 2);
 }

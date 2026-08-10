@@ -226,6 +226,14 @@ class CmsContentSeeder extends Seeder
     private function siteSettings(): void
     {
         $settings = [
+            // ── site ──────────────────────────────────────────────────────
+            // The pre-launch gate the public website reads from `/public/settings`
+            // (`src/app/content/siteMode.ts` on the frontend). The frontend fails
+            // CLOSED on anything but an explicit `false` here — a missing row, a
+            // stopped API, or this seeder never having run all hold the site on
+            // the coming-soon screen. `false` opens the site to its real pages.
+            ['site', 'is_coming_soon', SettingType::BOOL, false],
+
             // ── contact ───────────────────────────────────────────────────
             // Display form, spaces and parentheses included. The `tel:` href is
             // the client's business: it strips the punctuation the humans need.

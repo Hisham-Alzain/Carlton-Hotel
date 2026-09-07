@@ -50,22 +50,23 @@ class ScanIdController extends GetxController
     duration: const Duration(milliseconds: 1800),
   )..repeat(reverse: true);
 
-  /// The live camera, or null while stopped. Plain (non-Rx) because the
-  /// lifecycle hook swaps it wholesale — views rebuild off [update].
-  CameraController? cameraController;
+  /// The live camera, or null while stopped. The lifecycle hook swaps it
+  /// wholesale, and the preview observes it — so it is Rxn, not a plain field.
+  final Rxn<CameraController> cameraController = Rxn<CameraController>();
 
   List<CameraDescription> _cameraDevices = const <CameraDescription>[];
 
   /// Front cameras and some budget rear modules have no torch. Discovered by
   /// the first failed torch attempt, then never retried.
-  bool _deviceHasTorch = true;
+  final RxBool _deviceHasTorch = true.obs;
 
   /// Guards against overlapping startups — a resume landing on top of an
   /// in-flight startup would leak the first controller.
   bool _isStartingCamera = false;
 
-  bool get isCameraReady => cameraController?.value.isInitialized ?? false;
-  bool get deviceHasTorch => _deviceHasTorch;
+  bool get isCameraReady =>
+      cameraController.value?.value.isInitialized ?? false;
+  bool get deviceHasTorch => _deviceHasTorch.value;
 
   @override
   void onInit() {
@@ -80,8 +81,8 @@ class ScanIdController extends GetxController
     scanLineAnimation.dispose();
     // Fire-and-forget: onClose cannot await, and the handle is released either
     // way. Detach first so a late frame cannot touch a disposing controller.
-    final CameraController? closing = cameraController;
-    cameraController = null;
+    final CameraController? closing = cameraController.value;
+    cameraController.value = null;
     closing?.dispose();
     super.onClose();
   }
@@ -95,7 +96,8 @@ class ScanIdController extends GetxController
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
       stopCamera();
-    } else if (state == AppLifecycleState.resumed && cameraController == null) {
+    } else if (state == AppLifecycleState.resumed &&
+        cameraController.value == null) {
       startCamera();
     }
   }
@@ -103,14 +105,13 @@ class ScanIdController extends GetxController
   /// Releases the hardware handle and rewinds to [ScanStage.initializing] so
   /// the view shows the placeholder rather than a frozen last frame.
   void stopCamera() {
-    final CameraController? closing = cameraController;
-    cameraController = null;
+    final CameraController? closing = cameraController.value;
+    cameraController.value = null;
     isTorchOn.value = false;
     closing?.dispose();
     if (!isClosed && stage.value == ScanStage.framing) {
       stage.value = ScanStage.initializing;
     }
-    update();
   }
 
   /// Permission → device list → initialise. Every failure funnels into
@@ -159,14 +160,13 @@ class ScanIdController extends GetxController
       await started.initialize();
       // The guest popped the route (or backgrounded) while we were awaiting:
       // this controller has no owner, so release it instead of leaking it.
-      if (isClosed || cameraController != null) {
+      if (isClosed || cameraController.value != null) {
         await started.dispose();
         return;
       }
 
-      cameraController = started;
+      cameraController.value = started;
       stage.value = ScanStage.framing;
-      update();
     } on CameraException catch (error) {
       if (isClosed) return;
       final bool isPermissionError =
@@ -190,7 +190,6 @@ class ScanIdController extends GetxController
     errorMessage.value = message;
     isBlockedByPermission.value = blockedByPermission;
     stage.value = ScanStage.unavailable;
-    update();
   }
 
   /// Takes the shot and copies it somewhere durable.
@@ -199,7 +198,7 @@ class ScanIdController extends GetxController
   /// any time — so the file is moved into app documents before anything else
   /// is allowed to hold a reference to it.
   Future<void> capturePhoto() async {
-    final CameraController? active = cameraController;
+    final CameraController? active = cameraController.value;
     if (active == null ||
         !active.value.isInitialized ||
         active.value.isTakingPicture ||
@@ -238,8 +237,10 @@ class ScanIdController extends GetxController
   Future<void> toggleTorch() => _applyTorch(!isTorchOn.value);
 
   Future<void> _applyTorch(bool shouldBeOn) async {
-    final CameraController? active = cameraController;
-    if (active == null || !active.value.isInitialized || !_deviceHasTorch) {
+    final CameraController? active = cameraController.value;
+    if (active == null ||
+        !active.value.isInitialized ||
+        !_deviceHasTorch.value) {
       return;
     }
     try {
@@ -247,11 +248,8 @@ class ScanIdController extends GetxController
       if (!isClosed) isTorchOn.value = shouldBeOn;
     } on CameraException {
       // No torch on this lens. Stop offering it rather than failing again.
-      _deviceHasTorch = false;
-      if (!isClosed) {
-        isTorchOn.value = false;
-        update();
-      }
+      _deviceHasTorch.value = false;
+      if (!isClosed) isTorchOn.value = false;
     }
   }
 
@@ -260,7 +258,7 @@ class ScanIdController extends GetxController
   Future<void> scanAgain() async {
     await _deletePreviousPhoto();
     capturedPhoto.value = null;
-    if (cameraController == null) {
+    if (cameraController.value == null) {
       await startCamera();
     } else if (!isClosed) {
       stage.value = ScanStage.framing;

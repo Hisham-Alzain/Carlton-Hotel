@@ -5,6 +5,7 @@ import 'package:carlton/controllers/account/account_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/theme/app_colors.dart';
+import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -111,10 +112,11 @@ class AccountView extends GetView<AccountController> {
             textStyle: textStyle.labelLarge?.copyWith(
               fontWeight: FontWeight.w600,
             ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
+            child: const RowTextComponent(
+              text: 'Sign Out',
+              icon: Icons.logout,
+              iconSize: 18,
               spacing: 6,
-              children: [Icon(Icons.logout, size: 18), Text('Sign Out')],
             ),
           ),
         ],

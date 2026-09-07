@@ -18,30 +18,37 @@ class RoomDetailsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Obx: the carousel index lives on the controller, so paging a photo has
+    // to rebuild this body.
     final controller = Get.find<BookingFlowController>();
 
-    return RoomDetailsContent(
-      room: room,
-      actions: Column(
-        spacing: 10,
-        children: [
-          CustomFilledButton(
-            width: double.infinity,
-            backgroundColor: AppColors.lagoonTeal,
-            onPressed: () {
-              Get.back();
-              controller.selectRoom(room);
-            },
-            child: const Text('Select This Room'),
-          ),
-          CustomFilledButton(
-            width: double.infinity,
-            backgroundColor: AppColors.whisperGrey,
-            foregroundColor: AppColors.inkBlack,
-            onPressed: () => Get.back(),
-            child: const Text('Back to Rooms'),
-          ),
-        ],
+    return Obx(
+      () => RoomDetailsContent(
+        room: room,
+        nights: controller.nights,
+        imageIndex: controller.roomImageIndex.value,
+        onImageChanged: controller.setRoomImage,
+        actions: Column(
+          spacing: 10,
+          children: [
+            CustomFilledButton(
+              width: double.infinity,
+              backgroundColor: AppColors.lagoonTeal,
+              onPressed: () {
+                Get.back();
+                controller.selectRoom(room);
+              },
+              child: const Text('Select This Room'),
+            ),
+            CustomFilledButton(
+              width: double.infinity,
+              backgroundColor: AppColors.whisperGrey,
+              foregroundColor: AppColors.inkBlack,
+              onPressed: () => Get.back(),
+              child: const Text('Back to Rooms'),
+            ),
+          ],
+        ),
       ),
     );
   }

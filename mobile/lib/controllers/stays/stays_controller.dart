@@ -34,14 +34,14 @@ class StaysController extends GetxController
   final ApiService _api = ApiService.find;
 
   // ── Active (single nullable object) ────────────────────────────────────────
-  Stay? active;
-  bool activeLoading = true;
-  bool activeError = false;
+  final Rxn<Stay> active = Rxn<Stay>();
+  final RxBool activeLoading = true.obs;
+  final RxBool activeError = false.obs;
 
   // ── Upcoming (plain array, not paginated) ──────────────────────────────────
-  List<Stay> upcoming = [];
-  bool upcomingLoading = true;
-  bool upcomingError = false;
+  final RxList<Stay> upcoming = <Stay>[].obs;
+  final RxBool upcomingLoading = true.obs;
+  final RxBool upcomingError = false.obs;
 
   // ── Past uses the mixin's Rx items / loading / hasError + scrollController ──
 
@@ -74,9 +74,8 @@ class StaysController extends GetxController
   // ══════════════════════════════════════════════════════════════════════════
 
   Future<void> _loadActive() async {
-    activeLoading = true;
-    activeError = false;
-    update();
+    activeLoading.value = true;
+    activeError.value = false;
     // `data` is a single object OR null (not checked in). Nullable T so the
     // envelope's `null` doesn't blow up the `raw as T` cast.
     final res = await _api.get<Map<String, dynamic>?>(
@@ -87,18 +86,18 @@ class StaysController extends GetxController
     if (isClosed || res.isCancelled) return;
     if (res.ok) {
       final data = res.data;
-      active = data == null ? null : _activeToStay(ActiveStay.fromJson(data));
+      active.value = data == null
+          ? null
+          : _activeToStay(ActiveStay.fromJson(data));
     } else {
-      activeError = true;
+      activeError.value = true;
     }
-    activeLoading = false;
-    update();
+    activeLoading.value = false;
   }
 
   Future<void> _loadUpcoming() async {
-    upcomingLoading = true;
-    upcomingError = false;
-    update();
+    upcomingLoading.value = true;
+    upcomingError.value = false;
     final res = await _api.get<List<dynamic>>(
       path: '/stays/upcoming',
       showErrorDialog: false,
@@ -106,14 +105,13 @@ class StaysController extends GetxController
     );
     if (isClosed || res.isCancelled) return;
     if (res.statusCode == 200 && res.data != null) {
-      upcoming = UpcomingStay.listFromJson(
+      upcoming.value = UpcomingStay.listFromJson(
         res.data,
       ).map(_upcomingToStay).toList();
     } else {
-      upcomingError = true;
+      upcomingError.value = true;
     }
-    upcomingLoading = false;
-    update();
+    upcomingLoading.value = false;
   }
 
   @override
@@ -347,8 +345,8 @@ class StaysController extends GetxController
     );
     if (isClosed || res.isCancelled) return;
     if (res.ok || res.isNoContent) {
+      // RxList.removeWhere notifies on its own — no update() needed.
       upcoming.removeWhere((s) => s.uuid == stay.uuid);
-      update();
       // Cancelling may drop the guest's has_booking entitlement — resync from
       // the authoritative /me rather than guessing a flag flip.
       await MiddlewareService.find.checkToken();

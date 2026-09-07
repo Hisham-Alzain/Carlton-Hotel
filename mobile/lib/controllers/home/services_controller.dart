@@ -21,7 +21,7 @@ class ServicesController extends GetxController
     with GetSingleTickerProviderStateMixin {
   // Drives the themed Material TabBar (All Services / Active Requests).
   late final TabController tabController;
-  int tabIndex = 0;
+  final RxInt tabIndex = 0.obs;
 
   // Auth + entitlement come from the unified session (MiddlewareService).
   bool get isLoggedIn => MiddlewareService.find.isAuthenticated;
@@ -38,10 +38,10 @@ class ServicesController extends GetxController
 
   // Active-stay header (Services stay card) — populated from `GET /stays/active`
   // once the guest is checked in; blank until then (no more demo Room 812).
-  String room = '';
-  String stayRoomName = '';
-  String checkedInTime = '';
-  int nightsRemaining = 0;
+  final RxString room = ''.obs;
+  final RxString stayRoomName = ''.obs;
+  final RxString checkedInTime = ''.obs;
+  final RxInt nightsRemaining = 0.obs;
   final String stayImagePath = 'assets/images/stay_room.png';
 
   // The eight hub tiles are decorative demo (icons/subtitles); each carries a
@@ -50,23 +50,22 @@ class ServicesController extends GetxController
 
   /// Live service catalog (`GET /public/service-catalog`, active only) and the
   /// guest's own active requests (`GET /service-requests`, checked-in only) —
-  /// first-page fetch + GetBuilder, same rationale as Discover (not the Rx
+  /// first-page fetch only, same rationale as Discover (not the paginated
   /// mixin).
-  List<ServiceCatalogItem> catalog = [];
-  List<ServiceRequest> activeRequests = [];
+  final RxList<ServiceCatalogItem> catalog = <ServiceCatalogItem>[].obs;
+  final RxList<ServiceRequest> activeRequests = <ServiceRequest>[].obs;
 
   /// Do Not Disturb switch state (the `toggle`-kind tile), backed by
   /// `PATCH /stays/active/dnd`. Optimistic; reverts on failure.
-  bool dndEnabled = false;
+  final RxBool dndEnabled = false.obs;
 
   @override
   void onInit() {
     super.onInit();
     tabController = TabController(length: 2, vsync: this);
     tabController.addListener(() {
-      if (tabIndex != tabController.index) {
-        tabIndex = tabController.index;
-        update();
+      if (tabIndex.value != tabController.index) {
+        tabIndex.value = tabController.index;
       }
     });
     _loadCatalog();
@@ -91,12 +90,11 @@ class ServicesController extends GetxController
     );
     if (isClosed) return;
     if (res.statusCode != 200 || res.data == null) return;
-    catalog = res.data!
+    catalog.value = res.data!
         .whereType<Map<String, dynamic>>()
         .map(ServiceCatalogItem.fromJson)
         .where((c) => c.isActive)
         .toList();
-    update();
   }
 
   /// Loads the guest's own service requests (tier-3b — checked in). Empty is a
@@ -108,8 +106,7 @@ class ServicesController extends GetxController
     );
     if (isClosed) return;
     if (res.statusCode != 200 || res.data == null) return;
-    activeRequests = ServiceRequest.listFromJson(res.data!);
-    update();
+    activeRequests.value = ServiceRequest.listFromJson(res.data!);
   }
 
   /// Loads the active-stay header (`GET /stays/active`, tier-3b) for the Services
@@ -122,15 +119,14 @@ class ServicesController extends GetxController
     if (isClosed) return;
     if (!res.ok || res.data == null) return;
     final s = ActiveStay.fromJson(res.data!);
-    room = (s.roomNumber != null && s.roomNumber!.isNotEmpty)
+    room.value = (s.roomNumber != null && s.roomNumber!.isNotEmpty)
         ? 'Room ${s.roomNumber}'
         : s.roomName.value;
-    stayRoomName = s.roomName.value;
-    nightsRemaining = s.nightsRemaining;
-    checkedInTime = s.checkedInAt != null
+    stayRoomName.value = s.roomName.value;
+    nightsRemaining.value = s.nightsRemaining;
+    checkedInTime.value = s.checkedInAt != null
         ? _timeFormat.format(s.checkedInAt!)
         : (s.checkIn != null ? _dateFormat.format(s.checkIn!) : '');
-    update();
   }
 
   static final DateFormat _timeFormat = DateFormat('h:mm a');
@@ -199,7 +195,14 @@ class ServicesController extends GetxController
     CustomBottomSheet.show<void>(
       title: option.name.value,
       subtitle: '${option.description.value}$eta',
-      child: ServiceRequestSheet(option: option),
+      child: ServiceRequestSheet(
+        option: option,
+        stayLabel: [room, stayRoomName].where((s) => s.isNotEmpty).join(' · '),
+        onSubmit: (notes) {
+          submitServiceRequest(serviceItemUuid: option.uuid, notes: notes);
+          Get.back();
+        },
+      ),
     );
   }
 
@@ -221,8 +224,8 @@ class ServicesController extends GetxController
     );
     if (isClosed) return;
     if (res.statusCode == 201 && res.data != null) {
+      // RxList.insert notifies on its own.
       activeRequests.insert(0, ServiceRequest.fromJson(res.data!));
-      update();
       switchTab(1);
       CustomSnackbars.showSuccess(message: AppTranslations.requestSubmitted);
       return;
@@ -244,10 +247,10 @@ class ServicesController extends GetxController
     CustomBottomSheet.show<void>(
       title: AppTranslations.dndTitle,
       subtitle: AppTranslations.dndSubtitle,
-      child: GetBuilder<ServicesController>(
-        builder: (controller) => SwitchListTile(
-          value: controller.dndEnabled,
-          onChanged: controller.toggleDnd,
+      child: Obx(
+        () => SwitchListTile(
+          value: dndEnabled.value,
+          onChanged: toggleDnd,
           contentPadding: EdgeInsets.zero,
           title: Text(AppTranslations.dndSwitchLabel),
         ),
@@ -258,9 +261,8 @@ class ServicesController extends GetxController
   /// Optimistically flips DND, then persists via `PATCH /stays/active/dnd`
   /// (tier-3b). Reverts on failure.
   Future<void> toggleDnd(bool enabled) async {
-    final previous = dndEnabled;
-    dndEnabled = enabled;
-    update();
+    final previous = dndEnabled.value;
+    dndEnabled.value = enabled;
     final res = await ApiService.find.patch<Map<String, dynamic>>(
       path: '/stays/active/dnd',
       data: {'enabled': enabled},
@@ -268,8 +270,7 @@ class ServicesController extends GetxController
     );
     if (isClosed) return;
     if (res.statusCode != 200) {
-      dndEnabled = previous;
-      update();
+      dndEnabled.value = previous;
       final message = res.error?.errorCode == ErrorCodes.noActiveReservation
           ? AppTranslations.dndNeedsCheckIn
           : AppTranslations.dndFailed;

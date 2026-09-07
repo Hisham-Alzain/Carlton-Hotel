@@ -1,5 +1,6 @@
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
+import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -143,26 +144,16 @@ class _MethodRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
-    return Row(
+    return RowTextComponent(
+      text: label,
+      iconPath: iconPath,
+      iconSize: 15,
+      iconColor: AppColors.graphite,
       spacing: 10,
-      children: [
-        SvgPicture.asset(
-          iconPath,
-          width: 15,
-          height: 15,
-          colorFilter: const ColorFilter.mode(
-            AppColors.graphite,
-            BlendMode.srcIn,
-          ),
-        ),
-        Text(
-          label,
-          style: textStyle.labelMedium?.copyWith(
-            fontFamily: 'DM Sans',
-            color: AppColors.inkBlack,
-          ),
-        ),
-      ],
+      textStyle: textStyle.labelMedium?.copyWith(
+        fontFamily: 'DM Sans',
+        color: AppColors.inkBlack,
+      ),
     );
   }
 }

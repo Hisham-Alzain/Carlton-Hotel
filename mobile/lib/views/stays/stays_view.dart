@@ -15,124 +15,130 @@ class StaysView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<StaysController>(
-      builder: (controller) => Column(
-        children: [
-          TabBar(
-            controller: controller.tabController,
-            tabs: const [
-              Tab(text: 'Active'),
-              Tab(text: 'Upcoming'),
-              Tab(text: 'Past'),
-            ],
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: controller.tabController,
-              children: [
-                _ActiveTab(controller: controller),
-                _UpcomingTab(controller: controller),
-                _PastTab(controller: controller),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+    // No observer here: the TabBar/TabBarView read only `tabController`, which
+    // never changes. Each tab owns its own Obx so a fetch in one repaints one
+    // tab instead of all three.
+    final controller = Get.find<StaysController>();
 
-class _ActiveTab extends StatelessWidget {
-  final StaysController controller;
-  const _ActiveTab({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    if (controller.activeLoading) return const _Loading();
-    if (controller.activeError) {
-      return _Retry(
-        title: "Couldn't load your stay",
-        subtitle: 'Please check your connection and try again.',
-        onRetry: controller.reloadActive,
-      );
-    }
-    final activeStay = controller.active;
-    if (activeStay == null) {
-      return const _Empty(
-        title: 'No active stay',
-        subtitle: 'Your current stay will appear here during check-in.',
-      );
-    }
-    return ListView(
-      padding: const EdgeInsets.all(20),
+    return Column(
       children: [
-        CustomActiveStayCard(
-          stay: activeStay,
-          onRequestService: controller.requestService,
-          onExpressCheckout: controller.expressCheckout,
+        TabBar(
+          controller: controller.tabController,
+          tabs: const [
+            Tab(text: 'Active'),
+            Tab(text: 'Upcoming'),
+            Tab(text: 'Past'),
+          ],
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: controller.tabController,
+            children: const [_ActiveTab(), _UpcomingTab(), _PastTab()],
+          ),
         ),
       ],
     );
   }
 }
 
-class _UpcomingTab extends StatelessWidget {
-  final StaysController controller;
-  const _UpcomingTab({required this.controller});
+class _ActiveTab extends StatelessWidget {
+  const _ActiveTab();
 
   @override
   Widget build(BuildContext context) {
-    if (controller.upcomingLoading) return const _Loading();
-    if (controller.upcomingError) {
-      return _Retry(
-        title: "Couldn't load your reservations",
-        subtitle: 'Please check your connection and try again.',
-        onRetry: controller.reloadUpcoming,
-      );
-    }
-    if (controller.upcoming.isEmpty) {
-      return _Empty(
-        title: 'No upcoming stays',
-        subtitle: 'Book your next stay and it will show up here.',
-        primaryLabel: 'Book a Stay',
-        onPrimary: controller.startBooking,
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: controller.upcoming.length,
-      itemBuilder: (_, index) {
-        final stay = controller.upcoming[index];
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CustomUpcomingStayCard(
-              stay: stay,
-              onCancel: () => controller.requestCancel(stay),
-            ),
-            if (stay.nextCheckInDays != null)
-              CustomInfoBanner(
-                iconPath: 'assets/icons/calendar.svg',
-                message:
-                    'Your next check-in is in ${stay.nextCheckInDays} days. '
-                    'Pre-order amenities and services before arrival.',
-              ),
-          ],
+    final controller = Get.find<StaysController>();
+
+    return Obx(() {
+      if (controller.activeLoading.value) return const _Loading();
+      if (controller.activeError.value) {
+        return _Retry(
+          title: "Couldn't load your stay",
+          subtitle: 'Please check your connection and try again.',
+          onRetry: controller.reloadActive,
         );
-      },
-    );
+      }
+      final activeStay = controller.active.value;
+      if (activeStay == null) {
+        return const _Empty(
+          title: 'No active stay',
+          subtitle: 'Your current stay will appear here during check-in.',
+        );
+      }
+      return ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          CustomActiveStayCard(
+            stay: activeStay,
+            onRequestService: controller.requestService,
+            onExpressCheckout: controller.expressCheckout,
+          ),
+        ],
+      );
+    });
   }
 }
 
-/// The one Obx island in this otherwise-GetBuilder view — the Past tab reads the
-/// Rx state of [PaginatedControllerMixin] (items / loading / hasError /
-/// loadingMore) and scrolls via the mixin's scrollController.
-class _PastTab extends StatelessWidget {
-  final StaysController controller;
-  const _PastTab({required this.controller});
+class _UpcomingTab extends StatelessWidget {
+  const _UpcomingTab();
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<StaysController>();
+
+    return Obx(() {
+      if (controller.upcomingLoading.value) return const _Loading();
+      if (controller.upcomingError.value) {
+        return _Retry(
+          title: "Couldn't load your reservations",
+          subtitle: 'Please check your connection and try again.',
+          onRetry: controller.reloadUpcoming,
+        );
+      }
+      if (controller.upcoming.isEmpty) {
+        return _Empty(
+          title: 'No upcoming stays',
+          subtitle: 'Book your next stay and it will show up here.',
+          primaryLabel: 'Book a Stay',
+          onPrimary: controller.startBooking,
+        );
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: controller.upcoming.length,
+        itemBuilder: (_, index) {
+          final stay = controller.upcoming[index];
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CustomUpcomingStayCard(
+                stay: stay,
+                onCancel: () => controller.requestCancel(stay),
+              ),
+              if (stay.nextCheckInDays != null)
+                CustomInfoBanner(
+                  iconPath: 'assets/icons/calendar.svg',
+                  message:
+                      'Your next check-in is in ${stay.nextCheckInDays} days. '
+                      'Pre-order amenities and services before arrival.',
+                ),
+            ],
+          );
+        },
+      );
+    });
+  }
+}
+
+/// The Past tab reads the Rx state of [PaginatedControllerMixin] (items /
+/// loading / hasError / loadingMore) and scrolls via the mixin's
+/// scrollController.
+class _PastTab extends StatelessWidget {
+  const _PastTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = Get.find<StaysController>();
+
     return Obx(() {
       if (controller.loading.value) return const _Loading();
       if (controller.hasError.value) {

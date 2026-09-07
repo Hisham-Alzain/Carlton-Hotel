@@ -1,8 +1,6 @@
 import 'package:carlton/components/check_in/arrival_time_sheet.dart';
-import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
-import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/check_in/pre_arrival_step.dart';
 import 'package:carlton/routes/routes.dart';
@@ -208,9 +206,15 @@ class _StayHeroBackdrop extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            const CustomImage(
-              source: 'assets/images/room_classic_courtyard.jpg',
+            // Full-bleed, and the bundled export is a 4x Figma asset — decode
+            // it at screen width so it does not sit in memory at native size.
+            Image.asset(
+              'assets/images/room_classic_courtyard.jpg',
               fit: BoxFit.cover,
+              cacheWidth:
+                  (MediaQuery.sizeOf(context).width *
+                          MediaQuery.devicePixelRatioOf(context))
+                      .round(),
             ),
             DecoratedBox(
               decoration: BoxDecoration(
@@ -507,8 +511,10 @@ class _ChecklistCheckbox extends StatelessWidget {
 
 /// Airport transfer promo (Figma `2209:2555`). Routes into the existing
 /// Services tab rather than inventing a second request path.
-class AirportTransferSection extends GetView<HomeController> {
-  const AirportTransferSection({super.key});
+class AirportTransferSection extends StatelessWidget {
+  final VoidCallback onRequest;
+
+  const AirportTransferSection({required this.onRequest, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -549,18 +555,20 @@ class AirportTransferSection extends GetView<HomeController> {
                   ],
                 ),
               ),
-              const CustomImage(
-                source: 'assets/images/airport_transfer.png',
+              Image.asset(
+                'assets/images/airport_transfer.png',
                 width: 90,
                 height: 75,
                 fit: BoxFit.contain,
+                cacheWidth: (90 * MediaQuery.devicePixelRatioOf(context))
+                    .round(),
               ),
             ],
           ),
           CustomFilledButton(
             height: 44,
             width: double.infinity,
-            onPressed: controller.goToServices,
+            onPressed: onRequest,
             backgroundColor: AppColors.lagoonTeal,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),

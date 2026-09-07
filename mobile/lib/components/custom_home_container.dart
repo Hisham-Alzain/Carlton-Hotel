@@ -1,7 +1,7 @@
 import 'package:carlton/customWidgets/custom_filled_button.dart';
-import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/theme/app_colors.dart';
+import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
@@ -10,7 +10,11 @@ class CustomHomeContainer extends StatelessWidget {
   final String location;
   final String title;
   final String subtitle;
-  final String imagePath;
+
+  /// Bundled hero still shown until [videoController] is ready. Always an
+  /// `assets/…` path (see `DemoData.hero*ImagePath`) — these are marketing
+  /// stills that ship with the app, not content the API serves.
+  final String assetPath;
   final VideoPlayerController? videoController;
   final bool videoReady;
   final String primaryLabel;
@@ -23,7 +27,7 @@ class CustomHomeContainer extends StatelessWidget {
     required this.location,
     required this.title,
     required this.subtitle,
-    required this.imagePath,
+    required this.assetPath,
     this.videoController,
     this.videoReady = false,
     this.primaryLabel = 'Book Now',
@@ -43,7 +47,7 @@ class CustomHomeContainer extends StatelessWidget {
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
       child: Stack(
         children: [
-          Positioned.fill(child: _background()),
+          Positioned.fill(child: _background(context)),
           const Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -84,20 +88,14 @@ class CustomHomeContainer extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 20,
                     children: [
-                      Row(
+                      RowTextComponent(
+                        text: location.toUpperCase(),
+                        icon: Icons.location_on_outlined,
+                        iconColor: Colors.white,
                         spacing: 10,
-                        children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            color: Colors.white,
-                          ),
-                          Text(
-                            location.toUpperCase(),
-                            style: textStyle.labelSmall?.copyWith(
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
+                        textStyle: textStyle.labelSmall?.copyWith(
+                          color: Colors.white,
+                        ),
                       ),
                       Text.rich(
                         TextSpan(
@@ -183,7 +181,7 @@ class CustomHomeContainer extends StatelessWidget {
     return spans;
   }
 
-  Widget _background() {
+  Widget _background(BuildContext context) {
     final heroVideoController = videoController;
     if (heroVideoController != null && videoReady) {
       return FittedBox(
@@ -195,6 +193,14 @@ class CustomHomeContainer extends StatelessWidget {
         ),
       );
     }
-    return CustomImage(source: imagePath, fit: BoxFit.cover);
+    // Full-bleed 4x Figma export: decode at screen width, not native size.
+    return Image.asset(
+      assetPath,
+      fit: BoxFit.cover,
+      cacheWidth:
+          (MediaQuery.sizeOf(context).width *
+                  MediaQuery.devicePixelRatioOf(context))
+              .round(),
+    );
   }
 }

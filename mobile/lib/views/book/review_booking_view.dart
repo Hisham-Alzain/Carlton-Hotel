@@ -16,6 +16,8 @@ class ReviewBookingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<BookingFlowController>();
+
     return CustomScaffold(
       appBar: AppBar(
         title: Text('Review Booking'),
@@ -33,8 +35,8 @@ class ReviewBookingView extends StatelessWidget {
           ),
         ],
       ),
-      body: GetBuilder<BookingFlowController>(
-        builder: (controller) {
+      body: Obx(
+        () {
           final TextTheme textStyle = Get.textTheme;
           return Padding(
             padding: const EdgeInsets.all(20),
@@ -53,8 +55,11 @@ class ReviewBookingView extends StatelessWidget {
                   ),
                 ),
                 BookingSummaryHeader(
-                  controller: controller,
-                  showPriceSection: false,
+                  roomName: controller.selectedRoom.value!.name,
+                  roomImage: controller.selectedRoom.value!.images.first,
+                  dateRange: controller.dateRange,
+                  nights: controller.nights,
+                  totalDisplay: controller.totalDisplay,
                 ),
 
                 Container(
@@ -63,7 +68,9 @@ class ReviewBookingView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.black06, width: 1),
                   ),
-                  child: BookingPriceBreakdown(controller: controller),
+                  child: BookingPriceBreakdown(
+                    summary: controller.priceSummary,
+                  ),
                 ),
 
                 Container(
@@ -97,8 +104,10 @@ class ReviewBookingView extends StatelessWidget {
                 CustomFilledButton(
                   width: double.infinity,
                   backgroundColor:
-                      controller.paymentMethod == PaymentMethod.applePay ||
-                          controller.paymentMethod == PaymentMethod.googlePay
+                      controller.paymentMethod.value ==
+                              PaymentMethod.applePay ||
+                          controller.paymentMethod.value ==
+                              PaymentMethod.googlePay
                       ? AppColors.inkBlack
                       : AppColors.lagoonTeal,
                   onPressed: controller.confirmBooking,
@@ -106,7 +115,7 @@ class ReviewBookingView extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     spacing: 10,
                     children: [
-                      if (controller.paymentMethod.iconPath
+                      if (controller.paymentMethod.value.iconPath
                           case final iconPath?)
                         SvgPicture.asset(
                           iconPath,
@@ -114,7 +123,8 @@ class ReviewBookingView extends StatelessWidget {
                           height: 16,
                           // Apple mark is white; the Google "G" keeps its colours.
                           colorFilter:
-                              controller.paymentMethod == PaymentMethod.applePay
+                              controller.paymentMethod.value ==
+                                  PaymentMethod.applePay
                               ? const ColorFilter.mode(
                                   AppColors.white,
                                   BlendMode.srcIn,

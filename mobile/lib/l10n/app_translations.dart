@@ -44,6 +44,7 @@ class AppTranslations {
   static String get invalidEmail => 'validation.invalidEmail'.tr;
   static String get shortPassword => 'validation.shortPassword'.tr;
   static String get numberField => 'validation.numberField'.tr;
+  static String get invalidOtp => 'validation.invalidOtp'.tr;
   static String get invalidNumber => 'validation.invalidNumber'.tr;
   static String get invalidPasswordLength =>
       'validation.invalidPasswordLength'.tr;

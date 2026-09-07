@@ -18,24 +18,24 @@ class PreferencesView extends GetView<PreferencesController> {
         title: const Text('Preferences'),
         iconTheme: const IconThemeData(color: AppColors.primary),
       ),
-      body: GetBuilder<PreferencesController>(
-        builder: (c) => ListView(
+      body: Obx(
+        () => ListView(
           padding: const EdgeInsets.all(16),
           children: [
             CustomDropdownField(
               label: 'Language',
-              value: c.languageLabel,
+              value: controller.languageLabel,
               options: DemoData.languageOptions,
-              selectedId: c.languageId,
-              onSelected: c.chooseLanguage,
+              selectedId: controller.languageId,
+              onSelected: controller.chooseLanguage,
             ),
             const SizedBox(height: 20),
             CustomDropdownField(
               label: 'Currency',
-              value: c.currencyLabel,
+              value: controller.currencyLabel,
               options: DemoData.currencyOptions,
-              selectedId: c.currencyId,
-              onSelected: c.chooseCurrency,
+              selectedId: controller.currencyId,
+              onSelected: controller.chooseCurrency,
             ),
             const SizedBox(height: 28),
             CustomSettingsSection(
@@ -43,24 +43,24 @@ class PreferencesView extends GetView<PreferencesController> {
               children: [
                 CustomDropdownField(
                   label: 'Bed Type',
-                  value: c.bedLabel,
+                  value: controller.bedLabel,
                   options: DemoData.bedOptions,
-                  selectedId: c.bedId,
-                  onSelected: c.chooseBed,
+                  selectedId: controller.bedId.value,
+                  onSelected: controller.chooseBed,
                 ),
                 CustomDropdownField(
                   label: 'Pillow',
-                  value: c.pillowLabel,
+                  value: controller.pillowLabel,
                   options: DemoData.pillowOptions,
-                  selectedId: c.pillowId,
-                  onSelected: c.choosePillow,
+                  selectedId: controller.pillowId.value,
+                  onSelected: controller.choosePillow,
                 ),
                 CustomDropdownField(
                   label: 'Mattress Type',
-                  value: c.mattressLabel,
+                  value: controller.mattressLabel,
                   options: DemoData.mattressOptions,
-                  selectedId: c.mattressId,
-                  onSelected: c.chooseMattress,
+                  selectedId: controller.mattressId.value,
+                  onSelected: controller.chooseMattress,
                 ),
               ],
             ),
@@ -71,17 +71,17 @@ class PreferencesView extends GetView<PreferencesController> {
                 CustomListRow(
                   title: 'Smoking Room',
                   subtitle: 'Request smoking-permitted room',
-                  trailing: _switch(c.smoking, c.toggleSmoking),
+                  trailing: _switch(controller.smoking.value, controller.toggleSmoking),
                 ),
                 CustomListRow(
                   title: 'Early Check-in',
                   subtitle: 'Request early check-in when available',
-                  trailing: _switch(c.earlyCheckIn, c.toggleEarlyCheckIn),
+                  trailing: _switch(controller.earlyCheckIn.value, controller.toggleEarlyCheckIn),
                 ),
                 CustomListRow(
                   title: 'Late Check-out',
                   subtitle: 'Request late check-out when available',
-                  trailing: _switch(c.lateCheckout, c.toggleLateCheckout),
+                  trailing: _switch(controller.lateCheckout.value, controller.toggleLateCheckout),
                 ),
               ],
             ),

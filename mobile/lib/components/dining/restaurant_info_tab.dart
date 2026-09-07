@@ -1,6 +1,6 @@
 import 'package:carlton/components/dining/custom_gallery_grid.dart';
-import 'package:carlton/controllers/dining/restaurant_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
+import 'package:carlton/models/home_models.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -9,9 +9,19 @@ import 'package:get/get.dart';
 /// Restaurant "info" tab: About, a card of Hours/Location/Cuisine/Rating rows,
 /// the gallery grid, and a Reserve CTA.
 class RestaurantInfoTab extends StatelessWidget {
-  final RestaurantController c;
+  final RestaurantItem restaurant;
 
-  const RestaurantInfoTab({required this.c, super.key});
+  /// Venue description from the detail endpoint; empty until it lands (or for a
+  /// demo venue with no uuid), which is why the copy falls back below.
+  final String about;
+  final List<String> gallery;
+
+  const RestaurantInfoTab({
+    required this.restaurant,
+    required this.about,
+    required this.gallery,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +46,7 @@ class RestaurantInfoTab extends StatelessWidget {
             ),
           ),
           Text(
-            c.about.isNotEmpty ? c.about : 'Details coming soon.',
+            about.isNotEmpty ? about : 'Details coming soon.',
             style: textStyle.labelMedium?.copyWith(
               fontFamily: 'DM Sans',
               height: 1.5,
@@ -57,29 +67,29 @@ class RestaurantInfoTab extends StatelessWidget {
                 _InfoRow(
                   icon: 'assets/icons/clock.svg',
                   label: 'Hours',
-                  value: c.restaurant.hours,
+                  value: restaurant.hours,
                 ),
                 _InfoRow(
                   icon: 'assets/icons/location.svg',
                   label: 'Location',
-                  value: c.restaurant.location,
+                  value: restaurant.location,
                 ),
                 _InfoRow(
                   icon: 'assets/icons/cuisine.svg',
                   label: 'Cuisine',
-                  value: c.restaurant.cuisine,
+                  value: restaurant.cuisine,
                 ),
                 _InfoRow(
                   icon: 'assets/icons/rating.svg',
                   label: 'Rating',
                   value:
-                      '${c.restaurant.rating} / 5.0 · '
-                      '${c.restaurant.reviews} reviews',
+                      '${restaurant.rating} / 5.0 · '
+                      '${restaurant.reviews} reviews',
                 ),
               ],
             ),
           ),
-          if (c.gallery.isNotEmpty) ...[
+          if (gallery.isNotEmpty) ...[
             Text(
               'Gallery',
               style: textStyle.titleSmall?.copyWith(
@@ -87,7 +97,7 @@ class RestaurantInfoTab extends StatelessWidget {
                 color: AppColors.inkBlack,
               ),
             ),
-            CustomGalleryGrid(images: c.gallery),
+            CustomGalleryGrid(images: gallery),
           ],
           CustomFilledButton(
             width: double.infinity,

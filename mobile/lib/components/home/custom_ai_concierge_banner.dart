@@ -1,7 +1,6 @@
 import 'package:carlton/components/custom_logo_avatar.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
-import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -139,13 +138,10 @@ class CustomAiConciergeBanner extends StatelessWidget {
     );
   }
 
-  Widget _photo(String source) => ClipRRect(
+  /// [assetPath] is always a bundled room photo — the fanned thumbnails are
+  /// decoration, not the guest's actual booking, so they never come from the API.
+  Widget _photo(String assetPath) => ClipRRect(
     borderRadius: BorderRadius.circular(4),
-    child: CustomImage(
-      source: source,
-      width: 50,
-      height: 50,
-      fit: BoxFit.cover,
-    ),
+    child: Image.asset(assetPath, width: 50, height: 50, fit: BoxFit.cover),
   );
 }

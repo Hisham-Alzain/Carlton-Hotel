@@ -1,5 +1,6 @@
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
+import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -113,16 +114,13 @@ class CustomRequestCard extends StatelessWidget {
   /// outline icon + label in #2A2A2A medium.
   Widget _menuRow(IconData icon, String label, double iconSize) {
     final TextTheme textStyle = Get.textTheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return RowTextComponent(
+      text: label,
+      icon: icon,
+      iconSize: iconSize,
+      iconColor: AppColors.charcoal,
       spacing: 10,
-      children: [
-        Icon(icon, size: iconSize, color: AppColors.charcoal),
-        Text(
-          label,
-          style: textStyle.labelLarge?.copyWith(color: AppColors.charcoal),
-        ),
-      ],
+      textStyle: textStyle.labelLarge?.copyWith(color: AppColors.charcoal),
     );
   }
 }

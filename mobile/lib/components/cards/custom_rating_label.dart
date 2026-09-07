@@ -1,4 +1,5 @@
 import 'package:carlton/theme/app_colors.dart';
+import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -22,18 +23,18 @@ class CustomRatingLabel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       spacing: 10,
       children: [
-        Row(
-          children: [
-            const Icon(Icons.star, color: AppColors.antiqueGold, size: 15),
-            Text(
-              rating.toStringAsFixed(1),
-              style: textStyle.labelMedium?.copyWith(
-                fontFamily: 'DM Sans',
-                fontWeight: FontWeight.w600,
-                color: AppColors.inkBlack,
-              ),
-            ),
-          ],
+        // spacing: 0 is deliberate — the star sits flush against the score.
+        RowTextComponent(
+          text: rating.toStringAsFixed(1),
+          icon: Icons.star,
+          iconSize: 15,
+          iconColor: AppColors.antiqueGold,
+          spacing: 0,
+          textStyle: textStyle.labelMedium?.copyWith(
+            fontFamily: 'DM Sans',
+            fontWeight: FontWeight.w600,
+            color: AppColors.inkBlack,
+          ),
         ),
 
         Text(

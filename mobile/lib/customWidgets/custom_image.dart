@@ -7,7 +7,12 @@ import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/cache/cache_manager.dart';
 import 'package:shimmer/shimmer.dart';
 
-//TODO: do not use local assets here use flutter default image widget
+/// Never pass a literal `assets/…` path to this widget — use `Image.asset` /
+/// `SvgPicture.asset` directly (with a `cacheWidth` for anything full-bleed).
+/// The asset branch below exists only because `DemoData` still stands in for
+/// the API: model-driven sources (`room.images`, `restaurant.imagePath`, …)
+/// are asset paths today and storage URLs after integration. Delete the branch
+/// when `DemoData` goes.
 class CustomImage extends StatelessWidget {
   /// Either a bundled asset path (`assets/…`), an absolute URL (`http…`), or a
   /// storage-relative path that [url] expands against the API storage host.

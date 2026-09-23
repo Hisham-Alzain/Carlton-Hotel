@@ -1,6 +1,5 @@
 import 'package:carlton/components/cards/custom_rating_label.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
-import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_image_carousel.dart';
 import 'package:carlton/components/custom_info_banner.dart';
 import 'package:carlton/components/custom_price_summary.dart';
@@ -18,10 +17,22 @@ import 'package:get/get.dart';
 /// chrome and the [actions] block below the price differ.
 class RoomDetailsContent extends StatelessWidget {
   final RoomOption room;
+
+  /// Nights in the in-progress booking — drives the "Total for N nights" row.
+  final int nights;
+
+  /// Which carousel photo is showing. Held by the caller so the page survives
+  /// this widget being rebuilt.
+  final int imageIndex;
+  final ValueChanged<int> onImageChanged;
+
   final Widget actions;
 
   const RoomDetailsContent({
     required this.room,
+    required this.nights,
+    required this.imageIndex,
+    required this.onImageChanged,
     required this.actions,
     super.key,
   });
@@ -33,30 +44,27 @@ class RoomDetailsContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
-    final controller = Get.find<BookingFlowController>();
-    final stayTotal = room.pricePerNight * controller.nights;
+    final stayTotal = room.pricePerNight * nights;
 
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GetBuilder<BookingFlowController>(
-            builder: (carouselController) => CustomImageCarousel(
-              images: room.images,
-              index: carouselController.roomImageIndex,
-              onIndexChanged: carouselController.setRoomImage,
-              height: 220,
-              // topRight: CustomCircleIconButton(
-              //   iconPath: 'assets/icons/close.svg',
-              //   size: 32,
-              //   color: AppColors.pebbleGrey73,
-              //   bordered: false,
-              //   shadow: false,
-              //   iconSize: 16,
-              //   iconPadding: 8,
-              //   onTap: () => Get.back(),
-              // ),
-            ),
+          CustomImageCarousel(
+            images: room.images,
+            index: imageIndex,
+            onIndexChanged: onImageChanged,
+            height: 220,
+            // topRight: CustomCircleIconButton(
+            //   iconPath: 'assets/icons/close.svg',
+            //   size: 32,
+            //   color: AppColors.pebbleGrey73,
+            //   bordered: false,
+            //   shadow: false,
+            //   iconSize: 16,
+            //   iconPadding: 8,
+            //   onTap: () => Get.back(),
+            // ),
           ),
           Padding(
             padding: const EdgeInsets.all(10),
@@ -104,8 +112,7 @@ class RoomDetailsContent extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   backgroundColor: AppColors.cream,
                   child: CustomPriceSummaryRow(
-                    title:
-                        'Total for ${controller.nights} night${controller.nights == 1 ? '' : 's'}',
+                    title: 'Total for $nights night${nights == 1 ? '' : 's'}',
                     value: '\$$stayTotal',
                     titleStyle: textStyle.labelMedium?.copyWith(
                       fontFamily: 'DM Sans',

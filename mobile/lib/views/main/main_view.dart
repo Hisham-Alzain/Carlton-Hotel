@@ -15,49 +15,43 @@ class MainView extends GetView<MainController> {
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<MainController>(
-      builder: (_) => CustomScaffold(
-        appBar: CustomAppBar(currentIndex: controller.currentIndex),
-        drawer: Drawer(),
-        bottomNav: CustoBottomNavigationBar(
-          currentIndex: controller.currentIndex,
-          onTap: controller.changeTab,
-        ),
-        body: PageView(
-          controller: controller.pageController,
-          physics: const NeverScrollableScrollPhysics(),
-          children: const [
-            _KeepAlive(child: HomeView()),
-            _KeepAlive(child: StaysView()),
-            _KeepAlive(child: BookView()),
-            _KeepAlive(child: ServicesView()),
-            _KeepAlive(child: AccountView()),
-          ],
+    // The two observers wrap only the chrome that reads `currentIndex`. The
+    // PageView sits outside them: it is driven by the PageController, so a tab
+    // change must not rebuild five tabs' worth of subtree to repaint a nav bar.
+    return CustomScaffold(
+      // PreferredSize because Scaffold.appBar needs a PreferredSizeWidget and
+      // Obx is not one; the height is CustomAppBar's own.
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Obx(
+          () => CustomAppBar(currentIndex: controller.currentIndex.value),
         ),
       ),
+      drawer: Drawer(),
+      bottomNav: Obx(
+        () => CustoBottomNavigationBar(
+          currentIndex: controller.currentIndex.value,
+          onTap: controller.changeTab,
+        ),
+      ),
+      // No keep-alive wrapper: every tab is stateless and reads its state from
+      // a controller owned by MainBinding, which is scoped to this route rather
+      // than to the widgets. An off-screen tab's subtree is disposed and rebuilt
+      // on return, but nothing is re-fetched and nothing is lost — the
+      // controllers, their TabControllers and their scroll controllers all
+      // outlive the rebuild. Re-add a keep-alive only if a tab gains widget
+      // state that has to survive a switch.
+      body: PageView(
+        controller: controller.pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: const [
+          HomeView(),
+          StaysView(),
+          BookView(),
+          ServicesView(),
+          AccountView(),
+        ],
+      ),
     );
-  }
-}
-
-/// Keeps a tab's state (scroll position, form input) alive while another tab
-/// is showing, so switching back doesn't rebuild it from scratch.
-class _KeepAlive extends StatefulWidget {
-  final Widget child;
-
-  const _KeepAlive({required this.child});
-
-  @override
-  State<_KeepAlive> createState() => _KeepAliveState();
-}
-
-class _KeepAliveState extends State<_KeepAlive>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return widget.child;
   }
 }

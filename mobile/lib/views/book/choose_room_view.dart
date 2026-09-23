@@ -13,6 +13,8 @@ class ChooseRoomView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<BookingFlowController>();
+
     return CustomScaffold(
       appBar: AppBar(
         title: Text('Choose Your Room'),
@@ -30,8 +32,8 @@ class ChooseRoomView extends StatelessWidget {
           ),
         ],
       ),
-      body: GetBuilder<BookingFlowController>(
-        builder: (controller) {
+      body: Obx(
+        () {
           final TextTheme textStyle = Get.textTheme;
           return CustomScrollView(
             slivers: [
@@ -81,7 +83,7 @@ class ChooseRoomView extends StatelessWidget {
                   ),
                 ),
               ),
-              if (controller.roomsLoading)
+              if (controller.roomsLoading.value)
                 const SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.only(top: 60),

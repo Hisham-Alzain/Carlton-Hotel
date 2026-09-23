@@ -1,8 +1,8 @@
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/models/card_meta.dart';
 import 'package:carlton/theme/app_colors.dart';
+import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class CustomHomeCard extends StatelessWidget {
@@ -32,27 +32,16 @@ class CustomHomeCard extends StatelessWidget {
     final TextTheme textStyle = Get.textTheme;
     final metaChips = meta
         .map(
-          (metaEntry) => Row(
-            mainAxisSize: MainAxisSize.min,
+          (metaEntry) => RowTextComponent(
+            text: metaEntry.text,
+            iconPath: metaEntry.iconPath,
+            iconSize: 12,
+            iconColor: AppColors.taupeBrown,
             spacing: 10,
-            children: [
-              SvgPicture.asset(
-                metaEntry.iconPath,
-                width: 12,
-                height: 12,
-                colorFilter: const ColorFilter.mode(
-                  AppColors.taupeBrown,
-                  BlendMode.srcIn,
-                ),
-              ),
-              Text(
-                metaEntry.text,
-                style: textStyle.labelMedium?.copyWith(
-                  color: AppColors.taupeBrown,
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-            ],
+            textStyle: textStyle.labelMedium?.copyWith(
+              color: AppColors.taupeBrown,
+              fontWeight: FontWeight.w300,
+            ),
           ),
         )
         .toList();

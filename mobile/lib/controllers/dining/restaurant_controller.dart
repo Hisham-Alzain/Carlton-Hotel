@@ -1,5 +1,8 @@
+import 'package:carlton/components/reviews/review_submit_sheet.dart';
 import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/constants/error_codes.dart';
+import 'package:carlton/controllers/reviews/review_controller.dart';
+import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/extensions/date_extension.dart';
 import 'package:carlton/l10n/app_translations.dart';
@@ -7,6 +10,7 @@ import 'package:carlton/models/dining_venue.dart';
 import 'package:carlton/models/home_models.dart';
 import 'package:carlton/models/menu.dart';
 import 'package:carlton/models/service_booking.dart';
+import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/middleware_service.dart';
 import 'package:flutter/material.dart';
@@ -21,33 +25,33 @@ import 'package:get/get.dart';
 class RestaurantController extends GetxController {
   late final RestaurantItem restaurant;
 
-  int categoryIndex = 0;
-  int galleryIndex = 0;
+  final RxInt categoryIndex = 0.obs;
+  final RxInt galleryIndex = 0.obs;
 
   // ── Venue detail (public: /public/dining-venues/{uuid}) ────────────────────
   /// About/description + gallery, fetched from the venue detail endpoint.
   /// Rating/hours/location/cuisine already ride on [restaurant].
-  String about = '';
-  List<String> gallery = [];
+  final RxString about = ''.obs;
+  final RxList<String> gallery = <String>[].obs;
 
   // ── Menu (public content: /public/dining-venues/{uuid}/menu[-categories]) ──
-  List<MenuCategory> menuCategories = [];
-  List<MenuItem> menuItems = [];
-  bool menuLoading = true;
+  final RxList<MenuCategory> menuCategories = <MenuCategory>[].obs;
+  final RxList<MenuItem> menuItems = <MenuItem>[].obs;
+  final RxBool menuLoading = true.obs;
 
   /// Dishes under the selected category chip (filtered by slug). With no
   /// categories yet, every fetched dish shows.
   List<MenuItem> get visibleMenuItems {
-    if (menuCategories.isEmpty || categoryIndex >= menuCategories.length) {
+    if (menuCategories.isEmpty || categoryIndex.value >= menuCategories.length) {
       return menuItems;
     }
-    final slug = menuCategories[categoryIndex].slug;
+    final slug = menuCategories[categoryIndex.value].slug;
     return menuItems.where((m) => m.type == slug).toList();
   }
 
-  DateTime reserveDate = DateTime(2026, 8, 14);
-  String timeSlot = DemoData.reserveTimeSlots[2];
-  int guests = 2;
+  final Rx<DateTime> reserveDate = DateTime(2026, 8, 14).obs;
+  final RxString timeSlot = DemoData.reserveTimeSlots[2].obs;
+  final RxInt guests = 2.obs;
   final TextEditingController specialRequests = TextEditingController();
 
   @override
@@ -62,8 +66,7 @@ class RestaurantController extends GetxController {
   /// (no uuid) simply renders the empty state rather than calling the API.
   Future<void> _loadMenu() async {
     if (restaurant.uuid.isEmpty) {
-      menuLoading = false;
-      update();
+      menuLoading.value = false;
       return;
     }
     final base = '/public/dining-venues/${restaurant.uuid}';
@@ -86,23 +89,22 @@ class RestaurantController extends GetxController {
     if (isClosed) return;
     if (venueRes.statusCode == 200 && venueRes.data != null) {
       final venue = DiningVenue.fromJson(venueRes.data!);
-      about = venue.description.value;
-      gallery = venue.images.map((i) => i.url).toList();
+      about.value = venue.description.value;
+      gallery.value = venue.images.map((i) => i.url).toList();
     }
     if (catRes.statusCode == 200 && catRes.data != null) {
-      menuCategories = catRes.data!
+      menuCategories.value = catRes.data!
           .whereType<Map<String, dynamic>>()
           .map(MenuCategory.fromJson)
           .toList();
     }
     if (menuRes.statusCode == 200 && menuRes.data != null) {
-      menuItems = menuRes.data!
+      menuItems.value = menuRes.data!
           .whereType<Map<String, dynamic>>()
           .map(MenuItem.fromJson)
           .toList();
     }
-    menuLoading = false;
-    update();
+    menuLoading.value = false;
   }
 
   @override
@@ -112,23 +114,19 @@ class RestaurantController extends GetxController {
   }
 
   void selectCategory(int index) {
-    categoryIndex = index;
-    update();
+    categoryIndex.value = index;
   }
 
   void setGalleryIndex(int index) {
-    galleryIndex = index;
-    update();
+    galleryIndex.value = index;
   }
 
   void selectTimeSlot(String slot) {
-    timeSlot = slot;
-    update();
+    timeSlot.value = slot;
   }
 
   void setGuests(int value) {
-    guests = value;
-    update();
+    guests.value = value;
   }
 
   /// The picker's branding (cream surface, primary header, gold today ring)
@@ -138,18 +136,38 @@ class RestaurantController extends GetxController {
     final picked = await showDatePicker(
       context: Get.context!,
       // Clamp so a demo date in the past never trips the initialDate assertion.
-      initialDate: reserveDate.isBefore(now) ? now : reserveDate,
+      initialDate: reserveDate.value.isBefore(now) ? now : reserveDate.value,
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
     );
     if (picked != null) {
-      reserveDate = picked;
-      update();
+      reserveDate.value = picked;
     }
   }
 
   void downloadMenu() =>
       CustomSnackbars.showInfo(message: 'Full menu download coming soon');
+
+  /// Opens the "Write a Review" sheet for this venue. Lives here rather than in
+  /// the Reviews tab because it both auth-gates and navigates: a POST while
+  /// unauthenticated returns 401 and fires the global logout — the wrong
+  /// outcome for a review attempt.
+  void openReviewSheet() {
+    if (!MiddlewareService.find.isAuthenticated) {
+      CustomSnackbars.showInfo(message: 'Sign in to leave a review');
+      Get.toNamed(Routes.signIn);
+      return;
+    }
+    final reviews = Get.find<ReviewController>();
+    CustomBottomSheet.show<bool>(
+      title: 'Write a Review',
+      subtitle: restaurant.name,
+      child: ReviewSubmitSheet(
+        onSubmit: ({required rating, required comment}) =>
+            reviews.submitReview(rating: rating, comment: comment),
+      ),
+    );
+  }
 
   /// Reserves a table (`POST /dining-venues/{uuid}/table-reservations`,
   /// tier-3a). A demo venue (no uuid) just confirms locally; a guest with no
@@ -158,7 +176,7 @@ class RestaurantController extends GetxController {
   Future<void> confirmReservation() async {
     if (restaurant.uuid.isEmpty) {
       CustomSnackbars.showSuccess(
-        message: AppTranslations.tableReservedFor('$guests · $timeSlot'),
+        message: AppTranslations.tableReservedFor('${guests.value} · ${timeSlot.value}'),
       );
       return;
     }
@@ -169,9 +187,9 @@ class RestaurantController extends GetxController {
     final res = await ApiService.find.post<Map<String, dynamic>>(
       path: '/dining-venues/${restaurant.uuid}/table-reservations',
       data: {
-        'date': reserveDate.formatApiDate(),
-        'time': _toTime24h(timeSlot),
-        'guest_count': guests,
+        'date': reserveDate.value.formatApiDate(),
+        'time': _toTime24h(timeSlot.value),
+        'guest_count': guests.value,
         if (specialRequests.text.trim().isNotEmpty)
           'special_request': specialRequests.text.trim(),
       },
@@ -180,7 +198,7 @@ class RestaurantController extends GetxController {
     if (isClosed) return;
     if (res.statusCode == 201 && res.data != null) {
       final booking = ServiceBooking.fromJson(res.data!);
-      final label = booking.label.isNotEmpty ? booking.label : '$guests';
+      final label = booking.label.isNotEmpty ? booking.label : '${guests.value}';
       CustomSnackbars.showSuccess(
         message: AppTranslations.tableReservedFor(label),
       );

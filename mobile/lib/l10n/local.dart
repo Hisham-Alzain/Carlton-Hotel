@@ -51,6 +51,7 @@ class Local implements Translations {
     "validation.invalidEmail": "Invalid Email",
     "validation.shortPassword": "Short Password",
     "validation.numberField": "Field should contain only numbers",
+    "validation.invalidOtp": "Enter the 6-digit code",
     "validation.invalidNumber": "Invalid Number",
     "validation.invalidPasswordLength":
         "Password must be at least 8 characters",
@@ -501,6 +502,7 @@ class Local implements Translations {
     "validation.invalidEmail": "بريد إلكتروني غير صالح",
     "validation.shortPassword": "كلمة المرور قصيرة",
     "validation.numberField": "يجب أن يحتوي الحقل على أرقام فقط",
+    "validation.invalidOtp": "أدخل الرمز المكوّن من 6 أرقام",
     "validation.invalidNumber": "رقم غير صالح",
     "validation.invalidPasswordLength":
         "يجب أن تكون كلمة المرور 8 أحرف على الأقل",

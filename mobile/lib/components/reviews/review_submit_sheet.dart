@@ -1,4 +1,3 @@
-import 'package:carlton/controllers/reviews/review_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
@@ -8,20 +7,27 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:get/get.dart';
 
 /// "Write a Review" bottom-sheet body, shared verbatim by the restaurant Reviews
-/// tab and Room Details. Star input + optional comment + submit; delegates the
-/// POST to the injected [ReviewController]. Mirrors [ServiceRequestSheet]: state
-/// is held in [State], not rebuilt in [build].
+/// tab and Room Details. Star input + optional comment + submit; the POST is
+/// the caller's job via [onSubmit]. Mirrors [ServiceRequestSheet]: state is
+/// held in [State], not rebuilt in [build].
 class ReviewSubmitSheet extends StatefulWidget {
-  final ReviewController controller;
+  /// Returns true when the review was accepted. On false the sheet stays open
+  /// and re-enables the button — the caller is expected to have surfaced the
+  /// error itself.
+  final Future<bool> Function({required int rating, required String comment})
+  onSubmit;
 
-  const ReviewSubmitSheet({required this.controller, super.key});
+  const ReviewSubmitSheet({required this.onSubmit, super.key});
 
   @override
   State<ReviewSubmitSheet> createState() => _ReviewSubmitSheetState();
 }
 
 class _ReviewSubmitSheetState extends State<ReviewSubmitSheet> {
-  //TODO: move logic to controller
+  // Deliberately local, not on ReviewController: the POST already lives there
+  // (via [widget.onSubmit]), and this is per-sheet form state. ReviewController
+  // is shared and outlives the sheet, so hoisting these would make a half-typed
+  // comment and a stale rating reappear the next time the sheet opens.
   int _rating = 5;
   // Held in state, not build(): opening the keyboard rebuilds the sheet, and a
   // controller created in build() would drop whatever was typed.
@@ -36,7 +42,7 @@ class _ReviewSubmitSheetState extends State<ReviewSubmitSheet> {
 
   Future<void> _submit() async {
     setState(() => _submitting = true);
-    final ok = await widget.controller.submitReview(
+    final ok = await widget.onSubmit(
       rating: _rating,
       comment: _comment.text.trim(),
     );
@@ -45,7 +51,7 @@ class _ReviewSubmitSheetState extends State<ReviewSubmitSheet> {
       Get.back(result: true);
       CustomSnackbars.showSuccess(message: 'Thank you for your review');
     } else {
-      // The controller already surfaced the error.
+      // The caller already surfaced the error.
       setState(() => _submitting = false);
     }
   }

@@ -8,6 +8,10 @@ import '../ui/api_dialog_handler.dart';
 /// Handles binary file downloads. These calls bypass the JSON envelope —
 /// they return raw bytes / files and throw `DioException` (not
 /// `ApiException`) on failure, since there's no envelope to parse.
+///
+/// Both methods show a progress dialog by default; pass `showDialog: false`
+/// for a background fetch that should stay silent. Like every other surface in
+/// this layer it is dialogs only — never a snackbar.
 class FileDownloader {
   final Dio dio;
   final ApiDialogHandler dialogs;
@@ -20,13 +24,16 @@ class FileDownloader {
   Future<Response<dynamic>> getFile({
     required String path,
     CancelToken? cancelToken,
+    bool showDialog = true,
   }) async {
     final progress = 0.0.obs;
-    dialogs.showProgress(
-      title: AppTranslations.downloading,
-      progress: progress,
-      cancelToken: cancelToken,
-    );
+    if (showDialog) {
+      dialogs.showProgress(
+        title: AppTranslations.downloading,
+        progress: progress,
+        cancelToken: cancelToken,
+      );
+    }
 
     try {
       final response = await dio.get(
@@ -48,7 +55,7 @@ class FileDownloader {
       );
       return response;
     } finally {
-      dialogs.dismiss();
+      if (showDialog) dialogs.dismiss();
     }
   }
 
@@ -58,16 +65,19 @@ class FileDownloader {
     required String path,
     required String savePath,
     CancelToken? cancelToken,
+    bool showDialog = true,
   }) async {
     final progress = 0.0.obs;
     final file = File(savePath);
     await file.create(recursive: true);
 
-    dialogs.showProgress(
-      title: AppTranslations.downloading,
-      progress: progress,
-      cancelToken: cancelToken,
-    );
+    if (showDialog) {
+      dialogs.showProgress(
+        title: AppTranslations.downloading,
+        progress: progress,
+        cancelToken: cancelToken,
+      );
+    }
 
     try {
       await dio.download(
@@ -90,7 +100,7 @@ class FileDownloader {
       );
       return file;
     } finally {
-      dialogs.dismiss();
+      if (showDialog) dialogs.dismiss();
     }
   }
 }

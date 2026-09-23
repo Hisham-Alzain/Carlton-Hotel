@@ -19,10 +19,9 @@ class DiscoverView extends GetView<DiscoverController> {
         iconTheme: const IconThemeData(color: AppColors.inkBlack),
         title: Text(controller.title),
       ),
-      //TODO: do not use get builder
       //TODO: needs filter
-      body: GetBuilder<DiscoverController>(
-        builder: (_) => controller.loading
+      body: Obx(
+        () => controller.loading.value
             ? const Center(child: CircularProgressIndicator())
             : _list(),
       ),

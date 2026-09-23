@@ -41,6 +41,11 @@ void main() {
       expect(r.comment, 'Lovely evening');
       expect(r.isVerifiedStay, isTrue);
       expect(r.authorName, 'Mona Saleh');
+      // created_at is parsed at the model boundary, not carried as a string.
+      expect(r.createdAt, isA<DateTime>());
+      expect(r.createdAt!.toUtc().year, 2026);
+      expect(r.createdAt!.toUtc().month, 7);
+      expect(r.createdAt!.toUtc().day, 20);
     });
 
     test('tolerates a null comment and a missing author (defaults empty)', () {
@@ -49,9 +54,19 @@ void main() {
         'rating': 5,
       });
       expect(r.comment, isNull);
+      expect(r.createdAt, isNull);
       expect(r.isVerifiedStay, isFalse);
       expect(r.authorFirstName, '');
       expect(r.authorName, '');
+    });
+
+    test('an unparseable created_at becomes null rather than throwing', () {
+      final r = Review.fromJson(<String, dynamic>{
+        'uuid': 'rev-4',
+        'rating': 5,
+        'created_at': 'not-a-date',
+      });
+      expect(r.createdAt, isNull);
     });
 
     test('authorName joins only the non-empty name parts', () {

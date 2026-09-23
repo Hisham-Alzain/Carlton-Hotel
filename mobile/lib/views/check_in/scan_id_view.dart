@@ -91,12 +91,10 @@ class _CameraCaptureArea extends GetView<ScanIdController> {
                   if (initializing)
                     const _CameraLoadingPlaceholder()
                   else
-                    // GetBuilder, not Obx: `camera` is a plain field swapped
-                    // out by the lifecycle hook, so the rebuild comes from the
-                    // controller's own update() rather than an Rx read.
-                    GetBuilder<ScanIdController>(
-                      builder: (c) {
-                        final CameraController? cam = c.cameraController;
+                    Obx(
+                      () {
+                        final CameraController? cam =
+                            controller.cameraController.value;
                         if (cam == null || !cam.value.isInitialized) {
                           return const _CameraLoadingPlaceholder();
                         }

@@ -1,3 +1,4 @@
+import 'package:carlton/components/booking_price_breakdown.dart';
 import 'package:carlton/components/booking_summary_header.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/components/custom_card_form.dart';
@@ -28,6 +29,8 @@ class PaymentView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<BookingFlowController>();
+
     return CustomScaffold(
       appBar: AppBar(
         title: Text('Review Booking'),
@@ -45,8 +48,8 @@ class PaymentView extends StatelessWidget {
           ),
         ],
       ),
-      body: GetBuilder<BookingFlowController>(
-        builder: (controller) {
+      body: Obx(
+        () {
           final TextTheme textStyle = Get.textTheme;
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -65,7 +68,16 @@ class PaymentView extends StatelessWidget {
                     dotColor: AppColors.iceBlue,
                   ),
                 ),
-                BookingSummaryHeader(controller: controller),
+                BookingSummaryHeader(
+                  roomName: controller.selectedRoom.value!.name,
+                  roomImage: controller.selectedRoom.value!.images.first,
+                  dateRange: controller.dateRange,
+                  nights: controller.nights,
+                  totalDisplay: controller.totalDisplay,
+                  priceBreakdown: BookingPriceBreakdown(
+                    summary: controller.priceSummary,
+                  ),
+                ),
                 // CustomPromoBox(
                 //   promoCodeController: controller.promoCtrl,
                 //   onApply: controller.applyPromo,
@@ -82,11 +94,11 @@ class PaymentView extends StatelessWidget {
                     title: method.label,
                     subtitle: method.subtitle,
                     controlType: SelectableControl.radio,
-                    selected: controller.paymentMethod == method,
+                    selected: controller.paymentMethod.value == method,
                     onTap: () => controller.selectPaymentMethod(method),
                     leading: _leadingIcon(
                       _methodIconPaths[method]!,
-                      controller.paymentMethod == method,
+                      controller.paymentMethod.value == method,
                     ),
                   ),
                 ),
@@ -120,7 +132,7 @@ class PaymentView extends StatelessWidget {
   );
 
   static Widget _methodBody(BookingFlowController controller) {
-    switch (controller.paymentMethod) {
+    switch (controller.paymentMethod.value) {
       case PaymentMethod.card:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

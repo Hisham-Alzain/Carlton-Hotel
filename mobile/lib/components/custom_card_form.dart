@@ -2,8 +2,8 @@ import 'package:carlton/components/cards/custom_payment_card_preview.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:carlton/utils/input_formatters.dart';
+import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class CustomCardForm extends StatelessWidget {
@@ -103,24 +103,18 @@ class CustomCardForm extends StatelessWidget {
                   fillColor: AppColors.whisperGrey,
                   onChanged: (_) => onChanged(),
                 ),
-                Row(
+                // iconSize 14 matches lock.svg's own 13.997 viewBox, which is
+                // what the unsized SvgPicture rendered at before.
+                RowTextComponent(
+                  text: '256-bit SSL encrypted · PCI DSS compliant',
+                  iconPath: 'assets/icons/lock.svg',
+                  iconSize: 14,
+                  iconColor: AppColors.taupeBrown,
                   spacing: 10,
-                  children: [
-                    SvgPicture.asset(
-                      'assets/icons/lock.svg',
-                      colorFilter: const ColorFilter.mode(
-                        AppColors.taupeBrown,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                    Text(
-                      '256-bit SSL encrypted · PCI DSS compliant',
-                      style: textStyle.labelSmall?.copyWith(
-                        fontFamily: 'DM Sans',
-                        color: AppColors.taupeBrown,
-                      ),
-                    ),
-                  ],
+                  textStyle: textStyle.labelSmall?.copyWith(
+                    fontFamily: 'DM Sans',
+                    color: AppColors.taupeBrown,
+                  ),
                 ),
               ],
             ),

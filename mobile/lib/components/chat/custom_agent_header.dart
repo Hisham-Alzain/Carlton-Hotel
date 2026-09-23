@@ -1,8 +1,8 @@
 import 'package:carlton/components/custom_initial_avatar.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/theme/app_colors.dart';
+import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// Customer Service conversation header (Figma): agent avatar · a "role" pill
@@ -79,21 +79,12 @@ class CustomAgentHeader extends StatelessWidget {
             fontSize: 13,
             fontWeight: FontWeight.w700,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: const RowTextComponent(
+            text: 'Call',
+            iconPath: 'assets/icons/call.svg',
+            iconSize: 14,
+            iconColor: AppColors.primary,
             spacing: 6,
-            children: [
-              SvgPicture.asset(
-                'assets/icons/call.svg',
-                width: 14,
-                height: 14,
-                colorFilter: const ColorFilter.mode(
-                  AppColors.primary,
-                  BlendMode.srcIn,
-                ),
-              ),
-              const Text('Call'),
-            ],
           ),
         ),
       ],

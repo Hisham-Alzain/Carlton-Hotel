@@ -22,9 +22,9 @@ class AiConciergeView extends GetView<AiConciergeController> {
     return CustomScaffold(
       appBar: AppBar(
         iconTheme: const IconThemeData(color: AppColors.primary),
-        title: GetBuilder<AiConciergeController>(
-          builder: (_) => Text(
-            controller.tabIndex == 0
+        title: Obx(
+          () => Text(
+            controller.tabIndex.value == 0
                 ? AppTranslations.aiTabLabel
                 : AppTranslations.customerServiceTabLabel,
             style: Get.textTheme.titleMedium?.copyWith(
@@ -39,15 +39,18 @@ class AiConciergeView extends GetView<AiConciergeController> {
           ),
         ],
       ),
-      body: GetBuilder<AiConciergeController>(
-        builder: (_) => Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            spacing: 10,
-            children: [
-              CustomSegmentedButton.track(
+      // Three separate observers. The input bar is the reason: `canSend` flips
+      // on every keystroke, and a single body-wide observer would repaint the
+      // whole message thread per character typed.
+      body: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          spacing: 10,
+          children: [
+            Obx(
+              () => CustomSegmentedButton.track(
                 expanded: true,
-                selectedIndex: controller.tabIndex,
+                selectedIndex: controller.tabIndex.value,
                 onChanged: controller.switchTab,
                 segments: [
                   SegmentItem(
@@ -60,14 +63,16 @@ class AiConciergeView extends GetView<AiConciergeController> {
                   ),
                 ],
               ),
-              Expanded(
-                child: controller.tabIndex == 0
+            ),
+            Expanded(
+              child: Obx(
+                () => controller.tabIndex.value == 0
                     ? const _AiTab()
-                    : _CustomerServiceTab(controller: controller),
+                    : const _CustomerServiceTab(),
               ),
-              _buildInputBar(controller),
-            ],
-          ),
+            ),
+            Obx(() => _buildInputBar(controller)),
+          ],
         ),
       ),
     );
@@ -76,11 +81,12 @@ class AiConciergeView extends GetView<AiConciergeController> {
   /// AI tab → plain text field. Customer Service tab → attachment button +
   /// field, with a pending-image chip above and send gated while sending.
   Widget _buildInputBar(AiConciergeController controller) {
-    final isChat = controller.tabIndex == 1;
+    final isChat = controller.tabIndex.value == 1;
+    final attachment = controller.pendingAttachment.value;
     final canSend = isChat
-        ? (controller.canSend || controller.pendingAttachment != null) &&
-              !controller.sending
-        : controller.canSend;
+        ? (controller.canSend.value || attachment != null) &&
+              !controller.sending.value
+        : controller.canSend.value;
 
     final field = CustomChatTextField(
       controller: controller.messageController,
@@ -95,16 +101,18 @@ class AiConciergeView extends GetView<AiConciergeController> {
       mainAxisSize: MainAxisSize.min,
       spacing: 8,
       children: [
-        if (controller.pendingAttachment != null)
+        if (attachment != null)
           _AttachmentPreview(
-            file: controller.pendingAttachment!,
+            file: attachment,
             onRemove: controller.removeAttachment,
           ),
         Row(
           spacing: 8,
           children: [
             _AttachmentButton(
-              onTap: controller.sending ? null : controller.pickAttachment,
+              onTap: controller.sending.value
+                  ? null
+                  : controller.pickAttachment,
             ),
             Expanded(child: field),
           ],
@@ -173,12 +181,12 @@ class _AiTab extends StatelessWidget {
 /// Customer Service conversation: agent header + quick replies + message thread
 /// with loading / empty / error states (real staff chat).
 class _CustomerServiceTab extends StatelessWidget {
-  final AiConciergeController controller;
-
-  const _CustomerServiceTab({required this.controller});
+  const _CustomerServiceTab();
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<AiConciergeController>();
+
     return Column(
       spacing: 10,
       children: [
@@ -190,18 +198,22 @@ class _CustomerServiceTab extends StatelessWidget {
         ),
         const Divider(height: 1, thickness: 1, color: AppColors.black06),
         _QuickReplies(controller: controller),
-        Expanded(child: _thread()),
+        // Only the message list observes the thread — the agent header and the
+        // quick-reply chips above it are static for the tab's lifetime.
+        Expanded(
+          child: Obx(() => _thread(controller)),
+        ),
       ],
     );
   }
 
-  Widget _thread() {
-    if (controller.loadingThread) {
+  Widget _thread(AiConciergeController controller) {
+    if (controller.loadingThread.value) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.primary),
       );
     }
-    if (controller.threadError) {
+    if (controller.threadError.value) {
       return _ThreadError(onRetry: controller.refreshThread);
     }
     if (controller.messages.isEmpty) {

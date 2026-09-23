@@ -16,10 +16,10 @@ class DiscoverController extends GetxController {
       ? Get.arguments
       : DiscoverSection.rooms;
 
-  bool loading = true;
-  List<RoomItem> rooms = [];
-  List<RestaurantItem> restaurants = [];
-  List<ExperienceItem> experiences = [];
+  final RxBool loading = true.obs;
+  final RxList<RoomItem> rooms = <RoomItem>[].obs;
+  final RxList<RestaurantItem> restaurants = <RestaurantItem>[].obs;
+  final RxList<ExperienceItem> experiences = <ExperienceItem>[].obs;
 
   String get title => switch (section) {
     DiscoverSection.rooms => 'Rooms & Suites',
@@ -41,7 +41,7 @@ class DiscoverController extends GetxController {
           showErrorDialog: false,
         );
         if (res.statusCode == 200 && res.data != null) {
-          rooms = res.data!
+          rooms.value = res.data!
               .whereType<Map<String, dynamic>>()
               .map(RoomType.fromJson)
               .map(RoomItem.fromRoomType)
@@ -53,18 +53,17 @@ class DiscoverController extends GetxController {
           showErrorDialog: false,
         );
         if (res.statusCode == 200 && res.data != null) {
-          restaurants = res.data!
+          restaurants.value = res.data!
               .whereType<Map<String, dynamic>>()
               .map(DiningVenue.fromJson)
               .map(RestaurantItem.fromDiningVenue)
               .toList();
         }
       case DiscoverSection.experiences:
-        experiences = DemoData.experiences;
+        experiences.value = DemoData.experiences;
     }
     if (isClosed) return;
-    loading = false;
-    update();
+    loading.value = false;
   }
 
   // ── Row taps ────────────────────────────────────────────────────────────

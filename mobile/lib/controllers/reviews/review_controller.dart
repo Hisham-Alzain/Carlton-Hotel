@@ -14,7 +14,7 @@ import 'package:get/get.dart';
 /// (autoLoad: false — the list is never rendered there).
 ///
 /// A separate controller because [RestaurantController] already mixes
-/// `GetSingleTickerProviderStateMixin` + `GetBuilder` and owns the menu, and the
+/// `GetSingleTickerProviderStateMixin` and owns the menu, and the
 /// single-`T` [PaginatedControllerMixin] can't be mixed twice — the same reason
 /// Phase 2 kept multi-content controllers off the mixin.
 class ReviewController extends GetxController
@@ -46,6 +46,10 @@ class ReviewController extends GetxController
     // Chains into PaginatedControllerMixin.onClose → disposes scrollController.
     super.onClose();
   }
+
+  /// Retry for the Reviews tab's error state — the cancel token is private, so
+  /// the view cannot call [loadItems] itself.
+  Future<void> reload() => loadItems(_cancelToken);
 
   @override
   Future<({List<Review> items, Pagination pagination})?> fetchPage(

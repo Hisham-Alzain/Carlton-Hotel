@@ -17,6 +17,8 @@ class AddOnsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<BookingFlowController>();
+
     return CustomScaffold(
       appBar: AppBar(
         title: Text('Add-Ons'),
@@ -34,10 +36,10 @@ class AddOnsView extends StatelessWidget {
           ),
         ],
       ),
-      body: GetBuilder<BookingFlowController>(
-        builder: (controller) {
+      body: Obx(
+        () {
           final TextTheme textStyle = Get.textTheme;
-          final room = controller.selectedRoom;
+          final room = controller.selectedRoom.value;
           return Padding(
             padding: const EdgeInsets.all(10),
             child: Column(

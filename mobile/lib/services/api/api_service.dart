@@ -34,12 +34,12 @@ import 'ui/api_dialog_handler.dart';
 /// ```
 ///
 /// By default (`showErrorDialog: true`) the failure is already on screen by
-/// the time the call returns — [ApiDialogHandler.showError] maps the
-/// `errorCode` to the right snackbar or dialog; see that method for the full
-/// mapping. Pass `showErrorDialog: false` when the caller needs to run other
-/// logic first (revert an optimistic update, set an inline `errorMessage`)
-/// and report afterwards with `dialogs.showError(response.error!)`, or to
-/// stay fully silent for best-effort/background calls.
+/// the time the call returns, as a **dialog** — this layer never raises a
+/// snackbar, and shows nothing at all when the flag is false. Pass
+/// `showErrorDialog: false` when the caller needs to run other logic first
+/// (revert an optimistic update, set an inline `errorMessage`) and report
+/// afterwards with `dialogs.showError(response.error!)`, or to stay fully
+/// silent for best-effort/background calls.
 ///
 /// [ApiResponse.error] carries the full [ApiException] when a caller needs
 /// to branch — `error!.isValidation`, `error!.validationErrors`,
@@ -261,7 +261,12 @@ class ApiService extends GetxService {
   Future<Response<dynamic>> getFile({
     required String path,
     CancelToken? cancelToken,
-  }) => _downloader.getFile(path: path, cancelToken: cancelToken);
+    bool showDialog = true,
+  }) => _downloader.getFile(
+    path: path,
+    cancelToken: cancelToken,
+    showDialog: showDialog,
+  );
 
   /// Streams a file to disk at [savePath]. Throws [DioException] on
   /// failure.
@@ -269,10 +274,12 @@ class ApiService extends GetxService {
     required String path,
     required String savePath,
     CancelToken? cancelToken,
+    bool showDialog = true,
   }) => _downloader.downloadFile(
     path: path,
     savePath: savePath,
     cancelToken: cancelToken,
+    showDialog: showDialog,
   );
 
   // ══════════════════════════════════════════════════════════════════════

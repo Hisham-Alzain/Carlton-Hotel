@@ -29,69 +29,66 @@ class PreArrivalDocumentsView extends GetView<PreArrivalDocumentsController> {
           ),
         ),
       ),
-      body: GetBuilder<PreArrivalDocumentsController>(
-        builder: (controller) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    CustomInfoBanner(
-                      message: AppTranslations.preArrivalIntro,
-                      tone: InfoBannerTone.info,
-                    ),
-                    const SizedBox(height: 16),
-                    if (controller.docs.isEmpty)
-                      _EmptyState()
-                    else
-                      for (var i = 0; i < controller.docs.length; i++)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _DocumentRow(
-                            document: controller.docs[i],
-                            onTypeChanged: (type) =>
-                                controller.setType(i, type),
-                            onRemove: () => controller.removeDoc(i),
-                          ),
-                        ),
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: controller.pickDocuments,
-                      icon: const Icon(Icons.add, color: AppColors.primary),
-                      label: Text(
-                        AppTranslations.addDocument,
-                        style: Get.textTheme.labelLarge?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.black10),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
+      body: Obx(() {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: ListView(
                 padding: const EdgeInsets.all(16),
-                child: CustomFilledButton(
-                  width: double.infinity,
-                  height: 52,
-                  isLoading: controller.submitting,
-                  onPressed: controller.docs.isEmpty ? null : controller.submit,
-                  child: Text(AppTranslations.submitDocuments),
-                ),
+                children: [
+                  CustomInfoBanner(
+                    message: AppTranslations.preArrivalIntro,
+                    tone: InfoBannerTone.info,
+                  ),
+                  const SizedBox(height: 16),
+                  if (controller.docs.isEmpty)
+                    _EmptyState()
+                  else
+                    for (var i = 0; i < controller.docs.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _DocumentRow(
+                          document: controller.docs[i],
+                          onTypeChanged: (type) => controller.setType(i, type),
+                          onRemove: () => controller.removeDoc(i),
+                        ),
+                      ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: controller.pickDocuments,
+                    icon: const Icon(Icons.add, color: AppColors.primary),
+                    label: Text(
+                      AppTranslations.addDocument,
+                      style: Get.textTheme.labelLarge?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.black10),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          );
-        },
-      ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: CustomFilledButton(
+                width: double.infinity,
+                height: 52,
+                isLoading: controller.submitting.value,
+                onPressed: controller.docs.isEmpty ? null : controller.submit,
+                child: Text(AppTranslations.submitDocuments),
+              ),
+            ),
+          ],
+        );
+      }),
     );
   }
 }

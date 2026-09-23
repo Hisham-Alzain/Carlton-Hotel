@@ -29,6 +29,36 @@ class ReceiptData {
   });
 }
 
+/// The charge breakdown for one priced stay, already formatted for display.
+/// Assembled by `BookingFlowController.priceSummary` from the `/public/quote`
+/// result so the breakdown widget takes one model instead of seven strings.
+class BookingPriceSummary {
+  final String roomName;
+
+  /// The quote's night count, which can differ from the picked range once the
+  /// server has priced the stay.
+  final int nights;
+  final String subtotal;
+
+  /// [promoCode] is only rendered when [hasDiscount] — an unapplied code in the
+  /// field must not show up as a charged line.
+  final bool hasDiscount;
+  final String promoCode;
+  final String discount;
+
+  final String total;
+
+  const BookingPriceSummary({
+    required this.roomName,
+    required this.nights,
+    required this.subtotal,
+    required this.hasDiscount,
+    required this.promoCode,
+    required this.discount,
+    required this.total,
+  });
+}
+
 /// A stay in any of the three My Stays tabs. Fields are optional because each
 /// status renders a different card (see StaysView tab bodies).
 class Stay {

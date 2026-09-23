@@ -31,6 +31,9 @@ class DatabaseSeeder extends Seeder
             // demo_data.dart) and its artwork on top of the generic CMS rows,
             // deliberately overwriting the stock menu every venue was given.
             MobileDemoSeeder::class,
+            // Very last: real photos over every placeholder, plus a year of
+            // history and six months of bookings in every workflow state.
+            DemoShowcaseSeeder::class,
         ]);
     }
 }

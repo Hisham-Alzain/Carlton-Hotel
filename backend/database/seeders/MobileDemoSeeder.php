@@ -102,8 +102,9 @@ class MobileDemoSeeder extends Seeder
         [
             'en' => 'Al-Sham Restaurant', 'ar' => 'مطعم الشام', 'sort' => 0,
             'image' => 'restaurant_alsham.jpg',
-            // DemoData.restaurantGallery — shown on the venue's info tab.
-            'gallery' => ['gallery1.png', 'gallery2.png', 'gallery3.png', 'gallery4.png'],
+            // DemoData.restaurantGallery shipped as gallery1–4.png, since removed
+            // from the app; DemoShowcaseSeeder fills this gallery with web photos.
+            'gallery' => [],
         ],
         [
             'en' => 'Al-Qamar Restaurant', 'ar' => 'مطعم القمر', 'sort' => 1,
@@ -134,39 +135,39 @@ class MobileDemoSeeder extends Seeder
     /** Mirrors `DemoData.restaurantMenu`; every venue opens with the same card. */
     private const MENU = [
         ['slug' => 'breakfast', 'en' => 'Breakfast', 'ar' => 'فطور', 'items' => [
-            ['en' => 'Ful Medames', 'ar' => 'فول مدمس', 'price' => 5, 'vegan' => true, 'image' => 'food_ful.png',
+            ['en' => 'Ful Medames', 'ar' => 'فول مدمس', 'price' => 5, 'vegan' => true, 'image' => null,
              'den' => 'Slow-cooked fava beans, olive oil, lemon, cumin, fresh herbs',
              'dar' => 'فول مطهو ببطء، زيت زيتون، ليمون، كمون، أعشاب طازجة'],
-            ['en' => 'Continental Spread', 'ar' => 'إفطار كونتيننتال', 'price' => 15, 'vegan' => false, 'image' => 'food_spread.png',
+            ['en' => 'Continental Spread', 'ar' => 'إفطار كونتيننتال', 'price' => 15, 'vegan' => false, 'image' => null,
              'den' => 'Pastries, seasonal fruits, yoghurt, honey, Arabic coffee',
              'dar' => 'معجنات، فواكه موسمية، لبن، عسل، قهوة عربية'],
-            ['en' => 'Garden Fresh Omelette', 'ar' => 'أومليت الخضار الطازجة', 'price' => 8, 'vegan' => false, 'image' => 'food_omelette.png',
+            ['en' => 'Garden Fresh Omelette', 'ar' => 'أومليت الخضار الطازجة', 'price' => 8, 'vegan' => false, 'image' => null,
              'den' => 'Eggs, bell peppers, vegetables, cheese, served with toast',
              'dar' => 'بيض، فلفل ملون، خضار، جبن، يُقدَّم مع الخبز المحمّص'],
         ]],
         ['slug' => 'starters', 'en' => 'Starters', 'ar' => 'مقبلات', 'items' => [
-            ['en' => 'Hummus Beiruti', 'ar' => 'حمص بيروتي', 'price' => 6, 'vegan' => true, 'image' => 'food_ful.png',
+            ['en' => 'Hummus Beiruti', 'ar' => 'حمص بيروتي', 'price' => 6, 'vegan' => true, 'image' => null,
              'den' => 'Chickpea purée, tahini, garlic and parsley.',
              'dar' => 'معجون الحمص، طحينة، ثوم وبقدونس.'],
-            ['en' => 'Fattoush', 'ar' => 'فتوش', 'price' => 7, 'vegan' => false, 'image' => 'food_omelette.png',
+            ['en' => 'Fattoush', 'ar' => 'فتوش', 'price' => 7, 'vegan' => false, 'image' => null,
              'den' => 'Crisp greens, sumac and toasted pita.',
              'dar' => 'خضار مقرمشة، سمّاق وخبز محمّص.'],
         ]],
         ['slug' => 'main', 'en' => 'Mains', 'ar' => 'أطباق رئيسية', 'items' => [
-            ['en' => 'Lamb Shish', 'ar' => 'شيش لحم', 'price' => 22, 'vegan' => false, 'image' => 'food_spread.png',
+            ['en' => 'Lamb Shish', 'ar' => 'شيش لحم', 'price' => 22, 'vegan' => false, 'image' => null,
              'den' => 'Chargrilled lamb skewers, rice and grilled tomato.',
              'dar' => 'أسياخ لحم غنم مشوية، أرز وطماطم مشوية.'],
-            ['en' => 'Sea Bass Sayadieh', 'ar' => 'صيادية سمك القاروص', 'price' => 26, 'vegan' => false, 'image' => 'food_omelette.png',
+            ['en' => 'Sea Bass Sayadieh', 'ar' => 'صيادية سمك القاروص', 'price' => 26, 'vegan' => false, 'image' => null,
              'den' => 'Spiced rice, caramelised onions and pine nuts.',
              'dar' => 'أرز بالبهارات، بصل مكرمل وصنوبر.'],
         ]],
         ['slug' => 'dessert', 'en' => 'Desserts', 'ar' => 'حلويات', 'items' => [
-            ['en' => 'Knafeh Nabulsieh', 'ar' => 'كنافة نابلسية', 'price' => 9, 'vegan' => false, 'image' => 'food_spread.png',
+            ['en' => 'Knafeh Nabulsieh', 'ar' => 'كنافة نابلسية', 'price' => 9, 'vegan' => false, 'image' => null,
              'den' => 'Warm cheese pastry, semolina and rose syrup.',
              'dar' => 'معجنات الجبن الدافئة، سميد وشراب الورد.'],
         ]],
         ['slug' => 'beverages', 'en' => 'Beverages', 'ar' => 'مشروبات', 'items' => [
-            ['en' => 'Mint Lemonade', 'ar' => 'ليموناضة بالنعناع', 'price' => 4, 'vegan' => true, 'image' => 'food_ful.png',
+            ['en' => 'Mint Lemonade', 'ar' => 'ليموناضة بالنعناع', 'price' => 4, 'vegan' => true, 'image' => null,
              'den' => 'Fresh lemon, mint and a touch of honey.',
              'dar' => 'ليمون طازج، نعناع ولمسة من العسل.'],
         ]],
@@ -403,7 +404,9 @@ class MobileDemoSeeder extends Seeder
                         ],
                     );
 
-                    $this->attachAssetImages($menuItem, [$item['image']]);
+                    // The food_*.png artwork was dropped from the app; the dish keeps
+                    // no image here and DemoShowcaseSeeder gives breakfast a photo.
+                    $this->attachAssetImages($menuItem, array_filter([$item['image']]));
                 }
             }
         }

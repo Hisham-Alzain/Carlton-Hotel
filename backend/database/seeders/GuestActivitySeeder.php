@@ -91,8 +91,8 @@ class GuestActivitySeeder extends Seeder
 
     private function folios(Guest $ahmad, Reservation $ahmadReservation, Guest $sara, Reservation $saraReservation): void
     {
-        $ahmadFolio = Folio::create(['reservation_id' => $ahmadReservation->id, 'status' => FolioStatus::OPEN, 'subtotal_usd' => 450.00, 'total_usd' => 530.00]);
-        FolioItem::create(['folio_id' => $ahmadFolio->id, 'description' => 'Room charge', 'amount_usd' => 450.00, 'source_type' => 'reservation', 'source_id' => $ahmadReservation->id]);
+        $ahmadFolio = Folio::create(['reservation_id' => $ahmadReservation->id, 'status' => FolioStatus::OPEN, 'subtotal_usd' => 3230.00, 'total_usd' => 3230.00]);
+        FolioItem::create(['folio_id' => $ahmadFolio->id, 'description' => 'Room charge', 'amount_usd' => 3150.00, 'source_type' => 'reservation', 'source_id' => $ahmadReservation->id]);
         FolioItem::create(['folio_id' => $ahmadFolio->id, 'description' => 'Deep Tissue Massage', 'amount_usd' => 80.00, 'source_type' => 'service_booking']);
 
         $saraFolio = Folio::create(['reservation_id' => $saraReservation->id, 'status' => FolioStatus::SETTLED, 'subtotal_usd' => 270.00, 'total_usd' => 270.00, 'approved_by_guest_at' => now()->subDays(7), 'settled_at' => now()->subDays(7)]);

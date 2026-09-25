@@ -116,13 +116,63 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (filled by roadmap) | | |
+| ACCESS-01 | Phase 1 | Pending |
+| ACCESS-02 | Phase 1 | Pending |
+| ACCESS-03 | Phase 1 | Pending |
+| DOCS-01 | Phase 1 (enforced as contract gate in every phase) | Pending |
+| XCUT-01 | Phase 1 (enforced as contract gate in every phase) | Pending |
+| ROOMS-01 | Phase 2 | Pending |
+| ROOMS-02 | Phase 2 | Pending |
+| ROOMS-03 | Phase 2 | Pending |
+| ROOMS-04 | Phase 2 | Pending |
+| RESV-01 | Phase 3 | Pending |
+| RESV-02 | Phase 3 | Pending |
+| RESV-03 | Phase 3 | Pending |
+| RESV-04 | Phase 3 | Pending |
+| GUEST-01 | Phase 4 | Pending |
+| GUEST-02 | Phase 4 | Pending |
+| GUEST-03 | Phase 4 | Pending |
+| GUEST-04 | Phase 4 | Pending |
+| GUEST-05 | Phase 4 | Pending |
+| GUEST-06 | Phase 4 | Pending |
+| FOLIO-01 | Phase 5 | Pending |
+| FOLIO-02 | Phase 5 | Pending |
+| FOLIO-03 | Phase 5 (night-audit flag surfaced in Phase 9) | Pending |
+| FOLIO-04 | Phase 5 | Pending |
+| HK-01 | Phase 6 | Pending |
+| HK-02 | Phase 6 | Pending |
+| HK-03 | Phase 6 | Pending |
+| HK-04 | Phase 6 | Pending |
+| HK-05 | Phase 6 | Pending |
+| SVC-01 | Phase 6 | Pending |
+| SVC-02 | Phase 6 | Pending |
+| SVC-03 | Phase 6 | Pending |
+| SVC-04 | Phase 6 | Pending |
+| TICKET-01 | Phase 7 | Pending |
+| TICKET-02 | Phase 7 | Pending |
+| TICKET-03 | Phase 7 | Pending |
+| TICKET-04 | Phase 7 | Pending |
+| TICKET-05 | Phase 7 | Pending |
+| TICKET-06 | Phase 7 | Pending |
+| TICKET-07 | Phase 7 | Pending |
+| OPS-01 | Phase 7 | Pending |
+| OPS-02 | Phase 7 | Pending |
+| OPS-03 | Phase 7 | Pending |
+| EVENT-01 | Phase 8 | Pending |
+| EVENT-02 | Phase 8 | Pending |
+| EVENT-03 | Phase 8 | Pending |
+| DINING-01 | Phase 8 | Pending |
+| DINING-02 | Phase 8 | Pending |
+| AUDIT-01 | Phase 9 | Pending |
+| AUDIT-02 | Phase 9 | Pending |
+| AUDIT-03 | Phase 9 | Pending |
+| REPORT-01 | Phase 9 | Pending |
 
 **Coverage:**
 - v1 requirements: 51 total
-- Mapped to phases: 0
-- Unmapped: 51 ⚠️
+- Mapped to phases: 51
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-25*
-*Last updated: 2026-09-25 after initial definition*
+*Last updated: 2026-09-25 after roadmap creation*

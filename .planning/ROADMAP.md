@@ -115,7 +115,35 @@ Plans:
   5. Contract gate: all four routes pass happy / 401 / 403 / 422 tests with the suite green, AR/EN keys exist, and the reservation notes, room pick and check-in/out nodes are `api:true`. The guides and Postman are updated, the assign-room behaviour change is announced, and the summary states that no new permissions were added.
 
 **Reuses**: `AssignRoomAction`, `CheckAvailabilityAction`, `RoomAssigned` event → `SendRoomReadyNotification`, `Folio` / `FolioStatus`, the `SettleFolioAction` lock pattern, `reservations.*` and `folios.settle` permissions
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Reservation notes: additive `reservations.notes`, `PATCH /cms/reservations/{reservation}/notes`, staff-only `notes` on the shared resource, five-locale key (RESV-01)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 03-02-PLAN.md — Room pick list: `GET /cms/reservations/{reservation}/available-rooms` in 3 queries on one shared overlap predicate/picker; `config/hotel.php` + `HotelClock` hotel-local date, board and grid defaults aligned (RESV-02)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 03-03-PLAN.md — Check-in verb: `POST /cms/reservations/{reservation}/check-in` (given / pre-assigned / auto-picked room, hotel-local stay window, logged day-before override, maintenance refused, no room-status write), `GuestCheckedIn` on the room-ready listener (RESV-03)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 03-04-PLAN.md — assign-room narrowed to pure assignment (no status flip, `RoomAssigned` only on a move during a stay) and the four legacy tests rewritten in place (RESV-03)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 03-05-PLAN.md — Check-out verb: `POST /cms/reservations/{reservation}/check-out` with the `folio_unsettled` gate, `folios.settle` force with a logged reason, rooms dirty via `UpdateRoomStatusAction` (system actor), `ReservationCheckedOut` after commit, `GenerateFolioAction` guard (RESV-04)
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 03-06-PLAN.md — Guest express checkout through the shared check-out action; `status` / `folio_status` filters on `GET /cms/reservations` (RESV-04)
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
+- [ ] 03-07-PLAN.md — Guides, changelog, Postman, carlton-tree flips, phase gate and the contract summary (no new permissions, [BLOCKING] migrate) (DOCS-01, XCUT-01)
 
 ### Phase 4: Guests & Stay
 

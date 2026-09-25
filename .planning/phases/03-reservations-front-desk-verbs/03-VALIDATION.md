@@ -40,26 +40,44 @@ created: 2026-09-26
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 03-01-01 | 01 | 1 | RESV-01 | T-03-01 / — | Notes staff-only; guest resources omit `notes`; 422 over 2000 chars | feature | `cd backend && php artisan test --filter=ReservationNotesTest` | ❌ W0 | ⬜ pending |
-| 03-02-01 | 02 | 1 | RESV-02 | T-03-02 / — | Only free rooms of the type; maintenance excluded; ≤3 queries | feature | `cd backend && php artisan test --filter=AvailableRoomsTest` | ❌ W0 | ⬜ pending |
-| 03-03-01 | 03 | 2 | RESV-03 | T-03-03 / — | Check-in only from confirmed inside hotel-local window; early_check_in logged; assign-room never flips status | feature + unit | `cd backend && php artisan test --filter=CheckInTest` | ❌ W0 | ⬜ pending |
-| 03-04-01 | 04 | 3 | RESV-04 | T-03-04 / — | 422 folio_unsettled; 403 force w/o folios.settle; forced override logged; rooms dirty; event after commit; guest express shares action | feature + unit | `cd backend && php artisan test --filter=CheckOutTest` | ❌ W0 | ⬜ pending |
-| 03-05-01 | 05 | 4 | DOCS-01, XCUT-01 | — | n/a | manual + grep | tree/guide/Postman checks; summary states no new permissions | n/a | ⬜ pending |
+| 03-01-01 | 01 | 1 | RESV-01 | T-03-01, T-03-04 | Notes contract incl. guest omission and the six RESV-01 probes (RED first) | feature | `cd backend && ! php artisan test --filter=ReservationNotesTest` | ❌ W0 (this task creates it) | ⬜ pending |
+| 03-01-02 | 01 | 1 | RESV-01 | — | `messages.reservation_notes_updated` in five locales, parity kept | locale | `cd backend && php artisan test --filter=LocaleFoundationTest` | ✅ | ⬜ pending |
+| 03-01-03 | 01 | 1 | RESV-01 | T-03-01, T-03-04, T-03-05, T-03-06, T-03-07 | PATCH notes staff-only, any status, 2000-char cap, one activity row per change; additive migration reversible on a scratch DB | feature | `cd backend && php artisan test --filter='ReservationNotesTest\|Tests\\Feature\\Booking'` + route check + scratch migrate/rollback | ✅ after 03-01-01 | ⬜ pending |
+| 03-02-01 | 02 | 2 | RESV-02 | T-03-08, T-03-09, T-03-10, T-03-11 | Pick list, shared predicate/picker and hotel clock specs (RED first) | feature + unit | `cd backend && ! php artisan test --filter='AvailableRoomsTest\|RoomAvailabilityPredicateTest\|HotelClockTest'` | ❌ W0 (this task creates them) | ⬜ pending |
+| 03-02-02 | 02 | 2 | RESV-02 | T-03-01, T-03-08, T-03-09, T-03-10 | Only free, active, non-maintenance rooms of the type; capacity rule; exactly 3 queries; booking pick unchanged | feature + unit | `cd backend && php artisan test --filter='AvailableRoomsTest\|RoomAvailabilityPredicateTest\|Tests\\Feature\\Booking'` + route check | ✅ after 03-02-01 | ⬜ pending |
+| 03-02-03 | 02 | 2 | RESV-02 (D-02) | T-03-11 | Hotel-local business date; board and grid defaults follow it | unit + feature | `cd backend && php artisan test --filter='HotelClockTest\|Tests\\Feature\\Rooms'` | ✅ after 03-02-01 | ⬜ pending |
+| 03-03-01 | 03 | 3 | RESV-03 | T-03-03, T-03-12 | Check-in contract: window, early override, resolution order, maintenance, notifications, board read (RED first) | feature + unit | `cd backend && ! php artisan test --filter='CheckInTest\|CheckInReservationActionTest'` | ❌ W0 (this task creates them) | ⬜ pending |
+| 03-03-02 | 03 | 3 | RESV-03 | — | Two exceptions, GuestCheckedIn, three keys in five locales | lint + locale | `cd backend && php artisan test --filter=LocaleFoundationTest` + `php -l` | ✅ | ⬜ pending |
+| 03-03-03 | 03 | 3 | RESV-03 | T-03-01, T-03-03, T-03-05, T-03-12 | Only confirmed, inside the hotel-local window (day-before override logged); locks reservation then room type; never writes room status; GuestCheckedIn after commit | feature + unit | `cd backend && php artisan test --filter='CheckInTest\|CheckInReservationActionTest\|Tests\\Feature\\Booking\|Tests\\Feature\\Notification'` + route check | ✅ after 03-03-01 | ⬜ pending |
+| 03-04-01 | 04 | 4 | RESV-03 | T-03-14, T-03-15 | Narrowed assign-room spec plus in-place rewrites of the four legacy tests (method counts grow vs `b928abf`) (RED first) | feature | `cd backend && ! php artisan test --filter='AssignRoomTest\|RoomAssignmentAtBookingTest\|StayTest\|ReservationTest\|NotificationTriggersTest'` | ❌ W0 (this task creates / rewrites them) | ⬜ pending |
+| 03-04-02 | 04 | 4 | RESV-03 | T-03-01, T-03-03, T-03-14 | assign-room never flips status; RoomAssigned only on a real move during a stay; shared predicate under lock | feature | `cd backend && php artisan test --filter='Tests\\Feature\\Booking\|Tests\\Feature\\Notification\|Tests\\Feature\\Reservations'` | ✅ after 03-04-01 | ⬜ pending |
+| 03-05-01 | 05 | 5 | RESV-04 | T-03-02, T-03-03, T-03-16 | Check-out gate matrix, force, rooms dirty, event after commit, folio immutability, settle orderings; null-actor room status (RED first) | feature + unit | `cd backend && ! php artisan test --filter='CheckOutTest\|CheckOutReservationActionTest\|test_null_actor_records_a_system_change'` | ❌ W0 (this task creates them) | ⬜ pending |
+| 03-05-02 | 05 | 5 | RESV-04 | — | CheckOutMode, FolioUnsettledException, ReservationCheckedOut, two keys in five locales | lint + locale | `cd backend && php artisan test --filter=LocaleFoundationTest` + `php -l` | ✅ | ⬜ pending |
+| 03-05-03 | 05 | 5 | RESV-04 | T-03-01, T-03-02, T-03-03, T-03-05, T-03-16 | 422 folio_unsettled; 403 force without folios.settle; forced override logged, folio stays open; rooms dirty via the single writer (system actor); event after commit; GenerateFolio guard | feature + unit | `cd backend && php artisan test --filter='CheckOutTest\|CheckOutReservationActionTest\|UpdateRoomStatusActionTest\|Tests\\Feature\\Rooms\|Tests\\Feature\\Folio\|Tests\\Feature\\Reservations\|Tests\\Feature\\Booking'` + route check | ✅ after 03-05-01 | ⬜ pending |
+| 03-06-01 | 06 | 6 | RESV-04 | T-03-02, T-03-05 | Guest express through the shared action; index filters (RED first) | feature | `cd backend && ! php artisan test --filter='ExpressCheckoutTest\|ReservationIndexFilterTest'` | ❌ W0 (this task creates them) | ⬜ pending |
+| 03-06-02 | 06 | 6 | RESV-04 | T-03-03, T-03-05 | Guest approve = GUEST_EXPRESS check-out, guest marker with no causer, atomic on refusal | feature | `cd backend && php artisan test --filter='ExpressCheckoutTest\|Tests\\Feature\\Folio\|CheckOutTest'` | ✅ after 03-06-01 | ⬜ pending |
+| 03-06-03 | 06 | 6 | RESV-04 (D-10) | T-03-01, T-03-17 | `status` / `folio_status` filters; bad folio_status 422 | feature | `cd backend && php artisan test --filter='ReservationIndexFilterTest\|Tests\\Feature\\Reservations\|Tests\\Feature\\Booking'` | ✅ after 03-06-01 | ⬜ pending |
+| 03-07-01 | 07 | 7 | DOCS-01 | T-03-15, T-03-18 | Guide sections in order, breaking callout, error rows, changelog row, mobile push sentence | grep + node + test | verify block of 03-07 Task 1 (`guide order ok`, `docs ok`, PermissionGuideAccuracyTest) | ✅ | ⬜ pending |
+| 03-07-02 | 07 | 7 | DOCS-01 | T-03-20 | Postman 17 requests in safe order; tree 94 nodes / 73 api:true / untouched hash | node | verify block of 03-07 Task 2 (`postman ok`, `tree ok`) | ✅ | ⬜ pending |
+| 03-07-03 | 07 | 7 | DOCS-01, XCUT-01 | T-03-19, T-03-21 | Route guards, seeder unchanged vs `b928abf`, scratch migrate/rollback, full suite, summary contract sections | full suite + node | `cd backend && php artisan test` + verify block of 03-07 Task 3 | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
-*(Task IDs are provisional; the planner replaces this table with the real task list.)*
+*Every plan's Task 1 is its RED spec; a leading `!` in the command means the task passes when the spec fails.*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `backend/tests/Feature/Reservations/ReservationNotesTest.php` — RESV-01
-- [ ] `backend/tests/Feature/Reservations/AvailableRoomsTest.php` — RESV-02 (incl. `expectsDatabaseQueryCount`)
-- [ ] `backend/tests/Feature/Reservations/CheckInTest.php` + `backend/tests/Unit/Booking/CheckInReservationActionTest.php` — RESV-03 (window, early_check_in, maintenance, dirty, GuestCheckedIn event, assign-room narrowed)
-- [ ] `backend/tests/Feature/Reservations/CheckOutTest.php` + `backend/tests/Unit/Booking/CheckOutReservationActionTest.php` — RESV-04 (gate matrix, activity log, rooms dirty, event, guest express regression, settle/check-out concurrency)
-- [ ] Rewrite: `tests/Feature/Booking/RoomAssignmentAtBookingTest.php`, `StayTest.php`, `ReservationTest.php`, `tests/Feature/Notification/NotificationTriggersTest.php` to the new assign-room / check-in semantics
-- Existing factories (Reservation, ReservationRoom, Folio, Room, RoomType, Guest, User) and the per-class `staffToken()` helper cover the rest.
+Each spec is created by the owning plan's Task 1 (RED first), not by a separate Wave 0 plan:
+
+- [ ] `backend/tests/Feature/Reservations/ReservationNotesTest.php` — RESV-01 (03-01-01)
+- [ ] `backend/tests/Feature/Reservations/AvailableRoomsTest.php` (incl. `expectsDatabaseQueryCount(3)`), `backend/tests/Unit/Booking/RoomAvailabilityPredicateTest.php`, `backend/tests/Unit/Booking/HotelClockTest.php`, plus one added method each in `tests/Feature/Rooms/RoomBoardTest.php` and `tests/Feature/Rooms/AvailabilityGridTest.php` — RESV-02 and D-02 (03-02-01)
+- [ ] `backend/tests/Feature/Reservations/CheckInTest.php` + `backend/tests/Unit/Booking/CheckInReservationActionTest.php` — RESV-03 (window, early_check_in, maintenance, dirty, resolution order, GuestCheckedIn, board read, sequential races) (03-03-01)
+- [ ] `backend/tests/Feature/Reservations/AssignRoomTest.php` + in-place rewrites of `tests/Feature/Booking/RoomAssignmentAtBookingTest.php`, `StayTest.php`, `ReservationTest.php`, `tests/Feature/Notification/NotificationTriggersTest.php` — RESV-03 assign-room narrowed (03-04-01)
+- [ ] `backend/tests/Feature/Reservations/CheckOutTest.php` + `backend/tests/Unit/Booking/CheckOutReservationActionTest.php` + `UpdateRoomStatusActionTest::test_null_actor_records_a_system_change` — RESV-04 (gate matrix, activity log, rooms dirty, event after commit, settle/check-out orderings) (03-05-01)
+- [ ] `backend/tests/Feature/Reservations/ExpressCheckoutTest.php` + `backend/tests/Feature/Reservations/ReservationIndexFilterTest.php` — RESV-04 guest express regression and D-10 filters (03-06-01)
+- Existing factories (Reservation, ReservationRoom, Folio, Room, RoomType, Guest, User, DeviceToken, ServiceBooking), `Tests\Support\FakeFirebaseService` and the per-class `staffToken()` helper cover the rest. No framework install needed.
 
 ---
 

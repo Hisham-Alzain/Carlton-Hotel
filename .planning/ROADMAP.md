@@ -76,7 +76,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
 
   1. `GET /front-desk/room-board` returns every room with its housekeeping status and today's occupied / arriving / departing state. The query count stays bounded however many rooms there are.
-  2. A staff member with `rooms.status` moves a room along an allowed transition via `PATCH /cms/rooms/{room}/status`: available → dirty → cleaning → inspected/available, or into and out of maintenance. A disallowed transition returns 422 with a domain `error_code`. Every accepted change writes a `room_status_history` row recording who, when, from and to.
+  2. A staff member with `rooms.status` moves a room along an allowed transition via `PATCH /cms/rooms/{room}/status`: available ↔ dirty, available/dirty → maintenance, maintenance → dirty. A disallowed transition (including same-state) returns 422 with a domain `error_code`. Every accepted change writes a `room_status_history` row recording who, when, from and to.
   3. Changing a room's housekeeping status never changes what the booking availability check returns for a date range, because housekeeping status is independent of availability.
   4. `GET /front-desk/availability-grid?from&days` and `GET /front-desk/rates-grid?from&days` return per-room-type, per-night cells for 14 days by default. The rate grid is read-only, and an invalid `from` or `days` returns 422.
   5. Contract gate: all four routes pass happy / 401 / 403 / 422 tests with the suite green, AR/EN keys exist, and the room-board, room-status, availability-grid and rates-grid nodes are `api:true`. The guides and Postman are updated, and `rooms.status` is seeded with its role presets and listed in the summary.

@@ -16,7 +16,7 @@ All routes are under `/api/v1`. Staff routes use `auth:users` + permission middl
 ### Rooms & Inventory
 
 - [ ] **ROOMS-01**: Front desk can view a room board of every room with housekeeping status and today's occupancy/arrival/departure state (`GET /front-desk/room-board`)
-- [ ] **ROOMS-02**: Authorized staff can change a room's housekeeping status through an explicit transition table (available → dirty → cleaning → inspected/available, plus maintenance), independent of availability, with a `room_status_history` row recording who/when/from/to (`PATCH /cms/rooms/{room}/status`, new permission `rooms.status`)
+- [ ] **ROOMS-02**: Authorized staff can change a room's housekeeping status through an explicit transition table (available ↔ dirty; available/dirty → maintenance; maintenance → dirty), independent of availability, with a `room_status_history` row recording who/when/from/to (`PATCH /cms/rooms/{room}/status`, new permission `rooms.status`)
 - [ ] **ROOMS-03**: Front desk can view a 14-day availability grid per room type (`GET /front-desk/availability-grid?from&days`)
 - [ ] **ROOMS-04**: Front desk can view a 14-day read-only nightly rate grid per room type (`GET /front-desk/rates-grid?from&days`)
 

@@ -1,4 +1,5 @@
-import 'package:carlton/models/bilingual.dart';
+import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/models/localized.dart';
 
 /// The three stay-projection DTOs behind the My Stays tabs. Each is a genuinely
 /// different response shape (guide "Module: Stays"), so they are three classes
@@ -23,7 +24,7 @@ class ActiveStay {
   final String bookingCode;
   final String status;
   final String? roomNumber; // whenLoaded — may be absent
-  final Bilingual roomName; // whenLoaded — absent → Bilingual('','')
+  final Localized roomName; // whenLoaded — absent → Localized.empty
   final DateTime? checkIn;
   final DateTime? checkOut;
   final DateTime? checkedInAt; // null for legacy stays → fall back to checkIn
@@ -39,7 +40,7 @@ class ActiveStay {
     required this.bookingCode,
     required this.status,
     this.roomNumber,
-    this.roomName = const Bilingual(en: '', ar: ''),
+    this.roomName = Localized.empty,
     this.checkIn,
     this.checkOut,
     this.checkedInAt,
@@ -57,7 +58,7 @@ class ActiveStay {
       bookingCode: json['booking_code'] as String? ?? '',
       status: json['status'] as String? ?? '',
       roomNumber: json['room_number']?.toString(),
-      roomName: Bilingual.fromJson(json['room_name']),
+      roomName: Localized.fromJson(json['room_name']),
       checkIn: _date(json['check_in']),
       checkOut: _date(json['check_out']),
       checkedInAt: _date(json['checked_in_at']),
@@ -76,7 +77,7 @@ class UpcomingStay {
   final String bookingCode;
   final String status;
   final String? roomNumber;
-  final Bilingual roomName;
+  final Localized roomName;
   final String priceUsd; // decimal string = reservation total
   final DateTime? checkIn;
   final DateTime? checkOut;
@@ -88,7 +89,7 @@ class UpcomingStay {
     required this.bookingCode,
     this.status = '',
     this.roomNumber,
-    this.roomName = const Bilingual(en: '', ar: ''),
+    this.roomName = Localized.empty,
     this.priceUsd = '0',
     this.checkIn,
     this.checkOut,
@@ -101,7 +102,7 @@ class UpcomingStay {
     bookingCode: json['booking_code'] as String? ?? '',
     status: json['status'] as String? ?? '',
     roomNumber: json['room_number']?.toString(),
-    roomName: Bilingual.fromJson(json['room_name']),
+    roomName: Localized.fromJson(json['room_name']),
     priceUsd: json['price_usd']?.toString() ?? '0',
     checkIn: _date(json['check_in']),
     checkOut: _date(json['check_out']),
@@ -123,7 +124,7 @@ class UpcomingStay {
 class PastStay {
   final String uuid;
   final String bookingCode;
-  final Bilingual roomName;
+  final Localized roomName;
   final int totalNights;
   final DateTime? checkIn;
   final DateTime? checkOut;
@@ -136,7 +137,7 @@ class PastStay {
   const PastStay({
     required this.uuid,
     required this.bookingCode,
-    this.roomName = const Bilingual(en: '', ar: ''),
+    this.roomName = Localized.empty,
     this.totalNights = 0,
     this.checkIn,
     this.checkOut,
@@ -149,15 +150,15 @@ class PastStay {
 
   /// Client-side label — the backend has no `complete` status.
   String get statusLabel => switch (status) {
-    'checked_out' => 'Completed',
-    'cancelled' => 'Cancelled',
+    'checked_out' => AppTranslations.stayStatusCompleted,
+    'cancelled' => AppTranslations.stayStatusCancelled,
     _ => status,
   };
 
   factory PastStay.fromJson(Map<String, dynamic> json) => PastStay(
     uuid: json['uuid'] as String? ?? '',
     bookingCode: json['booking_code'] as String? ?? '',
-    roomName: Bilingual.fromJson(json['room_name']),
+    roomName: Localized.fromJson(json['room_name']),
     totalNights: (json['total_nights'] as num?)?.toInt() ?? 0,
     checkIn: _date(json['check_in']),
     checkOut: _date(json['check_out']),

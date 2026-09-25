@@ -13,6 +13,8 @@ class AccountController extends GetxController {
 
   void openPreferences() => Get.toNamed(Routes.preferences);
 
+  void openLoyalty() => Get.toNamed(Routes.loyalty);
+
   /// Edit the profile (reuses the Create Profile form, pre-filled).
   void editProfile() => Get.toNamed(Routes.editProfile, arguments: true);
 
@@ -25,7 +27,10 @@ class AccountController extends GetxController {
     showSignOutSheet(
       onConfirm: () async {
         await MiddlewareService.find.signOut();
-        Get.offAllNamed(Routes.signIn);
+        // Back to the entry fork ("do you have a reservation?") rather than
+        // straight to Sign In — a signed-out guest may want to browse or link a
+        // booking, and Sign In is only one of those three paths.
+        Get.offAllNamed(Routes.reservationChoice);
       },
     );
   }

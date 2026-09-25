@@ -1,4 +1,4 @@
-import 'package:carlton/models/bilingual.dart';
+import 'package:carlton/models/localized.dart';
 import 'package:carlton/models/json_num.dart';
 import 'package:carlton/models/media_image.dart';
 
@@ -6,14 +6,14 @@ import 'package:carlton/models/media_image.dart';
 /// (`/public/dining-venues/{uuid}`).
 class DiningVenue {
   final String uuid;
-  final Bilingual name;
-  final Bilingual description;
+  final Localized name;
+  final Localized description;
 
   // The live API returns these as bilingual `{en, ar}` objects (not plain
-  // strings), so they're parsed as [Bilingual] — resolve with `.value`.
-  final Bilingual cuisineType;
-  final Bilingual hours;
-  final Bilingual location;
+  // strings), so they're parsed as [Localized] — resolve with `.value`.
+  final Localized cuisineType;
+  final Localized hours;
+  final Localized location;
   final double? rating;
   final int ratingCount;
   final List<MediaImage> images;
@@ -23,9 +23,9 @@ class DiningVenue {
     required this.uuid,
     required this.name,
     required this.description,
-    this.cuisineType = const Bilingual(en: '', ar: ''),
-    this.hours = const Bilingual(en: '', ar: ''),
-    this.location = const Bilingual(en: '', ar: ''),
+    this.cuisineType = Localized.empty,
+    this.hours = Localized.empty,
+    this.location = Localized.empty,
     this.rating,
     this.ratingCount = 0,
     this.images = const [],
@@ -36,11 +36,11 @@ class DiningVenue {
     final images = MediaImage.listFromJson(json['images']);
     return DiningVenue(
       uuid: json['uuid'] as String? ?? '',
-      name: Bilingual.fromJson(json['name']),
-      description: Bilingual.fromJson(json['description']),
-      cuisineType: Bilingual.fromJson(json['cuisine_type']),
-      hours: Bilingual.fromJson(json['hours']),
-      location: Bilingual.fromJson(json['location']),
+      name: Localized.fromJson(json['name']),
+      description: Localized.fromJson(json['description']),
+      cuisineType: Localized.fromJson(json['cuisine_type']),
+      hours: Localized.fromJson(json['hours']),
+      location: Localized.fromJson(json['location']),
       rating: asDouble(json['rating']),
       ratingCount: asInt(json['rating_count']) ?? 0,
       images: images,

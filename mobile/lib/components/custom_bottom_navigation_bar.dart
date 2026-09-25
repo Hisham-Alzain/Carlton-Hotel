@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -9,12 +10,29 @@ class BottomNavBarItem {
   const BottomNavBarItem({required this.iconPath, required this.label});
 }
 
-const items = [
-  BottomNavBarItem(iconPath: 'assets/icons/home.svg', label: 'Home'),
-  BottomNavBarItem(iconPath: 'assets/icons/bedstays.svg', label: 'Stays'),
-  BottomNavBarItem(iconPath: 'assets/icons/book.svg', label: 'Book'),
-  BottomNavBarItem(iconPath: 'assets/icons/ring2.svg', label: 'Services'),
-  BottomNavBarItem(iconPath: 'assets/icons/profile.svg', label: 'Account'),
+/// Resolved per build so the labels follow `Get.updateLocale`; a top-level
+/// `const` list would pin them to the launch locale.
+List<BottomNavBarItem> get items => [
+  BottomNavBarItem(
+    iconPath: 'assets/icons/home.svg',
+    label: AppTranslations.navHome,
+  ),
+  BottomNavBarItem(
+    iconPath: 'assets/icons/doublebed.svg',
+    label: AppTranslations.navStays,
+  ),
+  BottomNavBarItem(
+    iconPath: 'assets/icons/book.svg',
+    label: AppTranslations.navBook,
+  ),
+  BottomNavBarItem(
+    iconPath: 'assets/icons/ring2.svg',
+    label: AppTranslations.navServices,
+  ),
+  BottomNavBarItem(
+    iconPath: 'assets/icons/profile.svg',
+    label: AppTranslations.navAccount,
+  ),
 ];
 
 /// Plain icon used by every tab except the raised "Book" tab.

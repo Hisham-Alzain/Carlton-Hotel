@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:carlton/constants/storage_keys.dart';
+import 'package:carlton/l10n/local.dart';
 import 'package:carlton/models/currency.dart';
 import 'package:carlton/models/language.dart';
 import 'package:carlton/services/get_storage_service.dart';
@@ -9,21 +10,36 @@ class SettingsService extends GetxService {
   /// Reactive state
   final Rx<Locale> locale = const Locale('en').obs;
   final Rx<Language> language = Language(name: 'English', local: 'en').obs;
-  final Rx<Currency> currency = Currency(
-    name: 'USD \$',
-    value: 'usd',
-    symbol: '\$',
-  ).obs;
+  final Rx<Currency> currency = currencies.first.obs;
 
   /// Available options
+  /// Each language is named in its own script — a guest who cannot read the
+  /// current UI language still has to be able to find their own row.
+  /// Order and membership follow [Local.supportedCodes].
+  static const Map<String, String> _endonyms = {
+    'en': 'English',
+    'ar': 'العربية',
+    'fr': 'Français',
+    'tr': 'Türkçe',
+    'es': 'Español',
+  };
+
   final List<Language> langs = [
-    Language(name: 'English', local: 'en'),
-    Language(name: 'العربية', local: 'ar'),
+    for (final code in Local.supportedCodes)
+      Language(name: _endonyms[code]!, local: code),
   ];
 
-  final List<Currency> currencies = [
-    Currency(name: 'USD \$', value: 'usd', symbol: '\$'),
-    Currency(name: 'SYP', value: 'syp', symbol: 'SYP'),
+  /// The three currencies the app ships. USD is the base — every monetary
+  /// field on the wire is `*_usd` — and the other two are converted at display
+  /// time by [MoneyFormat]. Order here is picker order.
+  ///
+  /// `value` is the persisted code: renaming one resets every guest who had it
+  /// selected. Display names are localized via [AppTranslations], not stored
+  /// here, so they follow the language switch.
+  static const List<Currency> currencies = [
+    Currency(value: 'usd', code: 'USD', symbol: '\$'),
+    Currency(value: 'syp', code: 'SYP', symbol: '£S', decimalDigits: 0),
+    Currency(value: 'try', code: 'TRY', symbol: '₺'),
   ];
 
   @override
@@ -38,10 +54,16 @@ class SettingsService extends GetxService {
   /// -------- LANGUAGE --------
 
   void _loadLocale() {
-    final storedLang = StorageService.getString(StorageKeys.language);
-
-    final code =
-        storedLang ?? ((Get.deviceLocale?.languageCode == 'ar') ? 'ar' : 'en');
+    // An explicit choice always wins. Failing that, fall back to the device
+    // locale when the app actually ships it — previously this only ever
+    // resolved to `ar` or `en`, so a French or Turkish phone silently got
+    // English even after those locales existed.
+    final stored = StorageService.getString(StorageKeys.language);
+    final device = Get.deviceLocale?.languageCode;
+    final code = [stored, device].firstWhere(
+      (c) => c != null && Local.supportedCodes.contains(c),
+      orElse: () => Local.supportedCodes.first,
+    )!;
 
     locale.value = Locale(code);
 

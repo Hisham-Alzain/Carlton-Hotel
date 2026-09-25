@@ -1,8 +1,11 @@
-// UI models for the homepage listings. Rooms/dining are mapped from the public
-// content DTOs at the controller boundary (see the fromRoomType/fromDiningVenue
-// factories); experiences stay demo-only.
+// UI models for the homepage listings. Rooms/dining/experiences are mapped
+// from the public content DTOs at the controller boundary (see the
+// fromRoomType/fromDiningVenue/fromExperience factories).
 
+import 'package:carlton/extensions/price_extension.dart';
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/dining_venue.dart';
+import 'package:carlton/models/experience.dart';
 import 'package:carlton/models/room_type.dart';
 
 /// Which Home section a "Discover All" tap opened, carried as the route
@@ -47,22 +50,30 @@ class RoomItem {
     this.amenities = const [],
   });
 
-  factory RoomItem.fromRoomType(RoomType r) => RoomItem(
-    uuid: r.uuid,
-    name: r.name.value,
+  factory RoomItem.fromRoomType(RoomType roomType) => RoomItem(
+    uuid: roomType.uuid,
+    name: roomType.name.value,
     // The meta row is a short "City view" label — NOT the full description,
     // which is a paragraph and overflowed the fixed-width meta chip.
-    view: (r.viewType != null && r.viewType!.isNotEmpty)
-        ? '${r.viewType![0].toUpperCase()}${r.viewType!.substring(1)} view'
+    view: (roomType.viewType != null && roomType.viewType!.isNotEmpty)
+        ? AppTranslations.roomView(
+            '${roomType.viewType![0].toUpperCase()}${roomType.viewType!.substring(1)}',
+          )
         : '',
-    area: r.sizeSqm != null ? '${r.sizeSqm} m²' : '',
+    area: roomType.sizeSqm != null
+        ? AppTranslations.roomSize('${roomType.sizeSqm}')
+        : '',
     guests: '',
-    bed: r.bedTypes.isNotEmpty ? '${r.bedTypes.first} bed' : '',
-    priceAmount: '\$${r.basePriceUsd}',
-    imagePath: r.banner?.url ?? '',
-    rating: r.rating ?? 0,
-    reviews: r.ratingCount,
-    amenities: r.highlights.map((a) => a.name.value).toList(),
+    bed: roomType.bedTypes.isNotEmpty
+        ? AppTranslations.roomBed(roomType.bedTypes.first)
+        : '',
+    priceAmount: MoneyFormat.usdString(roomType.basePriceUsd),
+    imagePath: roomType.banner?.url ?? '',
+    rating: roomType.rating ?? 0,
+    reviews: roomType.ratingCount,
+    amenities: roomType.highlights
+        .map((amenity) => amenity.name.value)
+        .toList(),
   );
 }
 
@@ -91,19 +102,34 @@ class RestaurantItem {
     this.reviews = 142,
   });
 
-  factory RestaurantItem.fromDiningVenue(DiningVenue v) => RestaurantItem(
-    uuid: v.uuid,
-    name: v.name.value,
-    cuisine: v.cuisineType.value,
-    hours: v.hours.value,
-    location: v.location.value,
-    imagePath: v.banner?.url ?? '',
-    rating: v.rating ?? 0,
-    reviews: v.ratingCount,
+  /// Empty venue used for the single frame a detail screen may render before a
+  /// routing error pops it. Deliberately blank rather than a plausible-looking
+  /// demo venue, so a guest never briefly sees details for somewhere real.
+  static const RestaurantItem blank = RestaurantItem(
+    name: '',
+    cuisine: '',
+    hours: '',
+    location: '',
+    imagePath: '',
+    rating: 0,
+    reviews: 0,
   );
+
+  factory RestaurantItem.fromDiningVenue(DiningVenue diningVenue) =>
+      RestaurantItem(
+        uuid: diningVenue.uuid,
+        name: diningVenue.name.value,
+        cuisine: diningVenue.cuisineType.value,
+        hours: diningVenue.hours.value,
+        location: diningVenue.location.value,
+        imagePath: diningVenue.banner?.url ?? '',
+        rating: diningVenue.rating ?? 0,
+        reviews: diningVenue.ratingCount,
+      );
 }
 
 class ExperienceItem {
+  final String uuid;
   final String name;
 
   /// One-line descriptor shown on the first meta row (e.g. a cuisine or a
@@ -127,8 +153,25 @@ class ExperienceItem {
     required this.hours,
     required this.imagePath,
     required this.category,
+    this.uuid = '',
     this.rating = 4.9,
     this.reviews = 142,
     this.badge,
   });
+
+  /// [Experience] carries no review system yet (no `HasReviews` on the
+  /// backend model), so rating/reviews come back honestly zeroed rather than
+  /// inheriting the demo defaults above.
+  factory ExperienceItem.fromExperience(Experience experience) =>
+      ExperienceItem(
+        uuid: experience.uuid,
+        name: experience.title.value,
+        subtitle: experience.groupSize.value,
+        hours: experience.durationLabel.value,
+        imagePath: experience.image ?? '',
+        category: experience.category,
+        rating: 0,
+        reviews: 0,
+        badge: experience.category.isEmpty ? null : experience.category,
+      );
 }

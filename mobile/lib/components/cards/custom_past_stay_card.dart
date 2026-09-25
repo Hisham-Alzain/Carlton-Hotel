@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/models/booking_models.dart';
@@ -66,7 +67,7 @@ class CustomPastStayCard extends StatelessWidget {
                 PillContainer(
                   backgroundColor: AppColors.successGreen07,
                   child: Text(
-                    'COMPLETED',
+                    AppTranslations.completedCaps,
                     style: textStyle.labelSmall?.copyWith(
                       fontFamily: 'DM Sans',
                       fontWeight: FontWeight.w700,
@@ -81,7 +82,7 @@ class CustomPastStayCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Total charged',
+                  AppTranslations.totalCharged,
                   style: textStyle.labelLarge?.copyWith(
                     fontFamily: 'DM Sans',
                     color: AppColors.taupeBrown,
@@ -106,7 +107,7 @@ class CustomPastStayCard extends StatelessWidget {
                     backgroundColor: AppColors.pearlCream,
                     foregroundColor: AppColors.inkBlack,
                     onPressed: onViewReceipt,
-                    child: Text('View Receipt'),
+                    child: Text(AppTranslations.viewReceipt),
                   ),
                 ),
                 Expanded(
@@ -115,7 +116,7 @@ class CustomPastStayCard extends StatelessWidget {
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     onPressed: onBookAgain,
-                    child: Text('Book Again'),
+                    child: Text(AppTranslations.bookAgain),
                   ),
                 ),
               ],

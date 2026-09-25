@@ -73,8 +73,8 @@ class CustomStayCard extends StatelessWidget {
             width: 144,
             foregroundDecoration: const BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
                 colors: [AppColors.iceBlue50, AppColors.surfTeal50],
               ),
             ),

@@ -1,5 +1,5 @@
-/// Preferences tab payload (Figma `75:808`). Ids match the `PreferenceOption`
-/// ids already in DemoData.bedOptions / pillowOptions / mattressOptions.
+/// Preferences tab payload (Figma `2237:4912`). Ids match the `PreferenceOption`
+/// ids already in PreferenceOptions.bedOptions / pillowOptions / mattressOptions.
 class StayPreferences {
   final String bedTypeId;
   final String pillowId;

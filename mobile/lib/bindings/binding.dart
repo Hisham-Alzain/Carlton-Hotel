@@ -1,4 +1,6 @@
+import 'package:carlton/controllers/services/airport_transfer_controller.dart';
 import 'package:carlton/controllers/account/account_controller.dart';
+import 'package:carlton/controllers/account/loyalty_controller.dart';
 import 'package:carlton/controllers/account/preferences_controller.dart';
 import 'package:carlton/controllers/dining/restaurant_controller.dart';
 import 'package:carlton/controllers/reviews/review_controller.dart';
@@ -38,9 +40,19 @@ class MainBinding implements Bindings {
     // The Home + Services tabs live inside the shell, so their controllers are
     // owned here.
     Get.lazyPut(() => HomeController(), fenix: true);
+    // Opened from the pre-arrival Home card; fenix so it survives the tab
+    // controller being recreated mid-flow.
+    Get.lazyPut(() => AirportTransferController(), fenix: true);
     Get.lazyPut(() => ServicesController(), fenix: true);
     Get.lazyPut(() => StaysController(), fenix: true);
     Get.lazyPut(() => AccountController(), fenix: true);
+  }
+}
+
+class LoyaltyBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => LoyaltyController());
   }
 }
 

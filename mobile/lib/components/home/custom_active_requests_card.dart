@@ -1,12 +1,14 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/models/service_request.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-/// "Active Requests" card on the reservation-state Home (Figma 2197:3262): a
+/// "Active Requests" card on the reservation-state Home (Figma 2237:3914): a
 /// heading, one thumbnail row per in-house request with a right-aligned status
 /// pill, and a New Request button.
 class CustomActiveRequestsCard extends StatelessWidget {
@@ -47,7 +49,7 @@ class CustomActiveRequestsCard extends StatelessWidget {
           children: [
             if (showHeading)
               Text(
-                'Active Requests',
+                AppTranslations.activeRequests,
                 style: textStyle.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkBlack,
@@ -74,7 +76,10 @@ class CustomActiveRequestsCard extends StatelessWidget {
                 side: const BorderSide(color: AppColors.black10),
               ),
               // The Icon takes its colour from the button's foregroundColor.
-              child: RowTextComponent(text: 'New Request', icon: Icons.add),
+              child: RowTextComponent(
+                text: AppTranslations.newRequest,
+                icon: Icons.add,
+              ),
             ),
           ],
         ),
@@ -127,9 +132,14 @@ class _RequestRow extends StatelessWidget {
                   child: request.iconAsset != null
                       ? Opacity(
                           opacity: 0.7,
-                          child: Image.asset(
+                          child: SvgPicture.asset(
                             request.iconAsset!,
-                            fit: BoxFit.contain,
+                            width: 16,
+                            height: 16,
+                            colorFilter: const ColorFilter.mode(
+                              AppColors.primary,
+                              BlendMode.srcIn,
+                            ),
                           ),
                         )
                       : const SizedBox.shrink(),

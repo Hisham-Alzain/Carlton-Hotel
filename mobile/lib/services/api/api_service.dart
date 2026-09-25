@@ -59,7 +59,7 @@ class ApiService extends GetxService {
   /// (`10.0.2.2` is emulator-only and is unreachable from a real phone.)
   static const String host = String.fromEnvironment(
     'API_HOST',
-    defaultValue: 'http://10.208.207.51:8000 ',
+    defaultValue: 'http://localhost:8000',
   );
 
   static const String baseUrl = '$host/api';
@@ -96,7 +96,9 @@ class ApiService extends GetxService {
     // Clear token + guest identity. MiddlewareService owns both; fall back to a
     // raw token wipe if it isn't registered yet (very early startup).
     if (Get.isRegistered<MiddlewareService>()) {
-      MiddlewareService.find.signOut();
+      // No remote revoke: the token that just 401'd is already invalid, and
+      // calling logout with it would 401 again and recurse through here.
+      MiddlewareService.find.signOut(revokeRemotely: false);
     } else {
       StorageService.remove(StorageKeys.token);
       StorageService.remove(StorageKeys.guest);

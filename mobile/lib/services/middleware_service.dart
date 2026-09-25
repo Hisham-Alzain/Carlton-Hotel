@@ -1,3 +1,4 @@
+import 'package:carlton/services/check_in_service.dart';
 import 'package:carlton/constants/storage_keys.dart';
 import 'package:carlton/enums/enums.dart';
 import 'package:carlton/models/guest.dart';
@@ -79,11 +80,37 @@ class MiddlewareService extends GetxService {
   void updateGuest(Guest next) => _setGuest(next);
 
   /// Clears token + guest everywhere. Called on explicit sign-out and on a 401.
-  Future<void> signOut() async {
+  ///
+  /// [revokeRemotely] tells the server to delete the token too. Clearing local
+  /// storage alone left the bearer token valid until expiry, so a "signed out"
+  /// device still held a working credential. Skipped for the 401 path, where
+  /// the token is already dead and the call would only 401 again.
+  Future<void> signOut({bool revokeRemotely = true}) async {
+    if (revokeRemotely && StorageService.getString(StorageKeys.token) != null) {
+      // Best-effort and awaited before the local wipe, since the request needs
+      // the token it is revoking. A failure here must not strand the guest in a
+      // signed-in UI, so errors are swallowed and the local clear runs anyway.
+      await ApiService.find.post(
+        path: '/auth/guest/logout',
+        data: {
+          // Detaches this phone's push registration server-side; other devices
+          // the guest is signed in on keep receiving notifications.
+          'device_token': StorageService.getString(StorageKeys.fcmToken),
+        },
+        showErrorDialog: false,
+      );
+    }
+
     await StorageService.remove(StorageKeys.token);
     await StorageService.remove(StorageKeys.guest);
+    await StorageService.remove(StorageKeys.fcmToken);
     guest.value = null;
     middlewareCase = MiddlewareCases.noToken;
+
+    // CheckInService is permanent, so its state outlives the session unless it
+    // is cleared here — including the previous guest's scanned ID number and
+    // document photo path.
+    if (Get.isRegistered<CheckInService>()) CheckInService.find.reset();
   }
 
   // ── Private ───────────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -29,7 +30,7 @@ class CustomPromoBox extends StatelessWidget {
         spacing: 10,
         children: [
           Text(
-            'Promo Code',
+            AppTranslations.promoCode,
             style: textStyle.labelMedium?.copyWith(
               fontFamily: 'Plus Jakarta Sans',
               color: AppColors.inkBlack,
@@ -43,14 +44,14 @@ class CustomPromoBox extends StatelessWidget {
                 child: CustomTextField(
                   controller: promoCodeController,
                   textInputType: TextInputType.text,
-                  hintText: 'Enter promo code',
+                  hintText: AppTranslations.promoHint,
                   fillColor: AppColors.whisperGrey,
                 ),
               ),
               CustomFilledButton(
                 height: 44,
                 onPressed: onApply,
-                child: const Text('Apply'),
+                child: Text(AppTranslations.apply),
               ),
             ],
           ),

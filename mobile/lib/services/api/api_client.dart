@@ -10,7 +10,6 @@ import 'interceptors/retry_interceptor.dart';
 
 /// Builds a fully-configured [Dio] instance with the project's interceptor
 /// stack. Order matters — see comments inline.
-/// //TODO: worth checking if it could be merged and why path is not passed here
 class ApiClient {
   static const String defaultBaseUrl = '';
   static const Duration defaultTimeout = Duration(seconds: 30);

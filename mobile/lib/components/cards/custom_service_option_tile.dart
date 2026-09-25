@@ -7,8 +7,8 @@ import 'package:get/get.dart';
 /// A tappable row for one service-catalog option inside a category detail
 /// list: leading icon chip, title/description/ETA, trailing chevron.
 class CustomServiceOptionTile extends StatelessWidget {
-  /// Optional per-option SVG. The service catalog gives no per-item icon, so
-  /// this is null there and a generic glyph is shown instead.
+  /// Optional per-option SVG. Null for icon keys with no extracted asset yet,
+  /// which fall back to the generic service bell.
   final String? iconPath;
   final String title;
   final String description;
@@ -44,21 +44,15 @@ class CustomServiceOptionTile extends StatelessWidget {
           child: Row(
             spacing: 20,
             children: [
-              iconPath != null
-                  ? SvgPicture.asset(
-                      height: 32,
-                      width: 32,
-                      iconPath!,
-                      colorFilter: const ColorFilter.mode(
-                        AppColors.antiqueGold,
-                        BlendMode.srcIn,
-                      ),
-                    )
-                  : const Icon(
-                      Icons.room_service_outlined,
-                      size: 32,
-                      color: AppColors.antiqueGold,
-                    ),
+              SvgPicture.asset(
+                iconPath ?? 'assets/icons/tab_service.svg',
+                height: 32,
+                width: 32,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.antiqueGold,
+                  BlendMode.srcIn,
+                ),
+              ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

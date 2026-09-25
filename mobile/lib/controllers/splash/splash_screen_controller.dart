@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/middleware_service.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -73,17 +74,35 @@ class SplashScreenController extends GetxController
     animationController.forward();
 
     animationController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        // Refresh entitlements from /me in the background; route on the cached
-        // session so the splash isn't network-blocked on cold start.
-        MiddlewareService.find.checkToken();
-        Get.offAllNamed(
-          MiddlewareService.find.isAuthenticated
-              ? Routes.main
-              : Routes.reservationChoice,
-        );
-      }
+      if (status == AnimationStatus.completed) _routeOnward();
     });
+  }
+
+  /// Cold start with a saved session: refresh entitlements, fetch the current
+  /// reservation, and resolve the Home state *before* leaving the splash — so
+  /// a returning guest never sees one Home variant swapped for another a
+  /// moment later. Signed out, the guest picks a path first.
+  ///
+  /// This makes the splash wait on the network where it previously routed off
+  /// the cached session. Both calls fail soft (a dead backend yields a null
+  /// reservation, not an error), so the cost of an unreachable API is a slower
+  /// splash, never a blocked one.
+  Future<void> _routeOnward() async {
+    if (!MiddlewareService.find.isAuthenticated) {
+      await Get.offAllNamed(Routes.reservationChoice);
+      return;
+    }
+    // /me first: has_booking and is_checked_in are refreshed from it, and the
+    // stay dashboard Home loads next reads them.
+    await MiddlewareService.find.checkToken();
+    if (isClosed) return;
+    // A saved-but-revoked token 401s here, and ErrorInterceptor has already
+    // signed the guest out and replaced the stack with Sign In. Routing Home
+    // now would stomp that redirect and land an unauthenticated guest on the
+    // stay dashboard, so re-read the session rather than trusting the one we
+    // checked before the await.
+    if (!MiddlewareService.find.isAuthenticated) return;
+    await HomeController.restoreAndGoHome();
   }
 
   @override

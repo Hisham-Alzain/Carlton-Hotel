@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/components/custom_info_banner.dart';
 import 'package:carlton/components/custom_price_summary.dart';
@@ -30,7 +31,7 @@ class ReceiptSheet extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Res. #${receipt.resCode}',
+                AppTranslations.resCode(receipt.resCode),
                 style: textStyle.labelLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: AppColors.primary,
@@ -47,7 +48,7 @@ class ReceiptSheet extends StatelessWidget {
           lineItems: receipt.lines
               .map((line) => (line.label, line.amount))
               .toList(),
-          totalLabel: 'Total Charged',
+          totalLabel: AppTranslations.totalCharged,
           totalValue: receipt.total,
         ),
         CustomInfoBanner(

@@ -89,11 +89,11 @@ class ApiException implements Exception {
     final byCode = switch (errorCode) {
       ErrorCodes.tooManyRequests => AppTranslations.tooManyRequests,
       ErrorCodes.serviceUnavailable => AppTranslations.serviceUnavailable,
-      ErrorCodes.serverError || ErrorCodes.databaseError =>
-        AppTranslations.serverError,
+      ErrorCodes.serverError ||
+      ErrorCodes.databaseError => AppTranslations.serverError,
       ErrorCodes.forbidden => AppTranslations.forbiddenRequest,
-      ErrorCodes.notFound || ErrorCodes.routeNotFound =>
-        AppTranslations.resourceNotFound,
+      ErrorCodes.notFound ||
+      ErrorCodes.routeNotFound => AppTranslations.resourceNotFound,
       ErrorCodes.requestTimeout => AppTranslations.requestTimeout,
       ErrorCodes.noInternetConnection =>
         AppTranslations.checkInternetConnection,

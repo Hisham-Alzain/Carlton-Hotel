@@ -372,9 +372,11 @@ class SiteSettingTest extends TestCase
     {
         $this->seed(\Database\Seeders\CmsContentSeeder::class);
 
-        $this->assertSame(20, SiteSetting::count());
+        // 21 = 20 content rows + `site.is_coming_soon` (commit 4126b7e), which
+        // lives in its own `site` group.
+        $this->assertSame(21, SiteSetting::count());
         $this->assertSame(
-            ['booking', 'contact', 'footer', 'hero', 'seo', 'social'],
+            ['booking', 'contact', 'footer', 'hero', 'seo', 'site', 'social'],
             SiteSetting::query()->distinct()->orderBy('group')->pluck('group')->all(),
         );
 

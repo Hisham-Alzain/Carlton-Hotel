@@ -24,8 +24,8 @@ All routes are under `/api/v1`. Staff routes use `auth:users` + permission middl
 
 - [ ] **RESV-01**: Staff can set and update free-text notes on a reservation (`PATCH /cms/reservations/{reservation}/notes`)
 - [ ] **RESV-02**: Staff can list the rooms available for a reservation's type and dates (`GET /cms/reservations/{reservation}/available-rooms`)
-- [ ] **RESV-03**: Staff can check a reservation in with one verb that assigns the room, marks it occupied and stamps `checked_in_at` (`POST /cms/reservations/{reservation}/check-in`)
-- [ ] **RESV-04**: Staff can check a reservation out with one verb that requires a settled folio (or `folios.settle`), stamps `checked_out_at` and marks the room dirty (`POST /cms/reservations/{reservation}/check-out`)
+- [ ] **RESV-03**: Staff can check a reservation in with one verb that assigns the room (given, pre-assigned or auto-picked), sets `status = checked_in` and stamps `checked_in_at`; the room board derives it as occupied (no `rooms.status` write); check-in outside the hotel-local stay window returns 422 `reservation_outside_stay_window` unless `early_check_in` with a reason is sent for the day before (`POST /cms/reservations/{reservation}/check-in`); `assign-room` becomes pure assignment
+- [ ] **RESV-04**: Staff can check a reservation out with one verb that refuses an open folio with 422 `folio_unsettled` unless a `folios.settle` holder sends `force: true` with a reason (recorded in the activity log; folio stays open), stamps `checked_out_at`, moves `available`/`maintenance` rooms to `dirty` via `UpdateRoomStatusAction` (system actor), and emits `ReservationCheckedOut`; guest express checkout shares the same action (`POST /cms/reservations/{reservation}/check-out`)
 
 ### Guests & Stay
 

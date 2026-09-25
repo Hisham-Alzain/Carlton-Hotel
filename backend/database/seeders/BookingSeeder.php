@@ -70,17 +70,18 @@ class BookingSeeder extends Seeder
         $family        = RoomType::where('name->en', 'Family Room')->firstOrFail();
         $staff         = User::where('email', 'reception@carlton.demo')->firstOrFail();
 
-        // --- Ahmad: checked in, room physically assigned ---
+        // --- Ahmad: checked in, room physically assigned. A three-week stay
+        // (21 nights x $150) so the in-stay demo stays valid long after seeding.
         $ahmad = Guest::where('phone', GuestSeeder::PHONE_CHECKED_IN)->firstOrFail();
         $ahmadReservation = Reservation::create([
             'guest_id' => $ahmad->id, 'booking_code' => 'CARL-DEMO0001', 'source' => ReservationSource::DIRECT,
-            'check_in' => now()->subDays(1)->toDateString(), 'check_out' => now()->addDays(2)->toDateString(),
-            'status' => ReservationStatus::CHECKED_IN, 'payment_method' => PaymentMethod::CASH, 'total_usd' => 450.00,
+            'check_in' => now()->subDays(1)->toDateString(), 'check_out' => now()->addDays(20)->toDateString(),
+            'status' => ReservationStatus::CHECKED_IN, 'payment_method' => PaymentMethod::CASH, 'total_usd' => 3150.00,
         ]);
         $room = Room::where('room_type_id', $deluxeKing->id)->first();
-        ReservationRoom::create(['reservation_id' => $ahmadReservation->id, 'room_type_id' => $deluxeKing->id, 'room_id' => $room->id, 'price_usd' => 450.00]);
+        ReservationRoom::create(['reservation_id' => $ahmadReservation->id, 'room_type_id' => $deluxeKing->id, 'room_id' => $room->id, 'price_usd' => 3150.00]);
         $room->update(['status' => 'occupied']);
-        Payment::create(['payable_type' => Reservation::class, 'payable_id' => $ahmadReservation->id, 'method' => 'cash', 'amount_usd' => 450.00, 'recorded_by' => $staff->id, 'note' => 'Paid at check-in', 'status' => 'completed']);
+        Payment::create(['payable_type' => Reservation::class, 'payable_id' => $ahmadReservation->id, 'method' => 'cash', 'amount_usd' => 450.00, 'recorded_by' => $staff->id, 'note' => 'Deposit at check-in', 'status' => 'completed']);
 
         // --- Layla: confirmed, not yet checked in ---
         $layla = Guest::where('phone', GuestSeeder::PHONE_CONFIRMED)->firstOrFail();

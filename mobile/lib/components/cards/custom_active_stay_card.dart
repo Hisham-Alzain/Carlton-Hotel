@@ -1,4 +1,3 @@
-import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/models/booking_models.dart';
@@ -187,7 +186,7 @@ class CustomActiveStayCard extends StatelessWidget {
   Widget _photo() => Stack(
     fit: StackFit.expand,
     children: [
-      CustomImage(source: 'assets/images/stay_room.png', fit: BoxFit.cover),
+      Image.asset('assets/images/stay_room.png', fit: BoxFit.cover),
       const DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(

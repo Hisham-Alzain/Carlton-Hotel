@@ -1,48 +1,54 @@
 import 'package:carlton/components/cards/custom_rating_label.dart';
-import 'package:carlton/components/reviews/review_submit_sheet.dart';
 import 'package:carlton/components/reviews/review_tile.dart';
-import 'package:carlton/controllers/dining/restaurant_controller.dart';
-import 'package:carlton/controllers/reviews/review_controller.dart';
-import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
+import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
-import 'package:carlton/customWidgets/custom_snackbar.dart';
-import 'package:carlton/routes/routes.dart';
-import 'package:carlton/services/middleware_service.dart';
+import 'package:carlton/models/review.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// The 4th restaurant-detail tab: overall-rating header + a "Write a Review" CTA
-/// pinned above the paginated reviews list. The list reads the Rx state of
-/// [ReviewController] (the codebase's sanctioned Obx exception) resolved via
-/// `Get.find`; the header rating stays on the venue's demo defaults because the
-/// venue-detail endpoint is unwired (a Phase 2 deferral).
+/// pinned above the paginated reviews list. The header rating stays on the
+/// venue's demo defaults because the venue-detail endpoint is unwired (a Phase 2
+/// deferral).
+///
+/// The list state arrives already resolved — the caller owns the `Obx` over
+/// `ReviewController`, so this tab renders one frame's worth of values.
 class RestaurantReviewsTab extends StatelessWidget {
-  final RestaurantController c;
+  final double rating;
+  final int reviewCount;
 
-  const RestaurantReviewsTab({required this.c, super.key});
+  final List<Review> reviews;
+  final bool loading;
+  final bool loadingMore;
+  final bool hasError;
 
-  ReviewController get _reviews => Get.find<ReviewController>();
+  /// From `PaginatedControllerMixin` — the list must attach the caller's
+  /// controller for scroll-triggered paging to fire.
+  final ScrollController scrollController;
 
-  void _openSubmitSheet() {
-    // Auth gate: a POST while unauthenticated returns 401 and fires the global
-    // logout — the wrong outcome for a review attempt.
-    if (!MiddlewareService.find.isAuthenticated) {
-      CustomSnackbars.showInfo(message: 'Sign in to leave a review');
-      Get.toNamed(Routes.signIn);
-      return;
-    }
-    CustomBottomSheet.show<bool>(
-      title: 'Write a Review',
-      subtitle: c.restaurant.name,
-      child: ReviewSubmitSheet(controller: _reviews),
-    );
-  }
+  final VoidCallback onWriteReview;
+
+  /// Retry for the error state. The empty state deliberately gets no button —
+  /// re-fetching an genuinely empty list returns the same thing.
+  final VoidCallback onRetry;
+
+  const RestaurantReviewsTab({
+    required this.rating,
+    required this.reviewCount,
+    required this.reviews,
+    required this.loading,
+    required this.loadingMore,
+    required this.hasError,
+    required this.scrollController,
+    required this.onWriteReview,
+    required this.onRetry,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
-    final reviews = _reviews;
 
     return Column(
       children: [
@@ -58,76 +64,65 @@ class RestaurantReviewsTab extends StatelessWidget {
             child: Column(
               spacing: 10,
               children: [
-                CustomRatingLabel(
-                  rating: c.restaurant.rating,
-                  reviews: c.restaurant.reviews,
-                ),
+                CustomRatingLabel(rating: rating, reviews: reviewCount),
                 CustomFilledButton(
                   width: double.infinity,
                   backgroundColor: AppColors.primary,
-                  onPressed: _openSubmitSheet,
+                  onPressed: onWriteReview,
                   child: const Text('Write a Review'),
                 ),
               ],
             ),
           ),
         ),
-        Expanded(
-          child: Obx(() {
-            if (reviews.loading.value) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            //TODO: use custom place holder instead
-            if (reviews.hasError.value) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Text(
-                    'Could not load reviews. Please try again.',
-                    textAlign: TextAlign.center,
-                    style: textStyle.labelMedium?.copyWith(
-                      color: AppColors.dimGrey,
-                    ),
-                  ),
-                ),
-              );
-            }
-            if (reviews.items.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Text(
-                    'No reviews yet — be the first',
-                    textAlign: TextAlign.center,
-                    style: textStyle.labelMedium?.copyWith(
-                      color: AppColors.dimGrey,
-                    ),
-                  ),
-                ),
-              );
-            }
-            final showLoadingMore = reviews.loadingMore.value;
-            return ListView.builder(
-              controller: reviews.scrollController,
-              padding: const EdgeInsets.all(10),
-              itemCount: reviews.items.length + (showLoadingMore ? 1 : 0),
-              itemBuilder: (_, index) {
-                if (index >= reviews.items.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(10),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: ReviewTile(review: reviews.items[index]),
-                );
-              },
-            );
-          }),
-        ),
+        Expanded(child: _list(textStyle)),
       ],
+    );
+  }
+
+  Widget _list(TextTheme textStyle) {
+    if (loading) return const Center(child: CircularProgressIndicator());
+
+    if (hasError) {
+      return CustomEmptyPlaceholder(
+        iconWidget: const Icon(
+          Icons.cloud_off_outlined,
+          size: 50,
+          color: AppColors.primary,
+        ),
+        title: "Couldn't load reviews",
+        subtitle: 'Please check your connection and try again.',
+        primaryLabel: 'Retry',
+        onPrimary: onRetry,
+      );
+    }
+    if (reviews.isEmpty) {
+      return const CustomEmptyPlaceholder(
+        iconWidget: Icon(
+          Icons.rate_review_outlined,
+          size: 50,
+          color: AppColors.primary,
+        ),
+        title: 'No reviews yet',
+        subtitle: 'Be the first to share your experience.',
+      );
+    }
+    return ListView.builder(
+      controller: scrollController,
+      padding: const EdgeInsets.all(10),
+      itemCount: reviews.length + (loadingMore ? 1 : 0),
+      itemBuilder: (_, index) {
+        if (index >= reviews.length) {
+          return const Padding(
+            padding: EdgeInsets.all(10),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return Padding(
+          padding: const EdgeInsets.all(10),
+          child: ReviewTile(review: reviews[index]),
+        );
+      },
     );
   }
 }

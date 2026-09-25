@@ -1,5 +1,4 @@
 import 'package:carlton/customWidgets/custom_containers.dart';
-import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -51,10 +50,7 @@ class CustomUpcomingStayCard extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 if (stay.imagePath != null)
-                  CustomImage(
-                    source: 'assets/images/stay_room.png',
-                    fit: BoxFit.cover,
-                  ),
+                  Image.asset('assets/images/stay_room.png', fit: BoxFit.cover),
                 const DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(

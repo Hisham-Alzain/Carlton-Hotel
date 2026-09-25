@@ -84,6 +84,20 @@ class CustomValidation {
     return null;
   }
 
+  /// The 6-digit OTP. Length and digits-only are client-side concerns, so this
+  /// is independent of the backend — a wrong-but-well-formed code still comes
+  /// back as `unauthorized` from the verify endpoint.
+  String? validateOtp(String? fieldText, {int digitCount = 6}) {
+    final entered = fieldText ?? '';
+    if (entered.isEmpty) {
+      return AppTranslations.requiredField;
+    }
+    if (entered.length != digitCount || !entered.isNumericOnly) {
+      return AppTranslations.invalidOtp;
+    }
+    return null;
+  }
+
   String? validateRequiredDropDown(dynamic selectedItem) {
     if (selectedItem == null) {
       return AppTranslations.requiredField;

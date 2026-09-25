@@ -33,6 +33,16 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   final List<ExperienceItem> experiences = DemoData.experiences;
   final RxBool contentLoading = true.obs;
 
+  /// True when the last content fetch failed. Distinct from "loaded but
+  /// empty": both leave [rooms]/[restaurants] empty, but only this one should
+  /// offer a Retry, so the rails need the two states separated.
+  final RxBool contentError = false.obs;
+
+  /// True while the first active-booking fetch is in flight, so the
+  /// reservation-state sections can render a placeholder instead of collapsing
+  /// to nothing and popping in.
+  final RxBool bookingLoading = true.obs;
+
   // ── Active-booking dashboard (shown when the guest has a reservation) ──────
   /// When true, Home renders the active-booking dashboard instead of the
   /// default explore sections. Backed by the authenticated guest's `has_booking`
@@ -135,6 +145,19 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   /// [onInit]. Every branch *assigns* rather than only writing on success, so
   /// signing out or switching guest can never strand the previous guest's stay
   /// on screen.
+  /// Pull-to-refresh: re-runs both fetches and completes only when they do, so
+  /// the RefreshIndicator's spinner tracks the real work. Deliberately does not
+  /// flip [contentLoading] — the indicator is already showing progress, and
+  /// swapping loaded rails for shimmer mid-pull would flicker.
+  ///
+  /// NOT named `refresh`: that is `GetxController.refresh()`, which GetX calls
+  /// internally to notify listeners. Overriding it to run network work would
+  /// fire these fetches from framework internals.
+  Future<void> refreshHome() async {
+    contentError.value = false;
+    await Future.wait([_loadContent(), _loadActiveBooking()]);
+  }
+
   Future<void> _loadActiveBooking() async {
     // Nothing to load while signed out — and hitting /stays/active without a
     // token 401s, which ErrorInterceptor escalates to signOut() plus a redirect
@@ -142,6 +165,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     // interceptor, so this guard is what keeps a browsing guest on Home.
     if (!MiddlewareService.find.isAuthenticated) {
       _clearActiveBooking();
+      bookingLoading.value = false;
       return;
     }
 
@@ -202,6 +226,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       billTotal.value = _emptyBillTotal;
       activeRequests.clear();
     }
+    bookingLoading.value = false;
   }
 
   /// Drops every stay-scoped value, so a signed-out guest — or the next guest
@@ -399,6 +424,9 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     if (isClosed) return;
     final roomsRes = results[0];
     final diningRes = results[1];
+    // Both calls pass showErrorDialog:false, so without this flag a failed
+    // request would be indistinguishable from an empty result.
+    contentError.value = !roomsRes.ok || !diningRes.ok;
     if (roomsRes.statusCode == 200 && roomsRes.data != null) {
       rooms.assignAll(
         roomsRes.data!

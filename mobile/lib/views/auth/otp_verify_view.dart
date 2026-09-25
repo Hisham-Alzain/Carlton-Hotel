@@ -28,9 +28,8 @@ class OtpVerifyView extends GetView<OtpVerifyController> {
               CustomPinput(
                 controller: controller.pinController,
                 digitCount: 6,
-                //TODO: change to otp validation when connecting api
                 validator: (enteredOtp) =>
-                    CustomValidation().validateRequiredField(enteredOtp),
+                    CustomValidation().validateOtp(enteredOtp),
                 // onComplete: (_) => controller.verify(),
               ),
 

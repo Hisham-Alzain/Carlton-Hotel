@@ -1,4 +1,3 @@
-import 'package:carlton/controllers/home/services_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
@@ -16,7 +15,19 @@ import 'package:get/get.dart';
 class ServiceRequestSheet extends StatefulWidget {
   final ServiceCatalogOption option;
 
-  const ServiceRequestSheet({required this.option, super.key});
+  /// "812 · Deluxe City View" — the active stay this request is for. Empty
+  /// falls back to "your room".
+  final String stayLabel;
+
+  /// Called with the sheet's notes; the caller closes the sheet.
+  final ValueChanged<String> onSubmit;
+
+  const ServiceRequestSheet({
+    required this.option,
+    required this.stayLabel,
+    required this.onSubmit,
+    super.key,
+  });
 
   @override
   State<ServiceRequestSheet> createState() => _ServiceRequestSheetState();
@@ -37,12 +48,7 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
     final mins = widget.option.expectedMinutes;
-    // Active-stay label from the live Services controller (was demo Room 812).
-    final services = Get.find<ServicesController>();
-    final stayLabel = [
-      services.room,
-      services.stayRoomName,
-    ].where((s) => s.isNotEmpty).join(' · ');
+    final stayLabel = widget.stayLabel;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,13 +105,7 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
         CustomFilledButton(
           width: double.infinity,
           backgroundColor: AppColors.lagoonTeal,
-          onPressed: () {
-            Get.find<ServicesController>().submitServiceRequest(
-              serviceItemUuid: widget.option.uuid,
-              notes: _notesController.text,
-            );
-            Get.back();
-          },
+          onPressed: () => widget.onSubmit(_notesController.text),
           child: const Text('Send Request'),
         ),
       ],

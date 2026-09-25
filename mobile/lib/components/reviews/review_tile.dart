@@ -7,9 +7,9 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:get/get.dart';
 
 /// One published review row: author + date, read-only stars, an optional
-/// "Verified stay" pill, and the comment. [Review.createdAt] is a raw ISO string
-/// (matches the guide's shape) — parsed defensively here; the whole tile is
-/// hidden when the timestamp is missing or unparseable.
+/// "Verified stay" pill, and the comment. The whole tile is hidden when
+/// [Review.createdAt] is absent — the model already parsed it, so an
+/// unparseable timestamp arrives here as null.
 class ReviewTile extends StatelessWidget {
   final Review review;
 
@@ -18,8 +18,9 @@ class ReviewTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
-    final created = _formatCreatedAt(review.createdAt);
-    if (created == null) return const SizedBox.shrink();
+    final createdAt = review.createdAt;
+    if (createdAt == null) return const SizedBox.shrink();
+    final created = createdAt.formatDatePicker();
 
     final name = review.authorName.isNotEmpty ? review.authorName : 'Guest';
     final comment = review.comment?.trim() ?? '';
@@ -96,12 +97,4 @@ class ReviewTile extends StatelessWidget {
     );
   }
 
-  //TODO: use datetime with formatter
-  /// Parse the ISO `created_at` defensively; null tells [build] to hide the row.
-  ///
-  String? _formatCreatedAt(String? raw) {
-    if (raw == null || raw.isEmpty) return null;
-    final parsed = DateTime.tryParse(raw);
-    return parsed?.formatDate();
-  }
 }

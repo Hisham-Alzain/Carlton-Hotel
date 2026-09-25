@@ -1,5 +1,3 @@
-import 'package:carlton/components/booking_price_breakdown.dart';
-import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
@@ -8,16 +6,31 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// Room hero + total card shared by the Payment and Review Booking screens
-/// (Figma "Booking / Step 12"). On Payment [showPriceSection] is on: the total
-/// row toggles in place to the full breakdown ("View price details"). On Review
-/// it is off — the hero stands alone above a separate always-visible breakdown.
+/// (Figma "Booking / Step 12"). On Payment a [priceBreakdown] is supplied: the
+/// total row toggles in place to the full breakdown ("View price details"). On
+/// Review it is null — the hero stands alone above a separate always-visible
+/// breakdown, so the whole price section is omitted.
 class BookingSummaryHeader extends StatefulWidget {
-  final BookingFlowController controller;
-  final bool showPriceSection;
+  final String roomName;
+
+  /// Hero photo behind the tinted overlay — a `CustomImage` source, so an asset
+  /// path today and a storage URL once rooms come from the API.
+  final String roomImage;
+  final String dateRange;
+  final int nights;
+  final String totalDisplay;
+
+  /// Revealed in place of the total row by "View price details". Null hides the
+  /// price section entirely.
+  final Widget? priceBreakdown;
 
   const BookingSummaryHeader({
-    required this.controller,
-    this.showPriceSection = true,
+    required this.roomName,
+    required this.roomImage,
+    required this.dateRange,
+    required this.nights,
+    required this.totalDisplay,
+    this.priceBreakdown,
     super.key,
   });
 
@@ -27,8 +40,6 @@ class BookingSummaryHeader extends StatefulWidget {
 
 class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
   bool _expanded = false;
-
-  BookingFlowController get controller => widget.controller;
 
   @override
   Widget build(BuildContext context) {
@@ -51,20 +62,19 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _hero(textStyle),
-          if (widget.showPriceSection) _priceSection(textStyle),
+          if (widget.priceBreakdown != null) _priceSection(textStyle),
         ],
       ),
     );
   }
 
   Widget _hero(TextTheme textStyle) {
-    final room = controller.selectedRoom!;
     return SizedBox(
       height: 100,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          CustomImage(source: room.images.first, fit: BoxFit.cover),
+          CustomImage(source: widget.roomImage, fit: BoxFit.cover),
           DecoratedBox(
             decoration: BoxDecoration(
               color: AppColors.slateTeal.withValues(alpha: 0.8),
@@ -79,14 +89,14 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    room.name,
+                    widget.roomName,
                     style: textStyle.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppColors.white,
                     ),
                   ),
                   Text(
-                    '${controller.dateRange} · ${controller.nights} nights',
+                    '${widget.dateRange} · ${widget.nights} nights',
                     style: textStyle.labelMedium?.copyWith(
                       fontFamily: 'DM Sans',
                       color: AppColors.white73,
@@ -110,7 +120,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                BookingPriceBreakdown(controller: controller),
+                widget.priceBreakdown!,
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                   child: Align(
@@ -153,7 +163,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
                     spacing: 6,
                     children: [
                       Text(
-                        controller.totalDisplay,
+                        widget.totalDisplay,
                         style: textStyle.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,

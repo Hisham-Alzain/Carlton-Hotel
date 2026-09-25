@@ -78,7 +78,7 @@ void main() {
   group('payment mapping (decision #1)', () {
     test('only Pay at Hotel is submittable, mapping to on_arrival', () {
       final c = BookingFlowController();
-      c.paymentMethod = PaymentMethod.payAtHotel;
+      c.paymentMethod.value = PaymentMethod.payAtHotel;
       expect(c.paymentApiValue, 'on_arrival');
       expect(c.isPaymentSubmittable, isTrue);
 
@@ -87,7 +87,7 @@ void main() {
         PaymentMethod.applePay,
         PaymentMethod.googlePay,
       ]) {
-        c.paymentMethod = m;
+        c.paymentMethod.value = m;
         expect(c.paymentApiValue, isNull, reason: '$m has no gateway yet');
         expect(c.isPaymentSubmittable, isFalse);
       }
@@ -103,7 +103,7 @@ void main() {
 
     test('total falls back to the room estimate before a quote arrives', () {
       final c = BookingFlowController();
-      c.selectedRoom = const RoomOption(
+      c.selectedRoom.value = const RoomOption(
         id: 'x',
         name: 'Suite',
         images: [],
@@ -119,7 +119,7 @@ void main() {
         description: '',
       );
       // reset-state dates are today → today+1 (1 night); no quote yet.
-      expect(c.quote, isNull);
+      expect(c.quote.value, isNull);
       expect(c.totalDisplay, r'$200');
     });
   });

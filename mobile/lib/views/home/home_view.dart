@@ -10,11 +10,12 @@ import 'package:carlton/services/check_in_service.dart';
 import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
-import 'package:carlton/customWidgets/custom_indicators.dart';
+import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
 import 'package:carlton/models/card_meta.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
 
 /// The single Home body for both guest states.
 ///
@@ -57,7 +58,7 @@ class HomeView extends GetView<HomeController> {
   static const preArrivalSections = <Widget>[
     PreArrivalStaySection(),
     PreArrivalChecklistSection(),
-    AirportTransferSection(),
+    _AirportTransferSection(),
     _AiConciergeSection(),
     _DiningCarousel(),
     _ExperiencesCarousel(),
@@ -90,18 +91,26 @@ class HomeView extends GetView<HomeController> {
           hasReservation: controller.hasReservation,
           isPreArrival: CheckInService.find.isPreArrival.value,
         );
-        return CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.all(20),
-              // Lazy: an off-screen section's Obx never runs its builder and
-              // holds no subscription until it scrolls into view.
-              sliver: SliverList.builder(
-                itemCount: sections.length,
-                itemBuilder: (context, index) => sections[index],
+        return RefreshIndicator(
+          onRefresh: controller.refreshHome,
+          color: AppColors.primary,
+          child: CustomScrollView(
+            // AlwaysScrollable so the pull gesture works even when the sections
+            // are shorter than the viewport (the explore state on a tall
+            // screen), which a default ScrollPhysics would swallow.
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.all(20),
+                // Lazy: an off-screen section's Obx never runs its builder and
+                // holds no subscription until it scrolls into view.
+                sliver: SliverList.builder(
+                  itemCount: sections.length,
+                  itemBuilder: (context, index) => sections[index],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       }),
     );
@@ -120,6 +129,10 @@ class _ActiveStaySection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      // Placeholder while the first /stays/active fetch is in flight —
+      // otherwise this collapses to nothing and the card pops in.
+      if (controller.bookingLoading.value) return const _CardShimmer(height: 220);
+
       final stay = controller.activeStay.value;
       if (stay != null) {
         return CustomActiveBookingCard(
@@ -159,6 +172,7 @@ class _ActiveRequestsSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      if (controller.bookingLoading.value) return const _CardShimmer(height: 140);
       if (controller.activeStay.value == null) return const SizedBox.shrink();
       return CustomActiveRequestsCard(
         // toList() both snapshots the list and registers the read — passing
@@ -179,6 +193,7 @@ class _CurrentBillSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      if (controller.bookingLoading.value) return const _CardShimmer(height: 160);
       if (controller.activeStay.value == null) return const SizedBox.shrink();
       return CustomCurrentBillCard(
         lines: controller.billLines.toList(),
@@ -190,6 +205,15 @@ class _CurrentBillSection extends GetView<HomeController> {
 }
 
 /// Static content — no Obx, only needs the controller for its callback.
+class _AirportTransferSection extends GetView<HomeController> {
+  const _AirportTransferSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return AirportTransferSection(onRequest: controller.goToServices);
+  }
+}
+
 class _AiConciergeSection extends GetView<HomeController> {
   const _AiConciergeSection();
 
@@ -213,7 +237,7 @@ class _VideoHeroSection extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Obx(
       () => CustomHomeContainer(
-        imagePath: DemoData.heroHomeImagePath,
+        assetPath: DemoData.heroHomeImagePath,
         videoController: controller.videoController,
         videoReady: controller.isVideoReady.value,
         location: 'Damascus · Syria',
@@ -232,7 +256,7 @@ class _DiningHeroSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return CustomHomeContainer(
-      imagePath: DemoData.heroDiningImagePath,
+      assetPath: DemoData.heroDiningImagePath,
       location: 'Damascus · Syria',
       title: 'Refined *flavors*,\ntimeless elegance.',
       subtitle: 'A refined dining experience, timeless hospitality.',
@@ -253,7 +277,7 @@ class _ExperiencesHeroSection extends GetView<HomeController> {
       title: 'Experiences',
       onPressed: () => controller.discoverAll('Experiences'),
       child: CustomHomeContainer(
-        imagePath: DemoData.heroExperienceImagePath,
+        assetPath: DemoData.heroExperienceImagePath,
         location: 'Damascus · Syria',
         title: 'A Quiet *Luxury*\nExperience',
         subtitle: 'Explore authentic experiences, crafted just for you.',
@@ -270,15 +294,113 @@ class _ExperiencesHeroSection extends GetView<HomeController> {
 
 /// Shown while a rail's content is still in flight, in place of the bare 400px
 /// of blank space the headers used to sit above.
-class _RailLoader extends StatelessWidget {
-  const _RailLoader();
+/// Card-shaped shimmer placeholders for a horizontal rail. Mirrors
+/// [CustomHomeCard]'s 300×200 photo block plus two text lines, so the rail
+/// keeps its height and the content doesn't jump when the real cards land.
+class _RailShimmer extends StatelessWidget {
+  const _RailShimmer();
 
   @override
   Widget build(BuildContext context) {
-    // AppColors.primary, not the indicator's default white logo — the rails
-    // sit on the light ghostWhite scaffold.
-    return const Center(
-      child: SpinningIconIndicator(size: 50, color: AppColors.primary),
+    return Shimmer.fromColors(
+      baseColor: AppColors.pearlGrey,
+      highlightColor: AppColors.whisperGrey,
+      // Non-scrollable: these are a placeholder, not content to explore, and a
+      // scrollable here would fight the RefreshIndicator's pull.
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 3,
+        itemBuilder: (context, _) => const Padding(
+          padding: EdgeInsets.only(right: 10),
+          child: _ShimmerCard(),
+        ),
+      ),
+    );
+  }
+}
+
+/// Full-width shimmer block for the stacked reservation-state cards, which are
+/// single cards rather than rails.
+class _CardShimmer extends StatelessWidget {
+  final double height;
+
+  const _CardShimmer({required this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Shimmer.fromColors(
+        baseColor: AppColors.pearlGrey,
+        highlightColor: AppColors.whisperGrey,
+        child: Container(
+          height: height,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShimmerCard extends StatelessWidget {
+  const _ShimmerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      spacing: 10,
+      children: [
+        Container(
+          width: 300,
+          height: 200,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        for (final width in const [180.0, 120.0])
+          Container(
+            width: width,
+            height: 14,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Rail fallback for "loaded, but nothing to show". [onRetry] is supplied only
+/// when the fetch actually failed — a genuinely empty result gets no Retry
+/// button, since retrying would return the same empty list.
+class _RailEmpty extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final VoidCallback? onRetry;
+
+  const _RailEmpty({required this.title, required this.subtitle, this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomEmptyPlaceholder(
+      iconWidget: Icon(
+        onRetry != null ? Icons.cloud_off_outlined : Icons.inbox_outlined,
+        size: 40,
+        color: AppColors.primary,
+      ),
+      title: title,
+      subtitle: subtitle,
+      primaryLabel: onRetry != null ? 'Retry' : null,
+      onPrimary: onRetry,
     );
   }
 }
@@ -300,7 +422,19 @@ class _RoomsCarousel extends GetView<HomeController> {
         child: SizedBox(
           height: 400,
           child: loading
-              ? const _RailLoader()
+              ? const _RailShimmer()
+              : rooms.isEmpty
+              ? _RailEmpty(
+                  title: controller.contentError.value
+                      ? "Couldn't load rooms"
+                      : 'No rooms available',
+                  subtitle: controller.contentError.value
+                      ? 'Check your connection and try again.'
+                      : 'New rooms will appear here as they open up.',
+                  onRetry: controller.contentError.value
+                      ? controller.refreshHome
+                      : null,
+                )
               : ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: rooms.length,
@@ -341,7 +475,19 @@ class _DiningCarousel extends GetView<HomeController> {
         child: SizedBox(
           height: 400,
           child: loading
-              ? const _RailLoader()
+              ? const _RailShimmer()
+              : restaurants.isEmpty
+              ? _RailEmpty(
+                  title: controller.contentError.value
+                      ? "Couldn't load restaurants"
+                      : 'No restaurants yet',
+                  subtitle: controller.contentError.value
+                      ? 'Check your connection and try again.'
+                      : 'Our venues will be listed here soon.',
+                  onRetry: controller.contentError.value
+                      ? controller.refreshHome
+                      : null,
+                )
               : ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: restaurants.length,

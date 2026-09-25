@@ -5,8 +5,10 @@ import 'package:carlton/components/dining/restaurant_menu_tab.dart';
 import 'package:carlton/components/dining/restaurant_reserve_tab.dart';
 import 'package:carlton/components/dining/restaurant_reviews_tab.dart';
 import 'package:carlton/controllers/dining/restaurant_controller.dart';
+import 'package:carlton/controllers/reviews/review_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
+import 'package:carlton/models/home_models.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,8 +31,13 @@ class RestaurantDetailView extends GetView<RestaurantController> {
         child: Builder(
           // Supplies a context *below* the DefaultTabController, which is what
           // DefaultTabController.of() needs in order to find it.
-          builder: (context) => GetBuilder<RestaurantController>(
-            builder: (c) => Column(
+          builder: (context) {
+            // No observer around the whole column: `restaurant` is late final,
+            // so the hero and meta card never need to repaint. Each tab that
+            // owns mutable state carries its own Obx instead — picking a menu
+            // category used to rebuild the hero and all 4 tabs.
+            final c = Get.find<RestaurantController>();
+            return Column(
               children: [
                 // Hero with the hours/location card floating over its bottom
                 // edge. The padded hero is the only non-positioned child, so it
@@ -102,18 +109,72 @@ class RestaurantDetailView extends GetView<RestaurantController> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      RestaurantMenuTab(c: c),
-                      RestaurantInfoTab(c: c),
-                      RestaurantReserveTab(c: c),
+                      Obx(
+                        () => RestaurantMenuTab(
+                          categories: c.menuCategories,
+                          items: c.visibleMenuItems,
+                          selectedCategory: c.categoryIndex.value,
+                          loading: c.menuLoading.value,
+                          onSelectCategory: c.selectCategory,
+                          onDownloadMenu: c.downloadMenu,
+                        ),
+                      ),
+                      Obx(
+                        () => RestaurantInfoTab(
+                          restaurant: c.restaurant,
+                          about: c.about.value,
+                          gallery: c.gallery,
+                        ),
+                      ),
+                      Obx(
+                        () => RestaurantReserveTab(
+                          date: c.reserveDate.value,
+                          timeSlot: c.timeSlot.value,
+                          guests: c.guests.value,
+                          specialRequests: c.specialRequests,
+                          onPickDate: c.pickDate,
+                          onSelectTimeSlot: c.selectTimeSlot,
+                          onGuestsChanged: c.setGuests,
+                          onConfirm: c.confirmReservation,
+                        ),
+                      ),
                       // TODO: check if should keep reviews
-                      RestaurantReviewsTab(c: c),
+                      _ReviewsTab(restaurant: c.restaurant),
                     ],
                   ),
                 ),
               ],
-            ),
-          ),
+            );
+          },
         ),
+      ),
+    );
+  }
+}
+
+/// Holds the `Obx` over [ReviewController]'s paginated Rx state so the tab
+/// itself takes plain values. Split out rather than inlined so the observer
+/// rebuilds only the reviews tab, not the whole detail column.
+class _ReviewsTab extends StatelessWidget {
+  final RestaurantItem restaurant;
+
+  const _ReviewsTab({required this.restaurant});
+
+  @override
+  Widget build(BuildContext context) {
+    final reviews = Get.find<ReviewController>();
+
+    return Obx(
+      () => RestaurantReviewsTab(
+        rating: restaurant.rating,
+        reviewCount: restaurant.reviews,
+        reviews: reviews.items,
+        loading: reviews.loading.value,
+        loadingMore: reviews.loadingMore.value,
+        hasError: reviews.hasError.value,
+        scrollController: reviews.scrollController,
+        onWriteReview: Get.find<RestaurantController>().openReviewSheet,
+        onRetry: reviews.reload,
       ),
     );
   }

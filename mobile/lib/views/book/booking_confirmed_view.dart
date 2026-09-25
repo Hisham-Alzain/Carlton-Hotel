@@ -18,9 +18,11 @@ class BookingConfirmedView extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
     final controller = Get.find<BookingFlowController>();
-    final code = controller.confirmationCode ?? '';
+    // Read once: this screen is a terminal confirmation, so nothing here
+    // changes after the booking lands — no observer needed.
+    final code = controller.confirmationCode.value ?? '';
     final email = controller.emailCtrl.text.trim();
-    final room = controller.selectedRoom;
+    final room = controller.selectedRoom.value;
 
     final bodyStyle = textStyle.labelMedium?.copyWith(
       fontFamily: 'DM Sans',

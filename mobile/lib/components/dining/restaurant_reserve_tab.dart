@@ -1,7 +1,6 @@
 import 'package:carlton/components/custom_counter_field.dart';
 import 'package:carlton/components/dining/custom_time_slot_selector.dart';
 import 'package:carlton/constants/demo_data.dart';
-import 'package:carlton/controllers/dining/restaurant_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
@@ -13,9 +12,30 @@ import 'package:get/get.dart';
 /// Restaurant "Reserve" tab: date field, time-slot grid, guests counter,
 /// special requests, and the Confirm CTA.
 class RestaurantReserveTab extends StatelessWidget {
-  final RestaurantController c;
+  final DateTime date;
+  final String timeSlot;
+  final int guests;
 
-  const RestaurantReserveTab({required this.c, super.key});
+  /// Owned by the caller, not this tab — the typed text has to outlive the
+  /// rebuild that a tab switch causes, so it cannot be created here.
+  final TextEditingController specialRequests;
+
+  final VoidCallback onPickDate;
+  final ValueChanged<String> onSelectTimeSlot;
+  final ValueChanged<int> onGuestsChanged;
+  final VoidCallback onConfirm;
+
+  const RestaurantReserveTab({
+    required this.date,
+    required this.timeSlot,
+    required this.guests,
+    required this.specialRequests,
+    required this.onPickDate,
+    required this.onSelectTimeSlot,
+    required this.onGuestsChanged,
+    required this.onConfirm,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,27 +64,24 @@ class RestaurantReserveTab extends StatelessWidget {
             ),
           ),
           const _Label('Date'),
-          _DateField(
-            value: c.reserveDate.formatDatePicker(),
-            onTap: c.pickDate,
-          ),
+          _DateField(value: date.formatDatePicker(), onTap: onPickDate),
           const _Label('Time'),
           CustomTimeSlotSelector(
             slots: DemoData.reserveTimeSlots,
-            selected: c.timeSlot,
-            onSelected: c.selectTimeSlot,
+            selected: timeSlot,
+            onSelected: onSelectTimeSlot,
           ),
           const _Label('Guests'),
           CustomCounterField(
             title: 'Guests',
-            value: c.guests,
-            onChanged: c.setGuests,
+            value: guests,
+            onChanged: onGuestsChanged,
             minCount: 1,
             maxCount: 20,
           ),
           const _Label('Special Requests (optional)'),
           CustomTextField(
-            controller: c.specialRequests,
+            controller: specialRequests,
             textInputType: TextInputType.multiline,
             maxLines: 3,
             hintText: 'Allergies, dietary requirements, occasion...',
@@ -75,7 +92,7 @@ class RestaurantReserveTab extends StatelessWidget {
             width: double.infinity,
             height: 50,
             backgroundColor: AppColors.primary,
-            onPressed: c.confirmReservation,
+            onPressed: onConfirm,
             child: const Text('Confirm Reservation'),
           ),
         ],

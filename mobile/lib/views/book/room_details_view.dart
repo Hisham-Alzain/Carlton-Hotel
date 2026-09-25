@@ -30,7 +30,13 @@ class RoomDetailsView extends StatelessWidget {
     CustomBottomSheet.show<bool>(
       title: 'Write a Review',
       subtitle: room.name,
-      child: ReviewSubmitSheet(controller: Get.find<ReviewController>()),
+      child: ReviewSubmitSheet(
+        onSubmit: ({required rating, required comment}) =>
+            Get.find<ReviewController>().submitReview(
+              rating: rating,
+              comment: comment,
+            ),
+      ),
     );
   }
 
@@ -43,50 +49,57 @@ class RoomDetailsView extends StatelessWidget {
     }
     final room = roomArgument;
     final TextTheme textStyle = Get.textTheme;
+    final controller = Get.find<BookingFlowController>();
 
     return CustomScaffold(
       //TODO: check what to add in title
       appBar: AppBar(iconTheme: IconThemeData(color: AppColors.inkBlack)),
       body: SafeArea(
         bottom: false,
-        child: RoomDetailsContent(
-          room: room,
-          actions: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 10,
-            children: [
-              CustomFilledButton(
-                width: double.infinity,
-                backgroundColor: AppColors.lagoonTeal,
-                onPressed: () => Get.find<BookingFlowController>()
-                    .beginBookingWithRoom(room),
-                child: const Text('Select This Room'),
-              ),
-              // A demo room (no uuid) can't be reviewed — hide the CTA entirely.
-              if (room.uuid.isNotEmpty)
+        // Obx: the carousel index lives on the controller, so paging a photo
+        // has to rebuild this body.
+        child: Obx(
+          () => RoomDetailsContent(
+            room: room,
+            nights: controller.nights,
+            imageIndex: controller.roomImageIndex.value,
+            onImageChanged: controller.setRoomImage,
+            actions: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 10,
+              children: [
                 CustomFilledButton(
                   width: double.infinity,
-                  height: 50,
-                  backgroundColor: AppColors.white,
-                  foregroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    side: const BorderSide(color: AppColors.primary),
-                  ),
-                  textStyle: textStyle.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  onPressed: () => _openReviewSheet(room),
-                  child: const Text('Write a Review'),
+                  backgroundColor: AppColors.lagoonTeal,
+                  onPressed: () => controller.beginBookingWithRoom(room),
+                  child: const Text('Select This Room'),
                 ),
-              CustomFilledButton(
-                width: double.infinity,
-                backgroundColor: AppColors.whisperGrey,
-                foregroundColor: AppColors.inkBlack,
-                onPressed: () => Get.back(),
-                child: const Text('Back'),
-              ),
-            ],
+                // A demo room (no uuid) can't be reviewed — hide the CTA.
+                if (room.uuid.isNotEmpty)
+                  CustomFilledButton(
+                    width: double.infinity,
+                    height: 50,
+                    backgroundColor: AppColors.white,
+                    foregroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: const BorderSide(color: AppColors.primary),
+                    ),
+                    textStyle: textStyle.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    onPressed: () => _openReviewSheet(room),
+                    child: const Text('Write a Review'),
+                  ),
+                CustomFilledButton(
+                  width: double.infinity,
+                  backgroundColor: AppColors.whisperGrey,
+                  foregroundColor: AppColors.inkBlack,
+                  onPressed: () => Get.back(),
+                  child: const Text('Back'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

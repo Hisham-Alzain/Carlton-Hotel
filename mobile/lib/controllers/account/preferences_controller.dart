@@ -13,12 +13,12 @@ import 'package:get/get.dart';
 class PreferencesController extends GetxController {
   final SettingsService _settings = SettingsService.find;
 
-  late String bedId;
-  late String pillowId;
-  late String mattressId;
-  late bool smoking;
-  late bool earlyCheckIn;
-  late bool lateCheckout;
+  final RxString bedId = ''.obs;
+  final RxString pillowId = ''.obs;
+  final RxString mattressId = ''.obs;
+  final RxBool smoking = false.obs;
+  final RxBool earlyCheckIn = false.obs;
+  final RxBool lateCheckout = false.obs;
 
   String get languageId => _settings.locale.value.languageCode;
   String get currencyId => _settings.currency.value.value;
@@ -26,46 +26,42 @@ class PreferencesController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    bedId = StorageService.getString(StorageKeys.prefBed) ?? 'king';
-    pillowId = StorageService.getString(StorageKeys.prefPillow) ?? 'firm';
-    mattressId = StorageService.getString(StorageKeys.prefMattress) ?? 'medium';
-    smoking = StorageService.getBool(StorageKeys.prefSmoking) ?? false;
-    earlyCheckIn =
-        StorageService.getBool(StorageKeys.prefEarlyCheckIn) ?? false;
-    lateCheckout =
-        StorageService.getBool(StorageKeys.prefLateCheckout) ?? false;
+    bedId.value = StorageService.getString(StorageKeys.prefBed) ?? 'king';
+    pillowId.value = StorageService.getString(StorageKeys.prefPillow) ?? 'firm';
+    mattressId.value = StorageService.getString(StorageKeys.prefMattress) ?? 'medium';
+    smoking.value = StorageService.getBool(StorageKeys.prefSmoking) ?? false;
+    earlyCheckIn.value = StorageService.getBool(StorageKeys.prefEarlyCheckIn) ?? false;
+    lateCheckout.value = StorageService.getBool(StorageKeys.prefLateCheckout) ?? false;
   }
 
   PreferenceOption _optionOf(List<PreferenceOption> options, String id) =>
       options.firstWhere((o) => o.id == id, orElse: () => options.first);
 
-  String get bedLabel => _optionOf(DemoData.bedOptions, bedId).label;
+  String get bedLabel => _optionOf(DemoData.bedOptions, bedId.value).label;
   String get pillowLabel =>
-      '${_optionOf(DemoData.pillowOptions, pillowId).label} Pillow';
+      '${_optionOf(DemoData.pillowOptions, pillowId.value).label} Pillow';
   String get mattressLabel =>
-      _optionOf(DemoData.mattressOptions, mattressId).label;
+      _optionOf(DemoData.mattressOptions, mattressId.value).label;
   String get languageLabel =>
       _optionOf(DemoData.languageOptions, languageId).label;
   String get currencyLabel =>
       _optionOf(DemoData.currencyOptions, currencyId).label;
 
-  void _persistString(String key, String value) {
-    StorageService.setString(key, value);
-    update();
-  }
+  void _persistString(String key, String value) =>
+      StorageService.setString(key, value);
 
   void chooseBed(PreferenceOption o) {
-    bedId = o.id;
+    bedId.value = o.id;
     _persistString(StorageKeys.prefBed, o.id);
   }
 
   void choosePillow(PreferenceOption o) {
-    pillowId = o.id;
+    pillowId.value = o.id;
     _persistString(StorageKeys.prefPillow, o.id);
   }
 
   void chooseMattress(PreferenceOption o) {
-    mattressId = o.id;
+    mattressId.value = o.id;
     _persistString(StorageKeys.prefMattress, o.id);
   }
 
@@ -76,8 +72,8 @@ class PreferencesController extends GetxController {
       (l) => l.local == o.id,
       orElse: () => _settings.langs.first,
     );
+    // languageId reads _settings.locale (Rx), so the Obx repaints on its own.
     await _settings.changeLanguage(lang);
-    update();
   }
 
   Future<void> chooseCurrency(PreferenceOption o) async {
@@ -86,24 +82,20 @@ class PreferencesController extends GetxController {
       orElse: () => _settings.currencies.first,
     );
     await _settings.changeCurrency(currency);
-    update();
   }
 
   void toggleSmoking(bool value) {
-    smoking = value;
+    smoking.value = value;
     StorageService.setBool(StorageKeys.prefSmoking, value);
-    update();
   }
 
   void toggleEarlyCheckIn(bool value) {
-    earlyCheckIn = value;
+    earlyCheckIn.value = value;
     StorageService.setBool(StorageKeys.prefEarlyCheckIn, value);
-    update();
   }
 
   void toggleLateCheckout(bool value) {
-    lateCheckout = value;
+    lateCheckout.value = value;
     StorageService.setBool(StorageKeys.prefLateCheckout, value);
-    update();
   }
 }

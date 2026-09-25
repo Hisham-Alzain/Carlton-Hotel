@@ -137,7 +137,7 @@ After login, the `permissions` array in the user object is the source of truth f
 
 A `super_admin` account bypasses all permission checks on the server.
 
-**Full permission catalog** (8 modules, 18 permissions): `reservations.view|create|cancel`, `folios.view|settle`, `cms.view|edit|restore|purge`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`.
+**Full permission catalog** (9 modules, 19 permissions): `reservations.view|create|cancel`, `folios.view|settle`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`.
 
 ### `cms.view` is enforced — gate read-only navigation on it
 
@@ -182,7 +182,7 @@ Most are route middleware, which is the norm. Two families are not, and are enfo
 
 ### Role presets
 
-Seven presets: `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `content_editor`, `content_manager` — see Module: Reference Data below for exactly which permissions each preset grants. The last two are the only presets that grant `cms.*`; without one of them no seeded account except the super admin can reach `/api/cms/*`. `content_manager` is `content_editor` plus `cms.purge`, and is the only preset that may empty the recycle bin.
+Seven presets: `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `content_editor`, `content_manager` — see Module: Reference Data below for exactly which permissions each preset grants. The last two are the only presets that grant `cms.*`; without one of them no seeded account except the super admin can reach `/api/cms/*`. `content_manager` is `content_editor` plus `cms.purge`, and is the only preset that may empty the recycle bin. `housekeeping` and `reception` also hold `rooms.status`.
 
 ---
 
@@ -519,7 +519,7 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 ]
 ```
 
-8 modules: `reservations`, `folios`, `cms`, `service_requests`, `tickets`, `pricing`, `reports`, `staff`.
+9 modules: `reservations`, `folios`, `cms`, `rooms`, `service_requests`, `tickets`, `pricing`, `reports`, `staff`.
 
 ---
 
@@ -532,9 +532,9 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 **Response `data`:** Array of presets:
 ```json
 [
-  { "name": "reception", "permissions": ["reservations.view", "reservations.create", "reservations.cancel", "folios.view", "folios.settle", "service_requests.view"] },
+  { "name": "reception", "permissions": ["reservations.view", "reservations.create", "reservations.cancel", "folios.view", "folios.settle", "service_requests.view", "rooms.status"] },
   { "name": "kitchen", "permissions": ["service_requests.view", "service_requests.update"] },
-  { "name": "housekeeping", "permissions": ["service_requests.view", "service_requests.update"] },
+  { "name": "housekeeping", "permissions": ["service_requests.view", "service_requests.update", "rooms.status"] },
   { "name": "concierge", "permissions": ["service_requests.view", "service_requests.assign", "service_requests.update"] },
   { "name": "events", "permissions": ["service_requests.view", "tickets.view", "tickets.assign", "tickets.respond"] },
   { "name": "content_editor", "permissions": ["cms.view", "cms.edit", "cms.restore"] },
@@ -654,7 +654,7 @@ On the CMS content modules `is_active` and `sort_order` are validated as bare `[
 `amenities` is a pivot **sync**: send the array to replace the whole set, omit the key to leave it untouched, send `[]`/`null` to detach all; a `uuid` that does not resolve is skipped silently, and a row's `sort_order` defaults to its array index. Read side returns `amenities` as amenity objects plus `highlights` (the `is_highlight` subset) — **not** an array of strings.
 *Known gap:* `UpdateRoomTypeRequest` drops `gte:base_occupancy`, so a `PUT` will accept `max_occupancy` below `base_occupancy`. Validate client-side.
 
-**Room** — `room_type_uuid` (**not** `room_type_id` — required on create, must exist), `number` (required on create, max 10, unique), `floor` (nullable int 0–200), `status` (`available|occupied|maintenance`), `is_active`. No `sort_order`. The nested `room_type` in the response omits `images`/`banner`/`amenities`/`highlights` — those relations are not eager-loaded through the nesting.
+**Room** — `room_type_uuid` (**not** `room_type_id` — required on create, must exist), `number` (required on create, max 10, unique), `floor` (nullable int 0–200), `status` (`available|dirty|maintenance`, accepted on create only), `is_active`. No `sort_order`. `PUT /cms/rooms/{uuid}` ignores a `status` key — no error, no change; change status with `PATCH /cms/rooms/{uuid}/status` (see below). The nested `room_type` in the response omits `images`/`banner`/`amenities`/`highlights` — those relations are not eager-loaded through the nesting.
 
 **Facility** — `name` `{loc}` req, `description` `{loc}` req, `location` `{loc}` opt, `hours` `{loc}` opt, `is_active`, `sort_order`.
 
@@ -830,6 +830,25 @@ New rows are appended: `sort_order` starts at `max(existing) + 1` (or `0` when t
 Two gaps to handle client-side: one request naming two *different* uuids that point at the same file will create two rows (the check reads the parent's rows as they were before the batch) — deduplicate by `url` before sending. And idempotency is per parent, not global; the same asset on many different records is expected.
 
 The single-image convenience fields — `banner` (room types, promotions), `photo` (home sliders, menu items), `cover_image` (journal posts), `avatar` (testimonials), `image` (experiences, gallery items) — are all `images->first()?->url`, i.e. load order. There is **no designated primary image** and no way to set one; `sort_order` is advisory.
+
+---
+
+### PATCH /cms/rooms/{uuid}/status — `rooms.status`
+
+**Purpose:** Move a room through the housekeeping lifecycle. Who can call: `rooms.status` (presets `housekeeping` and `reception`) — `cms.edit` alone is not enough.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `status` | string | yes | one of `available`, `dirty`, `maintenance` |
+| `reason` | string | no | max 255, stored on the history row |
+
+**Behavior:** Transition table — `available` to `dirty` or `maintenance`; `dirty` to `available` or `maintenance`; `maintenance` to `dirty` only (a room leaving maintenance must be cleaned before it is sold). Same-state is rejected. Each accepted change writes one `room_status_history` row (who, when, from, to, reason) and updates the room's `status_changed_at`/`status_changed_by` in one transaction; a rejected change writes nothing. Housekeeping status never affects availability, booking or room assignment. Occupancy is not a status: the board derives it from reservations.
+
+**Response `data`:** the room object (`uuid`, `number`, `floor`, `status`, `is_active`). Message: `"Room status updated."`.
+
+**Failure `error_code`s:** `unauthorized` (401); `forbidden` (403, no `rooms.status`); `not_found` (404, unknown or deleted room); `validation_failed` (422, `errors.status`, `errors.reason`); `room_status_transition_invalid` (422, `context: { from, to, allowed: [...] }` — the UI should offer only `allowed`).
 
 ---
 
@@ -1115,6 +1134,80 @@ The unified read+assign layer over `service_requests` and `tickets` (chatbot-cre
 
 ---
 
+## Module: Front Desk (`rooms.status` · `reservations.view`)
+
+### GET /front-desk/room-board — `rooms.status` or `reservations.view`
+
+**Purpose:** Live housekeeping and occupancy state for every active room, for the front-desk board screen.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `date` | string (Y-m-d) | no | default today UTC |
+| `status` | string | no | `available`, `dirty` or `maintenance` |
+| `floor` | integer | no | 0–200 |
+| `room_type` | string (uuid) | no | an unknown uuid returns an empty list |
+
+**Behavior:** Unpaginated, active rooms only, ordered by floor ascending (rooms without a floor first), then number. Occupancy rules: `occupied` when a checked-in stay covers the night of `date`; `stayover` when that stay began before `date`; `departing_today` when a checked-in stay ends on `date` — that room reads `vacant` because occupancy is counted per night (the guest is still in house until the check-out verb of Phase 3); `arriving_today` when any booking that is neither cancelled nor checked out starts on `date`; `reservation` is the checked-in stay, else today's arrival, else null. `status_changed_by` is null for rooms never moved through the status endpoint.
+
+**Response `data`:** `{ date, items: [...] }`. Each item has exactly these keys, in order:
+
+```json
+{
+  "uuid": "...", "number": "101", "floor": 1,
+  "room_type": { "uuid": "...", "name": {"en":"...","ar":"..."} },
+  "housekeeping_status": "dirty",
+  "status_changed_at": "2026-09-26T08:00:00+00:00",
+  "status_changed_by": { "uuid": "...", "name": "..." },
+  "occupancy": "occupied",
+  "arriving_today": false, "departing_today": false, "stayover": true,
+  "reservation": { "uuid": "...", "guest_name": "...", "check_in": "2026-09-24", "check_out": "2026-09-28", "status": "checked_in" }
+}
+```
+
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `validation_failed` (422).
+
+---
+
+### GET /front-desk/availability-grid — `reservations.view`
+
+**Purpose:** Free/booked/out-of-order counts per room type over a date window, for the dashboard's availability grid.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `from` | string (Y-m-d) | no | default today, not earlier than today minus 365 days |
+| `days` | integer | no | 1–31, default 14 |
+
+**Behavior:** `free` equals what `GET /public/availability` returns for that room type and night; `out_of_order` counts rooms in maintenance today, is repeated on every cell and is never subtracted from `free`.
+
+**Response `data`:** `{ from, days, room_types: [ { uuid, name, total, cells: [ { date, free, booked, out_of_order } ] } ] }`.
+
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `validation_failed` (422).
+
+---
+
+### GET /front-desk/rates-grid — `reservations.view`
+
+**Purpose:** Nightly rate per room type over a date window, for the dashboard's rates grid. Read-only: edit rates through the CMS pricing rules.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `from` | string (Y-m-d) | no | default today, not earlier than today minus 365 days |
+| `days` | integer | no | 1–31, default 14 |
+
+**Behavior:** `rate_usd` is a two-decimal string equal to the one-night booking quote for that date: active pricing rules whose window includes the date (inclusive on both ends) applied in the quote's order; `rule_scope` is the last applied rule's scope or null, and a `weekend` rule applies on every date of its window.
+
+**Response `data`:** `{ from, days, room_types: [ { uuid, name, base_price_usd, cells: [ { date, rate_usd, rule_scope } ] } ] }`.
+
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `validation_failed` (422).
+
+---
+
 ## Error codes quick reference
 
 | Code | HTTP | Meaning |
@@ -1135,6 +1228,7 @@ The unified read+assign layer over `service_requests` and `tickets` (chatbot-cre
 | `payment_failed` | 422 | Payment gateway rejected the charge |
 | `inquiry_state` | 422 | Invalid event-inquiry status transition |
 | `no_active_reservation` | 403 | Guest-side entitlement gate — not relevant to dashboard requests, but appears in any guest-facing payload you might inspect while debugging |
+| `room_status_transition_invalid` | 422 | Room status change not allowed from the current state; `context.allowed` lists the valid targets |
 
 ---
 

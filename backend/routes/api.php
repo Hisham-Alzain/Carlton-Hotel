@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\ConversationController as ApiConversationController
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
 use App\Http\Controllers\Admin\OperationsQueueController;
+use App\Http\Controllers\Admin\FrontDeskController;
 use App\Http\Controllers\Admin\EventInquiryController as AdminEventInquiryController;
 use App\Http\Controllers\Admin\MenuCategoryController;
 use App\Http\Controllers\Admin\MenuItemController;
@@ -491,6 +492,13 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         // rather than PATCH: the CMS submits the whole settings form it holds.
         Route::put   ('/settings',                                     [AdminSiteSettingController::class, 'update']);
     });
+
+    // ── Room housekeeping status (rooms.status, Phase 2) ──────────────
+    //
+    // Outside both cms groups on purpose: housekeeping and reception move rooms
+    // through the D-04 lifecycle without holding any CMS rights, and stacking
+    // cms.edit here would hand status rights to every content editor.
+    Route::middleware('permission:rooms.status')->patch('/rooms/{room}/status', [AdminRoomController::class, 'updateStatus']);
 });
 
 // ──────────────────────────────────────────────────────────────────────
@@ -706,3 +714,18 @@ Route::middleware('auth:users')->prefix('operations/queue/{type}/{uuid}')->group
 });
 
 Route::middleware('auth:users')->get('/dashboard/summary', [OperationsQueueController::class, 'summary']);
+
+// ──────────────────────────────────────────────────────────────────────
+// Phase 2 — Front desk: room board and the availability / rates grids.
+// Read-only, each bounded to a fixed number of queries (FrontDeskService).
+// The board admits housekeeping (rooms.status) and reception
+// (reservations.view); the grids are reservation data, reception only.
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware('auth:users')->prefix('front-desk')->group(function () {
+    Route::middleware('permission:rooms.status|reservations.view')->get('/room-board', [FrontDeskController::class, 'board']);
+
+    Route::middleware('permission:reservations.view')->group(function () {
+        Route::get('/availability-grid', [FrontDeskController::class, 'availabilityGrid']);
+        Route::get('/rates-grid',        [FrontDeskController::class, 'ratesGrid']);
+    });
+});

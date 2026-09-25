@@ -14,6 +14,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * `status` is the housekeeping status only (Phase 2, D-01); occupancy is derived
+ * from reservations. `status_changed_at` / `status_changed_by` are a
+ * denormalised copy of the latest `room_status_history` row, kept out of
+ * `$fillable`: their sync owner is `App\Actions\Cms\UpdateRoomStatusAction`.
+ */
 class Room extends Model
 {
     use HasFactory, HasUuid, LogsActivity, PurgesMedia, SoftDeletes;
@@ -27,8 +33,9 @@ class Room extends Model
     ];
 
     protected $casts = [
-        'status'    => RoomStatus::class,
-        'is_active' => 'boolean',
+        'status'            => RoomStatus::class,
+        'is_active'         => 'boolean',
+        'status_changed_at' => 'datetime',
     ];
 
     public function roomType(): BelongsTo
@@ -44,5 +51,15 @@ class Room extends Model
     public function reservationRooms(): HasMany
     {
         return $this->hasMany(ReservationRoom::class);
+    }
+
+    public function statusChangedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'status_changed_by');
+    }
+
+    public function statusHistory(): HasMany
+    {
+        return $this->hasMany(RoomStatusHistory::class);
     }
 }

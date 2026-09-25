@@ -26,7 +26,12 @@ class PermissionsGroupedTest extends TestCase
                     ->assertStatus(200)->assertJson(['success' => true]);
 
         $groups = $res->json('data');
-        $this->assertCount(8, $groups);
+        $this->assertCount(9, $groups);
+
+        // Phase 2 (D-06): the new `rooms` group holds only the status verb.
+        $roomsGroup = collect($groups)->firstWhere('module', 'rooms');
+        $this->assertNotNull($roomsGroup, 'rooms group exists');
+        $this->assertSame(['rooms.status'], $roomsGroup['permissions']);
 
         $srGroup = collect($groups)->firstWhere('module', 'service_requests');
         $this->assertNotNull($srGroup, 'service_requests group exists');

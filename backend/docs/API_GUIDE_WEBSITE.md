@@ -280,7 +280,7 @@ until the first review lands.
   "images": [ ... ]
 }
 ```
-`status` is `available`, `occupied` or `maintenance`. The nested `room_type` omits
+`status` is the room's housekeeping state, `available`, `dirty` or `maintenance`; it says nothing about bookability, so use `GET /public/availability` for that. The nested `room_type` omits
 `banner`, `images`, `amenities` and `highlights` — those relations are not loaded
 through the nesting. Fetch `GET /public/room-types/{uuid}` when you need them.
 

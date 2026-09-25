@@ -40,8 +40,12 @@ class RoomTest extends TestCase
 
         $this->withToken($token)->getJson("/api/cms/rooms/{$uuid}")->assertOk();
 
-        $this->withToken($token)->putJson("/api/cms/rooms/{$uuid}", ['status' => 'maintenance'])
-            ->assertOk()->assertJsonPath('data.status', 'maintenance');
+        // D-01: the general update ignores status; only PATCH .../status writes it.
+        $this->withToken($token)->putJson("/api/cms/rooms/{$uuid}", ['status' => 'maintenance', 'floor' => 3])
+            ->assertOk()
+            ->assertJsonPath('data.floor', 3)
+            ->assertJsonPath('data.status', 'available');
+        $this->assertDatabaseHas('rooms', ['uuid' => $uuid, 'status' => 'available', 'floor' => 3]);
 
         $this->withToken($token)->deleteJson("/api/cms/rooms/{$uuid}")->assertStatus(204);
     }

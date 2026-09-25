@@ -786,9 +786,12 @@ class DemoShowcaseSeeder extends Seeder
     }
 
     /**
-     * Housekeeping board: occupied where a guest is in house, two empty rooms
-     * out for maintenance (the ones whose next arrival is furthest away), the
-     * rest available.
+     * Housekeeping board (Phase 2 two-axis model): rooms with a guest in house
+     * are `dirty` (stayovers awaiting daily service, so the board shows both
+     * axes), two empty rooms are out for `maintenance` (the ones whose next
+     * arrival is furthest away), the rest `available`. Occupancy is derived
+     * from reservations, never stored. Demo seeding writes the state directly
+     * and records no `room_status_history` rows.
      */
     private function roomStatuses(): void
     {
@@ -796,7 +799,7 @@ class DemoShowcaseSeeder extends Seeder
             ->whereHas('reservation', fn ($q) => $q->where('status', ReservationStatus::CHECKED_IN))
             ->pluck('room_id')->unique()->all();
 
-        Room::whereIn('id', $inHouse)->update(['status' => RoomStatus::OCCUPIED]);
+        Room::whereIn('id', $inHouse)->update(['status' => RoomStatus::DIRTY]);
 
         $todayS = $this->today->toDateString();
         $empty = collect($this->occupancy)

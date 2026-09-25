@@ -23,6 +23,10 @@ class RolesAndPermissionsSeeder extends Seeder
             // no other endpoint can reverse, which is why it is not something a
             // junior content editor holds by default.
             'cms.view', 'cms.edit', 'cms.restore', 'cms.purge',
+            // Opens the `rooms` group: moving a room through the housekeeping
+            // lifecycle. Deliberately independent of `cms.edit` — housekeeping
+            // must not need CMS rights to mark a room clean.
+            'rooms.status',
             'service_requests.view', 'service_requests.assign', 'service_requests.update',
             'tickets.view', 'tickets.assign', 'tickets.respond',
             'pricing.edit', 'reports.view', 'staff.manage',
@@ -33,9 +37,9 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         $presets = [
-            'reception'      => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'service_requests.view'],
+            'reception'      => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'service_requests.view', 'rooms.status'],
             'kitchen'        => ['service_requests.view', 'service_requests.update'],
-            'housekeeping'   => ['service_requests.view', 'service_requests.update'],
+            'housekeeping'   => ['service_requests.view', 'service_requests.update', 'rooms.status'],
             'concierge'      => ['service_requests.view', 'service_requests.assign', 'service_requests.update'],
             'events'         => ['service_requests.view', 'tickets.view', 'tickets.assign', 'tickets.respond'],
             // Without this preset no seeded account except the super admin (who

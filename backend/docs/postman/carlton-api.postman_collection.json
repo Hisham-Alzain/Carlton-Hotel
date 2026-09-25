@@ -4410,14 +4410,183 @@
                                 },
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n    \"status\": \"maintenance\"\n}",
+                                    "raw": "{\n    \"is_active\": true\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
                                         }
                                     }
                                 },
-                                "description": "Updates the seeded demo record in place — non-destructive (re-seed to reset)."
+                                "description": "status is not accepted here; use the status requests below."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Update status → dirty (as Housekeeping)",
+                            "request": {
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{housekeeping_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/cms/rooms/{{room_uuid}}/status",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "cms",
+                                        "rooms",
+                                        "{{room_uuid}}",
+                                        "status"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"status\": \"dirty\",\n    \"reason\": \"Guest spill reported\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Update status → available (as Housekeeping)",
+                            "request": {
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{housekeeping_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/cms/rooms/{{room_uuid}}/status",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "cms",
+                                        "rooms",
+                                        "{{room_uuid}}",
+                                        "status"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"status\": \"available\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "description": "leaves the seeded room as it started"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "❌ Update status, same state (expect 422 room_status_transition_invalid)",
+                            "request": {
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{housekeeping_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/cms/rooms/{{room_uuid}}/status",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "cms",
+                                        "rooms",
+                                        "{{room_uuid}}",
+                                        "status"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"status\": \"available\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "❌ Update status (as Kitchen — expect 403, no rooms.status)",
+                            "request": {
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{kitchen_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/cms/rooms/{{room_uuid}}/status",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "cms",
+                                        "rooms",
+                                        "{{room_uuid}}",
+                                        "status"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"status\": \"dirty\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
                             },
                             "response": []
                         },
@@ -7107,6 +7276,246 @@
                             }
                         },
                         "description": "Omit `until` to default to the end of the current hotel day. Stored as an expiry so a forgotten toggle clears itself. Tier-3b (is_checked_in)."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "18 - Front Desk (Admin)",
+            "item": [
+                {
+                    "name": "Room board (as Housekeeping)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{housekeeping_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/front-desk/room-board",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "front-desk",
+                                "room-board"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Room board — dirty rooms (as Reception)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{reception_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/front-desk/room-board?status=dirty",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "front-desk",
+                                "room-board"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "dirty"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Availability grid — 14 days from today (as Reception)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{reception_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/front-desk/availability-grid",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "front-desk",
+                                "availability-grid"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Availability grid — 31 days (as Reception)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{reception_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/front-desk/availability-grid?days=31",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "front-desk",
+                                "availability-grid"
+                            ],
+                            "query": [
+                                {
+                                    "key": "days",
+                                    "value": "31"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Rates grid — 14 days (as Reception)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{reception_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/front-desk/rates-grid",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "front-desk",
+                                "rates-grid"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "❌ Availability grid (as Housekeeping — expect 403, no reservations.view)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{housekeeping_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/front-desk/availability-grid",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "front-desk",
+                                "availability-grid"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "❌ Rates grid, days=32 (expect 422 validation_failed)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{reception_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/front-desk/rates-grid?days=32",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "front-desk",
+                                "rates-grid"
+                            ],
+                            "query": [
+                                {
+                                    "key": "days",
+                                    "value": "32"
+                                }
+                            ]
+                        }
                     },
                     "response": []
                 }

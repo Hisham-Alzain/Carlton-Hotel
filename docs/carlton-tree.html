@@ -244,12 +244,12 @@ var TREE = {
     "ep":["GET /public/rooms","GET /public/rooms/{room}","GET /public/amenities"]},
    {"name":"availability check","api":true,"dash":"na","mob":false,"meta":"app books without checking",
     "ep":["GET /public/availability"]},
-   {"name":"availability grid","api":false,"dash":"mock","mob":"na","meta":"no staff grid route",
-    "ep":["GET /availability/grid (dashboard mock only)"]},
-   {"name":"rate grid","api":false,"dash":"mock","mob":"na","meta":"read-only 14-day grid",
-    "ep":["GET /rates/grid (dashboard mock only)"]},
-   {"name":"room board · mark clean","api":false,"dash":"mock","mob":"na","meta":"front desk",
-    "ep":["GET /front-desk/room-board (mock)","PATCH /rooms/{id}/status (mock) — backend only has PUT /cms/rooms/{room}"]}
+   {"name":"availability grid","api":true,"dash":"mock","mob":"na","meta":"free / booked / out-of-order per room type · 1–31 nights",
+    "ep":["GET /front-desk/availability-grid"]},
+   {"name":"rate grid","api":true,"dash":"mock","mob":"na","meta":"read-only nightly rate per room type · same rule chain as the booking quote",
+    "ep":["GET /front-desk/rates-grid"]},
+   {"name":"room board · mark clean","api":true,"dash":"mock","mob":"na","meta":"housekeeping status + derived occupancy · audited status transitions",
+    "ep":["GET /front-desk/room-board","PATCH /cms/rooms/{room}/status"]}
   ]},
   {"name":"Reservations","kind":"section","api":true,"dash":"mock","mob":true,"children":[
    {"name":"guest booking flow","api":true,"dash":"na","mob":"partial","meta":"add-ons · guest details · party size dropped",

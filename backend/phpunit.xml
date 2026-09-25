@@ -18,6 +18,11 @@
         </include>
     </source>
     <php>
+        <!-- The suite passed ~1,000 tests (Phase 2) and outgrew the CLI default
+             of 128M: every test boots a fresh application and memory is not
+             fully released between tests, so the process died with
+             "Premature end of PHP process" late in the run. -->
+        <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>

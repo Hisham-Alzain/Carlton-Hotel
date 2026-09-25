@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Cms\UpdateRoomStatusAction;
 use App\Base\BaseCRUDController;
 use App\Base\BaseService;
 use App\Base\HandlesRecycleBin;
+use App\Enums\RoomStatus;
 use App\Http\Requests\Cms\CreateRoomRequest;
 use App\Http\Requests\Cms\UpdateRoomRequest;
+use App\Http\Requests\Cms\UpdateRoomStatusRequest;
 use App\Http\Resources\Cms\RoomResource;
 use App\Models\Room;
 use App\Services\Cms\RoomService;
@@ -39,6 +42,20 @@ class RoomController extends BaseCRUDController
     public function update(UpdateRoomRequest $request, Room $room): JsonResponse
     {
         return $this->updateResponse($request, $room);
+    }
+
+    /** PATCH /cms/rooms/{room}/status — the only runtime writer of rooms.status (D-01). */
+    public function updateStatus(UpdateRoomStatusRequest $request, Room $room, UpdateRoomStatusAction $action): JsonResponse
+    {
+        $result = $action->handle(
+            $room,
+            RoomStatus::from($request->validated('status')),
+            $request->validated('reason'),
+            $request->user('users'),
+        );
+        $result['data'] = new RoomResource($result['data']);
+
+        return $this->respondFromService($result, 'custom.messages.room_status_updated', $request);
     }
 
     public function destroy(Room $room, Request $request): JsonResponse

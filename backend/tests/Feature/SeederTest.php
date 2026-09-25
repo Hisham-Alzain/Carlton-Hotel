@@ -11,7 +11,7 @@ class SeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_all_18_permissions_seeded(): void
+    public function test_all_19_permissions_seeded(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $expected = [
@@ -21,6 +21,8 @@ class SeederTest extends TestCase
             // because undoing a delete and destroying a record permanently are
             // not edits — see RolesAndPermissionsSeeder and RecycleBinTest.
             'cms.view', 'cms.edit', 'cms.restore', 'cms.purge',
+            // Phase 2 (D-06): the `rooms` group, independent of cms.edit.
+            'rooms.status',
             'service_requests.view', 'service_requests.assign', 'service_requests.update',
             'tickets.view', 'tickets.assign', 'tickets.respond',
             'pricing.edit', 'reports.view', 'staff.manage',
@@ -28,7 +30,7 @@ class SeederTest extends TestCase
         foreach ($expected as $p) {
             $this->assertDatabaseHas('permissions', ['name' => $p, 'guard_name' => 'users']);
         }
-        $this->assertCount(18, Permission::where('guard_name', 'users')->get());
+        $this->assertCount(19, Permission::where('guard_name', 'users')->get());
     }
 
     public function test_all_7_role_presets_seeded(): void
@@ -86,11 +88,25 @@ class SeederTest extends TestCase
         $this->assertSame([], $ungrantable->all(), 'Permissions granted by no role preset: '.$ungrantable->implode(', '));
     }
 
+    public function test_housekeeping_and_reception_presets_grant_rooms_status(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $holders = Role::where('guard_name', 'users')->with('permissions')->get()
+            ->filter(fn (Role $role) => $role->permissions->pluck('name')->contains('rooms.status'))
+            ->pluck('name')
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame(['housekeeping', 'reception'], $holders);
+    }
+
     public function test_seeder_idempotent(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-        $this->assertCount(18, Permission::where('guard_name', 'users')->get());
+        $this->assertCount(19, Permission::where('guard_name', 'users')->get());
         $this->assertCount(7, Role::where('guard_name', 'users')->get());
 
         // Idempotent down to the pivot: re-running must not double up grants.

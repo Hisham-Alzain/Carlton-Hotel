@@ -80,7 +80,7 @@ class BookingSeeder extends Seeder
         ]);
         $room = Room::where('room_type_id', $deluxeKing->id)->first();
         ReservationRoom::create(['reservation_id' => $ahmadReservation->id, 'room_type_id' => $deluxeKing->id, 'room_id' => $room->id, 'price_usd' => 3150.00]);
-        $room->update(['status' => 'occupied']);
+        // Occupancy is derived from the checked-in reservation (Phase 2, D-02); housekeeping status stays `available`.
         Payment::create(['payable_type' => Reservation::class, 'payable_id' => $ahmadReservation->id, 'method' => 'cash', 'amount_usd' => 450.00, 'recorded_by' => $staff->id, 'note' => 'Deposit at check-in', 'status' => 'completed']);
 
         // --- Layla: confirmed, not yet checked in ---

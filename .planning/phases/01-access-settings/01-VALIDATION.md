@@ -40,24 +40,31 @@ created: 2026-09-25
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 01-01-01 | 01 | 1 | ACCESS-01 | T-01-01 / — | Revoked token gets 401 on every guest route; optional device_token only deletes a row owned by the caller | feature | `cd backend && php artisan test --filter=GuestLogoutTest` | ❌ W0 | ⬜ pending |
-| 01-01-02 | 01 | 1 | ACCESS-02 | T-01-02 / — | Email change requires current password; duplicate email → 422 validation_failed | feature | `cd backend && php artisan test --filter=StaffProfileTest` | ❌ W0 | ⬜ pending |
-| 01-01-03 | 01 | 1 | ACCESS-03 | T-01-03 / — | Wrong current password → 422; other tokens revoked, current kept; 6th call/min → 429 | feature | `cd backend && php artisan test --filter=StaffPasswordChangeTest` | ❌ W0 | ⬜ pending |
-| 01-01-04 | 01 | 1 | DOCS-01 | — | n/a | manual + grep | `grep -c "auth/profile" backend/docs/API_GUIDE_DASHBOARD.md` and tree node check | n/a | ⬜ pending |
-| 01-01-05 | 01 | 1 | XCUT-01 | — | No new permissions introduced; stated in SUMMARY | manual | `cd backend && php artisan test --filter=RolesAndPermissions` | ✅ | ⬜ pending |
+| 01-01-01 | 01 | 1 | ACCESS-01 | T-01-01 | Failing spec (RED): revoked token 401 on every `auth:guests` route; device_token ownership; real bearer tokens only | feature (RED) | `cd backend && php -l tests/Feature/Auth/GuestLogoutTest.php && ! php artisan test --filter=GuestLogoutTest` | ❌ W0 (created by this task) | ⬜ pending |
+| 01-01-02 | 01 | 1 | ACCESS-01 | T-01-01, T-01-01b | Only the current token revoked; device-token delete scoped to the caller; staff token untouched | feature | `cd backend && php artisan test --filter=GuestLogoutTest` | ✅ after 01-01-01 | ⬜ pending |
+| 01-02-01 | 02 | 2 | ACCESS-02 | T-01-02, T-01-08 | Failing spec (RED): email change needs current_password; privileged fields ignored; empty/encoding/idempotency edges | feature (RED) | `cd backend && php -l tests/Feature/Auth/StaffProfileTest.php && ! php artisan test --filter=StaffProfileTest` | ❌ W0 (created by this task) | ⬜ pending |
+| 01-02-02 | 02 | 2 | ACCESS-02 | T-01-02, T-01-08 | Email change gated by `current_password:users`; only name/email reach the model; same shape as /auth/me | feature | `cd backend && php artisan test --filter=StaffProfileTest` (15 of 16 green; the localized-message test waits for 01-02-03) | ✅ after 01-02-01 | ⬜ pending |
+| 01-02-03 | 02 | 2 | ACCESS-02 | — | `current_password` message localized in en/ar/fr/tr/es | feature + locale guards | `cd backend && php artisan test --filter='StaffProfileTest\|ValidationMessageLocalizationTest\|LocaleFoundationTest' && php artisan test` | ✅ | ⬜ pending |
+| 01-03-01 | 03 | 3 | ACCESS-03 | T-01-03, T-01-04 | Failing spec (RED): others revoked/current kept; 429 on 6th call per account; no hash in activity_log | feature (RED) | `cd backend && php -l tests/Feature/Auth/StaffPasswordChangeTest.php && ! php artisan test --filter=StaffPasswordChangeTest` | ❌ W0 (created by this task) | ⬜ pending |
+| 01-03-02 | 03 | 3 | ACCESS-03 | T-01-03, T-01-04, T-01-11, T-01-12 | `throttle:5,1` keyed per user; transaction revokes other tokens; `activitylog.default_except_attributes` excludes password | feature | `cd backend && php artisan test --filter=StaffPasswordChangeTest` (13 of 14 green; the localized-message test waits for 01-03-03) | ✅ after 01-03-01 | ⬜ pending |
+| 01-03-03 | 03 | 3 | ACCESS-03 | — | `confirmed`/`different`/`password_changed` localized in five locales | feature + locale guards | `cd backend && php artisan test --filter='StaffPasswordChangeTest\|StaffProfileTest\|ValidationMessageLocalizationTest\|LocaleFoundationTest' && php artisan test` | ✅ | ⬜ pending |
+| 01-04-01 | 04 | 4 | DOCS-01 | T-01-15 | Guides document only shipped behaviour with real error codes | grep | Heading/order/count greps in the 01-04 Task 1 `<verify>` | n/a | ⬜ pending |
+| 01-04-02 | 04 | 4 | DOCS-01 | T-01-14 | Postman order safe (revoking requests last); tree parses, only two nodes changed | node JSON checks | Postman + tree node one-liners in the 01-04 Task 2 `<verify>` (tree baseline sha1 `b71ef1ee…`) | n/a | ⬜ pending |
+| 01-04-03 | 04 | 4 | DOCS-01, XCUT-01 | T-01-16 | No new permission; four routes on correct guards; password throttled, profile not | route:list JSON + full suite | Route-contract checker in the 01-04 Task 3 `<verify>`, then `cd backend && php artisan test` | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
-*(Task IDs are provisional until PLAN.md is written; the planner replaces this table with the real task list.)*
+*Sampling continuity: every task has an automated command, and no three consecutive tasks lack one. RED tasks (01-0N-01) are expected to exit non-zero on the test run itself; their `<automated>` inverts that with `!` after a `php -l` syntax gate.*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `backend/tests/Feature/Auth/GuestLogoutTest.php` — stubs for ACCESS-01 (must use real bearer tokens via `withToken()`, never `actingAs()`, so `currentAccessToken()` is a real token)
-- [ ] `backend/tests/Feature/Auth/StaffProfileTest.php` — stubs for ACCESS-02
-- [ ] `backend/tests/Feature/Auth/StaffPasswordChangeTest.php` — stubs for ACCESS-03 incl. 429 throttle case
-- Existing infrastructure (`backend/tests/TestCase.php` helpers, factories for `User`, `Guest`, `DeviceToken`) covers the rest.
+- [ ] `backend/tests/Feature/Auth/GuestLogoutTest.php`: 12 tests for ACCESS-01, created RED by task 01-01-01 (real bearer tokens via `withToken()`, never `actingAs()`, so `currentAccessToken()` is a real token; includes the all-`auth:guests`-routes scan)
+- [ ] `backend/tests/Feature/Auth/StaffProfileTest.php`: 16 tests for ACCESS-02, created RED by task 01-02-01
+- [ ] `backend/tests/Feature/Auth/StaffPasswordChangeTest.php`: 14 tests for ACCESS-03 including the 429 per-user throttle case and the activity-log leak check, created RED by task 01-03-01
+- Existing guards that this phase must keep green and that pin its localization contract: `tests/Feature/ValidationMessageLocalizationTest.php` (every reachable rule mapped; mapped keys translated in en/ar/fr/tr/es; FormRequest `rules()` called with **no user**) and `tests/Feature/Cms/LocaleFoundationTest.php` (identical `custom.php` key sets across all five locales).
+- Existing infrastructure (factories for `User`, `Guest`, `DeviceToken`; `RolesAndPermissionsSeeder`) covers the rest. Staff-token helpers are per-test private methods, not in `tests/TestCase.php`.
 
 ---
 
@@ -66,7 +73,7 @@ created: 2026-09-25
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
 | API guides, Postman and `docs/carlton-tree.html` nodes updated | DOCS-01 | Documentation content, not runtime behaviour | Open `docs/carlton-tree.html` in a browser; "guest sign out" and "dashboard settings" nodes show api:true with the new endpoints; API guide Auth modules list the 4 routes |
-| Phase summary lists "no new permissions" and dashboard path changes | XCUT-01 | Summary format convention | Read `01-SUMMARY.md` after execution |
+| Phase summary lists "no new permissions" and dashboard path changes | XCUT-01 | Summary format convention | Read `01-04-SUMMARY.md` after execution: `## Permissions (XCUT-01)`, `## Dashboard & App Path Changes (DOCS-01)` and `## Docs Updated (DOCS-01)` are present in that order, per the contract in `.planning/codebase/CONVENTIONS.md` |
 
 ---
 

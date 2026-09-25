@@ -384,6 +384,120 @@
                     "response": []
                 },
                 {
+                    "name": "Profile (staff) — Get",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "profile"
+                            ]
+                        },
+                        "description": "Same shape as Me."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Profile (staff) — Update",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "profile"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\": \"Carlton Front Office\"}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Send only the fields you change; changing email also needs current_password; type, activation and roles stay on PUT /staff/{uuid}."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Change Password (staff)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "password"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"current_password\": \"password\", \"password\": \"password-changed-1\", \"password_confirmation\": \"password-changed-1\"}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Throttled 5/min per account; revokes every other token of this account while this staff_token keeps working; it changes the seeded account's password, so send it again with the values swapped to restore password."
+                    },
+                    "response": []
+                },
+                {
                     "name": "Logout",
                     "request": {
                         "method": "POST",
@@ -650,6 +764,48 @@
                             }
                         },
                         "description": "Completes the profile after OTP sign-in. Filling in a contact you do not have yet is allowed; replacing an already-verified phone/email returns 409 verified_contact_immutable."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Guest] Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/guest/logout",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "guest",
+                                "logout"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"device_token\": \"fcm-token-of-this-device\"}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Revokes the token stored in guest_token; device_token is optional and ignored when it is not this guest's; re-run \"[Guest] Verify OTP (login) — Rania\" to mint a fresh guest_token."
                     },
                     "response": []
                 }

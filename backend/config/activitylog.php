@@ -45,8 +45,15 @@ return [
     /*
      * These attributes will be excluded from logging for all models.
      * Model-specific exclusions via logExcept() are merged with these.
+     *
+     * App\Traits\LogsActivity logs every fillable attribute, User::$fillable
+     * contains `password`, and Spatie never consults `$hidden`. Without this
+     * list the bcrypt hash is copied into activity_log.attribute_changes on
+     * staff creation and on every password change. This is the global exclusion
+     * point on purpose: the trait's options are fixed, so no model adds its
+     * own logExcept().
      */
-    'default_except_attributes' => [],
+    'default_except_attributes' => ['password', 'remember_token'],
 
     /*
      * When enabled, activities are buffered in memory and inserted in a

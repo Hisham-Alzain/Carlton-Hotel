@@ -4,16 +4,16 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 1
 current_phase_name: Access & Settings
-status: executing
-stopped_at: Phase 1 context gathered
-last_updated: "2026-09-25T02:17:21.883Z"
+status: complete
+stopped_at: Phase 1 closed — 966/966 tests green, phase commit made
+last_updated: "2026-09-25T00:00:00.000Z"
 last_activity: 2026-09-25
-last_activity_desc: Roadmap created (9 phases, 51/51 v1 requirements mapped)
+last_activity_desc: Phase 1 (Access & Settings) closed — guest logout, staff profile read/update, staff password change, docs/contract closure
 progress:
-  total_phases: 1
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 9
+  completed_phases: 1
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 
 ## Current Position
 
-Phase: 1 of 9 (Access & Settings)
-Plan: 0 of TBD in current phase
-Status: Ready to execute
-Last activity: 2026-09-25 — Roadmap created (9 phases, 51/51 v1 requirements mapped)
+Phase: 1 of 9 (Access & Settings) — complete
+Plan: 4 of 4 in current phase (01-01, 01-02, 01-03, 01-04 all done)
+Status: Phase 1 closed; ready to plan Phase 2
+Last activity: 2026-09-25 — Phase 1 closed: guest logout, staff profile read/update, staff password change, docs/contract closure. Full suite 966/966 green.
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 11%
 
 ## Performance Metrics
 
@@ -91,6 +91,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-25T01:20:59.842Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-access-settings/01-CONTEXT.md
+Last session: 2026-09-25T00:00:00.000Z
+Stopped at: Phase 1 closed (SUMMARY.md written, phase commit made, never pushed)
+Resume file: .planning/phases/01-access-settings/SUMMARY.md

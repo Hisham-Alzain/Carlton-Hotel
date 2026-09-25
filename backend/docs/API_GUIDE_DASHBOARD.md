@@ -247,7 +247,7 @@ Seven presets: `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `c
 
 > Earlier revisions of this table listed `credentials_invalid` and `account_inactive` as the `error_code`s. Those are the **translation keys behind `message`**, not codes: `AuthStaffService` throws `UnauthorizedException` / `ForbiddenException`, whose `errorCode()` values are `unauthorized` and `forbidden`. A client branching on `credentials_invalid` will never match. Distinguish the two cases by HTTP status (401 vs 403).
 
-**Not rate-limited.** Unlike the guest OTP route, `POST /api/auth/login` carries no `throttle` middleware. Do not auto-retry on `401`.
+**Rate-limited.** `POST /api/auth/login` is throttled at 10 requests per minute per client IP; beyond that it answers `429` `too_many_requests`. Do not auto-retry on `401`.
 
 **State notes:** Store the token. Persist the `permissions` array for local gate checks (server re-enforces on every request). The `user.uuid` is the stable identifier — never use integer IDs.
 
@@ -282,6 +282,81 @@ Seven presets: `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `c
 | Code | HTTP | UI action |
 |---|---|---|
 | `unauthorized` | 401 | Token expired or invalid — redirect to login. |
+
+---
+
+### GET /api/auth/profile
+
+**Purpose:** Read the signed-in staff member's own profile for the settings screen.
+
+**Who can call:** Any authenticated staff member (no permission needed).
+
+**Request:** `Authorization: Bearer <token>`. No body.
+
+**Response `data`:** Same shape as `user` in `/auth/login`, and identical to `GET /api/auth/me`.
+
+**Failure `error_code`s:**
+
+| Code | HTTP | UI action |
+|---|---|---|
+| `unauthorized` | 401 | Token expired or invalid — redirect to login. |
+
+---
+
+### PUT /api/auth/profile
+
+**Purpose:** The staff member edits their own name and email.
+
+**Who can call:** Any authenticated staff member (no permission needed).
+
+**Request body:**
+
+| Field | Type | Required |
+|---|---|---|
+| `name` | string | Required when `email` is absent; max 255. |
+| `email` | string | Required when `name` is absent; valid email, max 255, unique across staff. |
+| `current_password` | string | Required when `email` changes to a different value; if sent, it is always checked. |
+
+Send only what changes; an empty body is rejected. Type, activation, roles and permissions are not editable here and stay on `PUT /api/staff/{uuid}`; the language switch stays client-side.
+
+**Response `data`:** The updated user object, same shape as `/auth/me`, with message "Profile updated.".
+
+**Failure `error_code`s:**
+
+| Code | HTTP | UI action |
+|---|---|---|
+| `unauthorized` | 401 | Token expired or invalid — redirect to login. |
+| `validation_failed` | 422 | Show each `errors.<field>` under its field. `errors.current_password` reads "The current password is incorrect." |
+
+**State notes:** No rate limit applies to this route. Refresh the stored user from `data` on success.
+
+---
+
+### PUT /api/auth/password
+
+**Purpose:** The staff member changes their own password.
+
+**Who can call:** Any authenticated staff member (no permission needed).
+
+**Request body:**
+
+| Field | Type | Required |
+|---|---|---|
+| `current_password` | string | ✅ |
+| `password` | string | ✅ — min 8, must differ from `current_password`. |
+| `password_confirmation` | string | ✅ — must equal `password`. |
+
+**Response `data`:** `null`, message "Password changed.".
+
+**State notes:** The token that made the call stays valid, and every other session of this account is signed out (their next call returns `401` `unauthorized`).
+
+**Failure `error_code`s:**
+
+| Code | HTTP | UI action |
+|---|---|---|
+| `unauthorized` | 401 | Token expired or invalid — redirect to login. |
+| `validation_failed` | 422 | `errors.current_password` / `errors.password`. |
+| `too_many_requests` | 429 | 5 requests per minute per account — tell the user to wait a minute and do not auto-retry. |
 
 ---
 

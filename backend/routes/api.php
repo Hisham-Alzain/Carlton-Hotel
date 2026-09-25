@@ -102,6 +102,15 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:users')->group(function () {
         Route::post('/logout', [StaffAuthController::class, 'logout']);
         Route::get('/me', [StaffAuthController::class, 'me']);
+        Route::get('/profile', [StaffAuthController::class, 'profile']);
+        Route::put('/profile', [StaffAuthController::class, 'updateProfile']);
+        // Throttled because it verifies a secret and says whether it was right:
+        // a stolen session could otherwise brute-force the account's password.
+        // Inside auth:users the throttle keys on the authenticated user id, not
+        // the IP, so 5/minute per account never locks out a shared back-office
+        // NAT. Tighter than login's 10/minute because the caller already holds a
+        // session. /profile stays unthrottled.
+        Route::put('/password', [StaffAuthController::class, 'changePassword'])->middleware('throttle:5,1');
     });
 
     // Guest auth
@@ -112,6 +121,7 @@ Route::prefix('auth')->group(function () {
         Route::middleware('auth:guests')->group(function () {
             Route::get('/me',      [GuestAuthController::class, 'me']);
             Route::put('/profile', [GuestAuthController::class, 'updateProfile']);
+            Route::post('/logout', [GuestAuthController::class, 'logout']);
         });
     });
 });

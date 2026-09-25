@@ -93,7 +93,7 @@ Both gates reject with `error_code: no_active_reservation` (403) when unmet — 
 
 ## Endpoint index
 
-Every endpoint the app can reach — 58 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
+Every endpoint the app can reach — 59 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
 
 | Tier | Method | Path | Section |
 |---|---|---|---|
@@ -103,6 +103,7 @@ Every endpoint the app can reach — 58 in total. Tier column: **P** public (no 
 | P | POST | `/auth/guest/link-booking-code` | [Guest Auth](#module-guest-auth) |
 | G | GET | `/auth/guest/me` | [Guest Auth](#module-guest-auth) |
 | G | PUT | `/auth/guest/profile` | [Guest Auth](#module-guest-auth) |
+| G | POST | `/auth/guest/logout` | [Guest Auth](#module-guest-auth) |
 | P | GET | `/public/home-sliders` | [Content](#module-content-tier-1-public) |
 | P | GET | `/public/room-types` | [Content](#module-content-tier-1-public) |
 | P | GET | `/public/room-types/{uuid}` | [Content](#module-content-tier-1-public) |
@@ -392,6 +393,24 @@ Send only the fields you are changing — omitted fields are left alone.
 **Response `data`:** the full guest object (same shape as `GET /api/auth/guest/me`).
 
 **Failure `error_code`s:** `verified_contact_immutable` (409), `validation_failed` (422 — includes a phone that could not be parsed, or an email/phone already taken by another guest).
+
+---
+
+### POST /api/auth/guest/logout
+
+**Purpose:** Sign out and revoke this device's token server-side.
+
+**Who can call:** Tier-2 (any guest token).
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `device_token` | string | optional | Max 500. The FCM token this device registered via `POST /api/device-tokens`; send it so pushes stop reaching this device. A token that is not this guest's is ignored. |
+
+**Response `data`:** `null`, message "Logged out successfully.".
+
+**State notes:** Discard the stored token and clear local storage even when the call returns 401. Without `device_token`, the device registration is kept and re-assigned at the next login. Only this token is revoked; other devices stay signed in.
+
+**Failure `error_code`s:** `unauthorized` (401 — the token was already revoked or expired, treat it as signed out), `validation_failed` (422 — `device_token` is not a string or exceeds 500 characters).
 
 ---
 

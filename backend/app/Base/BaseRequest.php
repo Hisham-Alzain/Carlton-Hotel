@@ -60,6 +60,9 @@ abstract class BaseRequest extends FormRequest
             'unique'           => __('custom.validation.unique',           ['attribute' => ':attribute']),
             'exists'           => __('custom.validation.exists',           ['attribute' => ':attribute']),
             'distinct'         => __('custom.validation.distinct',          ['attribute' => ':attribute']),
+            'current_password' => __('custom.validation.current_password', ['attribute' => ':attribute']),
+            'confirmed'        => __('custom.validation.confirmed',        ['attribute' => ':attribute']),
+            'different'        => __('custom.validation.different',        ['attribute' => ':attribute', 'other' => ':other']),
 
             // `Rule::enum()` is a ValidationRule object, not a string rule: it
             // fails with its own `$fail('validation.enum')`, and Laravel looks a

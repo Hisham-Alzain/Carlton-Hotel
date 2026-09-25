@@ -8,6 +8,7 @@ use App\Actions\Auth\VerifyOtpAction;
 use App\Enums\OtpChannel;
 use App\Enums\OtpPurpose;
 use App\Models\Guest;
+use Illuminate\Support\Facades\DB;
 
 class AuthGuestService
 {
@@ -42,5 +43,26 @@ class AuthGuestService
     public function updateProfile(Guest $guest, array $data): array
     {
         return $this->updateProfile->handle($guest, $data);
+    }
+
+    public function logout(Guest $guest, ?string $deviceToken = null): array
+    {
+        DB::transaction(function () use ($guest, $deviceToken) {
+            $token = $guest->currentAccessToken();
+            if ($token) {
+                $token->delete();
+            } else {
+                // Fallback: delete all tokens for this guest (safe — one active session)
+                $guest->tokens()->delete();
+            }
+
+            // Scoped through the relation, so guest_id is always in the WHERE:
+            // a token owned by another guest, or unknown, deletes nothing.
+            if ($deviceToken !== null && $deviceToken !== '') {
+                $guest->deviceTokens()->where('token', $deviceToken)->delete();
+            }
+        });
+
+        return ['data' => null, 'code' => 200];
     }
 }

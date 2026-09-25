@@ -283,6 +283,42 @@ $this->getTranslations('name') // Returns ['en' => '...', 'ar' => '...']
 throw new Exception('Room not found');
 ```
 
+## Phase Summary Contract (DOCS-01 / XCUT-01)
+
+Set in Phase 1 (01-access-settings); every phase-closing SUMMARY in this milestone follows it. Sections appear in the order below; none is ever omitted; an empty section says so in one line.
+
+### Permissions (XCUT-01)
+
+| Permission | Seeded role presets | Routes it gates | Notes |
+|---|---|---|---|
+
+Empty form (use when the phase adds none): `None — no new permissions this phase.`
+
+Rules:
+- Names follow `{domain}.{action}` in lowercase with a dot separator, reusing an existing domain prefix where one exists (e.g. `reports.view`, `folios.settle`, `cms.edit`).
+- Each permission is seeded in `RolesAndPermissionsSeeder` in the same phase, with its role presets.
+- Rows are sorted ascending by permission name.
+- A rename or removal is a breaking change that needs explicit sign-off.
+- Authenticated routes that need a rate limit use a named limiter keyed by guard and user id, not a plain throttle.
+
+### Dashboard & App Path Changes (DOCS-01)
+
+| Client (dashboard / app) | Method | Path | Change (added / changed / removed) | Notes |
+|---|---|---|---|---|
+
+Rows are sorted by client, then path, then method. `changed` and `removed` rows are breaking and need sign-off plus a note to the React/Flutter teams.
+
+Empty form (use when the phase changes no path): `None — no path changes this phase.`
+
+The section always ends with one line stating whether any existing path, field or error_code changed, e.g. `No existing path, field or error_code changed this phase.`
+
+### Docs Updated (DOCS-01)
+
+- [ ] API_GUIDE_DASHBOARD.md sections added or changed
+- [ ] API_GUIDE_MOBILE.md sections added or changed (and the Endpoint index count)
+- [ ] Postman folder and request names
+- [ ] carlton-tree.html nodes flipped, by node name
+
 ---
 
 *Convention analysis: 2026-09-25*

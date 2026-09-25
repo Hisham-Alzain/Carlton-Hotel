@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carlton — Logic Tree</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; }
+
+  :root {
+    --teal: #1f3a5f; --teal-light: #2c5282; --teal-soft: #e8eef6;
+    --gold: #c0a060; --gold-strong: #a78238;
+    --bg: #f7f5f0; --surface: #ffffff; --raised: #fbfaf7;
+    --border: #e5ded2; --border-firm: #d6c8b2;
+    --ink: #13233a; --body: #3b4a5c; --muted: #7d8794;
+    --built: #268765; --gap: #c75c3a; --mock: #7a5fb0; --edge: #c9bda9;
+    --f-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --f-body: 'Source Sans 3', 'Avenir Next', 'Segoe UI', sans-serif;
+    --f-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --teal: #8fb3e0; --teal-light: #5d8cc7; --teal-soft: #16294a;
+    --gold: #d8bd83; --gold-strong: #e6d09b;
+    --bg: #0b1626; --surface: #112037; --raised: #0e1b2f;
+    --border: #1f3553; --border-firm: #2a4668;
+    --ink: #f2ece0; --body: #c3cdd8; --muted: #8b9aad;
+    --built: #4fbf8f; --gap: #e8896a; --mock: #b39ae6; --edge: #2a4466;
+  } }
+  :root[data-theme="dark"] {
+    --teal: #8fb3e0; --teal-light: #5d8cc7; --teal-soft: #16294a;
+    --gold: #d8bd83; --gold-strong: #e6d09b;
+    --bg: #0b1626; --surface: #112037; --raised: #0e1b2f;
+    --border: #1f3553; --border-firm: #2a4668;
+    --ink: #f2ece0; --body: #c3cdd8; --muted: #8b9aad;
+    --built: #4fbf8f; --gap: #e8896a; --mock: #b39ae6; --edge: #2a4466;
+  }
+
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--body); font-family: var(--f-body);
+         display: flex; flex-direction: column; overflow: hidden; }
+
+  header.bar { flex: none; display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;
+    padding: 14px 22px 13px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .title { font-family: var(--f-display); font-size: 24px; font-weight: 600; color: var(--ink); line-height: 1; }
+  .sub { font-size: 13px; color: var(--muted); }
+  .sub b { color: var(--body); font-weight: 600; }
+  .controls { margin-left: auto; display: flex; gap: 7px; flex-wrap: wrap; }
+  button.ctl { font: 600 11px/1 var(--f-body); letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); background: var(--raised); border: 1px solid var(--border);
+    border-radius: 2px; padding: 8px 11px; cursor: pointer; }
+  button.ctl:hover { color: var(--ink); border-color: var(--border-firm); }
+  button.ctl:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .legend { flex: none; display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center;
+    padding: 10px 22px; background: var(--raised); border-bottom: 1px solid var(--border);
+    font-size: 12.5px; color: var(--body); }
+  .lg { display: flex; align-items: center; gap: 8px; }
+  .lg svg { display: block; overflow: visible; }
+  .lg-sep { width: 1px; height: 16px; background: var(--border); }
+  .hint { color: var(--muted); font-size: 12px; }
+
+  .filters { flex: none; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 10px 22px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .f-label { font: 600 11px/1 var(--f-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+  button.chip { display: inline-flex; align-items: center; gap: 7px; font: 500 12.5px/1 var(--f-body);
+    color: var(--body); background: var(--raised); border: 1px solid var(--border); border-radius: 999px;
+    padding: 7px 12px; cursor: pointer; }
+  button.chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); flex: none; }
+  button.chip b { font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); font-weight: 600; }
+  button.chip:hover { border-color: var(--border-firm); color: var(--ink); }
+  button.chip[aria-pressed="true"] { background: var(--teal-soft); border-color: var(--teal); color: var(--ink); }
+  button.chip[aria-pressed="true"] b { color: var(--ink); }
+  button.chip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  #canvas { flex: 1; position: relative; overflow: hidden; cursor: grab; }
+  #canvas.dragging { cursor: grabbing; }
+  #svg { width: 100%; height: 100%; display: block; touch-action: none; }
+
+  .edge { fill: none; stroke: var(--edge); stroke-width: 1.4; }
+  .edge.to-gap { stroke-dasharray: 4 4; stroke: var(--gap); opacity: .55; }
+
+  .node { cursor: pointer; }
+  .node:focus-visible .shape { stroke: var(--gold); stroke-width: 2.5; }
+  rect.shape { fill: var(--surface); stroke: var(--teal); stroke-width: 1.6; rx: 3; }
+  .node.branch:hover rect.shape, .node.leaf:hover circle.shape { fill: var(--teal-soft); }
+  circle.shape { fill: var(--surface); stroke: var(--muted); stroke-width: 1.6; }
+  .node.selected circle.shape { fill: var(--gold); }
+
+  .st-gapfront rect.shape, .st-gapfront circle.shape { stroke: var(--gap); stroke-dasharray: 5 3; }
+  .st-mock     rect.shape, .st-mock     circle.shape { stroke: var(--mock); stroke-dasharray: 5 3; }
+  .st-gapback  rect.shape, .st-gapback  circle.shape { stroke: var(--gold-strong); stroke-dasharray: 5 3; }
+  .st-planned  rect.shape, .st-planned  circle.shape { stroke: var(--muted); stroke-dasharray: 2 3; }
+  .st-gapfront text.label { fill: var(--gap); }
+  .is-root rect.shape { stroke-width: 2.6; fill: var(--teal-soft); }
+
+  text { dominant-baseline: middle; }
+  text.label { font-family: var(--f-body); font-size: 13px; fill: var(--ink); text-anchor: middle; }
+  text.meta  { font-family: var(--f-body); font-size: 10px; fill: var(--muted); text-anchor: middle; letter-spacing: .03em; }
+  text.gaps  { font-family: var(--f-mono); font-size: 10px; fill: var(--gap); text-anchor: middle; }
+  text.meta, text.gaps, text.label.leaf-label {
+    paint-order: stroke fill; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+  text.label.leaf-label { font-size: 12px; text-anchor: start; }
+  tspan.meta-inline { font-size: 9.5px; fill: var(--muted); letter-spacing: .02em; }
+
+  /* A · D · M dots — Laravel API · dashboard (web) · mobile app */
+  .dot-on   { fill: var(--built); stroke: var(--built); stroke-width: 1.3; }
+  .dot-off  { fill: none; stroke: var(--gap); stroke-width: 1.3; }
+  .dot-half { fill: var(--gold); stroke: var(--gold-strong); stroke-width: 1.3; }
+  .dot-mock { fill: var(--mock); stroke: var(--mock); stroke-width: 1.3; }
+  .dot-na   { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 1.5 1.5; }
+
+  #panel { position: absolute; right: 16px; bottom: 16px; width: min(420px, calc(100% - 32px));
+    max-height: 60%; overflow: auto; background: var(--surface); border: 1px solid var(--border-firm);
+    border-radius: 4px; padding: 14px 16px; box-shadow: 0 6px 24px rgba(0,0,0,.12); display: none;
+    cursor: default; font-size: 13px; }
+  #panel.open { display: block; }
+  #panel h2 { font-family: var(--f-display); font-size: 20px; color: var(--ink); font-weight: 600; margin-bottom: 4px; padding-right: 24px; }
+  #panel .path { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  #panel .status { display: inline-block; font: 600 10.5px/1 var(--f-body); letter-spacing: .08em; text-transform: uppercase;
+    padding: 4px 7px; border-radius: 2px; border: 1px solid currentColor; margin-bottom: 10px; }
+  #panel .rows { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin-bottom: 10px; }
+  #panel .rows span:nth-child(odd) { color: var(--muted); font-weight: 600; font-size: 11.5px; }
+  #panel .note { color: var(--body); margin-bottom: 10px; line-height: 1.4; }
+  #panel ul { list-style: none; padding: 0; font-family: var(--f-mono); font-size: 11.5px; color: var(--ink); }
+  #panel li { padding: 3px 0; border-top: 1px solid var(--border); word-break: break-all; }
+  #panel .close { position: absolute; top: 8px; right: 10px; background: none; border: 0; font-size: 18px;
+    color: var(--muted); cursor: pointer; }
+
+  footer.bar { flex: none; padding: 9px 22px; background: var(--surface);
+    border-top: 1px solid var(--border); font-family: var(--f-mono); font-size: 11.5px;
+    color: var(--muted); display: flex; gap: 20px; flex-wrap: wrap; }
+
+  @media (max-width: 640px) {
+    header.bar, .legend, .filters, footer.bar { padding-left: 16px; padding-right: 16px; }
+    #f-hint { display: none; }
+    .controls { margin-left: 0; }
+  }
+  @media print { body { overflow: visible; height: auto; background: #fff; }
+    .controls, .hint, #panel { display: none; } #canvas { overflow: visible; height: auto; } }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <span class="title">Carlton</span>
+  <span class="sub">logic-first tree · <b id="stat-total">–</b> capabilities ·
+    <b id="stat-api">–</b> on the Laravel API</span>
+  <span class="controls">
+    <button class="ctl" id="btn-expand" type="button">Expand all</button>
+    <button class="ctl" id="btn-collapse" type="button">Collapse</button>
+    <button class="ctl" id="btn-fit" type="button">Fit</button>
+    <button class="ctl" id="btn-theme" type="button">Theme</button>
+  </span>
+</header>
+
+<div class="filters" role="group" aria-label="Filter by status">
+  <span class="f-label">Filter</span>
+  <button class="chip" type="button" data-st="all" aria-pressed="true">All <b id="stat-all">–</b></button>
+  <button class="chip" type="button" data-st="st-ok" aria-pressed="false"><i style="--c:var(--built)"></i>Live end to end <b id="stat-ok">–</b></button>
+  <button class="chip" type="button" data-st="st-gapfront" aria-pressed="false"><i style="--c:var(--gap)"></i>API ready, no UI <b id="stat-gapfront">–</b></button>
+  <button class="chip" type="button" data-st="st-gapback" aria-pressed="false"><i style="--c:var(--gold-strong)"></i>UI with no API <b id="stat-gapback">–</b></button>
+  <button class="chip" type="button" data-st="st-mock" aria-pressed="false"><i style="--c:var(--mock)"></i>UI on mock, not wired <b id="stat-mock">–</b></button>
+  <button class="chip" type="button" data-st="st-planned" aria-pressed="false"><i style="--c:var(--muted)"></i>Not built <b id="stat-planned">–</b></button>
+  <span class="hint" id="f-hint">click to filter · ctrl/⌘-click to combine</span>
+</div>
+
+<div class="legend">
+  <span class="lg"><svg width="18" height="14"><rect x="1" y="1" width="16" height="12" rx="3"
+    fill="var(--surface)" stroke="var(--teal)" stroke-width="1.6"/></svg>
+    <span><b>Square</b> — module</span></span>
+  <span class="lg"><svg width="16" height="16"><circle cx="8" cy="8" r="6"
+    fill="var(--surface)" stroke="var(--muted)" stroke-width="1.6"/></svg>
+    <span><b>Circle</b> — capability (click for endpoints)</span></span>
+  <span class="lg-sep"></span>
+  <span class="lg"><svg width="44" height="12">
+    <circle cx="6" cy="6" r="4.5" class="dot-on"/><circle cx="20" cy="6" r="4.5" class="dot-on"/>
+    <circle cx="34" cy="6" r="4.5" class="dot-on"/></svg>
+    <span><b>A · D · M</b> — Laravel API / dashboard (web) / mobile app</span></span>
+  <span class="lg"><svg width="16" height="12"><circle cx="6" cy="6" r="4.5" class="dot-half"/></svg><span>partly</span></span>
+  <span class="lg"><svg width="16" height="12"><circle cx="6" cy="6" r="4.5" class="dot-mock"/></svg><span>mock / hard-coded</span></span>
+  <span class="lg"><svg width="16" height="12"><circle cx="6" cy="6" r="4.5" class="dot-off"/></svg><span>missing</span></span>
+  <span class="lg"><svg width="16" height="12"><circle cx="6" cy="6" r="4.5" class="dot-na"/></svg><span>not this client's job</span></span>
+  <span class="lg-sep"></span>
+  <span class="lg"><svg width="16" height="14"><rect x="1" y="1" width="14" height="12" rx="3"
+    fill="none" stroke="var(--mock)" stroke-width="1.6" stroke-dasharray="5 3"/></svg><span>UI on mock</span></span>
+  <span class="lg"><svg width="16" height="14"><rect x="1" y="1" width="14" height="12" rx="3"
+    fill="none" stroke="var(--gap)" stroke-width="1.6" stroke-dasharray="5 3"/></svg><span>API ready, no UI</span></span>
+  <span class="lg"><svg width="16" height="14"><rect x="1" y="1" width="14" height="12" rx="3"
+    fill="none" stroke="var(--gold-strong)" stroke-width="1.6" stroke-dasharray="5 3"/></svg><span>UI with no API</span></span>
+  <span class="lg"><svg width="16" height="14"><rect x="1" y="1" width="14" height="12" rx="3"
+    fill="none" stroke="var(--muted)" stroke-width="1.6" stroke-dasharray="2 3"/></svg><span>not built</span></span>
+  <span class="lg-sep"></span>
+  <span class="hint">Click a square to fold · click a circle for its endpoints · drag to pan · scroll to zoom</span>
+</div>
+
+<div id="canvas">
+  <svg id="svg"><g id="viewport"></g></svg>
+  <aside id="panel" aria-live="polite"></aside>
+</div>
+
+<footer class="bar">
+  <span>written by reading the code: backend/routes/api.php (311 routes), dashboard/src, mobile/lib</span>
+  <span>the dashboard's apiClient always routes to mockRequest() — every D dot is mock until it is wired</span>
+  <span><span id="foot-count">–</span> capabilities · read at 2026-09-23 · 94 backend test files</span>
+</footer>
+
+<script>
+"use strict";
+/* api = Laravel API · dash = React dashboard · mob = Flutter guest app.
+   values: true | "partial" | "mock" (UI built on mock / hard-coded data) | false | "na" (not this client's job).
+   ep = the endpoints behind the capability (METHOD /api/...). */
+var TREE = {
+ "name":"Carlton","kind":"root","api":true,"dash":"mock","mob":"partial",
+ "meta":"Laravel API 311 routes (244 staff · 67 guest/public) · React dashboard · Flutter guest app",
+ "children":[
+  {"name":"Access & identity","kind":"section","api":true,"dash":"mock","mob":true,"children":[
+   {"name":"staff sign in","api":true,"dash":"mock","mob":"na","meta":"routes match · client still mock",
+    "ep":["POST /auth/login","GET /auth/me","POST /auth/logout"]},
+   {"name":"guest OTP login / register","api":"partial","dash":"na","mob":true,"meta":"static OTP · no SMS provider",
+    "note":"OtpDispatcher has TODO(P9) for SMS/WhatsApp/email. RequestOtpAction issues a fixed code for testing.",
+    "ep":["POST /auth/guest/request-otp","POST /auth/guest/verify-otp","GET /auth/guest/me"]},
+   {"name":"link booking code","api":true,"dash":"na","mob":"partial","meta":"verify-otp booking_link → 422",
+    "note":"The app sends {code, purpose:'booking_link', booking_code} with no phone or email. VerifyOtpRequest requires one, so verification fails.",
+    "ep":["POST /auth/guest/link-booking-code","POST /auth/guest/verify-otp"]},
+   {"name":"guest profile","api":true,"dash":"na","mob":true,"meta":"preferred_locale never synced",
+    "ep":["PUT /auth/guest/profile"]},
+   {"name":"guest sign out","api":true,"dash":"na","mob":true,"meta":"token revoked on sign out",
+    "ep":["POST /auth/guest/logout"]},
+   {"name":"staff · roles · permissions","api":true,"dash":false,"mob":"na","meta":"8 routes · StaffPolicy staff.manage",
+    "ep":["GET/POST /staff","GET/PUT /staff/{staff}","PATCH /staff/{staff}/deactivate","POST /staff/{staff}/permissions","GET /roles","GET /permissions"]},
+   {"name":"dashboard settings","api":true,"dash":"partial","mob":"na","meta":"profile + password endpoints · language switch stays client-side",
+    "ep":["GET/PUT /auth/profile","PUT /auth/password"]}
+  ]},
+  {"name":"Rooms & inventory","kind":"section","api":true,"dash":"mock","mob":true,"children":[
+   {"name":"room types CMS","api":true,"dash":false,"mob":"na","meta":"11 routes · soft delete · images",
+    "ep":["/cms/room-types (CRUD · trashed · restore · force · images)"]},
+   {"name":"rooms CMS","api":true,"dash":false,"mob":"na","meta":"RoomStatus · 11 routes",
+    "ep":["/cms/rooms (CRUD · trashed · restore · force · images)"]},
+   {"name":"amenities CMS","api":true,"dash":false,"mob":"na","ep":["/cms/amenities (8 routes)"]},
+   {"name":"room types for guests","api":true,"dash":"na","mob":true,"meta":"Home rail · booking · Discover",
+    "ep":["GET /public/room-types","GET /public/room-types/{uuid}"]},
+   {"name":"public rooms · amenities","api":true,"dash":"na","mob":false,
+    "ep":["GET /public/rooms","GET /public/rooms/{room}","GET /public/amenities"]},
+   {"name":"availability check","api":true,"dash":"na","mob":false,"meta":"app books without checking",
+    "ep":["GET /public/availability"]},
+   {"name":"availability grid","api":false,"dash":"mock","mob":"na","meta":"no staff grid route",
+    "ep":["GET /availability/grid (dashboard mock only)"]},
+   {"name":"rate grid","api":false,"dash":"mock","mob":"na","meta":"read-only 14-day grid",
+    "ep":["GET /rates/grid (dashboard mock only)"]},
+   {"name":"room board · mark clean","api":false,"dash":"mock","mob":"na","meta":"front desk",
+    "ep":["GET /front-desk/room-board (mock)","PATCH /rooms/{id}/status (mock) — backend only has PUT /cms/rooms/{room}"]}
+  ]},
+  {"name":"Reservations","kind":"section","api":true,"dash":"mock","mob":true,"children":[
+   {"name":"guest booking flow","api":true,"dash":"na","mob":"partial","meta":"add-ons · guest details · party size dropped",
+    "ep":["POST /reservations {room_type_uuid, check_in, check_out, payment_method, promo_code?}"]},
+   {"name":"quote · promo code","api":true,"dash":"na","mob":true,"ep":["GET /public/quote"]},
+   {"name":"cancel my reservation","api":true,"dash":"na","mob":true,"ep":["DELETE /reservations/{uuid}"]},
+   {"name":"my reservations list","api":true,"dash":"na","mob":false,"meta":"app uses /stays/* instead",
+    "ep":["GET /reservations","GET /reservations/{reservation}"]},
+   {"name":"book without account","api":true,"dash":"na","mob":false,"meta":"website flow?",
+    "ep":["POST /reservations/guest","POST /reservations/guest/verify"]},
+   {"name":"staff reservation list · detail","api":true,"dash":"mock","mob":"na","meta":"dash calls guest routes",
+    "note":"The dashboard calls GET /reservations and /reservations/{id}, which are auth:guests. The staff routes live under /cms/reservations.",
+    "ep":["GET /cms/reservations","GET /cms/reservations/{reservation}"]},
+   {"name":"staff new booking","api":true,"dash":"mock","mob":"na","meta":"room types hard-coded",
+    "ep":["POST /cms/reservations (dash calls POST /reservations)"]},
+   {"name":"assign room · confirm · cancel","api":true,"dash":false,"mob":"na","meta":"no screen",
+    "ep":["POST /cms/reservations/{r}/assign-room","POST /cms/reservations/{r}/confirm","DELETE /cms/reservations/{r}"]},
+   {"name":"check in · check out","api":"partial","dash":"mock","mob":"na","meta":"different model on each side",
+    "note":"Dashboard expects /reservations/{id}/check-in, /check-out and /available-rooms. The backend splits this into assign-room, check-in approvals and settle.",
+    "ep":["POST /reservations/{id}/check-in (mock)","POST /reservations/{id}/check-out (mock)","GET /reservations/{id}/available-rooms (mock)"]},
+   {"name":"reservation notes","api":false,"dash":"mock","mob":"na","ep":["PATCH /reservations/{id}/notes (mock)"]},
+   {"name":"hold expiry · locking","api":true,"dash":"na","mob":"na","meta":"ReleaseExpiredHolds · lockForUpdate"}
+  ]},
+  {"name":"Stay & check-in","kind":"section","api":true,"dash":false,"mob":true,"children":[
+   {"name":"active · upcoming · past stays","api":true,"dash":"na","mob":true,
+    "ep":["GET /stays/active","GET /stays/upcoming","GET /stays/past"]},
+   {"name":"receipt · PDF","api":true,"dash":"na","mob":true,
+    "ep":["GET /stays/{uuid}/receipt","GET /stays/{uuid}/receipt/pdf"]},
+   {"name":"do not disturb","api":true,"dash":"na","mob":true,"ep":["PATCH /stays/active/dnd"]},
+   {"name":"stay status · entitlements","api":true,"dash":"na","mob":false,"ep":["GET /stays/status"]},
+   {"name":"pre-arrival documents","api":true,"dash":"na","mob":true,"meta":"jpg · png · pdf ≤ 10 MB",
+    "ep":["POST /pre-arrival/documents"]},
+   {"name":"check-in approvals","api":true,"dash":false,"mob":"na","meta":"staff approve docs · no screen",
+    "ep":["GET /cms/check-in-approvals","PATCH /cms/check-in-approvals/{reservation}/approve"]},
+   {"name":"online check-in","api":false,"dash":"na","mob":"mock","meta":"arrival time · digital key — local only"},
+   {"name":"ID scan","api":false,"dash":"na","mob":"mock","meta":"camera only · no OCR or upload"},
+   {"name":"guest preferences","api":false,"dash":"mock","mob":"mock","meta":"bed · pillow — GetStorage",
+    "ep":["PATCH /guests/{id}/preferences (dashboard mock, never called)"]}
+  ]},
+  {"name":"Folio & payments","kind":"section","api":true,"dash":"mock","mob":true,"children":[
+   {"name":"my bill","api":true,"dash":"na","mob":true,"meta":"My Bill · Full Statement buttons stubbed",
+    "ep":["GET /folio"]},
+   {"name":"approve folio · express checkout","api":true,"dash":"na","mob":true,"ep":["POST /folio/approve"]},
+   {"name":"generate · settle folio","api":true,"dash":false,"mob":"na","meta":"no screen",
+    "ep":["POST /cms/folios/{reservation}/generate","POST /cms/folios/{folio}/settle","POST /cms/reservations/{r}/settle"]},
+   {"name":"folio line items · payments","api":false,"dash":"mock","mob":"na","meta":"charges · disputes",
+    "ep":["GET /reservations/{id}/folio (mock)","POST /folios/{id}/line-items (mock)","PATCH …/line-items/{id}/dispute (mock)","POST /folios/{id}/payments (mock)"]},
+   {"name":"payment gateway","api":"partial","dash":"na","mob":"partial","meta":"ManualDriver: cash · on_arrival",
+    "note":"No online gateway. The app blocks card, Apple Pay and Google Pay; only Pay at hotel works."},
+   {"name":"night audit","api":false,"dash":"mock","mob":"na",
+    "ep":["GET /operations/night-audit (mock)","PATCH …/checks/{id} (mock)","PATCH …/blockers/{id} (mock)"]}
+  ]},
+  {"name":"Dining","kind":"section","api":true,"dash":false,"mob":true,"children":[
+   {"name":"venues · menus CMS","api":true,"dash":false,"mob":"na","meta":"35 routes · modifiers · tables",
+    "ep":["/cms/dining-venues","/cms/menu-categories","/cms/menu-items","/cms/restaurant-tables"]},
+   {"name":"venues & menus","api":true,"dash":"na","mob":true,
+    "ep":["GET /public/dining-venues","GET /public/dining-venues/{uuid}","GET …/menu-categories","GET …/menu"]},
+   {"name":"reserve a table","api":true,"dash":"na","mob":"partial","meta":"time slots hard-coded",
+    "ep":["POST /dining-venues/{uuid}/table-reservations"]},
+   {"name":"bookable tables","api":true,"dash":"na","mob":false,"ep":["GET /public/dining-venues/{uuid}/tables"]},
+   {"name":"table reservations for staff","api":false,"dash":false,"mob":"na","meta":"no staff list route"},
+   {"name":"download menu","api":false,"dash":"na","mob":"mock","meta":"button stubbed"}
+  ]},
+  {"name":"Guest services","kind":"section","api":true,"dash":"mock","mob":true,"children":[
+   {"name":"service catalog","api":true,"dash":"na","mob":"partial","meta":"tiles from DemoData, matched by code",
+    "ep":["GET /public/service-catalog"]},
+   {"name":"place · track requests","api":true,"dash":"na","mob":"partial","meta":"reads page 1 only",
+    "ep":["POST /service-requests","GET /service-requests"]},
+   {"name":"quick requests","api":false,"dash":"na","mob":"mock","meta":"chips show a snackbar"},
+   {"name":"catalog CMS","api":true,"dash":false,"mob":"na","meta":"categories · items · spa · cabanas · transfers",
+    "ep":["/cms/service-categories","/cms/service-items","/cms/spa-services","/cms/pool-cabanas","/cms/transfers"]},
+   {"name":"spa · cabana · transfer booking","api":true,"dash":"na","mob":false,
+    "ep":["POST /service-bookings","GET /public/spa-services","GET /public/pool-cabanas","GET /public/transfers"]},
+   {"name":"transport request","api":true,"dash":"na","mob":false,"meta":"Home card only switches tabs",
+    "ep":["POST /transport-requests"]},
+   {"name":"staff request board","api":"partial","dash":"mock","mob":"na","meta":"dash calls guest route",
+    "note":"Dashboard calls GET /service-requests (auth:guests + checked-in) and /service-requests/{id}/status|resolve, which don't exist. The staff path is the operations queue.",
+    "ep":["PATCH /operations/queue/{type}/{uuid}/status"]},
+   {"name":"departures","api":false,"dash":"mock","mob":"na","ep":["GET /departure-services (mock)","PATCH /departure-services/{id}/status (mock)"]},
+   {"name":"housekeeping","api":false,"dash":"mock","mob":"na",
+    "ep":["GET /housekeeping/tasks (mock)","PATCH …/{id}/assign (mock)","PATCH …/{id}/status (mock)"]},
+   {"name":"Firestore mirror","api":true,"dash":"na","mob":"na","meta":"listener + resilience test"}
+  ]},
+  {"name":"Operations","kind":"section","api":"partial","dash":"mock","mob":"na","children":[
+   {"name":"overview summary","api":true,"dash":"mock","mob":"na","meta":"no permission check on route",
+    "ep":["GET /dashboard/summary"]},
+   {"name":"live queue","api":"partial","dash":"mock","mob":"na","meta":"{id} vs {type}/{uuid} · no websocket",
+    "note":"Dashboard assign/status use /operations/queue/{id}/…; backend expects {type}/{uuid}. Claim and staff-list routes don't exist. Live updates are a mock setInterval.",
+    "ep":["GET /operations/queue","PATCH /operations/queue/{type}/{uuid}/assign","PATCH /operations/queue/{type}/{uuid}/status"]},
+   {"name":"support tickets","api":false,"dash":"mock","mob":"na","meta":"6 endpoints, none exist",
+    "ep":["GET /support-tickets (mock)","PATCH …/status · …/assign (mock)","POST …/recovery-actions · escalate · reply (mock)"]},
+   {"name":"reports","api":false,"dash":"mock","mob":"na","ep":["GET /reports/dashboard (mock)"]}
+  ]},
+  {"name":"Guests & messaging","kind":"section","api":true,"dash":"mock","mob":true,"children":[
+   {"name":"guest directory · profile","api":false,"dash":"mock","mob":"na","meta":"notes · pre-arrival checklist",
+    "ep":["GET /guests (mock)","GET /guests/{id} (mock)","POST /guests/{id}/notes (mock)"]},
+   {"name":"concierge chat — guest","api":true,"dash":"na","mob":"partial","meta":"page 1 only · agent persona hard-coded",
+    "ep":["GET /conversations","GET /conversations/{uuid}/messages","POST /conversations"]},
+   {"name":"concierge chat — staff inbox","api":true,"dash":false,"mob":"na","meta":"no screen",
+    "ep":["GET /cms/conversations","GET /cms/conversations/{c}/messages","POST /cms/conversations/{c}/messages"]},
+   {"name":"AI concierge","api":false,"dash":"na","mob":"mock","meta":"coming soon"},
+   {"name":"push notifications","api":true,"dash":"na","mob":false,"meta":"NotificationService commented out",
+    "ep":["POST /device-tokens"]},
+   {"name":"reviews","api":true,"dash":"na","mob":true,
+    "ep":["GET /public/reviews/{type}/{uuid}","POST /reviews/{type}/{uuid}"]},
+   {"name":"review moderation","api":true,"dash":false,"mob":"na",
+    "ep":["GET /cms/reviews","GET /cms/reviews/{review}","PATCH /cms/reviews/{review}/publish"]}
+  ]},
+  {"name":"Events","kind":"section","api":true,"dash":"mock","mob":"na","children":[
+   {"name":"event spaces CMS","api":true,"dash":false,"mob":"na","ep":["/cms/event-spaces (11 routes)"]},
+   {"name":"public spaces · inquiry form","api":true,"dash":"na","mob":"na","meta":"website",
+    "ep":["GET /public/event-spaces","GET /public/event-spaces/{id}","POST /event-inquiries"]},
+   {"name":"inquiry pipeline","api":"partial","dash":"mock","mob":"na","meta":"dash calls /events, backend has /cms/event-inquiries",
+    "ep":["GET /cms/event-inquiries","GET /cms/event-inquiries/{i}","PATCH …/assign","PATCH …/status"]},
+   {"name":"checklist · deposit · notes","api":false,"dash":"mock","mob":"na",
+    "ep":["PATCH /events/{id}/checklist/{item} (mock)","PATCH /events/{id}/deposit (mock)","PATCH /events/{id}/notes (mock)"]}
+  ]},
+  {"name":"Content & site","kind":"section","api":true,"dash":false,"mob":"partial","children":[
+   {"name":"home sliders","api":true,"dash":false,"mob":false,"meta":"app hero is DemoData",
+    "ep":["/cms/home-sliders","GET /public/home-sliders"]},
+   {"name":"experiences","api":true,"dash":false,"mob":false,"meta":"app shows DemoData",
+    "ep":["/cms/experiences","GET /public/experiences","GET /public/experiences/{id}"]},
+   {"name":"facilities · promotions","api":true,"dash":false,"mob":false,
+    "ep":["/cms/facilities","/cms/promotions","GET /public/facilities","GET /public/promotions"]},
+   {"name":"FAQs · pages","api":true,"dash":false,"mob":false,"meta":"Help & Legal stubbed in app",
+    "ep":["/cms/faqs","/cms/pages","GET /public/faqs","GET /public/pages/{slug}"]},
+   {"name":"gallery · journal · testimonials","api":true,"dash":false,"mob":"na","meta":"website",
+    "ep":["/cms/gallery-*","/cms/journal-posts","/cms/testimonials","GET /public/gallery","GET /public/journal","GET /public/testimonials"]},
+   {"name":"media library","api":true,"dash":false,"mob":"na","meta":"+39 per-entity image routes",
+    "ep":["GET/POST /cms/media","PATCH/DELETE /cms/media/{media}"]},
+   {"name":"site settings","api":true,"dash":false,"mob":false,"meta":"site.is_coming_soon",
+    "ep":["GET/PUT /cms/settings","GET /public/settings"]},
+   {"name":"recycle bin · purge","api":true,"dash":false,"mob":"na","meta":"trashed · restore · force · PurgeRecycleBin"},
+   {"name":"AR / EN localisation","api":true,"dash":true,"mob":true,"meta":"Accept-Language · LocaleFoundationTest"}
+  ]}
+ ]};
+
+/* ---------- prep ---------- */
+var uid = 0;
+function prepare(n, d, parent) {
+  n._id = ++uid; n._depth = d; n._parent = parent;
+  n._collapsed = !!(n.children && n.children.length) && n.kind === "section";
+  (n.children || []).forEach(function (c) { prepare(c, d + 1, n); });
+}
+prepare(TREE, 0, null);
+
+function hasKids(n) { return !!(n.children && n.children.length); }
+
+/* status filter: empty = show everything. A module stays if any capability under it matches. */
+var filter = {};
+function filtering() { return Object.keys(filter).length > 0; }
+function passes(n) {
+  if (!filtering()) return true;
+  if (!hasKids(n)) return !!filter[statusOf(n)];
+  return n.children.some(passes);
+}
+function kids(n) { return hasKids(n) ? n.children.filter(passes) : []; }
+function isOpen(n) { return hasKids(n) && !n._collapsed && kids(n).length > 0; }
+
+/* Outline answers "can this be used today?": the API has to answer, and every client that
+   owns the capability (not "na") has to be wired to it. */
+function apiOk(v) { return v === true || v === "partial" || v === "na"; }
+function statusOf(n) {
+  var rel = [n.dash, n.mob].filter(function (v) { return v !== "na"; });
+  var anyUi = rel.some(function (v) { return v !== false; });
+  if (!apiOk(n.api)) return anyUi ? "st-gapback" : "st-planned";
+  if (rel.some(function (v) { return v === false; })) return "st-gapfront";
+  if (rel.some(function (v) { return v === "mock"; })) return "st-mock";
+  return "st-ok";
+}
+var STATUS_TEXT = { "st-ok": "live end to end", "st-mock": "UI on mock — not wired",
+  "st-gapfront": "API ready, no UI", "st-gapback": "UI with no API", "st-planned": "not built" };
+var STATUS_COLOR = { "st-ok": "var(--built)", "st-mock": "var(--mock)", "st-gapfront": "var(--gap)",
+  "st-gapback": "var(--gold-strong)", "st-planned": "var(--muted)" };
+
+function gapsInside(n) {
+  var c = 0;
+  (n.children || []).forEach(function (k) {
+    if (!hasKids(k) && statusOf(k) !== "st-ok") c++;
+    c += gapsInside(k);
+  });
+  return c;
+}
+
+/* ---------- metrics ---------- */
+var LVL_H = 118, SIB_GAP = 26, PAD_X = 12, BOX_H = 30, LEAF_R = 7;
+var CW = 6.9, CW_META = 5.1, LEAF_SLOT = 34;
+function labelW(n) { return n.name.length * CW; }
+function metaW(n) { return n.meta ? n.meta.length * CW_META : 0; }
+function nodeW(n) {
+  if (!hasKids(n)) return LEAF_SLOT;
+  return Math.max(labelW(n) + PAD_X * 2, 64, n._depth === 0 ? 0 : metaW(n));
+}
+function subW(n) {
+  if (!isOpen(n)) return nodeW(n) + SIB_GAP;
+  var s = 0;
+  kids(n).forEach(function (c) { s += subW(c); });
+  return Math.max(s, nodeW(n) + SIB_GAP);
+}
+var cursorX;
+function layout(n) {
+  n.y = n._depth * LVL_H;
+  if (!isOpen(n)) { n.x = cursorX + subW(n) / 2; cursorX += subW(n); return; }
+  var start = cursorX;
+  var ks = kids(n);
+  ks.forEach(layout);
+  n.x = (ks[0].x + ks[ks.length - 1].x) / 2;
+  cursorX = start + subW(n);
+}
+
+/* ---------- render ---------- */
+var SVGNS = "http://www.w3.org/2000/svg";
+var viewport = document.getElementById("viewport");
+var canvas = document.getElementById("canvas");
+var panel = document.getElementById("panel");
+var selected = null;
+
+function el(tag, attrs) {
+  var e = document.createElementNS(SVGNS, tag);
+  for (var k in attrs) if (attrs[k] != null) e.setAttribute(k, attrs[k]);
+  return e;
+}
+function dotCls(v) {
+  if (v === "partial") return "dot-half";
+  if (v === "mock") return "dot-mock";
+  if (v === "na") return "dot-na";
+  return v === false ? "dot-off" : "dot-on";
+}
+function valText(v) {
+  return v === true ? "yes" : v === "partial" ? "partly" : v === "mock" ? "mock / hard-coded" :
+         v === "na" ? "not its job" : "missing";
+}
+
+var bounds;
+function render() {
+  cursorX = 0; layout(TREE);
+  while (viewport.firstChild) viewport.removeChild(viewport.firstChild);
+  var edges = el("g", {}), nodes = el("g", {});
+  viewport.appendChild(edges); viewport.appendChild(nodes);
+  var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+
+  (function walk(n) {
+    var leaf = !hasKids(n), st = statusOf(n);
+
+    if (isOpen(n)) {
+      var outY = n.y + BOX_H / 2;
+      kids(n).forEach(function (c) {
+        var inY = c.y - (hasKids(c) ? BOX_H / 2 : LEAF_R);
+        var midY = (outY + inY) / 2;
+        var cs = statusOf(c);
+        edges.appendChild(el("path", {
+          class: "edge" + (cs === "st-gapfront" || cs === "st-planned" ? " to-gap" : ""),
+          d: "M" + n.x + "," + outY + " C" + n.x + "," + midY + " " + c.x + "," + midY + " " + c.x + "," + inY
+        }));
+      });
+    }
+
+    var g = el("g", { class: "node " + (leaf ? "leaf" : "branch") + " " + st +
+                             (n._depth === 0 ? " is-root" : "") + (selected === n ? " selected" : "") });
+    var w = nodeW(n), belowY;
+
+    if (leaf) {
+      g.appendChild(el("circle", { class: "shape", cx: n.x, cy: n.y, r: LEAF_R }));
+      var ly = n.y + LEAF_R + 8;
+      var lt = el("text", { class: "label leaf-label", x: n.x, y: ly, "text-anchor": "start",
+        transform: "rotate(46 " + n.x + " " + ly + ")" });
+      lt.textContent = n.name;
+      if (n.meta) {
+        var ts = el("tspan", { class: "meta-inline" });
+        ts.textContent = "  · " + n.meta;
+        lt.appendChild(ts);
+      }
+      g.appendChild(lt);
+      var diag = labelW(n) + (n.meta ? n.meta.length * CW_META + 12 : 0);
+      belowY = ly + diag * 0.72;
+      maxX = Math.max(maxX, n.x + diag * 0.7 + 10);
+    } else {
+      var bw = Math.max(labelW(n) + PAD_X * 2, 64);
+      g.appendChild(el("rect", { class: "shape", x: n.x - bw / 2, y: n.y - BOX_H / 2, width: bw, height: BOX_H }));
+      var t = el("text", { class: "label", x: n.x, y: n.y + 0.5 });
+      t.textContent = n.name; g.appendChild(t);
+      belowY = n.y + BOX_H / 2 + 11;
+    }
+
+    var dotY = n.y - (leaf ? LEAF_R : BOX_H / 2) - 9;
+    g.appendChild(el("circle", { class: dotCls(n.api),  cx: n.x - 11, cy: dotY, r: 3.6 }));
+    g.appendChild(el("circle", { class: dotCls(n.dash), cx: n.x,      cy: dotY, r: 3.6 }));
+    g.appendChild(el("circle", { class: dotCls(n.mob),  cx: n.x + 11, cy: dotY, r: 3.6 }));
+
+    if (hasKids(n) && n._collapsed) {
+      var gaps = gapsInside(n);
+      var bt = el("text", { class: gaps ? "gaps" : "meta", x: n.x, y: belowY });
+      bt.textContent = filtering() ? "▸ " + kids(n).length + (kids(n).length === 1 ? " match" : " matches") : gaps ? "▸ " + gaps + " of " + n.children.length + " not live" : "▸ " + n.children.length + " inside, all live";
+      g.appendChild(bt);
+      belowY += 13;
+    }
+    if (n.meta && !leaf) {
+      var m = el("text", { class: "meta", x: n.x, y: belowY });
+      m.textContent = n.meta; g.appendChild(m);
+    }
+
+    g.setAttribute("tabindex", "0"); g.setAttribute("role", "button");
+    var act;
+    if (hasKids(n)) {
+      g.setAttribute("aria-expanded", String(!n._collapsed));
+      act = function (ev) { ev.stopPropagation(); n._collapsed = !n._collapsed; render(); };
+    } else {
+      g.setAttribute("aria-label", n.name + " — " + STATUS_TEXT[st]);
+      act = function (ev) { ev.stopPropagation(); showPanel(n); };
+    }
+    g.addEventListener("click", act);
+    g.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); act(ev); } });
+    nodes.appendChild(g);
+
+    minX = Math.min(minX, n.x - w / 2); maxX = Math.max(maxX, n.x + w / 2);
+    minY = Math.min(minY, n.y - BOX_H); maxY = Math.max(maxY, belowY + 6);
+    if (isOpen(n)) kids(n).forEach(walk);
+  })(TREE);
+
+  bounds = { minX: minX, maxX: maxX, minY: minY, maxY: maxY };
+}
+
+/* ---------- detail panel ---------- */
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) {
+  return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function showPanel(n) {
+  selected = n;
+  var st = statusOf(n);
+  var html = '<button class="close" type="button" aria-label="Close">×</button>' +
+    "<h2>" + esc(n.name) + "</h2>" +
+    '<div class="path">' + esc(n._parent ? n._parent.name : "") + "</div>" +
+    '<span class="status" style="color:' + STATUS_COLOR[st] + '">' + STATUS_TEXT[st] + "</span>" +
+    '<div class="rows"><span>API</span><span>' + valText(n.api) + "</span>" +
+    "<span>Dashboard</span><span>" + valText(n.dash) + "</span>" +
+    "<span>Mobile</span><span>" + valText(n.mob) + "</span></div>";
+  if (n.meta) html += '<p class="note">' + esc(n.meta) + "</p>";
+  if (n.note) html += '<p class="note">' + esc(n.note) + "</p>";
+  if (n.ep && n.ep.length) html += "<ul>" + n.ep.map(function (e) { return "<li>" + esc(e) + "</li>"; }).join("") + "</ul>";
+  panel.innerHTML = html;
+  panel.classList.add("open");
+  panel.querySelector(".close").addEventListener("click", hidePanel);
+  render();
+}
+function hidePanel() { selected = null; panel.classList.remove("open"); render(); }
+panel.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
+panel.addEventListener("wheel", function (e) { e.stopPropagation(); });
+document.addEventListener("keydown", function (e) { if (e.key === "Escape" && selected) hidePanel(); });
+
+/* ---------- pan/zoom ---------- */
+var view = { x: 0, y: 0, k: 1 };
+function applyView() {
+  viewport.setAttribute("transform", "translate(" + view.x + "," + view.y + ") scale(" + view.k + ")");
+}
+function fit() {
+  var r = canvas.getBoundingClientRect();
+  var w = bounds.maxX - bounds.minX, h = bounds.maxY - bounds.minY;
+  if (w <= 0 || h <= 0) return;
+  var kw = (r.width - 60) / w, kh = (r.height - 60) / h;
+  var k = Math.min(kh, 1.3);
+  if (kw < k) k = Math.max(kw, Math.min(kh, 0.85));
+  view.k = k;
+  if (w * k <= r.width - 60) view.x = 30 - bounds.minX * k + (r.width - 60 - w * k) / 2;
+  else view.x = r.width / 2 - TREE.x * k;
+  view.y = 30 - bounds.minY * k + Math.max(0, (r.height - 60 - h * k) / 2);
+  applyView();
+}
+var drag = null;
+canvas.addEventListener("pointerdown", function (e) {
+  if (e.target.closest(".node")) return;
+  drag = { x: e.clientX - view.x, y: e.clientY - view.y };
+  canvas.classList.add("dragging"); canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener("pointermove", function (e) {
+  if (!drag) return;
+  view.x = e.clientX - drag.x; view.y = e.clientY - drag.y; applyView();
+});
+function endDrag(e) {
+  drag = null; canvas.classList.remove("dragging");
+  if (e && e.pointerId !== undefined && canvas.hasPointerCapture(e.pointerId))
+    canvas.releasePointerCapture(e.pointerId);
+}
+canvas.addEventListener("pointerup", endDrag);
+canvas.addEventListener("pointercancel", endDrag);
+canvas.addEventListener("wheel", function (e) {
+  e.preventDefault();
+  var r = canvas.getBoundingClientRect();
+  var mx = e.clientX - r.left, my = e.clientY - r.top;
+  var k = Math.min(3, Math.max(0.12, view.k * (e.deltaY < 0 ? 1.12 : 1 / 1.12)));
+  var ratio = k / view.k;
+  view.x = mx - (mx - view.x) * ratio; view.y = my - (my - view.y) * ratio; view.k = k;
+  applyView();
+}, { passive: false });
+
+/* ---------- controls ---------- */
+function setAll(fn) {
+  (function w(n) { if (hasKids(n)) n._collapsed = fn(n); (n.children || []).forEach(w); })(TREE);
+}
+document.getElementById("btn-expand").addEventListener("click", function () {
+  setAll(function () { return false; }); render(); fit(); });
+document.getElementById("btn-collapse").addEventListener("click", function () {
+  setAll(function (n) { return n.kind === "section"; }); render(); fit(); });
+document.getElementById("btn-fit").addEventListener("click", fit);
+
+/* filter chips: plain click = only this status (click again for all); ctrl/⌘-click = combine */
+var chips = Array.prototype.slice.call(document.querySelectorAll(".chip"));
+function syncChips() {
+  chips.forEach(function (b) {
+    var st = b.getAttribute("data-st");
+    b.setAttribute("aria-pressed", String(st === "all" ? !filtering() : !!filter[st]));
+  });
+}
+chips.forEach(function (b) {
+  b.addEventListener("click", function (ev) {
+    var st = b.getAttribute("data-st"), was = filtering();
+    if (st === "all") filter = {};
+    else if (ev.ctrlKey || ev.metaKey) { if (filter[st]) delete filter[st]; else filter[st] = true; }
+    else if (filter[st] && Object.keys(filter).length === 1) filter = {};
+    else { filter = {}; filter[st] = true; }
+    /* a filtered view opens every module so the matches are visible; clearing restores the fold */
+    if (filtering()) setAll(function () { return false; });
+    else if (was) setAll(function (n) { return n.kind === "section"; });
+    if (selected && !passes(selected)) { selected = null; panel.classList.remove("open"); }
+    syncChips(); render(); fit();
+  });
+});
+document.getElementById("btn-theme").addEventListener("click", function () {
+  var root = document.documentElement;
+  var dark = root.getAttribute("data-theme") === "dark" ||
+    (!root.hasAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  var next = dark ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  try { localStorage.setItem("carlton-tree-theme", next); } catch (e) {}
+});
+try {
+  var saved = localStorage.getItem("carlton-tree-theme");
+  if (saved) document.documentElement.setAttribute("data-theme", saved);
+} catch (e) {}
+
+/* ---------- stats (leaves = capabilities) ---------- */
+(function () {
+  var c = { total: 0, "st-ok": 0, "st-mock": 0, "st-gapfront": 0, "st-gapback": 0, "st-planned": 0, api: 0 };
+  (function w(n) {
+    if (!hasKids(n)) {
+      c.total++; c[statusOf(n)]++;
+      if (n.api === true || n.api === "partial") c.api++;
+    }
+    (n.children || []).forEach(w);
+  })(TREE);
+  document.getElementById("stat-total").textContent = c.total;
+  document.getElementById("stat-all").textContent = c.total;
+  document.getElementById("stat-ok").textContent = c["st-ok"];
+  document.getElementById("stat-mock").textContent = c["st-mock"];
+  document.getElementById("stat-gapfront").textContent = c["st-gapfront"];
+  document.getElementById("stat-gapback").textContent = c["st-gapback"];
+  document.getElementById("stat-planned").textContent = c["st-planned"];
+  document.getElementById("stat-api").textContent = c.api;
+  document.getElementById("foot-count").textContent = c.total;
+})();
+
+render(); fit();
+window.addEventListener("resize", fit);
+</script>
+</body>
+</html>

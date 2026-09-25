@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Base\BaseController;
+use App\Http\Requests\Auth\GuestLogoutRequest;
 use App\Http\Requests\Auth\LinkBookingCodeRequest;
 use App\Http\Requests\Auth\RequestOtpRequest;
 use App\Http\Requests\Auth\UpdateGuestProfileRequest;
@@ -63,5 +64,12 @@ class GuestAuthController extends BaseController
     {
         $result = $this->service->updateProfile($request->user('guests'), $request->validated());
         return $this->success(new GuestResource($result['data']), 'custom.messages.profile_updated', 200, $request);
+    }
+
+    // Revokes the calling token and, when sent, deregisters this device's FCM token.
+    public function logout(GuestLogoutRequest $request): JsonResponse
+    {
+        $this->service->logout($request->user('guests'), $request->validated('device_token'));
+        return $this->success(null, 'custom.auth.logged_out', 200, $request);
     }
 }

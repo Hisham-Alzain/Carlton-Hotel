@@ -13,3 +13,6 @@ P5_TICKETS.md
 P6_TICKETS.md
 TESTING_REPORT.md
 PLAN.md
+
+# GSD planning artifacts are tracked even when a bare-name rule above matches
+!.planning/**

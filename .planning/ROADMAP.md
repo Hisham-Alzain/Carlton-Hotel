@@ -82,7 +82,23 @@ Plans:
   5. Contract gate: all four routes pass happy / 401 / 403 / 422 tests with the suite green, AR/EN keys exist, and the room-board, room-status, availability-grid and rates-grid nodes are `api:true`. The guides and Postman are updated, and `rooms.status` is seeded with its role presets and listed in the summary.
 
 **Reuses**: `Room`, `RoomStatus` enum (available / occupied / maintenance, to be extended), `AvailabilityService` / `CheckAvailabilityAction`, `PricingService` / `RatePlan` / `PricingRule` for rate cells
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Room status lifecycle: `rooms.status` enum to string with legacy rows mapped, `room_status_history`, `PATCH /cms/rooms/{room}/status` behind new `rooms.status` (housekeeping + reception presets), five-locale keys, demo seeders fixed (ROOMS-02)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-02-PLAN.md — Room board: `GET /front-desk/room-board` with derived occupancy / arriving / departing / stayover, filters, exactly 4 queries (ROOMS-01)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 02-03-PLAN.md — Grids: `GET /front-desk/availability-grid` equal to `/availability` per cell (4 queries) and `GET /front-desk/rates-grid` via `PricingService::nightlyRate` equal to the one-night quote (2 queries) (ROOMS-03, ROOMS-04)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 02-04-PLAN.md — Guides, Postman, carlton-tree flips, phase gate and the contract summary with [BLOCKING] deploy notes (DOCS-01, XCUT-01)
 
 ### Phase 3: Reservations Front-Desk Verbs
 

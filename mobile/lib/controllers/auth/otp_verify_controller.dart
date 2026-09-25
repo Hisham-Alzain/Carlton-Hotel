@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'dart:async';
 
 import 'package:carlton/constants/error_codes.dart';
@@ -139,14 +140,12 @@ class OtpVerifyController extends GetxController {
     switch (code) {
       case ErrorCodes.otpExpired:
         pinController.clear();
-        CustomSnackbars.showError(message: 'Code expired — tap Resend.');
+        CustomSnackbars.showError(message: AppTranslations.otpExpired);
       case ErrorCodes.otpLocked:
-        CustomSnackbars.showError(
-          message: 'Too many attempts. Request a new code.',
-        );
+        CustomSnackbars.showError(message: AppTranslations.otpTooManyAttempts);
         Get.back();
       default:
-        CustomSnackbars.showError(message: 'Incorrect code. Please try again.');
+        CustomSnackbars.showError(message: AppTranslations.otpIncorrect);
     }
   }
 

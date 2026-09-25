@@ -15,25 +15,30 @@ class MainView extends GetView<MainController> {
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<MainController>(
-      builder: (_) => CustomScaffold(
-        appBar: CustomAppBar(currentIndex: controller.currentIndex),
-        drawer: Drawer(),
-        bottomNav: CustoBottomNavigationBar(
-          currentIndex: controller.currentIndex,
+    return CustomScaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Obx(
+          () => CustomAppBar(currentIndex: controller.currentIndex.value),
+        ),
+      ),
+      drawer: Drawer(),
+      bottomNav: Obx(
+        () => CustoBottomNavigationBar(
+          currentIndex: controller.currentIndex.value,
           onTap: controller.changeTab,
         ),
-        body: PageView(
-          controller: controller.pageController,
-          physics: const NeverScrollableScrollPhysics(),
-          children: const [
-            _KeepAlive(child: HomeView()),
-            _KeepAlive(child: StaysView()),
-            _KeepAlive(child: BookView()),
-            _KeepAlive(child: ServicesView()),
-            _KeepAlive(child: AccountView()),
-          ],
-        ),
+      ),
+      body: PageView(
+        controller: controller.pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: const [
+          _KeepAlive(child: HomeView()),
+          _KeepAlive(child: StaysView()),
+          _KeepAlive(child: BookView()),
+          _KeepAlive(child: ServicesView()),
+          _KeepAlive(child: AccountView()),
+        ],
       ),
     );
   }

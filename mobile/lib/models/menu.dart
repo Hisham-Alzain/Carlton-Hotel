@@ -1,10 +1,10 @@
-import 'package:carlton/models/bilingual.dart';
+import 'package:carlton/models/localized.dart';
 
 /// A dining-menu filter chip (`/dining-venues/{uuid}/menu-categories`).
 class MenuCategory {
   final String uuid;
   final String slug;
-  final Bilingual name;
+  final Localized name;
   final int sortOrder;
 
   const MenuCategory({
@@ -17,7 +17,7 @@ class MenuCategory {
   factory MenuCategory.fromJson(Map<String, dynamic> json) => MenuCategory(
     uuid: json['uuid'] as String? ?? '',
     slug: json['slug'] as String? ?? '',
-    name: Bilingual.fromJson(json['name']),
+    name: Localized.fromJson(json['name']),
     sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
   );
 }
@@ -26,8 +26,8 @@ class MenuCategory {
 class MenuItem {
   final String uuid;
   final String type;
-  final Bilingual name;
-  final Bilingual description;
+  final Localized name;
+  final Localized description;
   final String? priceUsd;
   final bool isVegan;
   final String? photo;
@@ -45,8 +45,8 @@ class MenuItem {
   factory MenuItem.fromJson(Map<String, dynamic> json) => MenuItem(
     uuid: json['uuid'] as String? ?? '',
     type: json['type'] as String? ?? '',
-    name: Bilingual.fromJson(json['name']),
-    description: Bilingual.fromJson(json['description']),
+    name: Localized.fromJson(json['name']),
+    description: Localized.fromJson(json['description']),
     priceUsd: json['price_usd']?.toString(),
     isVegan: json['is_vegan'] as bool? ?? false,
     photo: json['photo'] as String?,

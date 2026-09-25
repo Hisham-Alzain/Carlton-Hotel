@@ -7,7 +7,6 @@ import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/cache/cache_manager.dart';
 import 'package:shimmer/shimmer.dart';
 
-//TODO: do not use local assets here use flutter default image widget
 class CustomImage extends StatelessWidget {
   /// Either a bundled asset path (`assets/…`), an absolute URL (`http…`), or a
   /// storage-relative path that [url] expands against the API storage host.

@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/models/booking_models.dart';
@@ -6,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-/// The active-stay hero on the reservation-state Home (Figma 2197:3202): a
+/// The active-stay hero on the reservation-state Home (Figma 2237:3914): a
 /// solid teal card (with a faint room photo behind it) carrying a gold room
 /// badge, the room name + dates + nights-left, a translucent Do-Not-Disturb
 /// row, and four quick actions.
@@ -40,6 +41,30 @@ class CustomActiveBookingCard extends StatelessWidget {
     this.interactive = true,
     super.key,
   });
+
+  /// Date range + nights, skipping any part the stay does not carry.
+  ///
+  /// Filters on emptiness, not just null: `HomeController._activeToStay` sets
+  /// the check-in/out labels to `''` rather than null when the dates are
+  /// missing, so a null-only filter left a bare " – " where the range belongs.
+  static String _subtitleFor(Stay stay, bool interactive) {
+    final range =
+        stay.dateRangeLabel ??
+        [
+          stay.checkInLabel,
+          stay.checkOutLabel,
+        ].whereType<String>().where((s) => s.isNotEmpty).join(' – ');
+    final nights = stay.nightsRemaining;
+    final nightsLabel = nights == null
+        ? null
+        : interactive
+        ? AppTranslations.nightsRemainingCount(nights)
+        : AppTranslations.nightsCount(nights);
+    return [
+      range,
+      nightsLabel,
+    ].where((p) => p != null && p.isNotEmpty).join(' · ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,8 +150,7 @@ class CustomActiveBookingCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${stay.dateRangeLabel ?? '${stay.checkInLabel} – ${stay.checkOutLabel}'}'
-                  ' · ${stay.nightsRemaining} ${interactive ? 'nights remaining' : 'nights'}',
+                  _subtitleFor(stay, interactive),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: textStyle.labelSmall?.copyWith(
@@ -154,22 +178,22 @@ class CustomActiveBookingCard extends StatelessWidget {
                           children: [
                             _QuickAction(
                               iconAsset: 'assets/icons/act_request.svg',
-                              label: 'Request',
+                              label: AppTranslations.request,
                               onTap: onRequest,
                             ),
                             _QuickAction(
                               iconAsset: 'assets/icons/act_concierge.svg',
-                              label: 'Concierge',
+                              label: AppTranslations.tileConcierge,
                               onTap: onConcierge,
                             ),
                             _QuickAction(
                               iconAsset: 'assets/icons/act_bill.svg',
-                              label: 'My Bill',
+                              label: AppTranslations.myBill,
                               onTap: onBill,
                             ),
                             _QuickAction(
                               iconAsset: 'assets/icons/act_checkout.svg',
-                              label: 'Checkout',
+                              label: AppTranslations.checkout,
                               onTap: onCheckout,
                             ),
                           ],
@@ -220,7 +244,7 @@ class _DndRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Do Not Disturb',
+                  AppTranslations.dndTitle,
                   style: textStyle.labelMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: AppColors.white,

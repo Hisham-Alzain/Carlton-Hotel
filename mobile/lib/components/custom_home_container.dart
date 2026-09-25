@@ -1,8 +1,10 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 
@@ -13,8 +15,10 @@ class CustomHomeContainer extends StatelessWidget {
   final String imagePath;
   final VideoPlayerController? videoController;
   final bool videoReady;
-  final String primaryLabel;
-  final String secondaryLabel;
+
+  /// Null falls back to the localized default (Book Now / Explore).
+  final String? primaryLabel;
+  final String? secondaryLabel;
   final VoidCallback? onPrimary;
   final VoidCallback? onSecondary;
   final double height;
@@ -26,8 +30,10 @@ class CustomHomeContainer extends StatelessWidget {
     required this.imagePath,
     this.videoController,
     this.videoReady = false,
-    this.primaryLabel = 'Book Now',
-    this.secondaryLabel = 'Explore',
+    // Null means "use the default label" — resolved in `build` so the text
+    // follows the active locale instead of the locale at construction.
+    this.primaryLabel,
+    this.secondaryLabel,
     this.onPrimary,
     this.onSecondary,
     this.height = 500,
@@ -87,9 +93,14 @@ class CustomHomeContainer extends StatelessWidget {
                       Row(
                         spacing: 10,
                         children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            color: Colors.white,
+                          SvgPicture.asset(
+                            'assets/icons/location.svg',
+                            width: 20,
+                            height: 20,
+                            colorFilter: const ColorFilter.mode(
+                              AppColors.white,
+                              BlendMode.srcIn,
+                            ),
                           ),
                           Text(
                             location.toUpperCase(),
@@ -137,13 +148,19 @@ class CustomHomeContainer extends StatelessWidget {
                         child: CustomFilledButton(
                           width: 300,
                           onPressed: onPrimary,
-                          child: Text(primaryLabel.toUpperCase()),
+                          child: Text(
+                            (primaryLabel ?? AppTranslations.bookNowLabel)
+                                .toUpperCase(),
+                          ),
                         ),
                       ),
                       CustomOutlinedButton(
                         width: 300,
                         onPressed: onSecondary,
-                        child: Text(secondaryLabel.toUpperCase()),
+                        child: Text(
+                          (secondaryLabel ?? AppTranslations.exploreLabel)
+                              .toUpperCase(),
+                        ),
                       ),
                     ],
                   ),

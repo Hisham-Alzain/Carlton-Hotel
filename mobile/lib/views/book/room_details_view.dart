@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/reviews/review_submit_sheet.dart';
 import 'package:carlton/components/room_details_content.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
@@ -23,12 +24,12 @@ class RoomDetailsView extends StatelessWidget {
   /// returns 401 and fires the global logout — the wrong outcome here.
   void _openReviewSheet(RoomOption room) {
     if (!MiddlewareService.find.isAuthenticated) {
-      CustomSnackbars.showInfo(message: 'Sign in to leave a review');
+      CustomSnackbars.showInfo(message: AppTranslations.signInToReview);
       Get.toNamed(Routes.signIn);
       return;
     }
     CustomBottomSheet.show<bool>(
-      title: 'Write a Review',
+      title: AppTranslations.writeAReview,
       subtitle: room.name,
       child: ReviewSubmitSheet(controller: Get.find<ReviewController>()),
     );
@@ -45,7 +46,6 @@ class RoomDetailsView extends StatelessWidget {
     final TextTheme textStyle = Get.textTheme;
 
     return CustomScaffold(
-      //TODO: check what to add in title
       appBar: AppBar(iconTheme: IconThemeData(color: AppColors.inkBlack)),
       body: SafeArea(
         bottom: false,
@@ -60,7 +60,7 @@ class RoomDetailsView extends StatelessWidget {
                 backgroundColor: AppColors.lagoonTeal,
                 onPressed: () => Get.find<BookingFlowController>()
                     .beginBookingWithRoom(room),
-                child: const Text('Select This Room'),
+                child: Text(AppTranslations.selectThisRoom),
               ),
               // A demo room (no uuid) can't be reviewed — hide the CTA entirely.
               if (room.uuid.isNotEmpty)
@@ -77,14 +77,14 @@ class RoomDetailsView extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                   onPressed: () => _openReviewSheet(room),
-                  child: const Text('Write a Review'),
+                  child: Text(AppTranslations.writeAReview),
                 ),
               CustomFilledButton(
                 width: double.infinity,
                 backgroundColor: AppColors.whisperGrey,
                 foregroundColor: AppColors.inkBlack,
                 onPressed: () => Get.back(),
-                child: const Text('Back'),
+                child: Text(AppTranslations.back),
               ),
             ],
           ),

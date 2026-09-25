@@ -441,7 +441,19 @@ class AppTranslations {
   static String get activatedDigitalKey => 'checkIn.activatedDigitalKey'.tr;
   static String get digitalKeyHint => 'checkIn.digitalKeyHint'.tr;
   static String get completeCheckIn => 'checkIn.completeCheckIn'.tr;
+  static String finishStepsFirst(String step) =>
+      'checkIn.finishStepsFirst'.trParams({'step': step});
+  static String get stepIdentity => 'checkIn.stepIdentity'.tr;
+  static String get stepSpecialRequests => 'checkIn.stepSpecialRequests'.tr;
+  static String get stepContactDetails => 'checkIn.stepContactDetails'.tr;
   static String get selectArrivalTime => 'checkIn.selectArrivalTime'.tr;
+  static String get arrivalTimeSubtitle => 'checkIn.arrivalTimeSubtitle'.tr;
+  static String get arrivalAfternoon => 'checkIn.arrivalAfternoon'.tr;
+  static String get arrivalEvening => 'checkIn.arrivalEvening'.tr;
+  static String get arrivalLateNight => 'checkIn.arrivalLateNight'.tr;
+  static String arrivalAfterTime(String time) =>
+      'checkIn.arrivalAfterTime'.trParams({'time': time});
+  static String get confirmArrivalTime => 'checkIn.confirmArrivalTime'.tr;
   static String get saveLabel => 'checkIn.save'.tr;
 
   // ── Home pre-arrival ──
@@ -471,4 +483,440 @@ class AppTranslations {
   static String get airportTransferBody => 'preArrival.airportTransferBody'.tr;
   static String get requestAirportTransfer =>
       'preArrival.requestAirportTransfer'.tr;
+
+  // ══ Extracted from hardcoded Dart literals ══
+
+  // Shared labels
+  static String get total => 'general.total'.tr;
+  static String get retry => 'general.retry'.tr;
+  static String get copy => 'general.copy'.tr;
+  static String get copied => 'general.copied'.tr;
+  static String get back => 'general.back'.tr;
+  static String get guest => 'general.guest'.tr;
+  static String get date => 'general.date'.tr;
+  static String get time => 'general.time'.tr;
+  static String get guests => 'general.guests'.tr;
+  static String get about => 'general.about'.tr;
+  static String get hours => 'general.hours'.tr;
+  static String get gallery => 'general.gallery'.tr;
+  static String get active => 'general.active'.tr;
+  static String get past => 'general.past'.tr;
+  static String get request => 'general.request'.tr;
+  static String get call => 'general.call'.tr;
+  static String get apply => 'general.apply'.tr;
+  static String get reserve => 'general.reserve'.tr;
+  static String get reviews => 'general.reviews'.tr;
+  static String get cancelled => 'general.cancelled'.tr;
+  static String get inProgress => 'general.inProgress'.tr;
+  static String get requested => 'general.requested'.tr;
+
+  // Account
+  static String get myProfile => 'account.myProfile'.tr;
+  static String get security => 'account.security'.tr;
+  static String get accountSupport => 'account.support'.tr;
+  static String get helpAndSupport => 'account.helpAndSupport'.tr;
+  static String get legal => 'account.legal'.tr;
+  static String get signOut => 'account.signOut'.tr;
+  static String get preferences => 'account.preferences'.tr;
+
+  // Preference catalogue
+  static String get bedKing => 'prefs.bedKing'.tr;
+  static String get bedQueen => 'prefs.bedQueen'.tr;
+  static String get bedDouble => 'prefs.bedDouble'.tr;
+  static String get bedTwin => 'prefs.bedTwin'.tr;
+  static String get bedSingle => 'prefs.bedSingle'.tr;
+  static String get bedExtra => 'prefs.bedExtra'.tr;
+  static String get pillowSoft => 'prefs.pillowSoft'.tr;
+  static String get pillowFirm => 'prefs.pillowFirm'.tr;
+  static String get pillowFeather => 'prefs.pillowFeather'.tr;
+  static String get mattressSoft => 'prefs.mattressSoft'.tr;
+  static String get mattressMedium => 'prefs.mattressMedium'.tr;
+  static String get mattressFirm => 'prefs.mattressFirm'.tr;
+  static String get mattressMemory => 'prefs.mattressMemory'.tr;
+  static String get mattressOrtho => 'prefs.mattressOrtho'.tr;
+  static String get mattressStandard => 'prefs.mattressStandard'.tr;
+
+  // Booking flow
+  static String get selectDatesAndGuests => 'book.selectDatesAndGuests'.tr;
+  static String get adults => 'book.adults'.tr;
+  static String get ages18Plus => 'book.ages18Plus'.tr;
+  static String get children => 'book.children'.tr;
+  static String get ages0To17 => 'book.ages0To17'.tr;
+  static String get chooseYourRoom => 'book.chooseYourRoom'.tr;
+  static String get selectRoom => 'book.selectRoom'.tr;
+  static String get selectThisRoom => 'book.selectThisRoom'.tr;
+  static String get backToRooms => 'book.backToRooms'.tr;
+  static String get guestDetails => 'book.guestDetails'.tr;
+  static String get emailAddressRequired => 'book.emailAddressRequired'.tr;
+  static String get addOns => 'book.addOns'.tr;
+  static String get extrasTotal => 'book.extrasTotal'.tr;
+  static String get skipNoExtras => 'book.skipNoExtras'.tr;
+  static String get reviewBooking => 'book.reviewBooking'.tr;
+  static String get bookingConfirmed => 'book.bookingConfirmed'.tr;
+  static String get confirmationCode => 'book.confirmationCode'.tr;
+  static String get viewMyStays => 'book.viewMyStays'.tr;
+  static String get selectYourDates => 'book.selectYourDates'.tr;
+  static String get selectYourDatesFirst => 'book.selectYourDatesFirst'.tr;
+  static String get promoCode => 'book.promoCode'.tr;
+  static String get highlights => 'book.highlights'.tr;
+  static String get allAmenities => 'book.allAmenities'.tr;
+  static String get hidePriceDetails => 'book.hidePriceDetails'.tr;
+  static String get viewPriceDetails => 'book.viewPriceDetails'.tr;
+
+  // Payment
+  static String get cardNumber => 'payment.cardNumber'.tr;
+  static String get expiryDate => 'payment.expiryDate'.tr;
+  static String get cardholder => 'payment.cardholder'.tr;
+  static String get cardholderHint => 'payment.cardholderHint'.tr;
+  static String get expires => 'payment.expires'.tr;
+  static String get creditCard => 'payment.creditCard'.tr;
+  static String get applePaySubtitle => 'payment.applePaySubtitle'.tr;
+  static String get applePayFaceId => 'payment.applePayFaceId'.tr;
+  static String get applePayNoCardShared => 'payment.applePayNoCardShared'.tr;
+  static String get applePayTagline => 'payment.applePayTagline'.tr;
+  static String get googlePaySecurity => 'payment.googlePaySecurity'.tr;
+  static String get payAtHotel => 'payment.payAtHotel'.tr;
+  static String get howItWorks => 'payment.howItWorks'.tr;
+  static String get acceptedCards => 'payment.acceptedCards'.tr;
+  static String get acceptedCardsFull => 'payment.acceptedCardsFull'.tr;
+  static String get acceptedCash => 'payment.acceptedCash'.tr;
+
+  // Stays
+  static String get noActiveStay => 'stays.noActiveStay'.tr;
+  static String get bookAStay => 'stays.bookAStay'.tr;
+  static String get noPastStays => 'stays.noPastStays'.tr;
+  static String get viewReceipt => 'stays.viewReceipt'.tr;
+  static String get bookAgain => 'stays.bookAgain'.tr;
+  static String get cancelReservation => 'stays.cancelReservation'.tr;
+  static String get totalCharged => 'stays.totalCharged'.tr;
+  static String get checkInCaps => 'stays.checkInCaps'.tr;
+  static String get checkOutCaps => 'stays.checkOutCaps'.tr;
+  static String get requestServiceCaps => 'stays.requestServiceCaps'.tr;
+  static String get expressCheckoutCaps => 'stays.expressCheckoutCaps'.tr;
+  static String get completedCaps => 'stays.completedCaps'.tr;
+  static String get receipt => 'stays.receipt'.tr;
+  static String get downloadPdfReceipt => 'stays.downloadPdfReceipt'.tr;
+  static String get noKeep => 'stays.noKeep'.tr;
+  static String get yesCancel => 'stays.yesCancel'.tr;
+  static String get checkoutComplete => 'stays.checkoutComplete'.tr;
+  static String get noActiveStayToCheckOut => 'stays.noActiveStayToCheckOut'.tr;
+
+  // Home dashboard
+  static String get expressCheckout => 'home.expressCheckout'.tr;
+  static String get yourStay => 'home.yourStay'.tr;
+  static String get checkoutRequested => 'home.checkoutRequested'.tr;
+  static String get myBill => 'home.myBill'.tr;
+  static String get homeRequest => 'home.request'.tr;
+  static String get checkout => 'home.checkout'.tr;
+  static String get estimatedTotal => 'home.estimatedTotal'.tr;
+  static String get activeRequests => 'home.activeRequests'.tr;
+  static String get newRequest => 'home.newRequest'.tr;
+  static String get quickRequests => 'home.quickRequests'.tr;
+  static String get askTheConcierge => 'home.askTheConcierge'.tr;
+
+  // Dining & reviews
+  static String get reserveATable => 'dining.reserveATable'.tr;
+  static String get reserveATableTitle => 'dining.reserveATableTitle'.tr;
+  static String get confirmReservation => 'dining.confirmReservation'.tr;
+  static String get writeAReview => 'reviews.writeAReview'.tr;
+  static String get submitReview => 'reviews.submitReview'.tr;
+  static String get noReviewsYet => 'reviews.noReviewsYet'.tr;
+  static String get verifiedStay => 'reviews.verifiedStay'.tr;
+
+  // Service catalogue tiles
+  static String get sendRequest => 'services.sendRequest'.tr;
+  static String get requestTargetRoom => 'services.requestTargetRoom'.tr;
+  static String get tileRoomService => 'services.tileRoomService'.tr;
+  static String get tileLaundry => 'services.tileLaundry'.tr;
+  static String get tileHousekeeping => 'services.tileHousekeeping'.tr;
+  static String get tileConcierge => 'services.tileConcierge'.tr;
+  static String get tileTransport => 'services.tileTransport'.tr;
+  static String get tileRestaurant => 'services.tileRestaurant'.tr;
+  static String get tileMaintenance => 'services.tileMaintenance'.tr;
+  static String get sub24Hrs => 'services.sub24Hrs'.tr;
+  static String get subSameDay => 'services.subSameDay'.tr;
+  static String get subOnDemand => 'services.subOnDemand'.tr;
+  static String get subAlwaysAvailable => 'services.subAlwaysAvailable'.tr;
+  static String get subCarAndValet => 'services.subCarAndValet'.tr;
+  static String get subQuickRequest => 'services.subQuickRequest'.tr;
+  static String get subPrivacyMode => 'services.subPrivacyMode'.tr;
+
+  // Concierge chat
+  static String get imageTooLarge => 'concierge.imageTooLarge'.tr;
+  static String get agentRole => 'concierge.agentRole'.tr;
+  static String get quickBilling => 'concierge.quickBilling'.tr;
+  static String get quickRoomIssue => 'concierge.quickRoomIssue'.tr;
+  static String get quickSpecialRequest => 'concierge.quickSpecialRequest'.tr;
+  static String get quickFeedback => 'concierge.quickFeedback'.tr;
+
+  // Notifications
+  static String get channelName => 'notifications.channelName'.tr;
+
+  // API dialog
+
+  // ── Parameterised (extracted) ──
+
+  /// `1 Adult` / `@count Adults`. English two-form is enough here: the count
+  /// is bounded by the room's max occupancy, so the Arabic dual/few/many
+  /// distinctions never surface for realistic values.
+  static String adultsCount(int count) => count == 1
+      ? 'book.adultsCountOne'.tr
+      : 'book.adultsCount'.trParams({'count': '$count'});
+
+  static String childrenCount(int count) => count == 1
+      ? 'book.childrenCountOne'.tr
+      : 'book.childrenCount'.trParams({'count': '$count'});
+
+  static String promoCodeApplied(String code) =>
+      'book.promoCodeApplied'.trParams({'code': code});
+
+  static String roomSize(String size) =>
+      'book.roomSize'.trParams({'size': size});
+
+  static String roomView(String view) =>
+      'book.roomView'.trParams({'view': view});
+
+  static String roomBed(String bed) => 'book.roomBed'.trParams({'bed': bed});
+
+  static String creditCardMasked(String last4) =>
+      'payment.creditCardMasked'.trParams({'last4': last4});
+
+  static String receiptSaved(String path) =>
+      'stays.receiptSaved'.trParams({'path': path});
+
+  static String resCode(String code) =>
+      'stays.resCode'.trParams({'code': code});
+
+  static String stayRoomNumber(String number) =>
+      'stays.roomNumber'.trParams({'number': number});
+
+  static String suiteNumber(String number) =>
+      'stays.suiteNumber'.trParams({'number': number});
+
+  static String receiptSubtitle(String room, String dates) =>
+      'stays.receiptSubtitle'.trParams({'room': room, 'dates': dates});
+
+  static String checkoutConfirmBody(String target) =>
+      'home.checkoutConfirmBody'.trParams({'target': target});
+
+  static String requestConfirmation(String target) =>
+      'services.requestConfirmation'.trParams({'target': target});
+
+  static String reservationSummary(String guests, String time) =>
+      'dining.reservationSummary'.trParams({'guests': guests, 'time': time});
+
+  static String retryAfterSeconds(int count) =>
+      'api.retryAfterSeconds'.trParams({'count': '$count'});
+
+  // ── Batch 2 ──
+  static String get searchRooms => 'book.searchRooms'.tr;
+  static String get bankWire => 'book.bankWire'.tr;
+  static String get walletTagline => 'payment.walletTagline'.tr;
+  static String get upcoming => 'stays.upcoming'.tr;
+  static String get noActiveStaySubtitle => 'stays.noActiveStaySubtitle'.tr;
+  static String get noPastStaysSubtitle => 'stays.noPastStaysSubtitle'.tr;
+  static String get beTheFirstReview => 'reviews.beTheFirst'.tr;
+  static String get tabMenu => 'dining.tabMenu'.tr;
+  static String get tabInfo => 'dining.tabInfo'.tr;
+
+  /// `1 night` / `@count nights` — same two-form reasoning as [adultsCount].
+  static String nightsCount(int count) => count == 1
+      ? 'book.nightsCountOne'.tr
+      : 'book.nightsCount'.trParams({'count': '$count'});
+
+  static String walletUnavailable(String method) =>
+      'payment.walletUnavailable'.trParams({'method': method});
+
+  static String get googlePayTagline => 'payment.googlePayTagline'.tr;
+  static String get payAtHotelTagline => 'payment.payAtHotelTagline'.tr;
+  static String get statusRequested => 'services.statusRequested'.tr;
+  static String get statusInProgress => 'services.statusInProgress'.tr;
+  static String get statusConfirmed => 'services.statusConfirmed'.tr;
+  static String get statusCompleted => 'services.statusCompleted'.tr;
+  static String get statusCancelled => 'services.statusCancelled'.tr;
+  static String get stayStatusCompleted => 'stays.statusCompleted'.tr;
+  static String get stayStatusCancelled => 'stays.statusCancelled'.tr;
+  static String get timePm => 'dining.timePm'.tr;
+  static String get timeAm => 'dining.timeAm'.tr;
+
+  static String requestConfirmationEta(String target, String eta) =>
+      'services.requestConfirmationEta'.trParams({
+        'target': target,
+        'eta': eta,
+      });
+
+  static String get notificationChannelName => 'notifications.channelName'.tr;
+
+  static String get signOutTitle => 'account.signOutTitle'.tr;
+  static String get signOutBody => 'account.signOutBody'.tr;
+  static String get cardComingSoon => 'payment.cardComingSoon'.tr;
+  static String get walletComingSoon => 'payment.walletComingSoon'.tr;
+  static String get googlePaySubtitle => 'payment.googlePaySubtitle'.tr;
+  static String get googlePaySavedMethod => 'payment.googlePaySavedMethod'.tr;
+  static String get googlePayInstant => 'payment.googlePayInstant'.tr;
+  static String get checkoutStatementNote => 'home.checkoutStatementNote'.tr;
+  static String get checkoutConfirmNow => 'home.checkoutConfirmNow'.tr;
+  static String get loadStayFailed => 'stays.loadStayFailed'.tr;
+  static String get loadReservationsFailed => 'stays.loadReservationsFailed'.tr;
+  static String get loadPastFailed => 'stays.loadPastFailed'.tr;
+  static String get loadMessagesFailed => 'concierge.loadMessagesFailed'.tr;
+
+  // ── Currency ──
+  static String get currencyUsd => 'currency.usd'.tr;
+  static String get currencySyp => 'currency.syp'.tr;
+  static String get currencyTry => 'currency.try'.tr;
+  static String get currencyApproxNote => 'currency.approxNote'.tr;
+
+  /// Display name for a currency code, so the picker follows the language
+  /// switch instead of carrying English names in the model.
+  static String currencyName(String code) => switch (code) {
+    'usd' => currencyUsd,
+    'syp' => currencySyp,
+    'try' => currencyTry,
+    _ => code.toUpperCase(),
+  };
+
+  static String perNight(String price) =>
+      'book.perNight'.trParams({'price': price});
+
+  static String balanceDue(String amount) =>
+      'stays.balanceDue'.trParams({'amount': amount});
+
+  // -- Batch 3: named-parameter strings the literal pass missed --
+  static String get notifications => 'account.notifications'.tr;
+  static String get savedPayments => 'account.savedPayments'.tr;
+  static String get stayPreferences => 'account.stayPreferences'.tr;
+  static String get unlockInRoom => 'services.unlockInRoom'.tr;
+  static String get checkConnectionRetry => 'api.checkConnectionRetry'.tr;
+  static String get noUpcomingStays => 'stays.noUpcoming'.tr;
+  static String get noUpcomingStaysSubtitle => 'stays.noUpcomingSubtitle'.tr;
+  static String get freeCancellation => 'book.freeCancellation'.tr;
+  static String get locationLabel => 'dining.locationLabel'.tr;
+  static String get cuisineLabel => 'dining.cuisineLabel'.tr;
+  static String get ratingLabel => 'dining.ratingLabel'.tr;
+  static String get diningNotesHint => 'dining.notesHint'.tr;
+  static String get menuDownloadComingSoon =>
+      'dining.menuDownloadComingSoon'.tr;
+  static String get signInToReview => 'reviews.signInToReview'.tr;
+  static String get reviewsLoadFailed => 'reviews.loadFailed'.tr;
+  static String get tryAgainShort => 'reviews.tryAgainShort'.tr;
+  static String get reviewThankYou => 'reviews.thankYou'.tr;
+  static String get reviewShareHint => 'reviews.shareHint'.tr;
+  static String get currentBill => 'home.currentBill'.tr;
+  static String get fullStatement => 'home.fullStatement'.tr;
+  static String get checkoutFailed => 'home.checkoutFailed'.tr;
+  static String get requestNotesHint => 'services.requestNotesHint'.tr;
+  static String get promoHint => 'book.promoHint'.tr;
+  static String get promoCodeFirst => 'book.promoCodeFirst'.tr;
+  static String get roomLoadFailed => 'book.roomLoadFailed'.tr;
+  static String get signInToBook => 'book.signInToBook'.tr;
+  static String get selectRoomAndDates => 'book.selectRoomAndDates'.tr;
+  static String get otpExpired => 'auth.otpExpired'.tr;
+  static String get otpTooManyAttempts => 'auth.otpTooManyAttempts'.tr;
+  static String get otpIncorrect => 'auth.otpIncorrect'.tr;
+  static String get receiptLoadFailed => 'stays.receiptLoadFailed'.tr;
+  static String get receiptDownloadFailed => 'stays.receiptDownloadFailed'.tr;
+  static String get reservationCancelled => 'stays.reservationCancelled'.tr;
+
+  /// Each hero title carries one emphasised word, stored as its own key so a
+  /// translator can put the emphasis where the phrase actually needs it.
+  /// [CustomHomeContainer] splits on `*word*`, so the three parts are
+  /// recombined into that markup here rather than teaching the widget a
+  /// three-part API.
+  static String get heroVideoTitle =>
+      '$heroVideoTitlePre*$heroVideoTitleItalic*$heroVideoTitlePost';
+
+  static String get heroDiningTitle =>
+      '$heroDiningTitlePre*$heroDiningTitleItalic*$heroDiningTitlePost';
+
+  static String get heroExperiencesTitle =>
+      '$heroExperiencesTitlePre*$heroExperiencesTitleItalic*'
+      '$heroExperiencesTitlePost';
+
+  // -- Airport Transfer flow --
+  static String get transferTitle => 'transfer.title'.tr;
+  static String get transferRoute => 'transfer.route'.tr;
+  static String get flightDetails => 'transfer.flightDetails'.tr;
+  static String get flightNumber => 'transfer.flightNumber'.tr;
+  static String get flightNumberHint => 'transfer.flightNumberHint'.tr;
+  static String get transferDate => 'transfer.date'.tr;
+  static String get arrivalTime => 'transfer.arrivalTime'.tr;
+  static String get terminal => 'transfer.terminal'.tr;
+  static String get passengers => 'transfer.passengers'.tr;
+  static String get chooseYourCar => 'transfer.chooseYourCar'.tr;
+  static String get selectVehicle => 'transfer.selectVehicle'.tr;
+  static String get oneWay => 'transfer.oneWay'.tr;
+  static String get reviewBookingLabel => 'transfer.reviewBooking'.tr;
+  static String get confirmTransfer => 'transfer.confirmTransfer'.tr;
+  static String get pickup => 'transfer.pickup'.tr;
+  static String get pickupValue => 'transfer.pickupValue'.tr;
+  static String get destination => 'transfer.destination'.tr;
+  static String get destinationValue => 'transfer.destinationValue'.tr;
+  static String get flightLabel => 'transfer.flight'.tr;
+  static String get notSpecified => 'transfer.notSpecified'.tr;
+  static String get dateAndTime => 'transfer.dateAndTime'.tr;
+  static String get vehicle => 'transfer.vehicle'.tr;
+  static String get transferInstructions => 'transfer.specialInstructions'.tr;
+  static String get transferInstructionsHint => 'transfer.instructionsHint'.tr;
+  static String get transferFolioNote => 'transfer.folioNote'.tr;
+  static String get confirmBooking => 'transfer.confirmBooking'.tr;
+  static String get selectVehicleFirst => 'transfer.selectVehicleFirst'.tr;
+  static String get noTransfers => 'transfer.noVehicles'.tr;
+  static String get transferLoadFailed => 'transfer.loadFailed'.tr;
+  static String get transferComingSoon => 'transfer.bookingComingSoon'.tr;
+
+  static String maxPassengers(int count) =>
+      'transfer.maxPassengers'.trParams({'count': '$count'});
+
+  static String upToPassengers(int count) =>
+      'transfer.upToPassengers'.trParams({'count': '$count'});
+
+  static String terminalValue(String name) =>
+      'transfer.terminalValue'.trParams({'name': name});
+
+  /// `1 passenger` / `@count passengers` — two-form is enough here, the count
+  /// is capped at the vehicle's seat count.
+  static String passengerCount(int count) => count == 1
+      ? 'transfer.passengerCountOne'.tr
+      : 'transfer.passengerCount'.trParams({'count': '$count'});
+
+  /// Joins date and time on the transfer summary line.
+  static String get at => 'transfer.at'.tr;
+
+  /// `1 night remaining` / `@count nights remaining` — the active-stay hero.
+  static String nightsRemainingCount(int count) => count == 1
+      ? 'stays.nightsRemainingOne'.tr
+      : 'stays.nightsRemainingCount'.trParams({'count': '$count'});
+
+  // Loyalty / Carlton Rewards
+  static String get loyaltyTitle => 'loyalty.title'.tr;
+  static String get loyaltyRow => 'loyalty.row'.tr;
+  static String get loyaltyRowBody => 'loyalty.rowBody'.tr;
+  static String get loyaltyProgramName => 'loyalty.programName'.tr;
+  static String get loyaltyAvailablePoints => 'loyalty.availablePoints'.tr;
+  static String get loyaltyPointsUnit => 'loyalty.pointsUnit'.tr;
+  static String get loyaltyTopTier => 'loyalty.topTier'.tr;
+  static String get loyaltyEarnTitle => 'loyalty.earnTitle'.tr;
+  static String get loyaltyEarnBody => 'loyalty.earnBody'.tr;
+  static String get loyaltyEarned => 'loyalty.earned'.tr;
+  static String get loyaltyRedeemed => 'loyalty.redeemed'.tr;
+  static String get loyaltyStaysCounted => 'loyalty.staysCounted'.tr;
+  static String get loyaltyNetChange => 'loyalty.netChange'.tr;
+  static String get loyaltyActivity => 'loyalty.activity'.tr;
+  static String get loyaltyNoActivity => 'loyalty.noActivity'.tr;
+  static String get loyaltyNoActivityBody => 'loyalty.noActivityBody'.tr;
+  static String get loyaltyRedeem => 'loyalty.redeem'.tr;
+  static String get loyaltyRedeemSoon => 'loyalty.redeemSoon'.tr;
+
+  /// `@points pts to @tier` — the caption under the tier bar. [points] is
+  /// pre-formatted by `formatPoints()` so the grouping follows the guest's
+  /// locale rather than being interpolated raw here.
+  static String loyaltyToNextTier({
+    required String points,
+    required String tier,
+  }) => 'loyalty.toNextTier'.trParams({'points': points, 'tier': tier});
+
+  /// `@count Total` — the entry count on the ledger header.
+  static String loyaltyEntryCount(int count) =>
+      'loyalty.entryCount'.trParams({'count': '$count'});
 }

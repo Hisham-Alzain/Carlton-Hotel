@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
@@ -83,7 +84,7 @@ class CustomActiveStayCard extends StatelessWidget {
 
                           RowTextComponent(
                             spacing: 10,
-                            title: 'Checked in since',
+                            title: AppTranslations.checkedInSincePrefix,
                             text: stay.checkedInSince ?? '',
                             titleStyle: textStyle.labelSmall?.copyWith(
                               fontWeight: FontWeight.w300,
@@ -97,7 +98,7 @@ class CustomActiveStayCard extends StatelessWidget {
 
                           RowTextComponent(
                             spacing: 10,
-                            title: 'Nights remaining',
+                            title: AppTranslations.nightsRemainingPrefix,
                             text: '${stay.nightsRemaining}',
                             titleStyle: textStyle.labelSmall?.copyWith(
                               fontWeight: FontWeight.w300,
@@ -120,13 +121,13 @@ class CustomActiveStayCard extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: _dateBox(
-                                  'CHECK-IN',
+                                  AppTranslations.checkInCaps,
                                   stay.checkInLabel ?? '',
                                 ),
                               ),
                               Expanded(
                                 child: _dateBox(
-                                  'CHECK-OUT',
+                                  AppTranslations.checkOutCaps,
                                   stay.checkOutLabel ?? '',
                                 ),
                               ),
@@ -156,7 +157,7 @@ class CustomActiveStayCard extends StatelessWidget {
                   borderColor: AppColors.white39,
                   borderWidth: 0.8,
                   child: Text(
-                    'REQUEST SERVICE',
+                    AppTranslations.requestServiceCaps,
                     style: textStyle.labelSmall?.copyWith(
                       color: AppColors.primary,
                     ),
@@ -170,7 +171,7 @@ class CustomActiveStayCard extends StatelessWidget {
                   borderColor: AppColors.white39,
                   borderWidth: 0.8,
                   child: Text(
-                    'EXPRESS CHECKOUT',
+                    AppTranslations.expressCheckoutCaps,
                     style: textStyle.labelSmall?.copyWith(
                       color: AppColors.primary,
                     ),
@@ -191,8 +192,8 @@ class CustomActiveStayCard extends StatelessWidget {
       const DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
+            begin: AlignmentDirectional.centerStart,
+            end: AlignmentDirectional.centerEnd,
             colors: [AppColors.primary50, AppColors.primary00],
           ),
         ),

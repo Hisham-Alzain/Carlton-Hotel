@@ -26,6 +26,15 @@ class Reservation {
     this.holdExpiresAt,
   });
 
+  /// The guest is in-house. Drives [HomeViewState.activeBooking] — see
+  /// `HomeController.resolveHomeState`.
+  bool get isCheckedIn => status == 'checked_in';
+
+  /// Whether this reservation is still live enough for Home to render it.
+  /// Mirrors the backend's `Guest::activeReservations` scope, which is what
+  /// `has_booking` is derived from — keep the two in step.
+  bool get isCurrent => status != 'cancelled' && status != 'checked_out';
+
   /// `DELETE /reservations/{uuid}` succeeds only before check-in — from
   /// `pending_verification`, `pending`, or `confirmed`. `checked_in`+ returns
   /// `reservation_state` (422), so the cancel affordance is hidden past that.

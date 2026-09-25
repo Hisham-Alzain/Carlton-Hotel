@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/custom_price_summary.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -18,7 +19,7 @@ class BookingPriceBreakdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
-    final room = controller.selectedRoom!;
+    final room = controller.selectedRoom.value!;
 
     return Padding(
       padding: const EdgeInsets.all(10),
@@ -47,7 +48,7 @@ class BookingPriceBreakdown extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Total',
+                    AppTranslations.total,
                     style: textStyle.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.inkBlack,

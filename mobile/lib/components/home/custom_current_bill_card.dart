@@ -1,9 +1,10 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/custom_price_summary.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-/// "Current Bill" block on the reservation-state Home (Figma 2197:3292): a
+/// "Current Bill" block on the reservation-state Home (Figma 2237:3914): a
 /// heading with a Full Statement link over the running charges + estimated
 /// total. Reuses [CustomPriceSummary] for the line items.
 class CustomCurrentBillCard extends StatelessWidget {
@@ -32,14 +33,14 @@ class CustomCurrentBillCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(10),
         child: SectionContainer(
-          title: 'Current Bill',
-          buttonText: 'Full Statement',
+          title: AppTranslations.currentBill,
+          buttonText: AppTranslations.fullStatement,
           icon: Icons.chevron_right,
           iconColor: AppColors.primary,
           onPressed: onFullStatement,
           child: CustomPriceSummary(
             lineItems: lines,
-            totalLabel: 'Estimated Total',
+            totalLabel: AppTranslations.estimatedTotal,
             totalValue: total,
           ),
         ),

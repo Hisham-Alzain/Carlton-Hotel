@@ -3,7 +3,7 @@ import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Wizard progress strip (Figma 75:463 / 75:808 / 75:928).
+/// Wizard progress strip (Figma 2237:4567 / 2237:4912 / 2237:5032).
 ///
 /// Not a TabBar — see CheckInController for why. Locked tabs render muted and
 /// swallow taps rather than being removed, so the guest can see what is coming.
@@ -53,14 +53,14 @@ class CheckInTabBar extends StatelessWidget {
                       color: active
                           ? AppColors.primary
                           : unlocked
-                          ? AppColors.taupeBrown
-                          : AppColors.stoneTaupe,
+                          ? AppColors.mediumGrey
+                          : AppColors.silverGrey,
                       fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                   Container(
                     height: 2,
-                    color: active ? AppColors.primary : AppColors.primary00,
+                    color: active ? AppColors.primary : AppColors.iceBlue,
                   ),
                 ],
               ),

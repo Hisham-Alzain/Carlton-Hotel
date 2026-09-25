@@ -1,3 +1,6 @@
+import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/models/home_models.dart';
+import 'package:carlton/constants/app_assets.dart';
 import 'package:carlton/components/cards/custom_discover_card.dart';
 import 'package:carlton/components/cards/custom_home_card.dart';
 import 'package:carlton/components/custom_home_container.dart';
@@ -5,11 +8,12 @@ import 'package:carlton/components/home/custom_active_booking_card.dart';
 import 'package:carlton/components/home/custom_active_requests_card.dart';
 import 'package:carlton/components/home/custom_ai_concierge_banner.dart';
 import 'package:carlton/components/home/custom_current_bill_card.dart';
-import 'package:carlton/components/home/pre_arrival_sections.dart';
-import 'package:carlton/services/check_in_service.dart';
-import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/components/home/airport_transfer_section.dart';
+import 'package:carlton/components/home/pre_arrival_checklist_section.dart';
+import 'package:carlton/components/home/pre_arrival_stay_section.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
+import 'package:carlton/enums/enums.dart';
 import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:carlton/models/card_meta.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -52,7 +56,7 @@ class HomeView extends GetView<HomeController> {
     _ExperiencesHeroSection(),
   ];
 
-  /// Pre-arrival sections (Figma `75:133`) — booked but not checked in. Half
+  /// Pre-arrival sections (Figma `2237:4237`) — booked but not checked in. Half
   /// the list is existing widgets; only the top three are new.
   static const preArrivalSections = <Widget>[
     PreArrivalStaySection(),
@@ -69,13 +73,14 @@ class HomeView extends GetView<HomeController> {
   /// short-circuits the whole subtree when the identical const list comes
   /// back, which is what stops an unrelated profile edit from rebuilding every
   /// carousel. Do not replace these with computed lists.
-  static List<Widget> sectionsFor({
-    required bool hasReservation,
-    required bool isPreArrival,
-  }) {
-    if (!hasReservation) return exploreSections;
-    return isPreArrival ? preArrivalSections : reservationSections;
-  }
+  ///
+  /// There is no "check-in has opened yet" distinction — the pre-arrival list
+  /// is what a booked, not-yet-checked-in guest sees for the whole span.
+  static List<Widget> sectionsFor(HomeViewState state) => switch (state) {
+    HomeViewState.defaultHome => exploreSections,
+    HomeViewState.preCheckIn => preArrivalSections,
+    HomeViewState.activeBooking => reservationSections,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -86,22 +91,26 @@ class HomeView extends GetView<HomeController> {
       // reassigns guest — it hands back the same const section instances and
       // Element.updateChild short-circuits the whole subtree.
       body: Obx(() {
-        final sections = sectionsFor(
-          hasReservation: controller.hasReservation,
-          isPreArrival: CheckInService.find.isPreArrival.value,
-        );
-        return CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.all(20),
-              // Lazy: an off-screen section's Obx never runs its builder and
-              // holds no subscription until it scrolls into view.
-              sliver: SliverList.builder(
-                itemCount: sections.length,
-                itemBuilder: (context, index) => sections[index],
+        final sections = sectionsFor(controller.currentState.value);
+        return RefreshIndicator(
+          onRefresh: controller.refreshHome,
+          color: AppColors.primary,
+          child: CustomScrollView(
+            // Always scrollable so the pull gesture works even when the body
+            // is shorter than the viewport (the default-home explore list is).
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.all(20),
+                // Lazy: an off-screen section's Obx never runs its builder and
+                // holds no subscription until it scrolls into view.
+                sliver: SliverList.builder(
+                  itemCount: sections.length,
+                  itemBuilder: (context, index) => sections[index],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       }),
     );
@@ -211,18 +220,22 @@ class _VideoHeroSection extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => CustomHomeContainer(
-        imagePath: DemoData.heroHomeImagePath,
+    return Obx(() {
+      final slider = controller.videoHeroSlider;
+      return CustomHomeContainer(
+        // The video is the actual visual here; the image is only the poster
+        // shown before it's ready, so it stays the bundled asset regardless.
+        imagePath: AppAssets.heroHomeImagePath,
         videoController: controller.videoController,
         videoReady: controller.isVideoReady.value,
-        location: 'Damascus · Syria',
-        title: 'Where every\n*moment* is composed',
-        subtitle: 'A landmark of luxury in the heart of Damascus',
+        location: slider?.location.value ?? AppTranslations.heroLocation,
+        title: slider?.headerText.value ?? AppTranslations.heroVideoTitle,
+        subtitle:
+            slider?.descriptionText.value ?? AppTranslations.heroVideoSubtitle,
         onPrimary: controller.bookNow,
         onSecondary: controller.explore,
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -231,14 +244,18 @@ class _DiningHeroSection extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomHomeContainer(
-      imagePath: DemoData.heroDiningImagePath,
-      location: 'Damascus · Syria',
-      title: 'Refined *flavors*,\ntimeless elegance.',
-      subtitle: 'A refined dining experience, timeless hospitality.',
-      onPrimary: controller.bookNow,
-      onSecondary: controller.explore,
-    );
+    return Obx(() {
+      final slider = controller.diningHeroSlider;
+      return CustomHomeContainer(
+        imagePath: slider?.photo ?? AppAssets.heroDiningImagePath,
+        location: slider?.location.value ?? AppTranslations.heroLocation,
+        title: slider?.headerText.value ?? AppTranslations.heroDiningTitle,
+        subtitle:
+            slider?.descriptionText.value ?? AppTranslations.heroDiningSubtitle,
+        onPrimary: controller.bookNow,
+        onSecondary: controller.explore,
+      );
+    });
   }
 }
 
@@ -250,16 +267,22 @@ class _ExperiencesHeroSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return SectionContainer(
-      title: 'Experiences',
-      onPressed: () => controller.discoverAll('Experiences'),
-      child: CustomHomeContainer(
-        imagePath: DemoData.heroExperienceImagePath,
-        location: 'Damascus · Syria',
-        title: 'A Quiet *Luxury*\nExperience',
-        subtitle: 'Explore authentic experiences, crafted just for you.',
-        onPrimary: controller.bookNow,
-        onSecondary: controller.explore,
-      ),
+      title: AppTranslations.experiences,
+      onPressed: () => controller.discoverAll(DiscoverSection.experiences),
+      child: Obx(() {
+        final slider = controller.experiencesHeroSlider;
+        return CustomHomeContainer(
+          imagePath: slider?.photo ?? AppAssets.heroExperienceImagePath,
+          location: slider?.location.value ?? AppTranslations.heroLocation,
+          title:
+              slider?.headerText.value ?? AppTranslations.heroExperiencesTitle,
+          subtitle:
+              slider?.descriptionText.value ??
+              AppTranslations.heroExperiencesSubtitle,
+          onPrimary: controller.bookNow,
+          onSecondary: controller.explore,
+        );
+      }),
     );
   }
 }
@@ -278,7 +301,7 @@ class _RailLoader extends StatelessWidget {
     // AppColors.primary, not the indicator's default white logo — the rails
     // sit on the light ghostWhite scaffold.
     return const Center(
-      child: SpinningIconIndicator(size: 50, color: AppColors.primary),
+      child: LogoLoadingIndicator(size: 50, color: AppColors.primary),
     );
   }
 }
@@ -295,8 +318,8 @@ class _RoomsCarousel extends GetView<HomeController> {
       // and it leaves itemBuilder closing over a plain list.
       final rooms = controller.rooms.toList();
       return SectionContainer(
-        title: 'Rooms & Suites',
-        onPressed: () => controller.discoverAll('Rooms'),
+        title: AppTranslations.roomsSuites,
+        onPressed: () => controller.discoverAll(DiscoverSection.rooms),
         child: SizedBox(
           height: 400,
           child: loading
@@ -336,8 +359,8 @@ class _DiningCarousel extends GetView<HomeController> {
       final loading = controller.contentLoading.value;
       final restaurants = controller.restaurants.toList();
       return SectionContainer(
-        title: 'Dining & Restaurants',
-        onPressed: () => controller.discoverAll('Dining'),
+        title: AppTranslations.diningRestaurants,
+        onPressed: () => controller.discoverAll(DiscoverSection.dining),
         child: SizedBox(
           height: 400,
           child: loading
@@ -376,8 +399,8 @@ class _ExperiencesCarousel extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return SectionContainer(
-      title: 'Experiences',
-      onPressed: () => controller.discoverAll('Experiences'),
+      title: AppTranslations.experiences,
+      onPressed: () => controller.discoverAll(DiscoverSection.experiences),
       child: SizedBox(
         height: 350,
         child: ListView.builder(

@@ -11,19 +11,19 @@ class MainController extends GetxController {
   /// Nav order: Home 0 · Stays 1 · Book 2 · Services 3 · Account 4. Opens on
   /// Services — the only fully built tab — unless a starting index is passed
   /// via `Get.arguments`.
-  int currentIndex = 0;
+  final RxInt currentIndex = 0.obs;
   late final PageController pageController;
 
   @override
   void onInit() {
     super.onInit();
-    if (Get.arguments is int) currentIndex = Get.arguments as int;
-    pageController = PageController(initialPage: currentIndex);
+    if (Get.arguments is int) currentIndex.value = Get.arguments as int;
+    pageController = PageController(initialPage: currentIndex.value);
   }
 
   void changeTab(int index) {
-    if (index == currentIndex) return;
-    currentIndex = index;
+    if (index == currentIndex.value) return;
+    currentIndex.value = index;
     pageController.jumpToPage(index);
     // The Home tab's hero video should only decode while it's on screen.
     // isRegistered guards the case where the Home tab was never visited.
@@ -33,7 +33,6 @@ class MainController extends GetxController {
     // Book (tab 2) is a live plan editor — start every visit from a fresh
     // draft, matching the old "Start Booking" behavior.
     if (index == 2) Get.find<BookingFlowController>().reset();
-    update();
   }
 
   @override

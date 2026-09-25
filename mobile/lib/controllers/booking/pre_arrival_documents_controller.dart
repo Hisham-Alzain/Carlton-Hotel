@@ -10,12 +10,12 @@ import 'package:get/get.dart';
 
 /// Lets a booked (tier-3a) guest pick jpg/png/pdf identity documents, tag each
 /// with a type (passport/id_card/visa), then upload them for e-check-in via
-/// `POST /pre-arrival/documents` as EXPLICIT indexed multipart. GetBuilder +
-/// [update].
+/// `POST /pre-arrival/documents` as EXPLICIT indexed multipart.
 class PreArrivalDocumentsController extends GetxController {
   /// The selected files awaiting upload.
-  final List<PreArrivalDocumentUpload> docs = [];
-  bool submitting = false;
+  final RxList<PreArrivalDocumentUpload> docs =
+      <PreArrivalDocumentUpload>[].obs;
+  final RxBool submitting = false.obs;
 
   /// MIME types the backend accepts (max 10MB each, enforced server-side).
   static const List<String> allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
@@ -41,25 +41,21 @@ class PreArrivalDocumentsController extends GetxController {
         ),
       );
     }
-    update();
   }
 
   void setType(int index, String type) {
     if (index < 0 || index >= docs.length) return;
     docs[index] = docs[index].copyWith(type: type);
-    update();
   }
 
   void removeDoc(int index) {
     if (index < 0 || index >= docs.length) return;
     docs.removeAt(index);
-    update();
   }
 
   Future<void> submit() async {
-    if (docs.isEmpty || submitting) return;
-    submitting = true;
-    update();
+    if (docs.isEmpty || submitting.value) return;
+    submitting.value = true;
 
     final built = buildMultipart(docs);
     // Self-report failures once via the switch below — suppress the uploader's
@@ -71,12 +67,10 @@ class PreArrivalDocumentsController extends GetxController {
       showDialog: false,
     );
     if (isClosed) return;
-    submitting = false;
-    update();
+    submitting.value = false;
 
     if (res.statusCode == 201) {
       docs.clear();
-      update();
       CustomSnackbars.showSuccess(message: AppTranslations.documentsSubmitted);
       Get.back();
       return;

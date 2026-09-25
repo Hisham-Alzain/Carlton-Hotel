@@ -1,5 +1,5 @@
 import 'package:carlton/models/amenity.dart';
-import 'package:carlton/models/bilingual.dart';
+import 'package:carlton/models/localized.dart';
 import 'package:carlton/models/json_num.dart';
 import 'package:carlton/models/media_image.dart';
 
@@ -8,8 +8,8 @@ import 'package:carlton/models/media_image.dart';
 /// adds the gallery, amenities, rating, and cancellation window.
 class RoomType {
   final String uuid;
-  final Bilingual name;
-  final Bilingual description;
+  final Localized name;
+  final Localized description;
   final String basePriceUsd;
   final String? sizeSqm;
   final String? viewType;
@@ -43,8 +43,8 @@ class RoomType {
     final images = MediaImage.listFromJson(json['images']);
     return RoomType(
       uuid: json['uuid'] as String? ?? '',
-      name: Bilingual.fromJson(json['name']),
-      description: Bilingual.fromJson(json['description']),
+      name: Localized.fromJson(json['name']),
+      description: Localized.fromJson(json['description']),
       basePriceUsd: json['base_price_usd']?.toString() ?? '0',
       sizeSqm: json['size_sqm']?.toString(),
       viewType: json['view_type'] as String?,

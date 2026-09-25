@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_dialogs.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:dio/dio.dart';
@@ -111,7 +112,9 @@ class ApiDialogHandler {
         CustomSnackbars.showWarning(message: e.message);
 
       case ErrorCodes.tooManyRequests:
-        final wait = e.retryAfter != null ? ' (${e.retryAfter}s)' : '';
+        final wait = e.retryAfter != null
+            ? ' (${AppTranslations.retryAfterSeconds(e.retryAfter!)})'
+            : '';
         CustomSnackbars.showWarning(message: '${e.message}$wait');
 
       case ErrorCodes.noInternetConnection:

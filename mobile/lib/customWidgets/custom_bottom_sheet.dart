@@ -1,6 +1,7 @@
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// The shared shell for every modal sheet in the app: header (title, optional
@@ -141,9 +142,14 @@ class CustomBottomSheet extends StatelessWidget {
                           padding: EdgeInsets.zero,
                           iconSize: 16,
                           visualDensity: VisualDensity.compact,
-                          icon: const Icon(
-                            Icons.close,
-                            color: AppColors.taupeBrown,
+                          icon: SvgPicture.asset(
+                            'assets/icons/close.svg',
+                            width: 24,
+                            height: 24,
+                            colorFilter: const ColorFilter.mode(
+                              AppColors.taupeBrown,
+                              BlendMode.srcIn,
+                            ),
                           ),
                         ),
                       ),

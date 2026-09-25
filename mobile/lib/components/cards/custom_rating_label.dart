@@ -1,9 +1,11 @@
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// Gold star + rating value + "(reviews)" — the compact rating shown on every
-/// Discover listing card (Figma 2195:2668). Shared so the three card types
+/// Discover listing card (Figma 2195:2668 — node no longer present; the file
+/// now covers only Home + Check-In). Shared so the three card types
 /// don't each hand-roll it.
 class CustomRatingLabel extends StatelessWidget {
   final double rating;
@@ -24,7 +26,15 @@ class CustomRatingLabel extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.star, color: AppColors.antiqueGold, size: 15),
+            SvgPicture.asset(
+              'assets/icons/star.svg',
+              width: 15,
+              height: 15,
+              colorFilter: const ColorFilter.mode(
+                AppColors.antiqueGold,
+                BlendMode.srcIn,
+              ),
+            ),
             Text(
               rating.toStringAsFixed(1),
               style: textStyle.labelMedium?.copyWith(

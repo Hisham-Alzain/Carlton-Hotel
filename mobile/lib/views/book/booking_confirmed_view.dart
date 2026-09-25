@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
@@ -6,6 +7,7 @@ import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// Final booking-flow screen (Figma "Booking / Step 17"): a room-photo hero
@@ -18,9 +20,9 @@ class BookingConfirmedView extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
     final controller = Get.find<BookingFlowController>();
-    final code = controller.confirmationCode ?? '';
+    final code = controller.confirmationCode.value ?? '';
     final email = controller.emailCtrl.text.trim();
-    final room = controller.selectedRoom;
+    final room = controller.selectedRoom.value;
 
     final bodyStyle = textStyle.labelMedium?.copyWith(
       fontFamily: 'DM Sans',
@@ -29,7 +31,7 @@ class BookingConfirmedView extends StatelessWidget {
 
     return CustomScaffold(
       appBar: AppBar(
-        title: Text('Booking Confirmed'),
+        title: Text(AppTranslations.bookingConfirmed),
         actions: [
           Container(
             decoration: BoxDecoration(
@@ -38,7 +40,15 @@ class BookingConfirmedView extends StatelessWidget {
             ),
             child: IconButton(
               onPressed: () {},
-              icon: const Icon(Icons.close, color: AppColors.inkBlack),
+              icon: SvgPicture.asset(
+                'assets/icons/close.svg',
+                width: 24,
+                height: 24,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.inkBlack,
+                  BlendMode.srcIn,
+                ),
+              ),
             ),
           ),
         ],
@@ -96,10 +106,14 @@ class BookingConfirmedView extends StatelessWidget {
                               width: 4,
                             ),
                           ),
-                          child: const Icon(
-                            Icons.check,
-                            color: AppColors.white,
-                            size: 50,
+                          child: SvgPicture.asset(
+                            'assets/icons/check.svg',
+                            width: 50,
+                            height: 50,
+                            colorFilter: const ColorFilter.mode(
+                              AppColors.white,
+                              BlendMode.srcIn,
+                            ),
                           ),
                         ),
                         Text(
@@ -131,7 +145,7 @@ class BookingConfirmedView extends StatelessWidget {
                             spacing: 4,
                             children: [
                               Text(
-                                'CONFIRMATION CODE',
+                                AppTranslations.confirmationCode,
                                 style: textStyle.labelSmall?.copyWith(
                                   fontFamily: 'DM Sans',
                                   color: AppColors.walnutGold,
@@ -154,7 +168,7 @@ class BookingConfirmedView extends StatelessWidget {
                           child: IconButton(
                             onPressed: controller.copyConfirmationCode,
                             icon: RowTextComponent(
-                              text: 'Copy',
+                              text: AppTranslations.copy,
                               icon: Icons.copy,
                             ),
                           ),
@@ -185,7 +199,7 @@ class BookingConfirmedView extends StatelessWidget {
                           height: 50,
                           backgroundColor: AppColors.lagoonTeal,
                           onPressed: controller.viewMyStays,
-                          child: const Text('View My Stays'),
+                          child: Text(AppTranslations.viewMyStays),
                         ),
                       ],
                     ),

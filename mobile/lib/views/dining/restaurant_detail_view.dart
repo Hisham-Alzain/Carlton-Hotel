@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/custom_restaurant_metaline.dart';
 import 'package:carlton/components/dining/custom_restaurant_hero.dart';
 import 'package:carlton/components/dining/restaurant_info_tab.dart';
@@ -29,8 +30,9 @@ class RestaurantDetailView extends GetView<RestaurantController> {
         child: Builder(
           // Supplies a context *below* the DefaultTabController, which is what
           // DefaultTabController.of() needs in order to find it.
-          builder: (context) => GetBuilder<RestaurantController>(
-            builder: (c) => Column(
+          builder: (context) {
+            final c = controller;
+            return Column(
               children: [
                 // Hero with the hours/location card floating over its bottom
                 // edge. The padded hero is the only non-positioned child, so it
@@ -50,7 +52,6 @@ class RestaurantDetailView extends GetView<RestaurantController> {
                       left: 10,
                       right: 10,
                       bottom: -10,
-                      //TODO: check if it could be transperant
                       child: PillContainer(
                         backgroundColor: AppColors.white,
                         radius: 12,
@@ -90,11 +91,11 @@ class RestaurantDetailView extends GetView<RestaurantController> {
                 Padding(
                   padding: const EdgeInsets.all(10),
                   child: TabBar(
-                    tabs: const [
-                      Tab(text: 'Menu'),
-                      Tab(text: 'Info'),
-                      Tab(text: 'Reserve'),
-                      Tab(text: 'Reviews'),
+                    tabs: [
+                      Tab(text: AppTranslations.tabMenu),
+                      Tab(text: AppTranslations.tabInfo),
+                      Tab(text: AppTranslations.reserve),
+                      Tab(text: AppTranslations.reviews),
                     ],
                   ),
                 ),
@@ -105,14 +106,13 @@ class RestaurantDetailView extends GetView<RestaurantController> {
                       RestaurantMenuTab(c: c),
                       RestaurantInfoTab(c: c),
                       RestaurantReserveTab(c: c),
-                      // TODO: check if should keep reviews
                       RestaurantReviewsTab(c: c),
                     ],
                   ),
                 ),
               ],
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

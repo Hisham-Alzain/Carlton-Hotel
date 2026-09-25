@@ -1,7 +1,8 @@
+import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/constants/preference_options.dart';
 import 'package:carlton/components/account/custom_dropdown_field.dart';
 import 'package:carlton/components/account/custom_list_row.dart';
 import 'package:carlton/components/account/custom_settings_section.dart';
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/account/preferences_controller.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -15,75 +16,103 @@ class PreferencesView extends GetView<PreferencesController> {
   Widget build(BuildContext context) {
     return CustomScaffold(
       appBar: AppBar(
-        title: const Text('Preferences'),
+        title: Text(AppTranslations.preferences),
         iconTheme: const IconThemeData(color: AppColors.primary),
       ),
-      body: GetBuilder<PreferencesController>(
-        builder: (c) => ListView(
-          padding: const EdgeInsets.all(16),
+      // SingleChildScrollView + Column rather than ListView: ListView has no
+      // `spacing:`. `stretch` is load-bearing — ListView sized its children to
+      // full width for free, and a Column centres them instead, which would
+      // shrink both dropdowns and every settings card.
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        // Outer 28 separates the page's three blocks; the inner 20 is the
+        // tighter pairing between the two standalone dropdowns. Each block is
+        // its own Obx so a change in one section never rebuilds the others.
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 28,
           children: [
-            CustomDropdownField(
-              label: 'Language',
-              value: c.languageLabel,
-              options: DemoData.languageOptions,
-              selectedId: c.languageId,
-              onSelected: c.chooseLanguage,
+            Obx(
+              () => Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 20,
+                children: [
+                  CustomDropdownField(
+                    label: AppTranslations.language,
+                    value: controller.languageLabel,
+                    options: PreferenceOptions.languageOptions,
+                    selectedId: controller.languageId,
+                    onSelected: controller.chooseLanguage,
+                  ),
+                  CustomDropdownField(
+                    label: AppTranslations.currency,
+                    value: controller.currencyLabel,
+                    options: PreferenceOptions.currencyOptions,
+                    selectedId: controller.currencyId,
+                    onSelected: controller.chooseCurrency,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 20),
-            CustomDropdownField(
-              label: 'Currency',
-              value: c.currencyLabel,
-              options: DemoData.currencyOptions,
-              selectedId: c.currencyId,
-              onSelected: c.chooseCurrency,
+            Obx(
+              () => CustomSettingsSection(
+                title: AppTranslations.stayPreferences,
+                children: [
+                  CustomDropdownField(
+                    label: AppTranslations.bedType,
+                    value: controller.bedLabel,
+                    options: PreferenceOptions.bedOptions,
+                    selectedId: controller.bedId.value,
+                    onSelected: controller.chooseBed,
+                  ),
+                  CustomDropdownField(
+                    label: AppTranslations.pillowLabel,
+                    value: controller.pillowLabel,
+                    options: PreferenceOptions.pillowOptions,
+                    selectedId: controller.pillowId.value,
+                    onSelected: controller.choosePillow,
+                  ),
+                  CustomDropdownField(
+                    label: AppTranslations.mattressType,
+                    value: controller.mattressLabel,
+                    options: PreferenceOptions.mattressOptions,
+                    selectedId: controller.mattressId.value,
+                    onSelected: controller.chooseMattress,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 28),
-            CustomSettingsSection(
-              title: 'Stay Preferences',
-              children: [
-                CustomDropdownField(
-                  label: 'Bed Type',
-                  value: c.bedLabel,
-                  options: DemoData.bedOptions,
-                  selectedId: c.bedId,
-                  onSelected: c.chooseBed,
-                ),
-                CustomDropdownField(
-                  label: 'Pillow',
-                  value: c.pillowLabel,
-                  options: DemoData.pillowOptions,
-                  selectedId: c.pillowId,
-                  onSelected: c.choosePillow,
-                ),
-                CustomDropdownField(
-                  label: 'Mattress Type',
-                  value: c.mattressLabel,
-                  options: DemoData.mattressOptions,
-                  selectedId: c.mattressId,
-                  onSelected: c.chooseMattress,
-                ),
-              ],
-            ),
-            const SizedBox(height: 28),
-            CustomSettingsSection(
-              title: 'Room Type',
-              children: [
-                CustomListRow(
-                  title: 'Smoking Room',
-                  subtitle: 'Request smoking-permitted room',
-                  trailing: _switch(c.smoking, c.toggleSmoking),
-                ),
-                CustomListRow(
-                  title: 'Early Check-in',
-                  subtitle: 'Request early check-in when available',
-                  trailing: _switch(c.earlyCheckIn, c.toggleEarlyCheckIn),
-                ),
-                CustomListRow(
-                  title: 'Late Check-out',
-                  subtitle: 'Request late check-out when available',
-                  trailing: _switch(c.lateCheckout, c.toggleLateCheckout),
-                ),
-              ],
+            Obx(
+              () => CustomSettingsSection(
+                title: AppTranslations.roomType,
+                children: [
+                  CustomListRow(
+                    title: AppTranslations.smokingRoom,
+                    subtitle: AppTranslations.smokingRoomSubtitle,
+                    trailing: _switch(
+                      controller.smoking.value,
+                      controller.toggleSmoking,
+                    ),
+                  ),
+                  CustomListRow(
+                    title: AppTranslations.earlyCheckIn,
+                    subtitle: AppTranslations.earlyCheckInSubtitle,
+                    trailing: _switch(
+                      controller.earlyCheckIn.value,
+                      controller.toggleEarlyCheckIn,
+                    ),
+                  ),
+                  CustomListRow(
+                    title: AppTranslations.lateCheckOut,
+                    subtitle: AppTranslations.lateCheckOutSubtitle,
+                    trailing: _switch(
+                      controller.lateCheckout.value,
+                      controller.toggleLateCheckout,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -91,10 +120,21 @@ class PreferencesView extends GetView<PreferencesController> {
     );
   }
 
+  /// Figma inverts the Material default: the ON track is the pale tint and the
+  /// THUMB carries the brand colour, not the reverse.
   Widget _switch(bool value, ValueChanged<bool> onChanged) => Switch(
     value: value,
     onChanged: onChanged,
-    activeThumbColor: AppColors.white,
-    activeTrackColor: AppColors.primary,
+    thumbColor: WidgetStateProperty.resolveWith(
+      (states) => states.contains(WidgetState.selected)
+          ? AppColors.primary
+          : AppColors.white,
+    ),
+    trackColor: WidgetStateProperty.resolveWith(
+      (states) => states.contains(WidgetState.selected)
+          ? AppColors.frostTeal
+          : AppColors.cloudGrey,
+    ),
+    trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
   );
 }

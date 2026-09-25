@@ -7,6 +7,7 @@ import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/pre_arrival_document.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// E-check-in document upload (`POST /pre-arrival/documents`). No Figma frame —
@@ -29,68 +30,82 @@ class PreArrivalDocumentsView extends GetView<PreArrivalDocumentsController> {
           ),
         ),
       ),
-      body: GetBuilder<PreArrivalDocumentsController>(
-        builder: (controller) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    CustomInfoBanner(
-                      message: AppTranslations.preArrivalIntro,
-                      tone: InfoBannerTone.info,
-                    ),
-                    const SizedBox(height: 16),
-                    if (controller.docs.isEmpty)
-                      _EmptyState()
-                    else
-                      for (var i = 0; i < controller.docs.length; i++)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _DocumentRow(
-                            document: controller.docs[i],
-                            onTypeChanged: (type) =>
-                                controller.setType(i, type),
-                            onRemove: () => controller.removeDoc(i),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            // SingleChildScrollView + Column rather than ListView: ListView
+            // has no `spacing:`. `stretch` replaces the full-width sizing
+            // ListView gave its children for free.
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              // Was 16 after the banner but 20 before the button when rows
+              // were present (each row carried a trailing `bottom: 12` on
+              // top of an 8 spacer) and 8 when the list was empty. The gap
+              // is now a consistent 16 in both states, and the per-row 12
+              // sits between rows only — `spacing:` cannot leave a trailing
+              // gap after the last one.
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 16,
+                children: [
+                  CustomInfoBanner(
+                    message: AppTranslations.preArrivalIntro,
+                    tone: InfoBannerTone.info,
+                  ),
+                  Obx(
+                    () => controller.docs.isEmpty
+                        ? _EmptyState()
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            spacing: 12,
+                            children: [
+                              for (var i = 0; i < controller.docs.length; i++)
+                                _DocumentRow(
+                                  document: controller.docs[i],
+                                  onTypeChanged: (type) =>
+                                      controller.setType(i, type),
+                                  onRemove: () => controller.removeDoc(i),
+                                ),
+                            ],
                           ),
-                        ),
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: controller.pickDocuments,
-                      icon: const Icon(Icons.add, color: AppColors.primary),
-                      label: Text(
-                        AppTranslations.addDocument,
-                        style: Get.textTheme.labelLarge?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.black10),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: controller.pickDocuments,
+                    icon: const Icon(Icons.add, color: AppColors.primary),
+                    label: Text(
+                      AppTranslations.addDocument,
+                      style: Get.textTheme.labelLarge?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
-                ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.black10),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: CustomFilledButton(
-                  width: double.infinity,
-                  height: 52,
-                  isLoading: controller.submitting,
-                  onPressed: controller.docs.isEmpty ? null : controller.submit,
-                  child: Text(AppTranslations.submitDocuments),
-                ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Obx(
+              () => CustomFilledButton(
+                width: double.infinity,
+                height: 52,
+                isLoading: controller.submitting.value,
+                onPressed: controller.docs.isEmpty ? null : controller.submit,
+                child: Text(AppTranslations.submitDocuments),
               ),
-            ],
-          );
-        },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -102,27 +117,36 @@ class _EmptyState extends StatelessWidget {
     final textStyle = Get.textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
+      // Nested rather than one flat spacing: the title and subtitle are a pair
+      // (8 apart) held further from the icon (16).
       child: Column(
+        spacing: 16,
         children: [
           const Icon(
             Icons.badge_outlined,
             size: 56,
             color: AppColors.antiqueGold,
           ),
-          const SizedBox(height: 16),
-          Text(
-            AppTranslations.preArrivalEmptyTitle,
-            textAlign: TextAlign.center,
-            style: textStyle.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.inkBlack,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            AppTranslations.preArrivalEmptySubtitle,
-            textAlign: TextAlign.center,
-            style: textStyle.labelMedium?.copyWith(color: AppColors.dimGrey),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 8,
+            children: [
+              Text(
+                AppTranslations.preArrivalEmptyTitle,
+                textAlign: TextAlign.center,
+                style: textStyle.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.inkBlack,
+                ),
+              ),
+              Text(
+                AppTranslations.preArrivalEmptySubtitle,
+                textAlign: TextAlign.center,
+                style: textStyle.labelMedium?.copyWith(
+                  color: AppColors.dimGrey,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -177,7 +201,15 @@ class _DocumentRow extends StatelessWidget {
           ),
           IconButton(
             onPressed: onRemove,
-            icon: const Icon(Icons.close, color: AppColors.dimGrey, size: 18),
+            icon: SvgPicture.asset(
+              'assets/icons/close.svg',
+              width: 18,
+              height: 18,
+              colorFilter: const ColorFilter.mode(
+                AppColors.dimGrey,
+                BlendMode.srcIn,
+              ),
+            ),
             visualDensity: VisualDensity.compact,
           ),
         ],

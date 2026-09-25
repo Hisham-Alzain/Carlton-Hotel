@@ -1,7 +1,7 @@
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'dart:io';
 import 'package:carlton/components/chat/custom_agent_header.dart';
 import 'package:carlton/components/chat/custom_chat_bubble.dart';
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/home/ai_concierge_controller.dart';
 import 'package:carlton/components/custom_chat_text_field.dart';
 import 'package:carlton/components/custom_circle_icon_button.dart';
@@ -22,9 +22,9 @@ class AiConciergeView extends GetView<AiConciergeController> {
     return CustomScaffold(
       appBar: AppBar(
         iconTheme: const IconThemeData(color: AppColors.primary),
-        title: GetBuilder<AiConciergeController>(
-          builder: (_) => Text(
-            controller.tabIndex == 0
+        title: Obx(
+          () => Text(
+            controller.tabIndex.value == 0
                 ? AppTranslations.aiTabLabel
                 : AppTranslations.customerServiceTabLabel,
             style: Get.textTheme.titleMedium?.copyWith(
@@ -39,15 +39,15 @@ class AiConciergeView extends GetView<AiConciergeController> {
           ),
         ],
       ),
-      body: GetBuilder<AiConciergeController>(
-        builder: (_) => Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            spacing: 10,
-            children: [
-              CustomSegmentedButton.track(
+      body: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          spacing: 10,
+          children: [
+            Obx(
+              () => CustomSegmentedButton.track(
                 expanded: true,
-                selectedIndex: controller.tabIndex,
+                selectedIndex: controller.tabIndex.value,
                 onChanged: controller.switchTab,
                 segments: [
                   SegmentItem(
@@ -60,14 +60,16 @@ class AiConciergeView extends GetView<AiConciergeController> {
                   ),
                 ],
               ),
-              Expanded(
-                child: controller.tabIndex == 0
+            ),
+            Expanded(
+              child: Obx(
+                () => controller.tabIndex.value == 0
                     ? const _AiTab()
                     : _CustomerServiceTab(controller: controller),
               ),
-              _buildInputBar(controller),
-            ],
-          ),
+            ),
+            _buildInputBar(controller),
+          ],
         ),
       ),
     );
@@ -76,41 +78,46 @@ class AiConciergeView extends GetView<AiConciergeController> {
   /// AI tab → plain text field. Customer Service tab → attachment button +
   /// field, with a pending-image chip above and send gated while sending.
   Widget _buildInputBar(AiConciergeController controller) {
-    final isChat = controller.tabIndex == 1;
-    final canSend = isChat
-        ? (controller.canSend || controller.pendingAttachment != null) &&
-              !controller.sending
-        : controller.canSend;
+    return Obx(() {
+      final isChat = controller.tabIndex.value == 1;
+      final canSend = isChat
+          ? (controller.canSend.value ||
+                    controller.pendingAttachment.value != null) &&
+                !controller.sending.value
+          : controller.canSend.value;
 
-    final field = CustomChatTextField(
-      controller: controller.messageController,
-      canSend: canSend,
-      hintText: isChat ? 'Send a message' : 'Ask me anything...',
-      onSendTap: controller.send,
-    );
+      final field = CustomChatTextField(
+        controller: controller.messageController,
+        canSend: canSend,
+        hintText: isChat ? 'Send a message' : 'Ask me anything...',
+        onSendTap: controller.send,
+      );
 
-    if (!isChat) return field;
+      if (!isChat) return field;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 8,
-      children: [
-        if (controller.pendingAttachment != null)
-          _AttachmentPreview(
-            file: controller.pendingAttachment!,
-            onRemove: controller.removeAttachment,
-          ),
-        Row(
-          spacing: 8,
-          children: [
-            _AttachmentButton(
-              onTap: controller.sending ? null : controller.pickAttachment,
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 8,
+        children: [
+          if (controller.pendingAttachment.value != null)
+            _AttachmentPreview(
+              file: controller.pendingAttachment.value!,
+              onRemove: controller.removeAttachment,
             ),
-            Expanded(child: field),
-          ],
-        ),
-      ],
-    );
+          Row(
+            spacing: 8,
+            children: [
+              _AttachmentButton(
+                onTap: controller.sending.value
+                    ? null
+                    : controller.pickAttachment,
+              ),
+              Expanded(child: field),
+            ],
+          ),
+        ],
+      );
+    });
   }
 }
 
@@ -182,26 +189,28 @@ class _CustomerServiceTab extends StatelessWidget {
     return Column(
       spacing: 10,
       children: [
+        // No staff identity comes back from the conversation API yet — the
+        // header shows blank name/role/initial until it does.
         CustomAgentHeader(
-          name: DemoData.csAgentName,
-          role: DemoData.csAgentRole,
-          initial: DemoData.csAgentInitial,
+          name: '',
+          role: '',
+          initial: '',
           onCall: controller.callAgent,
         ),
         const Divider(height: 1, thickness: 1, color: AppColors.black06),
         _QuickReplies(controller: controller),
-        Expanded(child: _thread()),
+        Expanded(child: Obx(_thread)),
       ],
     );
   }
 
   Widget _thread() {
-    if (controller.loadingThread) {
+    if (controller.loadingThread.value) {
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
+        child: SpinningIconIndicator(size: 40, color: AppColors.primary),
       );
     }
-    if (controller.threadError) {
+    if (controller.threadError.value) {
       return _ThreadError(onRetry: controller.refreshThread);
     }
     if (controller.messages.isEmpty) {
@@ -220,7 +229,7 @@ class _CustomerServiceTab extends StatelessWidget {
           ),
           child: CustomChatBubble(
             message: controller.messages[i],
-            agentInitial: DemoData.csAgentInitial,
+            agentInitial: '',
           ),
         ),
       ),
@@ -291,14 +300,14 @@ class _ThreadError extends StatelessWidget {
               color: AppColors.silverGrey,
             ),
             Text(
-              "Couldn't load your messages",
+              AppTranslations.loadMessagesFailed,
               textAlign: TextAlign.center,
               style: textStyle.titleSmall?.copyWith(
                 color: AppColors.inkBlack,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
+            TextButton(onPressed: onRetry, child: Text(AppTranslations.retry)),
           ],
         ),
       ),
@@ -344,7 +353,7 @@ class _AttachmentPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -384,21 +393,25 @@ class _QuickReplies extends StatelessWidget {
 
   const _QuickReplies({required this.controller});
 
+  // No preset quick-reply phrases come back from the conversation API yet.
+  static const List<String> _quickReplies = [];
+
   @override
   Widget build(BuildContext context) {
+    if (_quickReplies.isEmpty) return const SizedBox.shrink();
     final TextTheme textStyle = Get.textTheme;
 
     return SizedBox(
       height: 34,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: DemoData.csQuickReplies.length,
+        itemCount: _quickReplies.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) => Material(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(30),
           child: InkWell(
-            onTap: () => controller.quickReply(DemoData.csQuickReplies[i]),
+            onTap: () => controller.quickReply(_quickReplies[i]),
             borderRadius: BorderRadius.circular(30),
             child: PillContainer(
               height: 34,
@@ -409,7 +422,7 @@ class _QuickReplies extends StatelessWidget {
               child: Center(
                 widthFactor: 1,
                 child: Text(
-                  DemoData.csQuickReplies[i],
+                  _quickReplies[i],
                   style: textStyle.labelMedium?.copyWith(
                     fontFamily: 'DM Sans',
                     color: AppColors.inkBlack,

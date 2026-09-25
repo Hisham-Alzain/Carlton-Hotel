@@ -210,9 +210,11 @@ class CustomDialogs {
       // sits on the light theme surface — the indicator's default white logo
       // would be invisible. AppColors.primary matches what the bare
       // CircularProgressIndicator picked up from progressIndicatorTheme.
+      // Extra padding over the old spinner: the breathing shadow blooms well
+      // past the mark's own box and would otherwise crowd the dialog edge.
       body: const Padding(
-        padding: EdgeInsets.all(10),
-        child: SpinningIconIndicator(size: 50, color: AppColors.primary),
+        padding: EdgeInsets.all(24),
+        child: LogoLoadingIndicator(size: 50, color: AppColors.primary),
       ),
       showActions: false,
       showIcon: false,

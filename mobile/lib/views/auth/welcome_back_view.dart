@@ -4,6 +4,7 @@ import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class WelcomeBackView extends GetView<WelcomeBackController> {
@@ -23,7 +24,15 @@ class WelcomeBackView extends GetView<WelcomeBackController> {
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.slateTeal, width: 1.5),
           ),
-          child: const Icon(Icons.check, color: Colors.white, size: 30),
+          child: SvgPicture.asset(
+            'assets/icons/check.svg',
+            width: 30,
+            height: 30,
+            colorFilter: const ColorFilter.mode(
+              AppColors.white,
+              BlendMode.srcIn,
+            ),
+          ),
         ),
         title: AppTranslations.welcomeBackTitle,
         subtitle: AppTranslations.welcomeBackSubtitle,

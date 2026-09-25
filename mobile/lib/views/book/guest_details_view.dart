@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
@@ -6,6 +7,7 @@ import 'package:carlton/customWidgets/custom_text_field.dart';
 import 'package:carlton/customWidgets/custom_validation.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -18,7 +20,7 @@ class GuestDetailsView extends StatelessWidget {
     final controller = Get.find<BookingFlowController>();
     return CustomScaffold(
       appBar: AppBar(
-        title: Text('Guest Details'),
+        title: Text(AppTranslations.guestDetails),
         iconTheme: IconThemeData(color: Colors.black),
         actions: [
           Container(
@@ -28,7 +30,15 @@ class GuestDetailsView extends StatelessWidget {
             ),
             child: IconButton(
               onPressed: () {},
-              icon: const Icon(Icons.close, color: AppColors.inkBlack),
+              icon: SvgPicture.asset(
+                'assets/icons/close.svg',
+                width: 24,
+                height: 24,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.inkBlack,
+                  BlendMode.srcIn,
+                ),
+              ),
             ),
           ),
         ],
@@ -59,9 +69,9 @@ class GuestDetailsView extends StatelessWidget {
                     child: CustomTextField(
                       controller: controller.firstNameCtrl,
                       textInputType: TextInputType.name,
-                      captionLabel: 'First Name',
+                      captionLabel: AppTranslations.firstNameLabel,
                       labelColor: AppColors.inkBlack,
-                      hintText: 'Ahmed',
+                      hintText: AppTranslations.firstNameHint,
                       fillColor: AppColors.whisperGrey,
                       validator: (enteredFirstName) => CustomValidation()
                           .validateRequiredField(enteredFirstName),
@@ -71,9 +81,9 @@ class GuestDetailsView extends StatelessWidget {
                     child: CustomTextField(
                       controller: controller.lastNameCtrl,
                       textInputType: TextInputType.name,
-                      captionLabel: 'Last Name',
+                      captionLabel: AppTranslations.lastNameLabel,
                       labelColor: AppColors.inkBlack,
-                      hintText: 'Al-Rashid',
+                      hintText: AppTranslations.lastNameHint,
                       fillColor: AppColors.whisperGrey,
                       validator: (enteredLastName) => CustomValidation()
                           .validateRequiredField(enteredLastName),
@@ -84,9 +94,9 @@ class GuestDetailsView extends StatelessWidget {
               CustomTextField(
                 controller: controller.emailCtrl,
                 textInputType: TextInputType.emailAddress,
-                captionLabel: 'Email Address *',
+                captionLabel: AppTranslations.emailAddressRequired,
                 labelColor: AppColors.inkBlack,
-                hintText: 'your@email.com',
+                hintText: AppTranslations.emailAddressHint,
                 fillColor: AppColors.whisperGrey,
                 validator: (enteredEmail) =>
                     CustomValidation().validateEmail(enteredEmail),
@@ -107,7 +117,7 @@ class GuestDetailsView extends StatelessWidget {
                       textDirection: TextDirection.ltr,
                       captionLabel: 'Phone Number*',
                       labelColor: AppColors.inkBlack,
-                      hintText: 'Phone number',
+                      hintText: AppTranslations.phoneNumberHint,
                       fillColor: AppColors.whisperGrey,
                       validator: (enteredPhoneNumber) =>
                           CustomValidation().validatePhoneNumber(
@@ -121,7 +131,7 @@ class GuestDetailsView extends StatelessWidget {
               CustomTextField(
                 controller: controller.specialRequestsCtrl,
                 textInputType: TextInputType.multiline,
-                captionLabel: 'Special Requests',
+                captionLabel: AppTranslations.specialRequestsTitle,
                 labelColor: AppColors.inkBlack,
                 hintText:
                     'Any dietary needs, room preferences, or special occasions…',
@@ -132,7 +142,7 @@ class GuestDetailsView extends StatelessWidget {
                 width: double.infinity,
                 backgroundColor: AppColors.lagoonTeal,
                 onPressed: controller.continueFromGuest,
-                child: const Text('Continue'),
+                child: Text(AppTranslations.continueButtonLabel),
               ),
             ],
           ),

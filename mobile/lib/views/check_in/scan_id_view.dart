@@ -1,7 +1,9 @@
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:camera/camera.dart';
 import 'package:carlton/controllers/check_in/scan_id_controller.dart';
+import 'package:carlton/views/check_in/camera_unavailable_body.dart';
+import 'package:carlton/views/check_in/captured_photo_review.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
-import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/check_in/check_in_enums.dart';
@@ -10,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-/// One view, five stages (Figma 75:653, 75:703, 75:757 plus the two states a
+/// One view, five stages (Figma 2237:4757, 2237:4807, 2237:4861 plus the two states a
 /// real camera adds: warming up, and unusable).
 ///
 /// The preview is live — [ScanIdController] owns the [CameraController] and
@@ -21,20 +23,22 @@ class ScanIdView extends GetView<ScanIdController> {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      backgroundColor: AppColors.pearlCream,
+      backgroundColor: AppColors.ghostWhite,
       appBar: AppBar(
-        backgroundColor: AppColors.pearlCream,
+        backgroundColor: AppColors.ghostWhite,
         elevation: 0,
-        leading: const BackButton(color: AppColors.primary),
+        leading: const BackButton(color: AppColors.inkBlack),
         title: Text(
           AppTranslations.scanYourId,
-          style: Get.textTheme.titleLarge?.copyWith(color: AppColors.primary),
+          style: Get.textTheme.titleLarge?.copyWith(color: AppColors.inkBlack),
         ),
       ),
       body: Obx(() {
         final ScanStage stage = controller.stage.value;
-        if (stage == ScanStage.success) return const _CapturedPhotoReview();
-        if (stage == ScanStage.unavailable) return const _CameraUnavailableBody();
+        if (stage == ScanStage.success) return const CapturedPhotoReview();
+        if (stage == ScanStage.unavailable) {
+          return const CameraUnavailableBody();
+        }
 
         return Column(
           children: [
@@ -43,7 +47,7 @@ class ScanIdView extends GetView<ScanIdController> {
               child: Text(
                 AppTranslations.positionIdInFrame,
                 style: Get.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.taupeBrown,
+                  color: AppColors.mediumGrey,
                 ),
               ),
             ),
@@ -67,12 +71,15 @@ class _CameraCaptureArea extends GetView<ScanIdController> {
   final bool scanning;
   final bool initializing;
 
-  const _CameraCaptureArea({required this.scanning, required this.initializing});
+  const _CameraCaptureArea({
+    required this.scanning,
+    required this.initializing,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.abyssTeal,
+      color: AppColors.nearBlack,
       padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.only(top: 10),
       child: Column(
@@ -91,35 +98,32 @@ class _CameraCaptureArea extends GetView<ScanIdController> {
                   if (initializing)
                     const _CameraLoadingPlaceholder()
                   else
-                    // GetBuilder, not Obx: `camera` is a plain field swapped
-                    // out by the lifecycle hook, so the rebuild comes from the
-                    // controller's own update() rather than an Rx read.
-                    GetBuilder<ScanIdController>(
-                      builder: (c) {
-                        final CameraController? cam = c.cameraController;
-                        if (cam == null || !cam.value.isInitialized) {
-                          return const _CameraLoadingPlaceholder();
-                        }
-                        // The sensor is never card-shaped: cover the frame and
-                        // let the sides crop, rather than letterboxing.
-                        return FittedBox(
-                          fit: BoxFit.cover,
-                          clipBehavior: Clip.hardEdge,
-                          child: SizedBox(
-                            width: cam.value.previewSize?.height ?? 1,
-                            height: cam.value.previewSize?.width ?? 1,
-                            child: CameraPreview(cam),
-                          ),
-                        );
-                      },
-                    ),
+                    Obx(() {
+                      final CameraController? cam =
+                          controller.cameraController.value;
+                      if (cam == null || !cam.value.isInitialized) {
+                        return const _CameraLoadingPlaceholder();
+                      }
+                      // The sensor is never card-shaped: cover the frame and
+                      // let the sides crop, rather than letterboxing.
+                      return FittedBox(
+                        fit: BoxFit.cover,
+                        clipBehavior: Clip.hardEdge,
+                        child: SizedBox(
+                          width: cam.value.previewSize?.height ?? 1,
+                          height: cam.value.previewSize?.width ?? 1,
+                          child: CameraPreview(cam),
+                        ),
+                      );
+                    }),
                   const _IdFrameBrackets(),
                   if (!scanning && !initializing) const _SweepingScanLine(),
                   if (scanning)
                     ColoredBox(
-                      color: AppColors.abyssTeal.withValues(alpha: 0.55),
+                      color: AppColors.nearBlack.withValues(alpha: 0.55),
                       child: const Center(
-                        child: CircularProgressIndicator(
+                        child: SpinningIconIndicator(
+                          size: 40,
                           color: AppColors.successGreen,
                         ),
                       ),
@@ -162,13 +166,15 @@ class _CameraLoadingPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const ColoredBox(
-      color: AppColors.slateTeal,
-      child: Center(child: CircularProgressIndicator(color: AppColors.cream60)),
+      color: AppColors.nearBlack,
+      child: Center(
+        child: SpinningIconIndicator(size: 40, color: AppColors.cream60),
+      ),
     );
   }
 }
 
-/// The four green corner brackets from Figma 75:653.
+/// The four green corner brackets from Figma 2237:4757.
 class _IdFrameBrackets extends StatelessWidget {
   const _IdFrameBrackets();
 
@@ -203,7 +209,7 @@ class _FrameCornerBracket extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const BorderSide side = BorderSide(color: AppColors.successGreen, width: 3);
+    const BorderSide side = BorderSide(color: AppColors.scanGreen, width: 3);
     final bool top = corner.y < 0;
     final bool left = corner.x < 0;
 
@@ -242,178 +248,6 @@ class _SweepingScanLine extends GetView<ScanIdController> {
             color: AppColors.successGreen,
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Terminal failure: permission refused, no camera, or a plugin error. Upload
-/// stays reachable so a denied camera never dead-ends the check-in.
-class _CameraUnavailableBody extends GetView<ScanIdController> {
-  const _CameraUnavailableBody();
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 20,
-        children: [
-          const Center(
-            child: CustomIconChip.circle(
-              size: 50,
-              backgroundColor: AppColors.primary08,
-              child: Icon(
-                Icons.no_photography_outlined,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-          Text(
-            AppTranslations.cameraUnavailable,
-            textAlign: TextAlign.center,
-            style: Get.textTheme.headlineSmall?.copyWith(
-              color: AppColors.primary,
-            ),
-          ),
-          Obx(
-            () => Text(
-              controller.errorMessage.value,
-              textAlign: TextAlign.center,
-              style: Get.textTheme.bodyMedium?.copyWith(
-                color: AppColors.taupeBrown,
-              ),
-            ),
-          ),
-          Obx(
-            () => CustomFilledButton(
-              height: 50,
-              onPressed: controller.isBlockedByPermission.value
-                  ? controller.openSettings
-                  : controller.startCamera,
-              backgroundColor: AppColors.lagoonTeal,
-              child: Text(
-                controller.isBlockedByPermission.value
-                    ? AppTranslations.openSettings
-                    : AppTranslations.tryAgain,
-              ),
-            ),
-          ),
-          CustomFilledButton(
-            height: 50,
-            onPressed: controller.openUpload,
-            backgroundColor: AppColors.primary08,
-            foregroundColor: AppColors.primary,
-            child: Text(AppTranslations.uploadLabel),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CapturedPhotoReview extends GetView<ScanIdController> {
-  const _CapturedPhotoReview();
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 20,
-        children: [
-          const Center(
-            child: CustomIconChip.circle(
-              size: 50,
-              backgroundColor: AppColors.lagoonTeal,
-              child: Icon(Icons.check, color: Colors.white),
-            ),
-          ),
-          Text(
-            AppTranslations.scanSuccessful,
-            textAlign: TextAlign.center,
-            style: Get.textTheme.headlineSmall?.copyWith(
-              color: AppColors.primary,
-            ),
-          ),
-          Text(
-            AppTranslations.capturedIdDetails,
-            textAlign: TextAlign.center,
-            style: Get.textTheme.bodyMedium?.copyWith(
-              color: AppColors.taupeBrown,
-            ),
-          ),
-          Card(
-            color: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(15),
-              child: Column(
-                spacing: 10,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        AppTranslations.frontOfId,
-                        style: Get.textTheme.titleSmall?.copyWith(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const Spacer(),
-                      // "Edit" is the retake affordance — the only edit there
-                      // is to a captured photo.
-                      InkWell(
-                        onTap: controller.scanAgain,
-                        child: Text(
-                          AppTranslations.editLabel,
-                          style: Get.textTheme.labelLarge?.copyWith(
-                            color: AppColors.lagoonTeal,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Obx(() {
-                    final file = controller.capturedPhoto.value;
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: AspectRatio(
-                        aspectRatio: 85.6 / 54,
-                        child: file == null
-                            ? const ColoredBox(color: AppColors.stoneTaupe)
-                            : Image.file(file, fit: BoxFit.cover),
-                      ),
-                    );
-                  }),
-                  Text(
-                    AppTranslations.makeSureDetailsClear,
-                    style: Get.textTheme.bodySmall?.copyWith(
-                      color: AppColors.taupeBrown,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          CustomFilledButton(
-            height: 50,
-            onPressed: controller.confirm,
-            backgroundColor: AppColors.lagoonTeal,
-            child: Text(AppTranslations.continueLabel),
-          ),
-          CustomFilledButton(
-            height: 50,
-            onPressed: controller.scanAgain,
-            backgroundColor: AppColors.primary08,
-            foregroundColor: AppColors.primary,
-            child: Text(AppTranslations.scanAgain),
-          ),
-        ],
       ),
     );
   }
@@ -484,8 +318,8 @@ class _CameraControlButton extends StatelessWidget {
             CustomIconChip.circle(
               size: 50,
               backgroundColor: highlighted
-                  ? AppColors.lagoonTeal
-                  : AppColors.pearlCream,
+                  ? AppColors.shallowTeal
+                  : AppColors.ghostWhite,
               // The Figma SVGs carry their own stroke colours (white on the
               // teal Scan button, grey on the two flanking ones), so no tint.
               child: SvgPicture.asset(asset, width: 22),
@@ -494,8 +328,8 @@ class _CameraControlButton extends StatelessWidget {
               label,
               style: Get.textTheme.bodySmall?.copyWith(
                 color: highlighted
-                    ? AppColors.lagoonTeal
-                    : AppColors.taupeBrown,
+                    ? AppColors.shallowTeal
+                    : AppColors.mediumGrey,
               ),
             ),
           ],

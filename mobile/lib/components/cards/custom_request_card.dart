@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -95,7 +96,11 @@ class CustomRequestCard extends StatelessWidget {
               itemBuilder: (context) => [
                 PopupMenuItem(
                   value: onEdit,
-                  child: _menuRow(Icons.edit_outlined, 'Edit Request', 15),
+                  child: _menuRow(
+                    Icons.edit_outlined,
+                    AppTranslations.editRequestLabel,
+                    15,
+                  ),
                 ),
                 PopupMenuItem(
                   value: onCancel,

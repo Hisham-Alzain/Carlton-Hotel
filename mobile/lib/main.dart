@@ -23,7 +23,8 @@ Future<void> main() async {
   await StorageService.init();
   Get.put(SettingsService(), permanent: true);
   Get.put(ApiService(), permanent: true);
-  // await Get.put(NotificationService(), permanent: trugage).setup();
+  // await Get.put(NotificationService(), permanent: trugage).setu
+  // p();
   Get.put(MiddlewareService(), permanent: true);
   Get.put(PermissionService(), permanent: true);
   Get.put(BookingFlowController(), permanent: true);
@@ -42,13 +43,12 @@ class MainApp extends StatelessWidget {
 
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      // DEV PREVIEW: opens straight on the check-in wizard so the new screens
-      // can be walked without signing in. Restore Routes.splashScreen before
-      // shipping.
-      initialRoute: Routes.checkIn,
+      initialRoute: Routes.splashScreen,
       getPages: Pages.getPages,
       theme: Themes.theme,
-      supportedLocales: const [Locale('en'), Locale('ar')],
+      // Derived from `Local.supportedCodes` so this can't drift from the key
+      // maps — a locale listed here without a key map renders raw keys.
+      supportedLocales: Local.supportedCodes.map(Locale.new),
       locale: settings.locale.value,
       onReady: () async {
         WidgetsBinding.instance.addPostFrameCallback((_) async {

@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
@@ -58,8 +59,8 @@ class CustomUpcomingStayCard extends StatelessWidget {
                 const DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                       colors: [AppColors.iceBlue70, AppColors.steelTeal70],
                     ),
                   ),
@@ -67,11 +68,11 @@ class CustomUpcomingStayCard extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(10),
                   child: Align(
-                    alignment: Alignment.bottomLeft,
+                    alignment: AlignmentDirectional.bottomStart,
                     child: PillContainer(
                       backgroundColor: AppColors.sandBeige,
                       child: Text(
-                        'Upcoming',
+                        AppTranslations.upcoming,
                         style: textStyle.labelSmall?.copyWith(
                           fontFamily: 'DM Sans',
                           fontWeight: FontWeight.w700,
@@ -127,14 +128,14 @@ class CustomUpcomingStayCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _DateContainer(
-                        label: 'Check-in',
+                        label: AppTranslations.checkInLabel,
                         formattedDate: stay.checkInLabel ?? '',
                       ),
                     ),
 
                     Expanded(
                       child: _DateContainer(
-                        label: 'Check-out',
+                        label: AppTranslations.checkOutLabel,
                         formattedDate: stay.checkOutLabel ?? '',
                       ),
                     ),
@@ -147,7 +148,7 @@ class CustomUpcomingStayCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Res. #${stay.resCode ?? ''}',
+                        AppTranslations.resCode(stay.resCode ?? ''),
                         style: textStyle.labelLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
@@ -166,7 +167,7 @@ class CustomUpcomingStayCard extends StatelessWidget {
                     onPressed: onCancel,
                     foregroundColor: AppColors.brickRed,
                     borderColor: AppColors.crimsonRed30,
-                    child: Text('Cancel Reservation'),
+                    child: Text(AppTranslations.cancelReservation),
                   ),
                 ),
               ],

@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
@@ -123,9 +124,14 @@ class NotificationService extends GetxService {
       },
     );
 
-    const channel = AndroidNotificationChannel(
+    // Android updates an existing channel's NAME when it is re-created, so
+    // recreating it each launch is what keeps the label in the guest's
+    // current language. The id stays `cartx_orders` on purpose: changing it
+    // orphans the channel (and its user-set preferences) on every device
+    // that already installed the app.
+    final channel = AndroidNotificationChannel(
       'cartx_orders',
-      'Order Updates',
+      AppTranslations.notificationChannelName,
       importance: Importance.high,
     );
 
@@ -202,10 +208,10 @@ class NotificationService extends GetxService {
       id: notification.hashCode,
       title: notification.title,
       body: notification.body,
-      notificationDetails: const NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'cartx_orders',
-          'Order Updates',
+          AppTranslations.notificationChannelName,
           icon: '@drawable/ic_notification',
           importance: Importance.high,
           priority: Priority.high,

@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -181,7 +182,8 @@ class SectionContainer extends StatelessWidget {
     this.height,
     this.width,
     this.title,
-    this.buttonText = 'Discover All',
+    // Null falls back to the localized "Discover All" at render time.
+    this.buttonText,
     this.icon = Icons.arrow_forward,
     this.onPressed,
     this.iconColor,
@@ -216,7 +218,7 @@ class SectionContainer extends StatelessWidget {
                   onPressed: onPressed,
                   child: InvertedRowTextComponent(
                     spacing: 10,
-                    text: buttonText ?? '',
+                    text: buttonText ?? AppTranslations.discoverAll,
                     textStyle: textStyle.labelLarge?.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w500,

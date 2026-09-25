@@ -1,3 +1,5 @@
+import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:carlton/components/cards/custom_discover_card.dart';
 import 'package:carlton/controllers/home/discover_controller.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
@@ -19,11 +21,16 @@ class DiscoverView extends GetView<DiscoverController> {
         iconTheme: const IconThemeData(color: AppColors.inkBlack),
         title: Text(controller.title),
       ),
-      //TODO: do not use get builder
-      //TODO: needs filter
-      body: GetBuilder<DiscoverController>(
-        builder: (_) => controller.loading
-            ? const Center(child: CircularProgressIndicator())
+      // No filter control yet — the screen lists everything the controller
+      // fetched. Filtering needs a query contract the endpoint does not expose.
+      body: Obx(
+        () => controller.loading.value
+            ? const Center(
+                child: SpinningIconIndicator(
+                  size: 40,
+                  color: AppColors.primary,
+                ),
+              )
             : _list(),
       ),
     );
@@ -47,7 +54,7 @@ class DiscoverView extends GetView<DiscoverController> {
             ],
             chips: rooms[i].amenities,
             priceLabel: rooms[i].priceAmount,
-            primaryLabel: 'Book Now',
+            primaryLabel: AppTranslations.bookNowLabel,
             onPrimary: () => controller.openRoom(rooms[i]),
             onTap: () => controller.openRoom(rooms[i]),
           ),
@@ -68,7 +75,7 @@ class DiscoverView extends GetView<DiscoverController> {
             ],
             secondaryLabel: 'View Menu',
             onSecondary: () => controller.openRestaurant(restaurants[i]),
-            primaryLabel: 'Book Now',
+            primaryLabel: AppTranslations.bookNowLabel,
             onPrimary: () => controller.openRestaurant(restaurants[i]),
             onTap: () => controller.openRestaurant(restaurants[i]),
           ),

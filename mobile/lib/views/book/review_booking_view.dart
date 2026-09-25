@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/booking_price_breakdown.dart';
 import 'package:carlton/components/booking_summary_header.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
@@ -18,7 +19,7 @@ class ReviewBookingView extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScaffold(
       appBar: AppBar(
-        title: Text('Review Booking'),
+        title: Text(AppTranslations.reviewBooking),
         iconTheme: IconThemeData(color: Colors.black),
         actions: [
           Container(
@@ -28,108 +29,117 @@ class ReviewBookingView extends StatelessWidget {
             ),
             child: IconButton(
               onPressed: () {},
-              icon: const Icon(Icons.close, color: AppColors.inkBlack),
+              icon: SvgPicture.asset(
+                'assets/icons/close.svg',
+                width: 24,
+                height: 24,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.inkBlack,
+                  BlendMode.srcIn,
+                ),
+              ),
             ),
           ),
         ],
       ),
-      body: GetBuilder<BookingFlowController>(
-        builder: (controller) {
-          final TextTheme textStyle = Get.textTheme;
-          return Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              spacing: 10,
-              children: [
-                AnimatedSmoothIndicator(
-                  activeIndex: 5,
-                  count: 6,
-                  effect: SlideEffect(
-                    dotHeight: 5,
-                    dotWidth: 50,
-                    spacing: 20,
-                    activeDotColor: AppColors.primary,
-                    dotColor: AppColors.iceBlue,
-                  ),
+      body: Obx(() {
+        final controller = Get.find<BookingFlowController>();
+        final TextTheme textStyle = Get.textTheme;
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            spacing: 10,
+            children: [
+              AnimatedSmoothIndicator(
+                activeIndex: 5,
+                count: 6,
+                effect: SlideEffect(
+                  dotHeight: 5,
+                  dotWidth: 50,
+                  spacing: 20,
+                  activeDotColor: AppColors.primary,
+                  dotColor: AppColors.iceBlue,
                 ),
-                BookingSummaryHeader(
-                  controller: controller,
-                  showPriceSection: false,
-                ),
+              ),
+              BookingSummaryHeader(
+                controller: controller,
+                showPriceSection: false,
+              ),
 
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.black06, width: 1),
-                  ),
-                  child: BookingPriceBreakdown(controller: controller),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.black06, width: 1),
                 ),
+                child: BookingPriceBreakdown(controller: controller),
+              ),
 
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.whisperGrey,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 12,
-                    children: [
-                      Text(
-                        'Guest & Payment',
-                        style: textStyle.labelLarge?.copyWith(
-                          fontFamily: 'Plus Jakarta Sans',
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.inkBlack,
-                        ),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.whisperGrey,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 12,
+                  children: [
+                    Text(
+                      'Guest & Payment',
+                      style: textStyle.labelLarge?.copyWith(
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.inkBlack,
                       ),
-                      _infoRow(
-                        'Guest',
-                        '${controller.firstNameCtrl.text} ${controller.lastNameCtrl.text}',
-                      ),
-                      _infoRow('Email', controller.emailCtrl.text),
-                      _infoRow('Payment', controller.paymentMethodDisplay),
-                    ],
-                  ),
+                    ),
+                    _infoRow(
+                      AppTranslations.guest,
+                      '${controller.firstNameCtrl.text} ${controller.lastNameCtrl.text}',
+                    ),
+                    _infoRow(AppTranslations.email, controller.emailCtrl.text),
+                    _infoRow('Payment', controller.paymentMethodDisplay),
+                  ],
                 ),
+              ),
 
-                CustomFilledButton(
-                  width: double.infinity,
-                  backgroundColor:
-                      controller.paymentMethod == PaymentMethod.applePay ||
-                          controller.paymentMethod == PaymentMethod.googlePay
-                      ? AppColors.inkBlack
-                      : AppColors.lagoonTeal,
-                  onPressed: controller.confirmBooking,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: 10,
-                    children: [
-                      if (controller.paymentMethod.iconPath
-                          case final iconPath?)
-                        SvgPicture.asset(
-                          iconPath,
-                          width: 16,
-                          height: 16,
-                          // Apple mark is white; the Google "G" keeps its colours.
-                          colorFilter:
-                              controller.paymentMethod == PaymentMethod.applePay
-                              ? const ColorFilter.mode(
-                                  AppColors.white,
-                                  BlendMode.srcIn,
-                                )
-                              : null,
-                        ),
-                      Text(controller.confirmCtaLabel),
-                    ],
-                  ),
+              CustomFilledButton(
+                width: double.infinity,
+                backgroundColor:
+                    controller.paymentMethod.value == PaymentMethod.applePay ||
+                        controller.paymentMethod.value ==
+                            PaymentMethod.googlePay
+                    ? AppColors.inkBlack
+                    : AppColors.lagoonTeal,
+                onPressed: controller.confirmBooking,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 10,
+                  children: [
+                    if (controller.paymentMethod.value.iconPath
+                        case final iconPath?)
+                      SvgPicture.asset(
+                        iconPath,
+                        width: 16,
+                        height: 16,
+                        // Apple mark is white; the Google "G" keeps its colours.
+                        colorFilter:
+                            controller.paymentMethod.value ==
+                                PaymentMethod.applePay
+                            ? const ColorFilter.mode(
+                                AppColors.white,
+                                BlendMode.srcIn,
+                              )
+                            : null,
+                      ),
+                    Text(controller.confirmCtaLabel),
+                  ],
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 

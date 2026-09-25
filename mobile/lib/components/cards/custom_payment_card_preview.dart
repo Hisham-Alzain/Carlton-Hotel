@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -84,13 +85,13 @@ class CustomPaymentCardPreview extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     _field(
-                      'Cardholder',
+                      AppTranslations.cardholder,
                       cardholderName.isEmpty
                           ? 'YOUR NAME'
                           : cardholderName.toUpperCase(),
                     ),
                     _field(
-                      'Expires',
+                      AppTranslations.expires,
                       cardExpiry.isEmpty ? 'MM/YY' : cardExpiry,
                     ),
                   ],

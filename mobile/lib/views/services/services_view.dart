@@ -1,7 +1,7 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/cards/custom_service_card.dart';
 import 'package:carlton/components/cards/custom_stay_card.dart';
 import 'package:carlton/components/home/custom_active_requests_card.dart';
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/home/services_controller.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
@@ -18,21 +18,19 @@ class ServicesView extends GetView<ServicesController> {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      body: GetBuilder<ServicesController>(
-        builder: (controller) {
-          switch (controller.homeState) {
-            // Not signed in: services are gated behind sign-in.
-            case ServicesHomeState.guestBrowse:
-              return const _GuestBrowse();
-            // Signed in, no booking: invite them to book.
-            case ServicesHomeState.exploreAndBook:
-              return const _ExploreAndBook();
-            // Guest with a current stay: their room + full room-service catalog.
-            case ServicesHomeState.activeStay:
-              return _ActiveStayServices(controller: controller);
-          }
-        },
-      ),
+      body: Obx(() {
+        switch (controller.homeState) {
+          // Not signed in: services are gated behind sign-in.
+          case ServicesHomeState.guestBrowse:
+            return const _GuestBrowse();
+          // Signed in, no booking: invite them to book.
+          case ServicesHomeState.exploreAndBook:
+            return const _ExploreAndBook();
+          // Guest with a current stay: their room + full room-service catalog.
+          case ServicesHomeState.activeStay:
+            return _ActiveStayServices(controller: controller);
+        }
+      }),
     );
   }
 }
@@ -52,63 +50,82 @@ class _ActiveStayServices extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 20,
         children: [
-          CustomStayCard(
-            roomName: controller.room,
-            checkedInTime: controller.checkedInTime,
-            nightsRemaining: controller.nightsRemaining,
-            imagePath: controller.stayImagePath,
+          Obx(
+            () => CustomStayCard(
+              roomName: controller.room.value,
+              checkedInTime: controller.checkedInTime.value,
+              nightsRemaining: controller.nightsRemaining.value,
+              imagePath: controller.stayImagePath,
+            ),
           ),
           TabBar(
-            tabs: const [Text('All Services'), Text('Active Requests')],
+            tabs: [
+              Text(AppTranslations.allServicesTab),
+              Text(AppTranslations.activeRequests),
+            ],
             controller: controller.tabController,
           ),
-          if (controller.tabIndex == 0) ...[
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: controller.services.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 20,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.5,
-              ),
-              itemBuilder: (context, index) => GestureDetector(
-                onTap: () => controller.openServiceCategory(
-                  controller.services[index].code,
-                ),
-                child: CustomServiceCard(service: controller.services[index]),
-              ),
-            ),
-            _QuickRequests(controller: controller),
-          ],
-          if (controller.tabIndex == 1)
-            Column(
+          Obx(
+            () => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 20,
               children: [
-                if (controller.activeRequests.isEmpty)
-                  CustomEmptyPlaceholder(
-                    iconPath: 'assets/icons/glass-empty.svg',
-                    title: 'No active requests',
-                    subtitle:
-                        'Your current requests will appear here once they are submitted',
-                    primaryLabel: 'Browse services',
-                    onPrimary: () => controller.switchTab(0),
-                  ),
-                if (controller.activeRequests.isNotEmpty)
-                  // The card no longer carries its own margin, so hold its
-                  // inset here: 10 from this Padding on top of the scroll
-                  // view's 10 keeps it exactly where it has always sat.
-                  Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: CustomActiveRequestsCard(
-                      requests: controller.activeRequests,
-                      showHeading: false,
-                      onOpen: controller.editRequest,
-                      onNewRequest: () => controller.switchTab(0),
+                if (controller.tabIndex.value == 0) ...[
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: controller.services.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 20,
+                          crossAxisSpacing: 10,
+                          childAspectRatio: 1.5,
+                        ),
+                    itemBuilder: (context, index) => GestureDetector(
+                      onTap: () => controller.openServiceCategory(
+                        controller.services[index].code,
+                      ),
+                      child: CustomServiceCard(
+                        service: controller.services[index],
+                      ),
                     ),
+                  ),
+                  _QuickRequests(controller: controller),
+                ],
+                if (controller.tabIndex.value == 1)
+                  Column(
+                    children: [
+                      if (controller.activeRequests.isEmpty)
+                        CustomEmptyPlaceholder(
+                          iconPath: 'assets/icons/glass-empty.svg',
+                          title: AppTranslations.noActiveRequestsTitle,
+                          subtitle:
+                              'Your current requests will appear here once they are submitted',
+                          primaryLabel:
+                              AppTranslations.browseServicesButtonLabel,
+                          onPrimary: () => controller.switchTab(0),
+                        ),
+                      if (controller.activeRequests.isNotEmpty)
+                        // The card no longer carries its own margin, so hold
+                        // its inset here: 10 from this Padding on top of the
+                        // scroll view's 10 keeps it exactly where it has
+                        // always sat.
+                        Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: CustomActiveRequestsCard(
+                            requests: controller.activeRequests.toList(),
+                            showHeading: false,
+                            onOpen: controller.editRequest,
+                            onNewRequest: () => controller.switchTab(0),
+                          ),
+                        ),
+                    ],
                   ),
               ],
             ),
+          ),
         ],
       ),
     );
@@ -120,21 +137,26 @@ class _QuickRequests extends StatelessWidget {
   final ServicesController controller;
   const _QuickRequests({required this.controller});
 
+  // No preset quick-request catalog exists on the backend yet, and these
+  // chips never submitted anything real even when they showed hardcoded text.
+  static const List<String> _quickRequestLabels = [];
+
   @override
   Widget build(BuildContext context) {
+    if (_quickRequestLabels.isEmpty) return const SizedBox.shrink();
     final TextTheme textStyle = Get.textTheme;
     return Column(
       spacing: 10,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quick Requests',
+          AppTranslations.quickRequests,
           style: textStyle.titleSmall?.copyWith(color: AppColors.primary),
         ),
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: DemoData.quickRequests
+          children: _quickRequestLabels
               .map((label) => Chip(label: Text(label)))
               .toList(),
         ),
@@ -154,7 +176,7 @@ class _GuestBrowse extends StatelessWidget {
       iconPath: 'assets/images/ring.png',
       iconWidth: 90,
       iconHeight: 65,
-      title: 'Sign in to access room services',
+      title: AppTranslations.signInPromptTitle,
       primaryLabel: 'Sign in',
       onPrimary: () => Get.toNamed(Routes.signIn),
       secondaryLabel: 'Create Account',
@@ -173,10 +195,11 @@ class _ExploreAndBook extends StatelessWidget {
       iconPath: 'assets/images/ring.png',
       iconWidth: 90,
       iconHeight: 65,
-      title: 'Ready for your next stay?',
-      subtitle: 'Book your stay to unlock in-room services.',
-      primaryLabel: 'Explore & Book',
-      onPrimary: () => CustomSnackbars.showInfo(message: 'Booking coming soon'),
+      title: AppTranslations.readyForNextStayTitle,
+      subtitle: AppTranslations.unlockInRoom,
+      primaryLabel: AppTranslations.exploreAndBookButtonLabel,
+      onPrimary: () =>
+          CustomSnackbars.showInfo(message: AppTranslations.bookingComingSoon),
     );
   }
 }

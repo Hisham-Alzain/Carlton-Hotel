@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// Horizontal single-select filter row used at the top of the Discover screen
-/// (Figma 2195:2648). The selected chip is a filled primary pill with white
+/// (Figma 2195:2648 — node no longer present; the file now covers only Home +
+/// Check-In). The selected chip is a filled primary pill with white
 /// text; the rest are light grey outlined pills. Purely presentational — the
 /// caller owns the selected index and reacts to [onSelected].
 class CustomFilterChips extends StatelessWidget {

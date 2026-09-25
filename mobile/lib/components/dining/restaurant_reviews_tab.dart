@@ -1,3 +1,6 @@
+import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:carlton/components/cards/custom_rating_label.dart';
 import 'package:carlton/components/reviews/review_submit_sheet.dart';
 import 'package:carlton/components/reviews/review_tile.dart';
@@ -28,12 +31,12 @@ class RestaurantReviewsTab extends StatelessWidget {
     // Auth gate: a POST while unauthenticated returns 401 and fires the global
     // logout — the wrong outcome for a review attempt.
     if (!MiddlewareService.find.isAuthenticated) {
-      CustomSnackbars.showInfo(message: 'Sign in to leave a review');
+      CustomSnackbars.showInfo(message: AppTranslations.signInToReview);
       Get.toNamed(Routes.signIn);
       return;
     }
     CustomBottomSheet.show<bool>(
-      title: 'Write a Review',
+      title: AppTranslations.writeAReview,
       subtitle: c.restaurant.name,
       child: ReviewSubmitSheet(controller: _reviews),
     );
@@ -41,7 +44,6 @@ class RestaurantReviewsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textStyle = Get.textTheme;
     final reviews = _reviews;
 
     return Column(
@@ -66,7 +68,7 @@ class RestaurantReviewsTab extends StatelessWidget {
                   width: double.infinity,
                   backgroundColor: AppColors.primary,
                   onPressed: _openSubmitSheet,
-                  child: const Text('Write a Review'),
+                  child: Text(AppTranslations.writeAReview),
                 ),
               ],
             ),
@@ -75,20 +77,23 @@ class RestaurantReviewsTab extends StatelessWidget {
         Expanded(
           child: Obx(() {
             if (reviews.loading.value) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: SpinningIconIndicator(
+                  size: 40,
+                  color: AppColors.primary,
+                ),
+              );
             }
 
-            //TODO: use custom place holder instead
+            // Error and empty are the same slot, so both go through
+            // CustomEmptyPlaceholder rather than a bare centred Text.
             if (reviews.hasError.value) {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(10),
-                  child: Text(
-                    'Could not load reviews. Please try again.',
-                    textAlign: TextAlign.center,
-                    style: textStyle.labelMedium?.copyWith(
-                      color: AppColors.dimGrey,
-                    ),
+                  child: CustomEmptyPlaceholder(
+                    title: AppTranslations.reviewsLoadFailed,
+                    subtitle: AppTranslations.tryAgainShort,
                   ),
                 ),
               );
@@ -97,12 +102,9 @@ class RestaurantReviewsTab extends StatelessWidget {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(10),
-                  child: Text(
-                    'No reviews yet — be the first',
-                    textAlign: TextAlign.center,
-                    style: textStyle.labelMedium?.copyWith(
-                      color: AppColors.dimGrey,
-                    ),
+                  child: CustomEmptyPlaceholder(
+                    title: AppTranslations.noReviewsYet,
+                    subtitle: AppTranslations.beTheFirstReview,
                   ),
                 ),
               );
@@ -116,7 +118,12 @@ class RestaurantReviewsTab extends StatelessWidget {
                 if (index >= reviews.items.length) {
                   return const Padding(
                     padding: EdgeInsets.all(10),
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(
+                      child: SpinningIconIndicator(
+                        size: 24,
+                        color: AppColors.primary,
+                      ),
+                    ),
                   );
                 }
                 return Padding(

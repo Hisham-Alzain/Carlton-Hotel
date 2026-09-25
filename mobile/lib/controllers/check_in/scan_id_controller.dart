@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/check_in/check_in_enums.dart';
 import 'package:carlton/routes/routes.dart';
@@ -12,7 +11,7 @@ import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-/// Live ID scanner (Figma 75:653 / 75:703 / 75:757).
+/// Live ID scanner (Figma 2237:4757 / 2237:4807 / 2237:4861).
 ///
 /// Owns a real [CameraController]. Two things about that are load-bearing:
 ///
@@ -50,9 +49,9 @@ class ScanIdController extends GetxController
     duration: const Duration(milliseconds: 1800),
   )..repeat(reverse: true);
 
-  /// The live camera, or null while stopped. Plain (non-Rx) because the
-  /// lifecycle hook swaps it wholesale — views rebuild off [update].
-  CameraController? cameraController;
+  /// The live camera, or null while stopped. Swapped wholesale by the
+  /// lifecycle hook, same shape as [capturedPhoto].
+  final Rxn<CameraController> cameraController = Rxn<CameraController>();
 
   List<CameraDescription> _cameraDevices = const <CameraDescription>[];
 
@@ -64,7 +63,8 @@ class ScanIdController extends GetxController
   /// in-flight startup would leak the first controller.
   bool _isStartingCamera = false;
 
-  bool get isCameraReady => cameraController?.value.isInitialized ?? false;
+  bool get isCameraReady =>
+      cameraController.value?.value.isInitialized ?? false;
   bool get deviceHasTorch => _deviceHasTorch;
 
   @override
@@ -80,8 +80,8 @@ class ScanIdController extends GetxController
     scanLineAnimation.dispose();
     // Fire-and-forget: onClose cannot await, and the handle is released either
     // way. Detach first so a late frame cannot touch a disposing controller.
-    final CameraController? closing = cameraController;
-    cameraController = null;
+    final CameraController? closing = cameraController.value;
+    cameraController.value = null;
     closing?.dispose();
     super.onClose();
   }
@@ -95,7 +95,8 @@ class ScanIdController extends GetxController
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
       stopCamera();
-    } else if (state == AppLifecycleState.resumed && cameraController == null) {
+    } else if (state == AppLifecycleState.resumed &&
+        cameraController.value == null) {
       startCamera();
     }
   }
@@ -103,14 +104,13 @@ class ScanIdController extends GetxController
   /// Releases the hardware handle and rewinds to [ScanStage.initializing] so
   /// the view shows the placeholder rather than a frozen last frame.
   void stopCamera() {
-    final CameraController? closing = cameraController;
-    cameraController = null;
+    final CameraController? closing = cameraController.value;
+    cameraController.value = null;
     isTorchOn.value = false;
     closing?.dispose();
     if (!isClosed && stage.value == ScanStage.framing) {
       stage.value = ScanStage.initializing;
     }
-    update();
   }
 
   /// Permission → device list → initialise. Every failure funnels into
@@ -159,14 +159,13 @@ class ScanIdController extends GetxController
       await started.initialize();
       // The guest popped the route (or backgrounded) while we were awaiting:
       // this controller has no owner, so release it instead of leaking it.
-      if (isClosed || cameraController != null) {
+      if (isClosed || cameraController.value != null) {
         await started.dispose();
         return;
       }
 
-      cameraController = started;
+      cameraController.value = started;
       stage.value = ScanStage.framing;
-      update();
     } on CameraException catch (error) {
       if (isClosed) return;
       final bool isPermissionError =
@@ -190,7 +189,6 @@ class ScanIdController extends GetxController
     errorMessage.value = message;
     isBlockedByPermission.value = blockedByPermission;
     stage.value = ScanStage.unavailable;
-    update();
   }
 
   /// Takes the shot and copies it somewhere durable.
@@ -199,7 +197,7 @@ class ScanIdController extends GetxController
   /// any time — so the file is moved into app documents before anything else
   /// is allowed to hold a reference to it.
   Future<void> capturePhoto() async {
-    final CameraController? active = cameraController;
+    final CameraController? active = cameraController.value;
     if (active == null ||
         !active.value.isInitialized ||
         active.value.isTakingPicture ||
@@ -238,7 +236,7 @@ class ScanIdController extends GetxController
   Future<void> toggleTorch() => _applyTorch(!isTorchOn.value);
 
   Future<void> _applyTorch(bool shouldBeOn) async {
-    final CameraController? active = cameraController;
+    final CameraController? active = cameraController.value;
     if (active == null || !active.value.isInitialized || !_deviceHasTorch) {
       return;
     }
@@ -248,10 +246,7 @@ class ScanIdController extends GetxController
     } on CameraException {
       // No torch on this lens. Stop offering it rather than failing again.
       _deviceHasTorch = false;
-      if (!isClosed) {
-        isTorchOn.value = false;
-        update();
-      }
+      if (!isClosed) isTorchOn.value = false;
     }
   }
 
@@ -260,7 +255,7 @@ class ScanIdController extends GetxController
   Future<void> scanAgain() async {
     await _deletePreviousPhoto();
     capturedPhoto.value = null;
-    if (cameraController == null) {
+    if (cameraController.value == null) {
       await startCamera();
     } else if (!isClosed) {
       stage.value = ScanStage.framing;
@@ -280,8 +275,10 @@ class ScanIdController extends GetxController
   /// Promotes the captured document to verified and returns to the Identity
   /// tab, which re-renders in its verified state.
   void confirm() {
+    // No OCR/document-verification endpoint exists yet to read the actual
+    // scanned document, so the number stays blank rather than a fabricated one.
     service.markIdentityVerified(
-      DemoData.demoPassportNumber,
+      '',
       imagePath: capturedPhoto.value?.path ?? '',
     );
     if (Get.currentRoute == Routes.scanId) Get.back<void>();

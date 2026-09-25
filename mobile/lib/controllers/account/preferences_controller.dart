@@ -1,4 +1,4 @@
-import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/constants/preference_options.dart';
 import 'package:carlton/constants/storage_keys.dart';
 import 'package:carlton/models/preference_option.dart';
 import 'package:carlton/services/get_storage_service.dart';
@@ -13,12 +13,12 @@ import 'package:get/get.dart';
 class PreferencesController extends GetxController {
   final SettingsService _settings = SettingsService.find;
 
-  late String bedId;
-  late String pillowId;
-  late String mattressId;
-  late bool smoking;
-  late bool earlyCheckIn;
-  late bool lateCheckout;
+  late final RxString bedId;
+  late final RxString pillowId;
+  late final RxString mattressId;
+  late final RxBool smoking;
+  late final RxBool earlyCheckIn;
+  late final RxBool lateCheckout;
 
   String get languageId => _settings.locale.value.languageCode;
   String get currencyId => _settings.currency.value.value;
@@ -26,47 +26,47 @@ class PreferencesController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    bedId = StorageService.getString(StorageKeys.prefBed) ?? 'king';
-    pillowId = StorageService.getString(StorageKeys.prefPillow) ?? 'firm';
-    mattressId = StorageService.getString(StorageKeys.prefMattress) ?? 'medium';
-    smoking = StorageService.getBool(StorageKeys.prefSmoking) ?? false;
+    bedId = (StorageService.getString(StorageKeys.prefBed) ?? 'king').obs;
+    pillowId = (StorageService.getString(StorageKeys.prefPillow) ?? 'firm').obs;
+    mattressId =
+        (StorageService.getString(StorageKeys.prefMattress) ?? 'medium').obs;
+    smoking = (StorageService.getBool(StorageKeys.prefSmoking) ?? false).obs;
     earlyCheckIn =
-        StorageService.getBool(StorageKeys.prefEarlyCheckIn) ?? false;
+        (StorageService.getBool(StorageKeys.prefEarlyCheckIn) ?? false).obs;
     lateCheckout =
-        StorageService.getBool(StorageKeys.prefLateCheckout) ?? false;
+        (StorageService.getBool(StorageKeys.prefLateCheckout) ?? false).obs;
   }
 
   PreferenceOption _optionOf(List<PreferenceOption> options, String id) =>
       options.firstWhere((o) => o.id == id, orElse: () => options.first);
 
-  String get bedLabel => _optionOf(DemoData.bedOptions, bedId).label;
+  String get bedLabel =>
+      _optionOf(PreferenceOptions.bedOptions, bedId.value).label;
+  // No ' Pillow' suffix: the option labels already carry the noun ('Soft
+  // Pillow', 'Firm Pillow', …), so appending it rendered "Firm Pillow Pillow"
+  // in the field while the dropdown row below read "Firm Pillow".
   String get pillowLabel =>
-      '${_optionOf(DemoData.pillowOptions, pillowId).label} Pillow';
+      _optionOf(PreferenceOptions.pillowOptions, pillowId.value).label;
   String get mattressLabel =>
-      _optionOf(DemoData.mattressOptions, mattressId).label;
+      _optionOf(PreferenceOptions.mattressOptions, mattressId.value).label;
   String get languageLabel =>
-      _optionOf(DemoData.languageOptions, languageId).label;
+      _optionOf(PreferenceOptions.languageOptions, languageId).label;
   String get currencyLabel =>
-      _optionOf(DemoData.currencyOptions, currencyId).label;
-
-  void _persistString(String key, String value) {
-    StorageService.setString(key, value);
-    update();
-  }
+      _optionOf(PreferenceOptions.currencyOptions, currencyId).label;
 
   void chooseBed(PreferenceOption o) {
-    bedId = o.id;
-    _persistString(StorageKeys.prefBed, o.id);
+    bedId.value = o.id;
+    StorageService.setString(StorageKeys.prefBed, o.id);
   }
 
   void choosePillow(PreferenceOption o) {
-    pillowId = o.id;
-    _persistString(StorageKeys.prefPillow, o.id);
+    pillowId.value = o.id;
+    StorageService.setString(StorageKeys.prefPillow, o.id);
   }
 
   void chooseMattress(PreferenceOption o) {
-    mattressId = o.id;
-    _persistString(StorageKeys.prefMattress, o.id);
+    mattressId.value = o.id;
+    StorageService.setString(StorageKeys.prefMattress, o.id);
   }
 
   /// Delegates to [SettingsService] so the choice actually changes the app
@@ -77,33 +77,28 @@ class PreferencesController extends GetxController {
       orElse: () => _settings.langs.first,
     );
     await _settings.changeLanguage(lang);
-    update();
   }
 
   Future<void> chooseCurrency(PreferenceOption o) async {
-    final currency = _settings.currencies.firstWhere(
+    final currency = SettingsService.currencies.firstWhere(
       (c) => c.value == o.id,
-      orElse: () => _settings.currencies.first,
+      orElse: () => SettingsService.currencies.first,
     );
     await _settings.changeCurrency(currency);
-    update();
   }
 
   void toggleSmoking(bool value) {
-    smoking = value;
+    smoking.value = value;
     StorageService.setBool(StorageKeys.prefSmoking, value);
-    update();
   }
 
   void toggleEarlyCheckIn(bool value) {
-    earlyCheckIn = value;
+    earlyCheckIn.value = value;
     StorageService.setBool(StorageKeys.prefEarlyCheckIn, value);
-    update();
   }
 
   void toggleLateCheckout(bool value) {
-    lateCheckout = value;
+    lateCheckout.value = value;
     StorageService.setBool(StorageKeys.prefLateCheckout, value);
-    update();
   }
 }

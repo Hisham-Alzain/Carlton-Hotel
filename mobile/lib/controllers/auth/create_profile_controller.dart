@@ -1,5 +1,5 @@
+import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:carlton/models/guest.dart';
-import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/middleware_service.dart';
 import 'package:flutter/material.dart';
@@ -57,7 +57,9 @@ class CreateProfileController extends GetxController {
     if (isEdit) {
       Get.back();
     } else {
-      Get.offAllNamed(Routes.main);
+      // First-time profile completion is the other tail of the auth flow —
+      // resolve Home from the reservation, same as the returning-guest path.
+      await HomeController.restoreAndGoHome();
     }
   }
 

@@ -1,3 +1,5 @@
+import 'package:carlton/extensions/price_extension.dart';
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/cards/custom_rating_label.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
@@ -40,11 +42,11 @@ class RoomDetailsContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GetBuilder<BookingFlowController>(
-            builder: (carouselController) => CustomImageCarousel(
+          Obx(
+            () => CustomImageCarousel(
               images: room.images,
-              index: carouselController.roomImageIndex,
-              onIndexChanged: carouselController.setRoomImage,
+              index: controller.roomImageIndex.value,
+              onIndexChanged: controller.setRoomImage,
               height: 220,
               // topRight: CustomCircleIconButton(
               //   iconPath: 'assets/icons/close.svg',
@@ -91,13 +93,17 @@ class RoomDetailsContent extends StatelessWidget {
                     color: AppColors.dimGrey,
                   ),
                 ),
-                Text('Highlights', style: _headingStyle(textStyle)),
-                _pairedGrid(room.highlights, _highlightTile, runSpacing: 10),
-                Text('All Amenities', style: _headingStyle(textStyle)),
-                _pairedGrid(room.amenities, _amenityTile, runSpacing: 10),
-                const CustomInfoBanner(
-                  message: 'Free cancellation until 48 hours before check-in.',
+                Text(
+                  AppTranslations.highlights,
+                  style: _headingStyle(textStyle),
                 ),
+                _pairedGrid(room.highlights, _highlightTile, runSpacing: 10),
+                Text(
+                  AppTranslations.allAmenities,
+                  style: _headingStyle(textStyle),
+                ),
+                _pairedGrid(room.amenities, _amenityTile, runSpacing: 10),
+                CustomInfoBanner(message: AppTranslations.freeCancellation),
                 PillContainer(
                   // The row no longer pads itself, so absorb the 10 it used to
                   // add on top of the pill's own 10.
@@ -106,7 +112,7 @@ class RoomDetailsContent extends StatelessWidget {
                   child: CustomPriceSummaryRow(
                     title:
                         'Total for ${controller.nights} night${controller.nights == 1 ? '' : 's'}',
-                    value: '\$$stayTotal',
+                    value: stayTotal.toDouble().formatPrice(),
                     titleStyle: textStyle.labelMedium?.copyWith(
                       fontFamily: 'DM Sans',
                       color: AppColors.inkBlack,

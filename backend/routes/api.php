@@ -110,6 +110,7 @@ Route::prefix('auth')->group(function () {
         Route::post('/verify-otp',       [GuestAuthController::class, 'verifyOtp']);
         Route::post('/link-booking-code',[GuestAuthController::class, 'linkBookingCode']);
         Route::middleware('auth:guests')->group(function () {
+            Route::post('/logout', [GuestAuthController::class, 'logout']);
             Route::get('/me',      [GuestAuthController::class, 'me']);
             Route::put('/profile', [GuestAuthController::class, 'updateProfile']);
         });
@@ -527,6 +528,7 @@ Route::middleware('auth:guests')->prefix('stays')->group(function () {
     // Cheap entitlement probe the app can poll on resume: is this token's guest
     // checked in? Declared before /{reservation} so "status" is never a UUID.
     Route::get('/status',   [StayController::class, 'status']);
+    Route::post('/check-in', [StayController::class, 'checkIn']);
     Route::get('/active',   [StayController::class, 'active']);
     Route::get('/upcoming', [StayController::class, 'upcoming']);
     Route::get('/past',     [StayController::class, 'past']);

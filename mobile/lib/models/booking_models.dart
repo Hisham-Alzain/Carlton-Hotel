@@ -2,6 +2,7 @@
 // pre-formatted to match Figma copy); a real API layer would swap these for
 // typed dates/amounts. Nothing here talks to a backend yet.
 
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/models/amenity.dart';
 import 'package:carlton/models/room_type.dart';
@@ -166,9 +167,11 @@ class RoomOption {
       id: r.uuid,
       name: r.name.value,
       images: r.images.map((i) => i.url).toList(),
-      area: r.sizeSqm != null ? '${r.sizeSqm} m²' : '',
-      view: r.viewType != null ? '${r.viewType} view' : '',
-      bed: r.bedTypes.isNotEmpty ? '${r.bedTypes.first} bed' : '',
+      area: r.sizeSqm != null ? AppTranslations.roomSize('${r.sizeSqm}') : '',
+      view: r.viewType != null ? AppTranslations.roomView(r.viewType!) : '',
+      bed: r.bedTypes.isNotEmpty
+          ? AppTranslations.roomBed(r.bedTypes.first)
+          : '',
       rating: r.rating ?? 0,
       reviewCount: r.ratingCount,
       pricePerNight: double.tryParse(r.basePriceUsd)?.round() ?? 0,
@@ -204,14 +207,28 @@ class AddOn {
 }
 
 enum PaymentMethod {
-  card('Credit / Debit Card', 'Visa, Mastercard, Amex'),
-  applePay('Apple Pay', 'Pay with Face ID or Touch ID'),
-  googlePay('Google Pay', 'Pay with your Google account'),
-  payAtHotel('Pay at Hotel', 'No payment required today');
+  card,
+  applePay,
+  googlePay,
+  payAtHotel;
 
-  const PaymentMethod(this.label, this.subtitle);
-  final String label;
-  final String subtitle;
+  /// Resolved per read rather than held as `const` enum fields — `.tr` is a
+  /// runtime lookup, so a const field would freeze the launch locale.
+  /// The wallet brand names stay untranslated on purpose: Apple and Google
+  /// ship them as proper nouns in every locale.
+  String get label => switch (this) {
+    PaymentMethod.card => AppTranslations.creditCard,
+    PaymentMethod.applePay => 'Apple Pay',
+    PaymentMethod.googlePay => 'Google Pay',
+    PaymentMethod.payAtHotel => AppTranslations.payAtHotel,
+  };
+
+  String get subtitle => switch (this) {
+    PaymentMethod.card => AppTranslations.acceptedCardsFull,
+    PaymentMethod.applePay => AppTranslations.applePayTagline,
+    PaymentMethod.googlePay => AppTranslations.googlePayTagline,
+    PaymentMethod.payAtHotel => AppTranslations.payAtHotelTagline,
+  };
 }
 
 extension PaymentMethodIcon on PaymentMethod {

@@ -1,6 +1,6 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'dart:io';
 
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/models/chat_message.dart';
 import 'package:carlton/models/conversation.dart';
@@ -19,13 +19,14 @@ import 'package:url_launcher/url_launcher.dart';
 /// `GET /conversations`, `GET /conversations/{uuid}/messages` and
 /// `POST /conversations`.
 ///
-/// One long-lived thread → a plain first-page fetch (GetBuilder + [update]),
-/// not [PaginatedControllerMixin]: messages are oldest-first top-to-bottom, the
+/// One long-lived thread → a plain first-page fetch, not
+/// [PaginatedControllerMixin]: messages are oldest-first top-to-bottom, the
 /// view opens at the newest, and there are no live updates (staff replies show
 /// on refresh). Agent identity in the header stays demo (the API carries only
 /// `sender_type`, no staff name).
 class AiConciergeController extends GetxController {
-  static const suggestions = DemoData.aiSuggestions;
+  // No chatbot endpoint exists yet — the whole tab is a stub.
+  static const suggestions = <String>[];
 
   static const int _maxAttachmentBytes = 5 * 1024 * 1024; // 5MB (server cap)
 
@@ -33,21 +34,21 @@ class AiConciergeController extends GetxController {
   final CancelToken _cancel = CancelToken();
 
   /// 0 = Carlton AI Concierge, 1 = Customer Service.
-  int tabIndex = 0;
-  bool canSend = false;
+  final RxInt tabIndex = 0.obs;
+  final RxBool canSend = false.obs;
 
   // ── Customer Service thread state ──────────────────────────────────────────
   /// The staff conversation, oldest-first. Empty until loaded / never messaged.
-  final List<ChatMessage> messages = [];
-  bool loadingThread = false;
-  bool threadError = false;
-  bool sending = false;
+  final RxList<ChatMessage> messages = <ChatMessage>[].obs;
+  final RxBool loadingThread = false.obs;
+  final RxBool threadError = false.obs;
+  final RxBool sending = false.obs;
 
   /// Null when the guest has no conversation yet — the first POST auto-opens one.
   String? conversationUuid;
 
   /// A picked image awaiting send (null = text-only).
-  File? pendingAttachment;
+  final Rx<File?> pendingAttachment = Rx<File?>(null);
 
   /// Chat opens at the newest message; jumped to the bottom on load/send.
   final ScrollController threadScrollController = ScrollController();
@@ -61,16 +62,12 @@ class AiConciergeController extends GetxController {
 
   void _onTextChanged() {
     final hasText = messageController.text.trim().isNotEmpty;
-    if (hasText != canSend) {
-      canSend = hasText;
-      update();
-    }
+    if (hasText != canSend.value) canSend.value = hasText;
   }
 
   void switchTab(int index) {
-    if (tabIndex == index) return;
-    tabIndex = index;
-    update();
+    if (tabIndex.value == index) return;
+    tabIndex.value = index;
   }
 
   void useSuggestion(String text) {
@@ -87,9 +84,8 @@ class AiConciergeController extends GetxController {
   /// GET the guest's conversation, then its message history. Tolerates an empty
   /// conversation list (never messaged) by leaving [messages] empty.
   Future<void> _loadThread() async {
-    loadingThread = true;
-    threadError = false;
-    update();
+    loadingThread.value = true;
+    threadError.value = false;
 
     final res = await ApiService.find.get<List<dynamic>>(
       path: '/conversations',
@@ -98,9 +94,8 @@ class AiConciergeController extends GetxController {
     );
     if (isClosed || res.isCancelled) return;
     if (res.statusCode != 200) {
-      loadingThread = false;
-      threadError = true;
-      update();
+      loadingThread.value = false;
+      threadError.value = true;
       return;
     }
 
@@ -110,8 +105,7 @@ class AiConciergeController extends GetxController {
       // fetch. The first POST /conversations opens the conversation.
       conversationUuid = null;
       messages.clear();
-      loadingThread = false;
-      update();
+      loadingThread.value = false;
       return;
     }
 
@@ -123,17 +117,13 @@ class AiConciergeController extends GetxController {
     );
     if (isClosed || msgRes.isCancelled) return;
     if (msgRes.statusCode != 200) {
-      loadingThread = false;
-      threadError = true;
-      update();
+      loadingThread.value = false;
+      threadError.value = true;
       return;
     }
 
-    messages
-      ..clear()
-      ..addAll(ChatMessage.listFromJson(msgRes.data));
-    loadingThread = false;
-    update();
+    messages.assignAll(ChatMessage.listFromJson(msgRes.data));
+    loadingThread.value = false;
     _scrollToBottom();
   }
 
@@ -160,27 +150,25 @@ class AiConciergeController extends GetxController {
     final path = picked.path;
     if (path == null) return;
     if (picked.size > _maxAttachmentBytes) {
-      CustomSnackbars.showError(message: 'Image must be 5MB or smaller');
+      CustomSnackbars.showError(message: AppTranslations.imageTooLarge);
       return;
     }
-    pendingAttachment = File(path);
-    update();
+    pendingAttachment.value = File(path);
   }
 
   void removeAttachment() {
-    if (pendingAttachment == null) return;
-    pendingAttachment = null;
-    update();
+    if (pendingAttachment.value == null) return;
+    pendingAttachment.value = null;
   }
 
   void send() {
-    if (tabIndex == 0) {
+    if (tabIndex.value == 0) {
       // P11 chatbot not built server-side; intentionally unwired.
-      CustomSnackbars.showInfo(message: 'AI Concierge is coming soon');
+      CustomSnackbars.showInfo(message: AppTranslations.conciergeComingSoon);
       messageController.clear();
       return;
     }
-    _sendToStaff(messageController.text.trim(), pendingAttachment);
+    _sendToStaff(messageController.text.trim(), pendingAttachment.value);
   }
 
   /// Tapping a quick-reply chip POSTs that phrase to staff (not a local echo),
@@ -188,10 +176,9 @@ class AiConciergeController extends GetxController {
   void quickReply(String text) => _sendToStaff(text, null);
 
   Future<void> _sendToStaff(String text, File? attachment) async {
-    if (sending) return;
+    if (sending.value) return;
     if (text.isEmpty && attachment == null) return;
-    sending = true;
-    update();
+    sending.value = true;
 
     final ApiResponse res;
     if (attachment != null) {
@@ -219,8 +206,7 @@ class AiConciergeController extends GetxController {
 
     // POST status is undocumented — accept both 200 and 201 as success.
     if (res.statusCode != 200 && res.statusCode != 201) {
-      sending = false;
-      update();
+      sending.value = false;
       if (res.error != null) ApiService.find.dialogs.showError(res.error!);
       return;
     }
@@ -233,9 +219,8 @@ class AiConciergeController extends GetxController {
       conversationUuid ??= data['conversation_uuid'] as String?;
     }
     messageController.clear();
-    pendingAttachment = null;
-    sending = false;
-    update();
+    pendingAttachment.value = null;
+    sending.value = false;
     _scrollToBottom();
   }
 
@@ -248,7 +233,10 @@ class AiConciergeController extends GetxController {
   }
 
   Future<void> callAgent() async {
-    final uri = Uri(scheme: 'tel', path: DemoData.csPhone);
+    // No staff phone number comes back from the conversation API yet.
+    const agentPhone = '';
+    if (agentPhone.isEmpty) return;
+    final uri = Uri(scheme: 'tel', path: agentPhone);
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 

@@ -1,3 +1,5 @@
+import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:carlton/components/cards/custom_active_stay_card.dart';
 import 'package:carlton/components/cards/custom_past_stay_card.dart';
 import 'package:carlton/components/cards/custom_upcoming_stay_card.dart';
@@ -10,34 +12,32 @@ import 'package:get/get.dart';
 
 /// My Stays tab body: Active / Upcoming / Past over a shared TabBar. The app bar
 /// and bottom nav come from the surrounding `MainView` shell.
-class StaysView extends StatelessWidget {
+class StaysView extends GetView<StaysController> {
   const StaysView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<StaysController>(
-      builder: (controller) => Column(
-        children: [
-          TabBar(
+    return Column(
+      children: [
+        TabBar(
+          controller: controller.tabController,
+          tabs: [
+            Tab(text: AppTranslations.active),
+            Tab(text: AppTranslations.upcoming),
+            Tab(text: AppTranslations.past),
+          ],
+        ),
+        Expanded(
+          child: TabBarView(
             controller: controller.tabController,
-            tabs: const [
-              Tab(text: 'Active'),
-              Tab(text: 'Upcoming'),
-              Tab(text: 'Past'),
+            children: [
+              _ActiveTab(controller: controller),
+              _UpcomingTab(controller: controller),
+              _PastTab(controller: controller),
             ],
           ),
-          Expanded(
-            child: TabBarView(
-              controller: controller.tabController,
-              children: [
-                _ActiveTab(controller: controller),
-                _UpcomingTab(controller: controller),
-                _PastTab(controller: controller),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -48,31 +48,33 @@ class _ActiveTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (controller.activeLoading) return const _Loading();
-    if (controller.activeError) {
-      return _Retry(
-        title: "Couldn't load your stay",
-        subtitle: 'Please check your connection and try again.',
-        onRetry: controller.reloadActive,
+    return Obx(() {
+      if (controller.activeLoading.value) return const _Loading();
+      if (controller.activeError.value) {
+        return _Retry(
+          title: AppTranslations.loadStayFailed,
+          subtitle: AppTranslations.checkConnectionRetry,
+          onRetry: controller.reloadActive,
+        );
+      }
+      final activeStay = controller.active.value;
+      if (activeStay == null) {
+        return _Empty(
+          title: AppTranslations.noActiveStay,
+          subtitle: AppTranslations.noActiveStaySubtitle,
+        );
+      }
+      return ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          CustomActiveStayCard(
+            stay: activeStay,
+            onRequestService: controller.requestService,
+            onExpressCheckout: controller.expressCheckout,
+          ),
+        ],
       );
-    }
-    final activeStay = controller.active;
-    if (activeStay == null) {
-      return const _Empty(
-        title: 'No active stay',
-        subtitle: 'Your current stay will appear here during check-in.',
-      );
-    }
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        CustomActiveStayCard(
-          stay: activeStay,
-          onRequestService: controller.requestService,
-          onExpressCheckout: controller.expressCheckout,
-        ),
-      ],
-    );
+    });
   }
 }
 
@@ -82,51 +84,53 @@ class _UpcomingTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (controller.upcomingLoading) return const _Loading();
-    if (controller.upcomingError) {
-      return _Retry(
-        title: "Couldn't load your reservations",
-        subtitle: 'Please check your connection and try again.',
-        onRetry: controller.reloadUpcoming,
-      );
-    }
-    if (controller.upcoming.isEmpty) {
-      return _Empty(
-        title: 'No upcoming stays',
-        subtitle: 'Book your next stay and it will show up here.',
-        primaryLabel: 'Book a Stay',
-        onPrimary: controller.startBooking,
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: controller.upcoming.length,
-      itemBuilder: (_, index) {
-        final stay = controller.upcoming[index];
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CustomUpcomingStayCard(
-              stay: stay,
-              onCancel: () => controller.requestCancel(stay),
-            ),
-            if (stay.nextCheckInDays != null)
-              CustomInfoBanner(
-                iconPath: 'assets/icons/calendar.svg',
-                message:
-                    'Your next check-in is in ${stay.nextCheckInDays} days. '
-                    'Pre-order amenities and services before arrival.',
-              ),
-          ],
+    return Obx(() {
+      if (controller.upcomingLoading.value) return const _Loading();
+      if (controller.upcomingError.value) {
+        return _Retry(
+          title: AppTranslations.loadReservationsFailed,
+          subtitle: AppTranslations.checkConnectionRetry,
+          onRetry: controller.reloadUpcoming,
         );
-      },
-    );
+      }
+      if (controller.upcoming.isEmpty) {
+        return _Empty(
+          title: AppTranslations.noUpcomingStays,
+          subtitle: AppTranslations.noUpcomingStaysSubtitle,
+          primaryLabel: AppTranslations.bookAStay,
+          onPrimary: controller.startBooking,
+        );
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: controller.upcoming.length,
+        itemBuilder: (_, index) {
+          final stay = controller.upcoming[index];
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CustomUpcomingStayCard(
+                stay: stay,
+                onCancel: () => controller.requestCancel(stay),
+              ),
+              if (stay.nextCheckInDays != null)
+                CustomInfoBanner(
+                  iconPath: 'assets/icons/calendar.svg',
+                  message:
+                      'Your next check-in is in ${stay.nextCheckInDays} days. '
+                      'Pre-order amenities and services before arrival.',
+                ),
+            ],
+          );
+        },
+      );
+    });
   }
 }
 
-/// The one Obx island in this otherwise-GetBuilder view — the Past tab reads the
-/// Rx state of [PaginatedControllerMixin] (items / loading / hasError /
-/// loadingMore) and scrolls via the mixin's scrollController.
+/// The Past tab reads the Rx state of [PaginatedControllerMixin] (items /
+/// loading / hasError / loadingMore) and scrolls via the mixin's
+/// scrollController.
 class _PastTab extends StatelessWidget {
   final StaysController controller;
   const _PastTab({required this.controller});
@@ -137,15 +141,15 @@ class _PastTab extends StatelessWidget {
       if (controller.loading.value) return const _Loading();
       if (controller.hasError.value) {
         return _Retry(
-          title: "Couldn't load past stays",
-          subtitle: 'Please check your connection and try again.',
+          title: AppTranslations.loadPastFailed,
+          subtitle: AppTranslations.checkConnectionRetry,
           onRetry: controller.reloadPast,
         );
       }
       if (controller.items.isEmpty) {
-        return const _Empty(
-          title: 'No past stays',
-          subtitle: 'Completed stays and receipts will appear here.',
+        return _Empty(
+          title: AppTranslations.noPastStays,
+          subtitle: AppTranslations.noPastStaysSubtitle,
         );
       }
       final showLoadingMore = controller.loadingMore.value;
@@ -157,7 +161,12 @@ class _PastTab extends StatelessWidget {
           if (index >= controller.items.length) {
             return const Padding(
               padding: EdgeInsets.all(16),
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(
+                child: SpinningIconIndicator(
+                  size: 24,
+                  color: AppColors.primary,
+                ),
+              ),
             );
           }
           final stay = controller.items[index];
@@ -176,8 +185,9 @@ class _Loading extends StatelessWidget {
   const _Loading();
 
   @override
-  Widget build(BuildContext context) =>
-      const Center(child: CircularProgressIndicator());
+  Widget build(BuildContext context) => const Center(
+    child: SpinningIconIndicator(size: 40, color: AppColors.primary),
+  );
 }
 
 class _Retry extends StatelessWidget {
@@ -201,7 +211,7 @@ class _Retry extends StatelessWidget {
       ),
       title: title,
       subtitle: subtitle,
-      primaryLabel: 'Retry',
+      primaryLabel: AppTranslations.retry,
       onPrimary: onRetry,
     );
   }

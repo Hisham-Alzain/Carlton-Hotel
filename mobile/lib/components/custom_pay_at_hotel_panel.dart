@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +47,7 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Pay at Hotel',
+                  AppTranslations.payAtHotel,
                   style: textStyle.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
@@ -68,7 +69,10 @@ class CustomPayAtHotelPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 10,
               children: [
-                Text('How it works', style: _headingStyle(textStyle)),
+                Text(
+                  AppTranslations.howItWorks,
+                  style: _headingStyle(textStyle),
+                ),
                 Text(
                   'Your reservation is secured without any charge today. '
                   'Payment will be collected at the front desk upon check-in.',
@@ -82,17 +86,17 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                   'Accepted Payment Methods at Hotel',
                   style: _headingStyle(textStyle),
                 ),
-                const _MethodRow(
-                  iconPath: 'assets/icons/card_line.svg',
-                  label: 'Visa, Mastercard',
+                _MethodRow(
+                  iconPath: 'assets/icons/pay_card.svg',
+                  label: AppTranslations.acceptedCards,
                 ),
-                const _MethodRow(
+                _MethodRow(
                   iconPath: 'assets/icons/bank.svg',
-                  label: 'Bank wire transfer',
+                  label: AppTranslations.bankWire,
                 ),
-                const _MethodRow(
+                _MethodRow(
                   iconPath: 'assets/icons/cash.svg',
-                  label: 'Cash (SYP or USD)',
+                  label: AppTranslations.acceptedCash,
                 ),
                 PillContainer(
                   width: double.infinity,

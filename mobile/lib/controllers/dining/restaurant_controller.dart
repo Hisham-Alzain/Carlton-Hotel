@@ -1,4 +1,3 @@
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/constants/error_codes.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/extensions/date_extension.dart';
@@ -14,47 +13,66 @@ import 'package:get/get.dart';
 
 /// Drives one restaurant detail screen: the menu/info/reserve tabs, the menu
 /// category filter, the gallery, and the reservation form. The restaurant
-/// arrives via `Get.arguments`; falls back to the first demo restaurant.
+/// arrives via `Get.arguments`; a missing or wrong argument pops the route.
 /// The Menu/Info/Reserve/Reviews TabController deliberately does **not** live
 /// here — [RestaurantDetailView] owns it via `DefaultTabController`, so it is
 /// tied to the widget's lifetime rather than this controller's.
 class RestaurantController extends GetxController {
-  late final RestaurantItem restaurant;
+  /// The venue this screen renders.
+  ///
+  /// Deliberately not `late final`: [RestaurantDetailView] builds in the same
+  /// frame [onInit] runs, so on a bad `Get.arguments` the view read this field
+  /// before the scheduled `Get.back()` could fire and threw
+  /// `LateInitializationError` — a red screen instead of a graceful pop. It
+  /// holds [RestaurantItem.blank] for that one frame instead.
+  RestaurantItem restaurant = RestaurantItem.blank;
 
-  int categoryIndex = 0;
-  int galleryIndex = 0;
+  final RxInt categoryIndex = 0.obs;
+  final RxInt galleryIndex = 0.obs;
 
   // ── Venue detail (public: /public/dining-venues/{uuid}) ────────────────────
   /// About/description + gallery, fetched from the venue detail endpoint.
   /// Rating/hours/location/cuisine already ride on [restaurant].
-  String about = '';
-  List<String> gallery = [];
+  final RxString about = ''.obs;
+  final RxList<String> gallery = <String>[].obs;
 
   // ── Menu (public content: /public/dining-venues/{uuid}/menu[-categories]) ──
-  List<MenuCategory> menuCategories = [];
-  List<MenuItem> menuItems = [];
-  bool menuLoading = true;
+  final RxList<MenuCategory> menuCategories = <MenuCategory>[].obs;
+  final RxList<MenuItem> menuItems = <MenuItem>[].obs;
+  final RxBool menuLoading = true.obs;
 
   /// Dishes under the selected category chip (filtered by slug). With no
   /// categories yet, every fetched dish shows.
   List<MenuItem> get visibleMenuItems {
-    if (menuCategories.isEmpty || categoryIndex >= menuCategories.length) {
+    if (menuCategories.isEmpty ||
+        categoryIndex.value >= menuCategories.length) {
       return menuItems;
     }
-    final slug = menuCategories[categoryIndex].slug;
+    final slug = menuCategories[categoryIndex.value].slug;
     return menuItems.where((m) => m.type == slug).toList();
   }
 
-  DateTime reserveDate = DateTime(2026, 8, 14);
-  String timeSlot = DemoData.reserveTimeSlots[2];
-  int guests = 2;
+  final Rx<DateTime> reserveDate = Rx(
+    DateUtils.dateOnly(DateTime.now()).add(const Duration(days: 1)),
+  );
+  // No backend slots endpoint exists yet — starts unselected until one is
+  // wired; see AppTranslations.selectYourDatesFirst-style empty state.
+  final RxString timeSlot = ''.obs;
+  final RxInt guests = 2.obs;
   final TextEditingController specialRequests = TextEditingController();
 
   @override
   void onInit() {
     super.onInit();
     final arg = Get.arguments;
-    restaurant = arg is RestaurantItem ? arg : DemoData.restaurants.first;
+    // Both entry points (Home rail, Discover list) always pass a
+    // RestaurantItem, so a missing or wrong argument is a routing bug. Bail
+    // out rather than render a placeholder venue the guest can't act on.
+    if (arg is! RestaurantItem) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => Get.back());
+      return;
+    }
+    restaurant = arg;
     _loadMenu();
   }
 
@@ -62,8 +80,7 @@ class RestaurantController extends GetxController {
   /// (no uuid) simply renders the empty state rather than calling the API.
   Future<void> _loadMenu() async {
     if (restaurant.uuid.isEmpty) {
-      menuLoading = false;
-      update();
+      menuLoading.value = false;
       return;
     }
     final base = '/public/dining-venues/${restaurant.uuid}';
@@ -86,23 +103,22 @@ class RestaurantController extends GetxController {
     if (isClosed) return;
     if (venueRes.statusCode == 200 && venueRes.data != null) {
       final venue = DiningVenue.fromJson(venueRes.data!);
-      about = venue.description.value;
-      gallery = venue.images.map((i) => i.url).toList();
+      about.value = venue.description.value;
+      gallery.assignAll(venue.images.map((i) => i.url));
     }
     if (catRes.statusCode == 200 && catRes.data != null) {
-      menuCategories = catRes.data!
-          .whereType<Map<String, dynamic>>()
-          .map(MenuCategory.fromJson)
-          .toList();
+      menuCategories.assignAll(
+        catRes.data!.whereType<Map<String, dynamic>>().map(
+          MenuCategory.fromJson,
+        ),
+      );
     }
     if (menuRes.statusCode == 200 && menuRes.data != null) {
-      menuItems = menuRes.data!
-          .whereType<Map<String, dynamic>>()
-          .map(MenuItem.fromJson)
-          .toList();
+      menuItems.assignAll(
+        menuRes.data!.whereType<Map<String, dynamic>>().map(MenuItem.fromJson),
+      );
     }
-    menuLoading = false;
-    update();
+    menuLoading.value = false;
   }
 
   @override
@@ -112,23 +128,19 @@ class RestaurantController extends GetxController {
   }
 
   void selectCategory(int index) {
-    categoryIndex = index;
-    update();
+    categoryIndex.value = index;
   }
 
   void setGalleryIndex(int index) {
-    galleryIndex = index;
-    update();
+    galleryIndex.value = index;
   }
 
   void selectTimeSlot(String slot) {
-    timeSlot = slot;
-    update();
+    timeSlot.value = slot;
   }
 
   void setGuests(int value) {
-    guests = value;
-    update();
+    guests.value = value;
   }
 
   /// The picker's branding (cream surface, primary header, gold today ring)
@@ -138,18 +150,17 @@ class RestaurantController extends GetxController {
     final picked = await showDatePicker(
       context: Get.context!,
       // Clamp so a demo date in the past never trips the initialDate assertion.
-      initialDate: reserveDate.isBefore(now) ? now : reserveDate,
+      initialDate: reserveDate.value.isBefore(now) ? now : reserveDate.value,
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
     );
     if (picked != null) {
-      reserveDate = picked;
-      update();
+      reserveDate.value = picked;
     }
   }
 
   void downloadMenu() =>
-      CustomSnackbars.showInfo(message: 'Full menu download coming soon');
+      CustomSnackbars.showInfo(message: AppTranslations.menuDownloadComingSoon);
 
   /// Reserves a table (`POST /dining-venues/{uuid}/table-reservations`,
   /// tier-3a). A demo venue (no uuid) just confirms locally; a guest with no
@@ -158,7 +169,9 @@ class RestaurantController extends GetxController {
   Future<void> confirmReservation() async {
     if (restaurant.uuid.isEmpty) {
       CustomSnackbars.showSuccess(
-        message: AppTranslations.tableReservedFor('$guests · $timeSlot'),
+        message: AppTranslations.tableReservedFor(
+          AppTranslations.reservationSummary('${guests.value}', timeSlot.value),
+        ),
       );
       return;
     }
@@ -169,9 +182,9 @@ class RestaurantController extends GetxController {
     final res = await ApiService.find.post<Map<String, dynamic>>(
       path: '/dining-venues/${restaurant.uuid}/table-reservations',
       data: {
-        'date': reserveDate.formatApiDate(),
-        'time': _toTime24h(timeSlot),
-        'guest_count': guests,
+        'date': reserveDate.value.formatApiDate(),
+        'time': _toTime24h(timeSlot.value),
+        'guest_count': guests.value,
         if (specialRequests.text.trim().isNotEmpty)
           'special_request': specialRequests.text.trim(),
       },
@@ -180,7 +193,9 @@ class RestaurantController extends GetxController {
     if (isClosed) return;
     if (res.statusCode == 201 && res.data != null) {
       final booking = ServiceBooking.fromJson(res.data!);
-      final label = booking.label.isNotEmpty ? booking.label : '$guests';
+      final label = booking.label.isNotEmpty
+          ? booking.label
+          : '${guests.value}';
       CustomSnackbars.showSuccess(
         message: AppTranslations.tableReservedFor(label),
       );

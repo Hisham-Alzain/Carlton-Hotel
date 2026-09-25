@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/booking_price_breakdown.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
@@ -58,7 +59,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
   }
 
   Widget _hero(TextTheme textStyle) {
-    final room = controller.selectedRoom!;
+    final room = controller.selectedRoom.value!;
     return SizedBox(
       height: 100,
       child: Stack(
@@ -73,7 +74,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
           Padding(
             padding: const EdgeInsets.all(10),
             child: Align(
-              alignment: Alignment.bottomLeft,
+              alignment: AlignmentDirectional.bottomStart,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -114,7 +115,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                   child: Align(
-                    alignment: Alignment.centerRight,
+                    alignment: AlignmentDirectional.centerEnd,
                     child: _toggle(textStyle),
                   ),
                 ),
@@ -131,7 +132,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Total',
+                          AppTranslations.total,
                           style: textStyle.labelLarge?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: AppColors.inkBlack,
@@ -175,7 +176,9 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
         backgroundColor: AppColors.linenGrey,
         radius: 4,
         child: RowTextComponent(
-          text: _expanded ? 'Hide price details' : 'View price details',
+          text: _expanded
+              ? AppTranslations.hidePriceDetails
+              : AppTranslations.viewPriceDetails,
           textStyle: textStyle.labelSmall?.copyWith(
             fontFamily: 'DM Sans',
             color: AppColors.primary,

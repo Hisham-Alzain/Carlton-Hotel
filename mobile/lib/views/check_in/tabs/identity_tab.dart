@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-/// Identity tab. Figma 75:463 (notStarted) and 75:565 (verified) are ONE view
+/// Identity tab. Figma 2237:4567 (notStarted) and 2237:4669 (verified) are ONE view
 /// in two states — everything above the state block is identical in both.
 class IdentityTab extends GetView<CheckInController> {
   const IdentityTab({super.key});
@@ -30,7 +30,9 @@ class IdentityTab extends GetView<CheckInController> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: 20,
           children: [
-            if (!verified) const _IdentityHeader(),
+            // Figma 2237:4669 keeps the chip and title in the verified state and
+            // drops only the "have your passport ready" instruction.
+            _IdentityHeader(showSubtitle: !verified),
             CheckInBookingPanel(
               reservation: controller.service.reservation.value,
             ),
@@ -57,7 +59,11 @@ class IdentityTab extends GetView<CheckInController> {
 }
 
 class _IdentityHeader extends StatelessWidget {
-  const _IdentityHeader();
+  /// False once identity is verified — the instruction to have a document
+  /// ready is stale at that point, but the chip and title stay.
+  final bool showSubtitle;
+
+  const _IdentityHeader({required this.showSubtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -65,27 +71,32 @@ class _IdentityHeader extends StatelessWidget {
       spacing: 10,
       children: [
         CustomIconChip.circle(
-          size: 50,
-          backgroundColor: AppColors.primary08,
+          size: 52,
+          backgroundColor: AppColors.featherGrey,
           child: SvgPicture.asset(
             'assets/icons/chk_identity_chip.svg',
-            width: 24,
+            width: 30,
+            colorFilter: const ColorFilter.mode(
+              AppColors.inkBlack,
+              BlendMode.srcIn,
+            ),
           ),
         ),
         Text(
           AppTranslations.identityTitle,
           textAlign: TextAlign.center,
           style: Get.textTheme.headlineSmall?.copyWith(
-            color: AppColors.primary,
+            color: AppColors.inkBlack,
           ),
         ),
-        Text(
-          AppTranslations.identitySubtitle,
-          textAlign: TextAlign.center,
-          style: Get.textTheme.bodyMedium?.copyWith(
-            color: AppColors.taupeBrown,
+        if (showSubtitle)
+          Text(
+            AppTranslations.identitySubtitle,
+            textAlign: TextAlign.center,
+            style: Get.textTheme.bodyMedium?.copyWith(
+              color: AppColors.mediumGrey,
+            ),
           ),
-        ),
       ],
     );
   }
@@ -97,7 +108,7 @@ class _ScanPrompt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Colors.white,
+      color: AppColors.ghostWhite,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -108,26 +119,33 @@ class _ScanPrompt extends StatelessWidget {
         child: Column(
           spacing: 15,
           children: [
-            // The white-stroked chk_id_card is for the teal Scan button; on
-            // this light card the dark-stroked chip variant is the readable one.
-            SvgPicture.asset('assets/icons/chk_identity_chip.svg', width: 30),
+            // Figma uses a dedicated scan-frame glyph here (griddy-icons:scan),
+            // not the identity chip from the header above.
+            SvgPicture.asset(
+              'assets/icons/chk_scan.svg',
+              width: 28,
+              colorFilter: const ColorFilter.mode(
+                AppColors.inkBlack,
+                BlendMode.srcIn,
+              ),
+            ),
             Text(
               AppTranslations.tapToScanId,
               style: Get.textTheme.titleMedium?.copyWith(
-                color: AppColors.primary,
+                color: AppColors.inkBlack,
               ),
             ),
             Text(
               AppTranslations.passportOrNationalId,
               style: Get.textTheme.bodySmall?.copyWith(
-                color: AppColors.taupeBrown,
+                color: AppColors.mediumGrey,
               ),
             ),
             CustomFilledButton(
               height: 50,
               width: double.infinity,
               onPressed: () => Get.toNamed(Routes.scanId),
-              backgroundColor: AppColors.nearBlack,
+              backgroundColor: AppColors.obsidianBlack,
               child: Text(AppTranslations.scanId),
             ),
           ],
@@ -143,11 +161,11 @@ class _VerifiedCard extends GetView<CheckInController> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: AppColors.successGreen08,
+      color: AppColors.mistGreen,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: AppColors.successGreen),
+        side: const BorderSide(color: AppColors.sageGreen),
       ),
       child: Padding(
         padding: const EdgeInsets.all(15),
@@ -157,10 +175,17 @@ class _VerifiedCard extends GetView<CheckInController> {
             Row(
               spacing: 10,
               children: [
-                const Icon(
-                  Icons.check_circle,
-                  color: AppColors.successGreen,
-                  size: 30,
+                CustomIconChip.circle(
+                  size: 34,
+                  backgroundColor: AppColors.sageGreen,
+                  child: SvgPicture.asset(
+                    'assets/icons/check_circle.svg',
+                    width: 20,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.successGreen,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                 ),
                 Expanded(
                   child: Column(
@@ -170,14 +195,14 @@ class _VerifiedCard extends GetView<CheckInController> {
                       Text(
                         AppTranslations.identityVerified,
                         style: Get.textTheme.titleSmall?.copyWith(
-                          color: AppColors.primary,
+                          color: AppColors.inkBlack,
                         ),
                       ),
                       Text(
                         'Passport #${controller.service.documentNumber.value} · '
                         '${controller.service.reservation.value.guestName}',
                         style: Get.textTheme.bodySmall?.copyWith(
-                          color: AppColors.taupeBrown,
+                          color: AppColors.mediumGrey,
                         ),
                       ),
                     ],
@@ -232,12 +257,20 @@ class _SecurityNote extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 10,
       children: [
-        const Icon(Icons.info_outline, size: 16, color: AppColors.taupeBrown),
+        SvgPicture.asset(
+          'assets/icons/info.svg',
+          width: 16,
+          height: 16,
+          colorFilter: const ColorFilter.mode(
+            AppColors.mediumGrey,
+            BlendMode.srcIn,
+          ),
+        ),
         Expanded(
           child: Text(
             AppTranslations.identitySecurityNote,
             style: Get.textTheme.bodySmall?.copyWith(
-              color: AppColors.taupeBrown,
+              color: AppColors.mediumGrey,
             ),
           ),
         ),

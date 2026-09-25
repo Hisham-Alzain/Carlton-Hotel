@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/room_details_content.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
@@ -32,14 +33,14 @@ class RoomDetailsSheet extends StatelessWidget {
               Get.back();
               controller.selectRoom(room);
             },
-            child: const Text('Select This Room'),
+            child: Text(AppTranslations.selectThisRoom),
           ),
           CustomFilledButton(
             width: double.infinity,
             backgroundColor: AppColors.whisperGrey,
             foregroundColor: AppColors.inkBlack,
             onPressed: () => Get.back(),
-            child: const Text('Back to Rooms'),
+            child: Text(AppTranslations.backToRooms),
           ),
         ],
       ),

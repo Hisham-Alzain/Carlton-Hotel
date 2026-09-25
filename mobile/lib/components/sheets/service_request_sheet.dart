@@ -58,20 +58,15 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
               const Icon(Icons.info_outline),
               Expanded(
                 child: Text.rich(
-                  TextSpan(
-                    children: [
-                      const TextSpan(text: 'This request is for '),
-                      TextSpan(
-                        text: stayLabel.isEmpty ? 'your room' : stayLabel,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      TextSpan(
-                        text: mins != null
-                            ? '. Our team will be with you within '
-                                  '${AppTranslations.etaMinutes(mins)}.'
-                            : '. Our team will be with you shortly.',
-                      ),
-                    ],
+                  // Built from ONE localized sentence, then split around the
+                  // target so it can stay bold. Assembling this from three
+                  // fragments hard-coded English word order — Arabic and
+                  // Turkish both put the target elsewhere in the clause.
+                  _confirmationSpan(
+                    target: stayLabel.isEmpty
+                        ? AppTranslations.requestTargetRoom
+                        : stayLabel,
+                    minutes: mins,
                   ),
                   style: textStyle.labelMedium?.copyWith(
                     color: AppColors.inkBlack,
@@ -92,7 +87,7 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
           controller: _notesController,
           textInputType: TextInputType.multiline,
           maxLines: 3,
-          hintText: 'Any specific requests or notes...',
+          hintText: AppTranslations.requestNotesHint,
           fillColor: AppColors.white,
           borderColor: AppColors.linenGrey,
         ),
@@ -106,9 +101,33 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
             );
             Get.back();
           },
-          child: const Text('Send Request'),
+          child: Text(AppTranslations.sendRequest),
         ),
       ],
     );
   }
+}
+
+/// One localized sentence, split around [target] so that word alone renders
+/// bold. Falls back to a single unstyled span when the placeholder is absent
+/// from a translation — better a plain sentence than a dropped one.
+TextSpan _confirmationSpan({required String target, int? minutes}) {
+  final sentence = minutes != null
+      ? AppTranslations.requestConfirmationEta(
+          target,
+          AppTranslations.etaMinutes(minutes),
+        )
+      : AppTranslations.requestConfirmation(target);
+  final at = sentence.indexOf(target);
+  if (at < 0) return TextSpan(text: sentence);
+  return TextSpan(
+    children: [
+      TextSpan(text: sentence.substring(0, at)),
+      TextSpan(
+        text: target,
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+      TextSpan(text: sentence.substring(at + target.length)),
+    ],
+  );
 }

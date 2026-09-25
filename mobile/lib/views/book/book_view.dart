@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/components/custom_counter_field.dart';
@@ -20,15 +21,16 @@ class BookView extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
 
-    return GetBuilder<BookingFlowController>(
-      builder: (controller) => Padding(
+    final controller = Get.find<BookingFlowController>();
+    return Obx(
+      () => Padding(
         padding: const EdgeInsets.all(10),
         child: SingleChildScrollView(
           child: Column(
             spacing: 10,
             children: [
               Text(
-                'Select Dates & Guests',
+                AppTranslations.selectDatesAndGuests,
                 style: Get.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkBlack,
@@ -51,20 +53,20 @@ class BookView extends StatelessWidget {
                 children: [
                   Expanded(
                     child: CustomDateBox(
-                      label: 'Check-in',
-                      value: controller.rangeStart == null
-                          ? 'Select'
-                          : controller.rangeStart!.formatDatePicker(),
+                      label: AppTranslations.checkInLabel,
+                      value: controller.rangeStart.value == null
+                          ? AppTranslations.select
+                          : controller.rangeStart.value!.formatDatePicker(),
                       selected: true,
                     ),
                   ),
 
                   Expanded(
                     child: CustomDateBox(
-                      label: 'Check-out',
-                      value: controller.rangeEnd == null
-                          ? 'Select'
-                          : controller.rangeEnd!.formatDatePicker(),
+                      label: AppTranslations.checkOutLabel,
+                      value: controller.rangeEnd.value == null
+                          ? AppTranslations.select
+                          : controller.rangeEnd.value!.formatDatePicker(),
                     ),
                   ),
                 ],
@@ -73,26 +75,26 @@ class BookView extends StatelessWidget {
               CustomDateRangeCalendar(
                 firstDay: controller.firstDay,
                 lastDay: controller.lastDay,
-                focusedDay: controller.focusedDay,
-                rangeStart: controller.rangeStart,
-                rangeEnd: controller.rangeEnd,
+                focusedDay: controller.focusedDay.value,
+                rangeStart: controller.rangeStart.value,
+                rangeEnd: controller.rangeEnd.value,
                 onRangeSelected: controller.onRangeSelected,
                 onPageChanged: controller.onPageChanged,
               ),
 
               CustomCounterField(
-                title: 'Adults',
-                subtitle: 'Ages 18+',
-                value: controller.adults,
+                title: AppTranslations.adults,
+                subtitle: AppTranslations.ages18Plus,
+                value: controller.adults.value,
                 minCount: 1,
                 maxCount: 10,
                 onChanged: controller.setAdults,
               ),
 
               CustomCounterField(
-                title: 'Children',
-                subtitle: 'Ages 0–17',
-                value: controller.children,
+                title: AppTranslations.children,
+                subtitle: AppTranslations.ages0To17,
+                value: controller.children.value,
                 maxCount: 10,
                 onChanged: controller.setChildren,
               ),
@@ -128,7 +130,9 @@ class BookView extends StatelessWidget {
                 backgroundColor: AppColors.lagoonTeal,
                 onPressed: controller.searchRooms,
                 child: Text(
-                  controller.roomPreselected ? 'Continue' : 'Search Rooms',
+                  controller.roomPreselected.value
+                      ? AppTranslations.continueButtonLabel
+                      : AppTranslations.searchRooms,
                 ),
               ),
             ],

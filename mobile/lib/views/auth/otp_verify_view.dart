@@ -28,7 +28,9 @@ class OtpVerifyView extends GetView<OtpVerifyController> {
               CustomPinput(
                 controller: controller.pinController,
                 digitCount: 6,
-                //TODO: change to otp validation when connecting api
+                // Presence-only while the OTP endpoint is stubbed; the real
+                // check is server-side, so validating the shape here would
+                // only ever reject typos.
                 validator: (enteredOtp) =>
                     CustomValidation().validateRequiredField(enteredOtp),
                 // onComplete: (_) => controller.verify(),

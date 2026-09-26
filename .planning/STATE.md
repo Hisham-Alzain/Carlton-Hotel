@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 4
 current_phase_name: Guests & Stay
 status: complete
-stopped_at: Phase 4 closed; ready to plan Phase 5 (Folio Extensions)
-last_updated: "2026-09-26T00:00:00.000Z"
+stopped_at: Phase 5 context gathered (auto); planner running
+last_updated: "2026-09-26T04:51:10.866Z"
 last_activity: 2026-09-26
-last_activity_desc: "Phase 4 closed: guest directory + profile (notes, preferences, pre-arrival checklist), guest preferences + online check-in + display-only digital key (NOT lock-grade), guests.view/guests.edit permissions (19->21, 9->10 groups), stays:expire-digital-keys scheduled sweep, docs/Postman/tree closure. Full suite 1383/1383 green."
+last_activity_desc: "Phase 4 closed: guest directory + profile, guest/staff preferences, online check-in, display-only digital key (NOT lock-grade) with encrypted-at-rest storage and expiry sweep, guests.view/guests.edit permissions (19->21, 9->10 groups), docs/Postman/tree closure. Full suite 1383/1383 green."
 progress:
-  total_phases: 9
-  completed_phases: 4
+  total_phases: 5
+  completed_phases: 0
   total_plans: 33
-  completed_plans: 24
+  completed_plans: 4
 ---
 
 # Project State
@@ -104,6 +104,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-26T00:00:00.000Z
-Stopped at: Phase 4 closed; ready to plan/execute Phase 5 (Folio Extensions)
-Resume file: .planning/phases/04-guests-stay/04-CONTEXT.md
+Last session: 2026-09-26T04:51:10.838Z
+Stopped at: Phase 5 context gathered (auto); planner running
+Resume file: .planning/phases/05-folio-extensions/05-CONTEXT.md

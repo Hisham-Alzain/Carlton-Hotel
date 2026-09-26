@@ -177,7 +177,47 @@ Plans:
   5. Contract gate: all new routes pass happy / 401 / 403 / 422 tests with the suite green, AR/EN keys exist, and the staff folio, line-item, payment and dispute nodes are `api:true`. The guides and Postman are updated, and `folios.post` and `folios.dispute` are seeded and listed in the summary.
 
 **Reuses**: `Folio`, `FolioItem`, `Payment`, `FolioService`, `GenerateFolioAction` (changed from rebuild to reconcile-by-source so posted rows and disputes survive refresh), `SettleFolioAction` (`DB::transaction` + `lockForUpdate`), `RecordCashPaymentAction`, `PaymentMethod` enum, `folios.view` / `folios.settle`
-**Plans**: TBD
+**Plans**: 10 plans
+Plans:
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — Ledger foundation: `folio_items` ledger migration, `FolioItemSource`, `FolioLedger` bcmath helpers, `Folio::ledgerPayments/paidUsd/balanceDueUsd/recalculateTotals`, `GenerateFolioAction` own-lock reconcile with frozen rows, receipt on the shared balance (FOLIO-02)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-02-PLAN.md — Staff folio read `GET /cms/reservations/{reservation}/folio`, 404 `folio_missing`, one FolioResource shape with payments and signed balance, ≤6 queries (FOLIO-01)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 05-03-PLAN.md — Post a charge `POST /cms/folios/{folio}/line-items`, `IdempotentWrite`, `folio_settled`, `idempotency_conflict`, `folios.post` seeded (FOLIO-02, XCUT-01)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 05-04-PLAN.md — Credits with `reverses_item_uuid`, item and balance floors, D-07 interleaved invariant (FOLIO-02)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 05-05-PLAN.md — Record a payment `POST /cms/folios/{folio}/payments` (Idempotency-Key required), overpayment refusal, auto-settle, decimal-string cash payments (FOLIO-04)
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 05-06-PLAN.md — Payment-free close on the settle route, `folio_settled` everywhere, legacy reservation-settle guard, prepaid folio passes check-out (FOLIO-04)
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
+- [ ] 05-07-PLAN.md — Guest disputes a line item `PATCH /folio/items/{item}/dispute`, dispute history table, 404 for foreign items, disputed rows frozen (FOLIO-03)
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
+- [ ] 05-08-PLAN.md — Staff raise/resolve/reject `PATCH /cms/folios/{folio}/line-items/{item}/dispute` with scoped bindings, `folios.dispute` seeded (FOLIO-03, XCUT-01)
+
+**Wave 9** *(blocked on Wave 8 completion)*
+
+- [ ] 05-09-PLAN.md — Open-dispute count on folio and check-out responses, `has_open_disputes` filter, check-out never blocked, Phase 9 read hooks (FOLIO-03)
+
+**Wave 10** *(blocked on Wave 9 completion)*
+
+- [ ] 05-10-PLAN.md — Guides, changelog, Postman (Idempotency-Key pre-request), carlton-tree flip, phase gate and contract summary with [BLOCKING] notes (DOCS-01, XCUT-01)
 
 ### Phase 6: Housekeeping & Guest Services
 

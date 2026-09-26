@@ -265,12 +265,12 @@ var TREE = {
     "ep":["GET /cms/reservations","GET /cms/reservations/{reservation}"]},
    {"name":"staff new booking","api":true,"dash":"mock","mob":"na","meta":"room types hard-coded",
     "ep":["POST /cms/reservations (dash calls POST /reservations)"]},
-   {"name":"assign room · confirm · cancel","api":true,"dash":false,"mob":"na","meta":"no screen",
+   {"name":"assign room · confirm · cancel","api":true,"dash":false,"mob":"na","meta":"assign only; check-in is its own verb",
     "ep":["POST /cms/reservations/{r}/assign-room","POST /cms/reservations/{r}/confirm","DELETE /cms/reservations/{r}"]},
-   {"name":"check in · check out","api":"partial","dash":"mock","mob":"na","meta":"different model on each side",
-    "note":"Dashboard expects /reservations/{id}/check-in, /check-out and /available-rooms. The backend splits this into assign-room, check-in approvals and settle.",
-    "ep":["POST /reservations/{id}/check-in (mock)","POST /reservations/{id}/check-out (mock)","GET /reservations/{id}/available-rooms (mock)"]},
-   {"name":"reservation notes","api":false,"dash":"mock","mob":"na","ep":["PATCH /reservations/{id}/notes (mock)"]},
+   {"name":"check in · check out","api":true,"dash":"mock","mob":"na","meta":"check-in · check-out · room pick list",
+    "note":"Dashboard mocks call /reservations/{id}/check-in, /check-out and /available-rooms; switch to the /cms/reservations/{r}/ routes listed here.",
+    "ep":["POST /cms/reservations/{r}/check-in","POST /cms/reservations/{r}/check-out","GET /cms/reservations/{r}/available-rooms"]},
+   {"name":"reservation notes","api":true,"dash":"mock","mob":"na","meta":"staff only · never in guest responses","ep":["PATCH /cms/reservations/{r}/notes"]},
    {"name":"hold expiry · locking","api":true,"dash":"na","mob":"na","meta":"ReleaseExpiredHolds · lockForUpdate"}
   ]},
   {"name":"Stay & check-in","kind":"section","api":true,"dash":false,"mob":true,"children":[

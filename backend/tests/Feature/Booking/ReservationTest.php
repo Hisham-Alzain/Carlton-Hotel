@@ -75,7 +75,8 @@ class ReservationTest extends TestCase
         $this->assertEquals(ReservationStatus::CANCELLED, $r->fresh()->status);
     }
 
-    public function test_staff_can_assign_room_at_checkin(): void
+    // Phase 3 D-03: assign-room is pure assignment and never checks in.
+    public function test_assign_room_keeps_a_confirmed_reservation_confirmed(): void
     {
         $rt   = RoomType::factory()->create(['base_price_usd' => 100]);
         $room = Room::factory()->create(['room_type_id' => $rt->id, 'is_active' => true]);
@@ -85,7 +86,27 @@ class ReservationTest extends TestCase
         $this->withToken($this->staffToken('reservations.create'))
             ->postJson("/api/cms/reservations/{$r->uuid}/assign-room", ['room_uuid' => $room->uuid])
             ->assertOk()
-            ->assertJsonPath('data.status', ReservationStatus::CHECKED_IN->value);
+            ->assertJsonPath('data.status', ReservationStatus::CONFIRMED->value)
+            ->assertJsonPath('data.checked_in_at', null)
+            ->assertJsonPath('data.rooms.0.room_uuid', $room->uuid);
+    }
+
+    // Phase 3 D-01: the check-in verb is the only way to check a guest in.
+    public function test_staff_can_check_in_through_the_check_in_verb(): void
+    {
+        config(['hotel.timezone' => 'Asia/Damascus']);
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2027-03-01 09:00:00'));
+
+        $rt   = RoomType::factory()->create(['base_price_usd' => 100]);
+        $room = Room::factory()->create(['room_type_id' => $rt->id, 'is_active' => true]);
+        $r    = Reservation::factory()->confirmed()->create(['check_in' => '2027-03-01', 'check_out' => '2027-03-05']);
+        ReservationRoom::factory()->create(['reservation_id' => $r->id, 'room_type_id' => $rt->id]);
+
+        $this->withToken($this->staffToken('reservations.create'))
+            ->postJson("/api/cms/reservations/{$r->uuid}/check-in", ['room_uuid' => $room->uuid])
+            ->assertOk()
+            ->assertJsonPath('data.status', ReservationStatus::CHECKED_IN->value)
+            ->assertJsonPath('data.rooms.0.room_uuid', $room->uuid);
     }
 
     public function test_staff_without_permission_gets_403(): void

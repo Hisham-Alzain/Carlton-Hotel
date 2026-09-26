@@ -3,6 +3,7 @@
 namespace App\Actions\Folio;
 
 use App\Enums\FolioStatus;
+use App\Enums\ReservationStatus;
 use App\Enums\ServiceBookingStatus;
 use App\Enums\ServiceRequestStatus;
 use App\Models\Folio;
@@ -24,6 +25,13 @@ class GenerateFolioAction
             // Once settled, the folio is a closed record — regenerating would drift its total away
             // from the amount actually captured on the Payment. Return it unchanged.
             if ($folio->status === FolioStatus::SETTLED) {
+                return ['data' => $folio->load('items'), 'code' => 200];
+            }
+
+            // A checked-out stay is closed: regenerating would drift the total of
+            // a forced check-out's still-open folio (D-06). A folio created just
+            // now for a legacy checked-out stay with none is still built once.
+            if ($reservation->status === ReservationStatus::CHECKED_OUT && ! $folio->wasRecentlyCreated) {
                 return ['data' => $folio->load('items'), 'code' => 200];
             }
 

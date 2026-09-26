@@ -4,11 +4,16 @@ namespace App\Services\Booking;
 
 use App\Actions\Booking\AssignRoomAction;
 use App\Actions\Booking\CancelReservationAction;
+use App\Actions\Booking\CheckAvailabilityAction;
+use App\Actions\Booking\CheckInReservationAction;
+use App\Actions\Booking\CheckOutReservationAction;
 use App\Actions\Booking\ConfirmReservationAction;
 use App\Actions\Booking\CreateReservationAction;
+use App\Actions\Booking\UpdateReservationNotesAction;
 use App\Actions\Auth\RequestOtpAction;
 use App\Adapters\DirectAdapter;
 use App\Adapters\WalkInAdapter;
+use App\Enums\CheckOutMode;
 use App\Enums\OtpChannel;
 use App\Enums\OtpPurpose;
 use App\Enums\PaymentMethod;
@@ -16,12 +21,15 @@ use App\Enums\ReservationSource;
 use App\Enums\ReservationStatus;
 use App\Exceptions\HoldExpiredException;
 use App\Exceptions\NotFoundException;
+use App\Exceptions\ReservationStateException;
+use App\Filters\ReservationFilter;
 use App\Models\Guest;
 use Illuminate\Support\Facades\DB;
 use App\Models\OtpCode;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\RoomType;
+use App\Models\User;
 
 class ReservationService
 {
@@ -33,6 +41,10 @@ class ReservationService
         private readonly CancelReservationAction  $cancel,
         private readonly AssignRoomAction         $assignRoom,
         private readonly RequestOtpAction         $requestOtp,
+        private readonly UpdateReservationNotesAction $updateNotes,
+        private readonly CheckAvailabilityAction   $availability,
+        private readonly CheckInReservationAction  $checkIn,
+        private readonly CheckOutReservationAction $checkOut,
     ) {}
 
     // Authenticated path (app-only): one step
@@ -131,10 +143,18 @@ class ReservationService
         return ['data' => $data, 'code' => 200];
     }
 
-    public function adminIndex(): array
+    /**
+     * Staff list, newest first, 15 per page. `$params` is the query string
+     * (`indexParams`), narrowed by `ReservationFilter`: `status` and
+     * `folio_status` (D-10).
+     */
+    public function adminIndex(array $params = []): array
     {
-        $data = Reservation::with($this->with)->orderByDesc('created_at')->paginate(15);
-        return ['data' => $data, 'code' => 200];
+        $query = Reservation::with($this->with)->orderByDesc('created_at');
+
+        (new ReservationFilter($params))->apply($query);
+
+        return ['data' => $query->paginate(15), 'code' => 200];
     }
 
     /**
@@ -211,8 +231,81 @@ class ReservationService
         return $this->cancel->handle($reservation);
     }
 
-    public function assignRoom(Reservation $reservation, ?Room $room = null): array
+    public function assignRoom(Reservation $reservation, ?string $roomUuid = null): array
     {
+        $room = $roomUuid ? Room::where('uuid', $roomUuid)->firstOrFail() : null;
+
         return $this->assignRoom->handle($reservation, $room);
+    }
+
+    public function updateNotes(Reservation $reservation, ?string $notes): array
+    {
+        return $this->updateNotes->handle($reservation, $notes);
+    }
+
+    /**
+     * The desk's pick list (D-12): rooms of the reservation's first room type
+     * that are active, not in maintenance and free for its dates (the shared
+     * D-04 predicate), the assigned room first and flagged, the rest by number.
+     *
+     * Exactly three queries and no writes or locks: Q1 the first line's type
+     * and assigned room in one join, Q2/Q3 inside `freeRoomsFor()`.
+     */
+    public function availableRooms(Reservation $reservation): array
+    {
+        $type = RoomType::withTrashed()
+            ->select([
+                'room_types.id',
+                'room_types.uuid',
+                'room_types.name',
+                'reservation_rooms.room_id as assigned_room_id',
+            ])
+            ->join('reservation_rooms', 'reservation_rooms.room_type_id', '=', 'room_types.id')
+            ->where('reservation_rooms.reservation_id', $reservation->id)
+            ->orderBy('reservation_rooms.id')
+            ->first();
+
+        if (! $type) {
+            throw new ReservationStateException(__('custom.errors.reservation_state'));
+        }
+
+        $assignedId = $type->assigned_room_id !== null ? (int) $type->assigned_room_id : null;
+
+        $items = $this->availability->freeRoomsFor($reservation, (int) $type->id)
+            ->sortBy(fn (Room $room) => (int) $room->id === $assignedId ? 0 : 1)
+            ->values()
+            ->map(fn (Room $room) => [
+                'uuid'                => $room->uuid,
+                'number'              => $room->number,
+                'floor'               => $room->floor,
+                'housekeeping_status' => $room->status->value,
+                'assigned'            => (int) $room->id === $assignedId,
+            ])
+            ->all();
+
+        return [
+            'data' => [
+                'room_type' => [
+                    'uuid' => $type->uuid,
+                    'name' => $type->getTranslations('name'),
+                ],
+                'check_in'  => $reservation->check_in->toDateString(),
+                'check_out' => $reservation->check_out->toDateString(),
+                'items'     => $items,
+            ],
+            'code' => 200,
+        ];
+    }
+
+    public function checkIn(Reservation $reservation, ?string $roomUuid, User $actor, bool $earlyCheckIn, ?string $reason): array
+    {
+        $room = $roomUuid ? Room::where('uuid', $roomUuid)->firstOrFail() : null;
+
+        return $this->checkIn->handle($reservation, $room, $actor, $earlyCheckIn, $reason);
+    }
+
+    public function checkOut(Reservation $reservation, CheckOutMode $mode, User $actor, ?string $reason): array
+    {
+        return $this->checkOut->handle($reservation, $mode, $actor, $reason);
     }
 }

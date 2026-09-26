@@ -4,6 +4,7 @@ namespace App\Http\Resources\Booking;
 
 use App\Base\BaseResource;
 use App\Http\Resources\GuestResource;
+use App\Models\User;
 
 class ReservationResource extends BaseResource
 {
@@ -17,6 +18,10 @@ class ReservationResource extends BaseResource
             'check_out'      => $this->check_out?->toDateString(),
             'checked_in_at'  => $this->checked_in_at?->toIso8601String(),
             'checked_out_at' => $this->checked_out_at?->toIso8601String(),
+            // Staff-internal (D-11): emitted only when the caller is a staff
+            // User. Guest routes resolve a Guest and the public verify route
+            // nobody, so the key is absent there.
+            'notes'          => $this->when($request->user() instanceof User, $this->notes),
             // Surfaced for staff too, so housekeeping can see the flag the guest set.
             'dnd'            => [
                 'enabled' => $this->isDndActive(),
@@ -30,6 +35,12 @@ class ReservationResource extends BaseResource
             'rooms'          => ReservationRoomResource::collection($this->whenLoaded('rooms')),
             'guest'          => new GuestResource($this->whenLoaded('guest')),
             'promo_code'     => $this->whenLoaded('promoCode', fn () => $this->promoCode?->code),
+            // Only the check-out response loads the folio (D-14).
+            'folio'          => $this->whenLoaded('folio', fn () => $this->folio ? [
+                'uuid'      => $this->folio->uuid,
+                'status'    => $this->folio->status,
+                'total_usd' => $this->folio->total_usd,
+            ] : null),
         ];
     }
 }

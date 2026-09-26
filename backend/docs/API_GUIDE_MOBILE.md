@@ -967,7 +967,7 @@ The folio recalculates on every call (room charge + confirmed/completed priced s
 
 **Response `data`:** same Folio shape as above, now with `approved_by_guest_at` set. **This also transitions your reservation to `checked_out`.** It does not settle payment — that's still a front-desk/admin action (cash or already paid on arrival).
 
-**Failure:** `no_active_reservation` (403).
+**Failure:** `no_active_reservation` (403), `reservation_state` (422, your most recent booking is not the checked-in stay).
 
 ### POST /api/transport-requests
 
@@ -1001,7 +1001,7 @@ One ongoing support conversation with staff per guest — no thread management n
 
 Live delivery mirrors to Firestore (`chats` collection, one doc per message keyed by `uuid`, filter by `conversation_uuid`) — subscribe there for real-time updates instead of polling; MySQL via the endpoints above remains the source of truth for history/pagination.
 
-**Push triggers already wired:** a welcome notification on first-ever device registration, and a "room ready" push when staff assign your room at check-in. Order-status and ticket-reply pushes land once P10's operations queue grows a status-change action (not yet built) and P11 ships the chatbot.
+**Push triggers already wired:** a welcome notification on first-ever device registration, and a "room ready" push when staff check you in, and again if you are moved to another room during your stay. Order-status and ticket-reply pushes land once P10's operations queue grows a status-change action (not yet built) and P11 ships the chatbot.
 
 ---
 

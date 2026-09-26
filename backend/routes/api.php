@@ -572,12 +572,19 @@ Route::middleware('auth:users')->prefix('cms/reservations')->group(function () {
     Route::middleware('permission:reservations.view')->group(function () {
         Route::get   ('/',              [AdminReservationController::class, 'index']);
         Route::get   ('/{reservation}', [AdminReservationController::class, 'show']);
+        Route::get   ('/{reservation}/available-rooms', [AdminReservationController::class, 'availableRooms']);
     });
     Route::middleware('permission:reservations.create')->group(function () {
         // Front-desk booking — reception creating a reservation for a guest.
         Route::post  ('/',                          [AdminReservationController::class, 'store']);
         Route::post  ('/{reservation}/confirm',     [AdminReservationController::class, 'confirm']);
+        // Pure assignment / room move; never checks in (D-03).
         Route::post  ('/{reservation}/assign-room', [AdminReservationController::class, 'assignRoom']);
+        Route::patch ('/{reservation}/notes',       [AdminReservationController::class, 'updateNotes']);
+        Route::post  ('/{reservation}/check-in',    [AdminReservationController::class, 'checkIn']);
+        // The force override additionally needs folios.settle, checked in the
+        // controller so one route serves forced and ordinary check-outs (D-07).
+        Route::post  ('/{reservation}/check-out',   [AdminReservationController::class, 'checkOut']);
     });
     Route::middleware('permission:reservations.cancel')->group(function () {
         Route::delete('/{reservation}',             [AdminReservationController::class, 'cancel']);

@@ -113,4 +113,25 @@ class UpdateRoomStatusActionTest extends TestCase
         $this->assertNull($fresh->status_changed_at);
         $this->assertNull($fresh->status_changed_by);
     }
+
+    // Phase 3 D-08: a null actor records a system change (check-out's ensure-dirty).
+    public function test_null_actor_records_a_system_change(): void
+    {
+        $room = Room::factory()->create(['status' => 'available']);
+
+        $result = app(UpdateRoomStatusAction::class)->handle($room, RoomStatus::DIRTY, 'check-out', null);
+
+        $this->assertSame(200, $result['code']);
+        $fresh = $room->fresh();
+        $this->assertSame(RoomStatus::DIRTY, $fresh->status);
+        $this->assertNull($fresh->status_changed_by);
+        $this->assertNotNull($fresh->status_changed_at);
+
+        $rows = DB::table('room_status_history')->where('room_id', $room->id)->get();
+        $this->assertCount(1, $rows);
+        $this->assertNull($rows[0]->changed_by);
+        $this->assertSame('check-out', $rows[0]->reason);
+        $this->assertSame('available', $rows[0]->from_status);
+        $this->assertSame('dirty', $rows[0]->to_status);
+    }
 }

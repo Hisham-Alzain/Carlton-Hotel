@@ -3,6 +3,7 @@
 namespace Tests\Feature\Booking;
 
 use App\Actions\Booking\AssignRoomAction;
+use App\Actions\Booking\CheckInReservationAction;
 use App\Actions\Booking\CreateReservationAction;
 use App\Adapters\DirectAdapter;
 use App\Enums\PaymentMethod;
@@ -13,6 +14,7 @@ use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\RoomType;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -117,15 +119,24 @@ class RoomAssignmentAtBookingTest extends TestCase
     }
 
     // ── Check-in ──────────────────────────────────────────────────────────
+    // Phase 3 D-01/D-03: check-in is its own verb (CheckInReservationAction);
+    // assign-room only assigns. Check-in runs on the arrival day, hotel time.
+
+    private function onArrivalDay(): void
+    {
+        config(['hotel.timezone' => 'Asia/Damascus']);
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2027-06-01 09:00:00'));
+    }
 
     public function test_check_in_without_a_room_uses_the_reserved_one(): void
     {
+        $this->onArrivalDay();
         $roomType    = RoomType::factory()->create(['base_price_usd' => 100]);
         $room        = Room::factory()->create(['room_type_id' => $roomType->id, 'number' => '801']);
         $reservation = $this->book(Guest::factory()->create(), $roomType);
         $reservation->update(['status' => ReservationStatus::CONFIRMED]);
 
-        $result = app(AssignRoomAction::class)->handle($reservation);
+        $result = app(CheckInReservationAction::class)->handle($reservation, null, User::factory()->create());
 
         $this->assertSame(ReservationStatus::CHECKED_IN, $result['data']->status);
         $this->assertSame($room->id, $result['data']->rooms->first()->room_id);
@@ -134,19 +145,23 @@ class RoomAssignmentAtBookingTest extends TestCase
 
     public function test_staff_can_move_the_guest_to_another_room_at_check_in(): void
     {
+        $this->onArrivalDay();
         $roomType    = RoomType::factory()->create(['base_price_usd' => 100]);
         Room::factory()->create(['room_type_id' => $roomType->id, 'number' => '801']);
         $other       = Room::factory()->create(['room_type_id' => $roomType->id, 'number' => '802']);
         $reservation = $this->book(Guest::factory()->create(), $roomType);
         $reservation->update(['status' => ReservationStatus::CONFIRMED]);
 
-        $result = app(AssignRoomAction::class)->handle($reservation, $other);
+        $result = app(CheckInReservationAction::class)->handle($reservation, $other, User::factory()->create());
 
+        $this->assertSame(ReservationStatus::CHECKED_IN, $result['data']->status);
         $this->assertSame($other->id, $result['data']->rooms->first()->room_id);
+        $this->assertNotNull($result['data']->checked_in_at);
     }
 
     public function test_moving_into_a_room_another_booking_holds_is_refused(): void
     {
+        $this->onArrivalDay();
         $roomType = RoomType::factory()->create(['base_price_usd' => 100]);
         Room::factory()->create(['room_type_id' => $roomType->id, 'number' => '801']);
         $second   = Room::factory()->create(['room_type_id' => $roomType->id, 'number' => '802']);
@@ -159,6 +174,21 @@ class RoomAssignmentAtBookingTest extends TestCase
         $this->assertSame($second->id, $theirs->rooms->first()->room_id);
 
         $this->expectException(RoomAlreadyAssignedException::class);
-        app(AssignRoomAction::class)->handle($mine, $second);
+        app(CheckInReservationAction::class)->handle($mine, $second, User::factory()->create());
+    }
+
+    public function test_pre_arrival_assign_room_changes_the_room_but_not_the_status(): void
+    {
+        $roomType    = RoomType::factory()->create(['base_price_usd' => 100]);
+        Room::factory()->create(['room_type_id' => $roomType->id, 'number' => '801']);
+        $other       = Room::factory()->create(['room_type_id' => $roomType->id, 'number' => '802']);
+        $reservation = $this->book(Guest::factory()->create(), $roomType);
+        $reservation->update(['status' => ReservationStatus::CONFIRMED]);
+
+        $result = app(AssignRoomAction::class)->handle($reservation, $other);
+
+        $this->assertSame($other->id, $result['data']->rooms->first()->room_id);
+        $this->assertSame(ReservationStatus::CONFIRMED, $result['data']->status);
+        $this->assertNull($result['data']->checked_in_at);
     }
 }

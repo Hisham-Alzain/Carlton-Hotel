@@ -436,4 +436,17 @@ class RoomBoardTest extends TestCase
 
         $this->assertSame($small, $large);
     }
+
+    // Phase 3 D-02: the board's default date is the hotel-local date.
+    public function test_board_default_date_follows_the_hotel_timezone(): void
+    {
+        config(['hotel.timezone' => 'Asia/Tokyo']);
+        $this->travelTo(Carbon::parse('2027-03-09 16:30:00', 'UTC'));
+        Room::factory()->create();
+
+        $this->board()->assertOk()->assertJsonPath('data.date', '2027-03-10');
+
+        config(['hotel.timezone' => 'UTC']);
+        $this->board()->assertOk()->assertJsonPath('data.date', '2027-03-09');
+    }
 }

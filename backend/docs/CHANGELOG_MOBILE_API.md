@@ -22,20 +22,33 @@ nine commits (`2fd294f` → `5d254a7`).
 
 ## ⚠️ Breaking changes
 
-Three, all affecting the **dashboard**, none affecting existing mobile builds.
+Four, all affecting the **dashboard**, none affecting existing mobile builds.
 
 | What | Before | After |
 |---|---|---|
 | `RoomTypeResource.amenities` | `["WiFi", "Safe"]` | `[{uuid, slug, name, icon, sort_order}]` |
 | Room type create/update `amenities` | `["WiFi"]` | `[{uuid, is_highlight?, sort_order?}]` — omit the key to leave the pivot untouched, send `[]` to clear |
 | `POST`/`PUT /cms/menu-categories` | venue-less | `dining_venue_uuid` now **required** |
+| `POST /cms/reservations/{uuid}/assign-room` | checked the guest in (status to `checked_in`, stamped `checked_in_at`, pushed "room ready") | pure assignment: `status` and `checked_in_at` unchanged; check in with `POST /cms/reservations/{uuid}/check-in` |
 
 The legacy `room_types.amenities` JSON column still exists and is still
 writable, but no resource reads it — a data migration lifted its contents into
 real amenity rows.
 
+The "room ready" push now fires when staff check the guest in
+(`POST /cms/reservations/{uuid}/check-in`) and when a checked-in guest is
+moved to another room, and no longer fires on a pre-arrival assignment.
+
 Non-breaking but behavioural: `POST /cms/reservations/{uuid}/assign-room` now
 accepts an **optional** `room_uuid` (see §9).
+
+---
+
+## Changed (non-breaking)
+
+| What | Before | After |
+|---|---|---|
+| `POST /folio/approve` | silently checked out whatever reservation the entitlement lookup picked, even a future booking | runs the same check-out as the desk (the guest's room turns dirty, `ReservationCheckedOut` fires, logged as `reservation.check_out_guest_express`); returns `reservation_state` (422) when the guest's most recent booking is not the checked-in stay — previously that mismatch was a silent defect. `GET /folio` still uses the same selection rule, unchanged this phase. |
 
 ---
 

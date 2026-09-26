@@ -9,6 +9,7 @@ use App\Models\ReservationRoom;
 use App\Models\Room;
 use App\Models\RoomType;
 use App\Services\Booking\PricingService;
+use App\Support\HotelClock;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -46,7 +47,8 @@ class FrontDeskService
      */
     public function board(array $filters): array
     {
-        $date = $filters['date'] ?? now()->toDateString();
+        // Default is the hotel-local date, the same "today" check-in uses (D-02).
+        $date = $filters['date'] ?? HotelClock::today()->toDateString();
 
         // Q1 rooms, Q2 roomType, Q3 statusChangedBy.
         $rooms = Room::query()
@@ -293,13 +295,14 @@ class FrontDeskService
     }
 
     /**
-     * Grid window: `from` (default today, UTC) for `days` nights (default 14).
+     * Grid window: `from` (default the hotel-local date, see HotelClock) for
+     * `days` nights (default 14).
      *
      * @return array{0: string, 1: int, 2: list<string>, 3: string} [from, days, dates, exclusive end]
      */
     private function window(array $params): array
     {
-        $from  = $params['from'] ?? now()->toDateString();
+        $from  = $params['from'] ?? HotelClock::today()->toDateString();
         $days  = (int) ($params['days'] ?? self::DEFAULT_DAYS);
         $start = CarbonImmutable::parse($from);
 

@@ -18,10 +18,13 @@ use Illuminate\Support\Facades\DB;
  * inside the transaction, so nothing is written. Never reads or writes
  * reservations, availability or room assignment: housekeeping status is
  * independent of bookability.
+ *
+ * A null actor records a system change (check-out's ensure-dirty, Phase 3
+ * D-08): `status_changed_by` and `room_status_history.changed_by` stay null.
  */
 class UpdateRoomStatusAction
 {
-    public function handle(Room $room, RoomStatus $to, ?string $reason, User $actor): array
+    public function handle(Room $room, RoomStatus $to, ?string $reason, ?User $actor): array
     {
         return DB::transaction(function () use ($room, $to, $reason, $actor) {
             $locked = Room::whereKey($room->getKey())->lockForUpdate()->firstOrFail();
@@ -41,14 +44,14 @@ class UpdateRoomStatusAction
             $locked->forceFill([
                 'status'            => $to,
                 'status_changed_at' => now(),
-                'status_changed_by' => $actor->getKey(),
+                'status_changed_by' => $actor?->getKey(),
             ])->save();
 
             RoomStatusHistory::create([
                 'room_id'     => $locked->id,
                 'from_status' => $from->value,
                 'to_status'   => $to->value,
-                'changed_by'  => $actor->getKey(),
+                'changed_by'  => $actor?->getKey(),
                 'reason'      => $reason,
             ]);
 

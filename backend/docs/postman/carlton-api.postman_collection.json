@@ -1715,6 +1715,72 @@
                     "response": []
                 },
                 {
+                    "name": "Create booking — arriving today (captures today_reservation_uuid)",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const today = new Date();",
+                                    "const tomorrow = new Date(today);",
+                                    "tomorrow.setUTCDate(today.getUTCDate() + 1);",
+                                    "const fmt = (d) => d.toISOString().slice(0, 10);",
+                                    "pm.collectionVariables.set('today', fmt(today));",
+                                    "pm.collectionVariables.set('tomorrow', fmt(tomorrow));"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200 || pm.response.code === 201) { pm.collectionVariables.set('today_reservation_uuid', pm.response.json().data.uuid); }"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"first_name\": \"Walk\",\n  \"last_name\": \"In\",\n  \"phone\": \"+963955000111\",\n  \"room_type_uuid\": \"{{room_type_uuid}}\",\n  \"check_in\": \"{{today}}\",\n  \"check_out\": \"{{tomorrow}}\",\n  \"payment_method\": \"on_arrival\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/cms/reservations",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reservations"
+                            ]
+                        },
+                        "description": "Near midnight the hotel date (HOTEL_TIMEZONE) can differ from UTC, so the dates computed here in UTC may not match the hotel-local \"today\"; a check-in against this booking near that boundary can then correctly answer 422."
+                    },
+                    "response": []
+                },
+                {
                     "name": "List reservations",
                     "request": {
                         "method": "GET",
@@ -1740,6 +1806,43 @@
                             "path": [
                                 "cms",
                                 "reservations"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "List checked-out reservations with an open folio",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/reservations?status=checked_out&folio_status=open",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reservations"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "checked_out"
+                                },
+                                {
+                                    "key": "folio_status",
+                                    "value": "open"
+                                }
                             ]
                         }
                     },
@@ -1811,7 +1914,89 @@
                     "response": []
                 },
                 {
-                    "name": "Assign room at check-in (Layla)",
+                    "name": "Available rooms (Layla, captures layla_room_uuid)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) { const items = pm.response.json().data.items; if (items && items.length) { pm.environment.set('layla_room_uuid', items[0].uuid); } }"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/reservations/{{layla_reservation_uuid}}/available-rooms",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reservations",
+                                "{{layla_reservation_uuid}}",
+                                "available-rooms"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update notes (Layla)",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"notes\": \"Late arrival, prefers a high floor.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/cms/reservations/{{layla_reservation_uuid}}/notes",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reservations",
+                                "{{layla_reservation_uuid}}",
+                                "notes"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Assign room — pre-arrival (Layla, status stays confirmed)",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -1842,14 +2027,231 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"room_uuid\": \"{{room_uuid}}\"\n}",
+                            "raw": "{\n    \"room_uuid\": \"{{layla_room_uuid}}\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
                                 }
                             }
                         },
-                        "description": "Layla is confirmed but not checked in — this both assigns the room and flips her reservation to checked_in."
+                        "description": "Assigns a room only; the reservation status stays confirmed. Check-in is its own verb — see \"Check in — arriving today (auto-pick room)\" and the Layla check-in below."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "❌ Check in (Layla arrives in 5 days — expect 422 reservation_outside_stay_window)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/cms/reservations/{{layla_reservation_uuid}}/check-in",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reservations",
+                                "{{layla_reservation_uuid}}",
+                                "check-in"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Check in — arriving today (auto-pick room)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/cms/reservations/{{today_reservation_uuid}}/check-in",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reservations",
+                                "{{today_reservation_uuid}}",
+                                "check-in"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "❌ Check out with an open folio (expect 422 folio_unsettled)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/cms/reservations/{{today_reservation_uuid}}/check-out",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reservations",
+                                "{{today_reservation_uuid}}",
+                                "check-out"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Check out — force with reason (as Reception, folios.settle)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"force\": true,\n  \"reason\": \"Guest left early; balance to be invoiced\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/cms/reservations/{{today_reservation_uuid}}/check-out",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reservations",
+                                "{{today_reservation_uuid}}",
+                                "check-out"
+                            ]
+                        },
+                        "description": "The picked room turns dirty; mark it available again with the Rooms status requests in folder 11.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{reception_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "❌ Check in (as Housekeeping — expect 403, no reservations.create)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{housekeeping_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/cms/reservations/{{today_reservation_uuid}}/check-in",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reservations",
+                                "{{today_reservation_uuid}}",
+                                "check-in"
+                            ]
+                        }
                     },
                     "response": []
                 },
@@ -3852,7 +4254,7 @@
                                 "approve"
                             ]
                         },
-                        "description": "Only run this if you are OK with Ahmad no longer being checked_in for the rest of your testing session — re-seed to reset."
+                        "description": "Runs the same check-out as the desk (the guest's room turns dirty, ReservationCheckedOut fires, logged as a guest express checkout). Still has no balance check, and now answers 422 reservation_state if the guest's most recent booking is not the checked-in stay."
                     },
                     "response": []
                 },

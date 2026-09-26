@@ -81,16 +81,45 @@ class StayTest extends TestCase
 
     public function test_checking_in_stamps_the_arrival_time(): void
     {
+        // Phase 3 D-01/D-02: the check-in verb stamps arrival, inside the
+        // hotel-local stay window.
+        config(['hotel.timezone' => 'Asia/Damascus']);
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2027-03-10 09:00:00'));
+
         $guest       = Guest::factory()->create();
-        $reservation = $this->stayFor($guest, 'confirmed');
-        // AssignRoomAction requires the room to match the booked room type.
+        $reservation = $this->stayFor($guest, 'confirmed', attributes: [
+            'check_in'  => '2027-03-10',
+            'check_out' => '2027-03-12',
+        ]);
+        // The check-in action requires the room to match the booked room type.
+        $room = Room::factory()->create([
+            'room_type_id' => $reservation->rooms()->first()->room_type_id,
+        ]);
+
+        app(\App\Actions\Booking\CheckInReservationAction::class)
+            ->handle($reservation, $room, \App\Models\User::factory()->create());
+
+        $this->assertNotNull($reservation->fresh()->checked_in_at);
+    }
+
+    public function test_assigning_a_room_does_not_stamp_the_arrival_time(): void
+    {
+        // Phase 3 D-03: assign-room is pure assignment.
+        $guest       = Guest::factory()->create();
+        $reservation = $this->stayFor($guest, 'confirmed', attributes: [
+            'check_in'  => '2027-03-10',
+            'check_out' => '2027-03-12',
+        ]);
         $room = Room::factory()->create([
             'room_type_id' => $reservation->rooms()->first()->room_type_id,
         ]);
 
         app(\App\Actions\Booking\AssignRoomAction::class)->handle($reservation, $room);
 
-        $this->assertNotNull($reservation->fresh()->checked_in_at);
+        $fresh = $reservation->fresh();
+        $this->assertNull($fresh->checked_in_at);
+        $this->assertSame(\App\Enums\ReservationStatus::CONFIRMED, $fresh->status);
+        $this->assertSame($room->id, $fresh->rooms()->first()->room_id);
     }
 
     // ── Upcoming ──────────────────────────────────────────────────────────

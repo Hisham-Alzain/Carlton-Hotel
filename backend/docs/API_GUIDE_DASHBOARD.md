@@ -856,7 +856,16 @@ The single-image convenience fields — `banner` (room types, promotions), `phot
 
 ### GET /cms/reservations — `reservations.view`
 
-Paginated, all reservations, newest first.
+Paginated (15 per page), all reservations, newest first.
+
+**Request query:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `status` | string or array | no | A reservation status. `?status=a,b`, `?status[in]=a,b` or repeated `?status[]=a&status[]=b` all filter to that set. Values are not validated — an unknown status simply matches nothing. |
+| `folio_status` | string | no | `open` or `settled`. Only reservations that have a folio are matched. Any other value is `validation_failed` (422, `errors.folio_status`). |
+
+Empty values mean no filter; unknown query parameters are ignored. Example: `?status=checked_out&folio_status=open` lists stays that left with an open folio — forced check-outs and guest express checkouts.
 
 ### GET /cms/reservations/{uuid} — `reservations.view`
 
@@ -866,11 +875,13 @@ Paginated, all reservations, newest first.
   "uuid": "...", "booking_code": "CARL-XXXXXXXX", "status": "confirmed",
   "check_in": "2026-07-20", "check_out": "2026-07-22", "nights": 2,
   "source": "direct", "payment_method": "cash", "total_usd": "270.00", "hold_expires_at": null,
+  "checked_in_at": null, "checked_out_at": null,
   "rooms": [ { "room_type": { "...room type..." }, "room_uuid": "...", "room_number": "801", "price_usd": "270.00" } ],
   "guest": { "uuid": "...", "name": "...", "phone": "...", "email": "..." },
-  "promo_code": null
+  "promo_code": null, "notes": "VIP, late arrival"
 }
 ```
+`notes` is returned to staff only; guest routes never include it.
 
 ### POST /cms/reservations — `reservations.create`
 
@@ -926,17 +937,92 @@ A guest created through this endpoint has **no verified contact** — they never
 
 ### POST /cms/reservations/{uuid}/assign-room — `reservations.create`
 
-**Purpose:** Check the guest in, optionally moving them to a different room. **This is the check-in action — there is no separate "check in" endpoint.**
+> ⚠️ **Behaviour change (Phase 3, breaking for the dashboard):** assign-room no longer checks the guest in. It never changes `status` or `checked_in_at`; check in with `POST /cms/reservations/{uuid}/check-in`. The response still carries `status`, so the unchanged state is visible.
 
-**Request body:** `{ "room_uuid": "..." }` — **optional.**
+**Purpose:** Assign a room before arrival (`confirmed`) or move a checked-in guest to a different room during their stay (`checked_in`).
 
-A specific room is now reserved when the booking is created, so `rooms[].room_number` is already populated before check-in. Omit `room_uuid` to check the guest into the room they were given; send it only to move them to a different room of the same type.
+**Request body:** `{ "room_uuid": "..." }` — **optional** (omit to keep the reserved room).
 
-**Behavior:** requires the reservation to be `confirmed`, the target room's type to match the booked type, and no date-overlapping hold on that room by another booking. A booking holds its room from creation — including while merely `pending` — so a room reserved by an unconfirmed booking cannot be handed to someone else. On success, sets `room_id`, flips `status` to `checked_in`, and stamps `checked_in_at` (a later room move does not overwrite the original arrival time).
+**Behavior:** requires the target room's type to match the booked type, and no date-overlapping hold on that room by another booking — a booking holds its room from creation, including while merely `pending`. The room must not be in maintenance. Re-assigning the same room is a no-op 200. A move during a stay (the room actually changed while `checked_in`) pushes the guest a "room ready" notification; a pre-arrival assignment (`confirmed`) pushes nothing.
 
-**Response `data`:** updated reservation with the room under `rooms[].room_uuid`/`room_number`.
+**Response `data`:** updated reservation with the room under `rooms[].room_uuid`/`room_number` and `status`.
 
-**Failure `error_code`s:** `reservation_state` (422, wrong status or type mismatch), `room_already_assigned` (409, overlapping dates), `validation_failed` (422, bad `room_uuid`).
+**Failure `error_code`s:** `reservation_state` (422, `context.allowed`: `confirmed`, `checked_in` — wrong status, room type mismatch, or no room given or reserved), `room_out_of_order` (422, `context: { room_uuid, housekeeping_status }`), `room_already_assigned` (409, overlapping dates), `validation_failed` (422, bad `room_uuid`).
+
+### GET /cms/reservations/{uuid}/available-rooms — `reservations.view`
+
+**Purpose:** List rooms the reservation's booked room type could be assigned or checked into for its stay dates.
+
+**Request:** No parameters. Read only.
+
+**Behavior:** returns the rooms of the reservation's (first) room line's type that are active, not in maintenance, and not held by another booking over these dates — a merely `pending` hold (including one with no room named) still counts. If other holds already use every active room of the type, the list is empty. The currently assigned room comes first with `assigned: true`, then the rest ordered by room number.
+
+**Response `data`:**
+```json
+{
+  "room_type": { "uuid": "...", "name": { "en": "...", "ar": "..." } },
+  "check_in": "2026-10-01", "check_out": "2026-10-04",
+  "items": [
+    { "uuid": "...", "number": "801", "floor": 8, "housekeeping_status": "available", "assigned": true }
+  ]
+}
+```
+Unpaginated.
+
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `not_found` (404), `reservation_state` (422, the reservation has no room line).
+
+### POST /cms/reservations/{uuid}/check-in — `reservations.create`
+
+**Purpose:** Check the guest in.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `room_uuid` | string | no | Must exist. Defaults to the reserved room, else auto-picked. |
+| `early_check_in` | boolean | no | Default `false`. Ignored once the ordinary stay window already admits today. |
+| `reason` | string | required when `early_check_in` is `true` | Max 255. |
+
+**Behavior:** only `confirmed`. The room is the one given, else the reserved one, else the first free room auto-picked (available before dirty, then lowest number; never maintenance) — dirty rooms are allowed to be checked into. The hotel-local date (server setting `HOTEL_TIMEZONE`, default `Asia/Damascus`) must satisfy `check_in <= today < check_out`; `early_check_in` with a reason admits exactly the day before `check_in`, logged in the activity log as `reservation.early_check_in` (properties `reason`, `check_in`, `today`) — the flag is ignored inside the ordinary window. The room's housekeeping status is not changed; the room board shows it occupied. The guest gets a "room ready" push.
+
+**Response `data`:** the reservation with `rooms` and `guest` loaded, message "Guest checked in.".
+
+**Failure `error_code`s:** `reservation_state` (422, `context: { status, allowed: ["confirmed"] }` — also room of another type, or no room line), `reservation_outside_stay_window` (422, `context: { check_in, check_out, today }`, all `Y-m-d`), `room_out_of_order` (422, `context: { room_uuid, housekeeping_status }`), `room_already_assigned` (409), `no_availability` (409, nothing free to auto-pick), `validation_failed` (422), `unauthorized` (401), `forbidden` (403), `not_found` (404).
+
+Example `validation_failed` when `early_check_in` is sent without a reason: `"errors": { "reason": ["The reason field is required."] }`.
+
+### POST /cms/reservations/{uuid}/check-out — `reservations.create` (+ `folios.settle` to force)
+
+**Purpose:** Check the guest out.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `force` | boolean | no | Overrides an open-folio refusal. Only honoured for callers holding `folios.settle`. |
+| `reason` | string | required when `force` is `true` | Max 255. |
+
+**Behavior:** only `checked_in`; no date guard. The folio is generated (if missing) or refreshed (if open). An open folio is refused with `folio_unsettled` unless `force: true` comes from a `folios.settle` holder: then check-out proceeds, the folio stays open (settle it later with `POST /cms/folios/{folio}/settle`), and the override is logged as `reservation.check_out_forced` (properties `folio_uuid`, `folio_status`, `total_usd`, `reason`). `force` on an already-settled folio is ignored. Every assigned room moves to `dirty` (a system change, reason `check-out`). An internal `ReservationCheckedOut` event fires after commit.
+
+**Response `data`:** the reservation plus `folio: { uuid, status, total_usd }`, message "Guest checked out.".
+
+**Failure `error_code`s:** `reservation_state` (422, `context: { status, allowed: ["checked_in"] }`), `folio_unsettled` (422, `context: { folio_uuid, total_usd, can_force }` — the folio named by `folio_uuid` exists with current charges and can be settled with `POST /cms/folios/{folio}/settle`; show a "Force check-out" action only when `can_force` is `true`), `forbidden` (403, `force` sent without `folios.settle`, whatever the folio state), `validation_failed` (422), `unauthorized` (401), `not_found` (404).
+
+### PATCH /cms/reservations/{uuid}/notes — `reservations.create`
+
+**Purpose:** Keep free-text front-desk notes on a reservation.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `notes` | string or null | ✅ (key must be present) | Max 2000 characters (code points). Empty or whitespace-only text is stored as `null`. |
+
+**Behavior:** works on a reservation of any status. `notes` is returned to staff only — guest routes never return it. Each change is kept in the activity log.
+
+**Response `data`:** the reservation (`rooms`, `guest` loaded), message "Reservation notes updated.".
+
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `not_found` (404), `validation_failed` (422).
 
 ### DELETE /cms/reservations/{uuid} — `reservations.cancel`
 
@@ -972,8 +1058,8 @@ A specific room is now reserved when the booking is created, so `rooms[].room_nu
 | `pending_verification` | Guest booking created via the public two-step flow, awaiting OTP |
 | `pending` | Booking active, no room assigned |
 | `confirmed` | Admin `confirm`, or a settled payment while pending |
-| `checked_in` | Admin `assign-room` |
-| `checked_out` | Guest approves express checkout (P8) |
+| `checked_in` | Admin `POST /cms/reservations/{uuid}/check-in` |
+| `checked_out` | Admin `POST /cms/reservations/{uuid}/check-out`, or guest approves express checkout (P8) |
 | `cancelled` | Terminal — guest or admin cancel, or an expired soft-hold auto-releasing |
 
 ---
@@ -1071,6 +1157,8 @@ For the menu module specifically, see also Module: CMS Content — it is documen
 ---
 
 ## Module: Folios & Express Checkout (`folios.view`, `folios.settle`)
+
+The guest's approve now runs the same check-out as the desk (rooms turn dirty, `ReservationCheckedOut` fires, logged as `reservation.check_out_guest_express`), still without a balance check. `POST /cms/folios/{reservation}/generate` returns the folio unchanged once the reservation is checked out.
 
 ### POST /cms/folios/{reservation}/generate — `folios.view`
 
@@ -1220,7 +1308,7 @@ The unified read+assign layer over `service_requests` and `tickets` (chatbot-cre
 | `validation_failed` | 422 | Form validation failed |
 | `too_many_requests` | 429 | Rate limited |
 | `server_error` | 500 | Unexpected error — show generic message, log `request_id` |
-| `no_availability` | 409 | Last room raced away during booking |
+| `no_availability` | 409 | Last room raced away during booking, or check-in auto-pick found no free room of the type for the stay dates |
 | `room_already_assigned` | 409 | Room already assigned to another reservation for overlapping dates |
 | `invalid_promo` | 422 | Promo code invalid/expired |
 | `reservation_state` | 422 | Action not valid for the reservation's/folio's current state |
@@ -1229,6 +1317,9 @@ The unified read+assign layer over `service_requests` and `tickets` (chatbot-cre
 | `inquiry_state` | 422 | Invalid event-inquiry status transition |
 | `no_active_reservation` | 403 | Guest-side entitlement gate — not relevant to dashboard requests, but appears in any guest-facing payload you might inspect while debugging |
 | `room_status_transition_invalid` | 422 | Room status change not allowed from the current state; `context.allowed` lists the valid targets |
+| `reservation_outside_stay_window` | 422 | Check-in outside the hotel-local stay window |
+| `room_out_of_order` | 422 | The room is in maintenance |
+| `folio_unsettled` | 422 | Check-out with an open folio; `context.can_force` says whether the caller may force it |
 
 ---
 

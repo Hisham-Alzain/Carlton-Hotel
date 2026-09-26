@@ -7,6 +7,7 @@ use App\Enums\ReservationSource;
 use App\Enums\ReservationStatus;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,7 +23,7 @@ class Reservation extends Model
         'guest_id', 'booking_code', 'source', 'external_ref', 'external_channel',
         'check_in', 'check_out', 'checked_in_at', 'checked_out_at', 'dnd_until',
         'status', 'hold_expires_at', 'payment_method',
-        'total_usd', 'promo_code_id', 'last_name', 'phone',
+        'total_usd', 'promo_code_id', 'last_name', 'phone', 'notes',
     ];
 
     protected $casts = [
@@ -88,6 +89,19 @@ class Reservation extends Model
     public function isDndActive(): bool
     {
         return $this->dnd_until !== null && $this->dnd_until->isFuture();
+    }
+
+    /**
+     * Whether the hotel-local business date falls inside the stay: arrival day
+     * up to the last night, `check_in <= today < check_out` (D-02). The
+     * departure day itself is outside the window. Pass `HotelClock::today()`.
+     */
+    public function isWithinStayWindow(CarbonImmutable $hotelToday): bool
+    {
+        $today = $hotelToday->toDateString();
+
+        return $this->check_in->toDateString() <= $today
+            && $today < $this->check_out->toDateString();
     }
 
     public function folio(): \Illuminate\Database\Eloquent\Relations\HasOne

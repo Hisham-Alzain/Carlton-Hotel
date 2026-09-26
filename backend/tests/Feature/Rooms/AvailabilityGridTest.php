@@ -322,4 +322,17 @@ class AvailabilityGridTest extends TestCase
 
         $this->assertSame($small, $large);
     }
+
+    // Phase 3 D-02: the grid's default `from` is the hotel-local date.
+    public function test_grid_default_from_follows_the_hotel_timezone(): void
+    {
+        config(['hotel.timezone' => 'Asia/Tokyo']);
+        $this->travelTo(Carbon::parse('2027-03-09 16:30:00', 'UTC'));
+        Room::factory()->create(['room_type_id' => RoomType::factory()->create()->id]);
+
+        $this->grid()->assertOk()->assertJsonPath('data.from', '2027-03-10');
+
+        config(['hotel.timezone' => 'UTC']);
+        $this->grid()->assertOk()->assertJsonPath('data.from', '2027-03-09');
+    }
 }

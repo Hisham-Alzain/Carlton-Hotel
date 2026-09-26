@@ -142,6 +142,51 @@ class CheckInReservationActionTest extends TestCase
         Event::assertDispatchedTimes(GuestCheckedIn::class, 1);
     }
 
+    public function test_maintenance_is_read_from_the_locked_room_row(): void
+    {
+        // The room model is resolved before the transaction (by the service);
+        // the action must re-read it under lock rather than trust that copy.
+        // SQLite cannot show MySQL's row-lock blocking, only that the check
+        // runs on the re-read row: a flip landing before the lock is refused.
+        Event::fake([GuestCheckedIn::class]);
+        $stale       = $this->room('101');
+        $reservation = $this->confirmedStay();
+        Room::whereKey($stale->id)->update(['status' => 'maintenance']);
+        $this->assertSame('available', $stale->status->value, 'the caller still holds the pre-flip copy');
+
+        try {
+            $this->action->handle($reservation, $stale, $this->actor);
+            $this->fail('RoomOutOfOrderException expected');
+        } catch (RoomOutOfOrderException $e) {
+            $this->assertSame(['room_uuid' => $stale->uuid, 'housekeeping_status' => 'maintenance'], $e->context());
+        }
+
+        $this->assertSame([null, 'confirmed', null], $this->state($reservation));
+        Event::assertNotDispatched(GuestCheckedIn::class);
+    }
+
+    public function test_a_concurrently_deleted_room_is_refused_without_a_500(): void
+    {
+        // Room is soft-deletable (D-06 hardening): the target is resolved
+        // outside the transaction, so a concurrent delete can land before the
+        // locked re-read. That must fold into the existing "no target room"
+        // refusal, never an unhandled null-deref.
+        Event::fake([GuestCheckedIn::class]);
+        $stale       = $this->room('101');
+        $reservation = $this->confirmedStay();
+        $stale->delete();
+
+        try {
+            $this->action->handle($reservation, $stale, $this->actor);
+            $this->fail('NoAvailabilityException expected');
+        } catch (NoAvailabilityException $e) {
+            $this->assertSame([], $e->context());
+        }
+
+        $this->assertSame([null, 'confirmed', null], $this->state($reservation));
+        Event::assertNotDispatched(GuestCheckedIn::class);
+    }
+
     public function test_two_reservations_racing_for_the_last_room(): void
     {
         // Two rooms of the type, one out of order: 101 is the last free room.

@@ -6,6 +6,7 @@ use App\Enums\CheckOutMode;
 use App\Enums\ReservationStatus;
 use App\Events\ReservationCheckedOut;
 use App\Models\Folio;
+use App\Models\FolioItem;
 use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\ReservationRoom;
@@ -195,6 +196,114 @@ class ExpressCheckoutTest extends TestCase
         Event::assertDispatchedTimes(ReservationCheckedOut::class, 1);
         $this->assertSame($history, DB::table('room_status_history')->count());
         $this->assertSame($markers, DB::table('activity_log')->where('description', 'reservation.check_out_guest_express')->count());
+    }
+
+    /** Count folio_items inserts while $call runs (a rebuild re-inserts every line). */
+    private function countItemInserts(callable $call): int
+    {
+        $inserts = 0;
+        Event::listen('eloquent.created: '.FolioItem::class, function () use (&$inserts) {
+            $inserts++;
+        });
+        $call();
+
+        return $inserts;
+    }
+
+    public function test_express_checkout_builds_a_new_folio_exactly_once(): void
+    {
+        // Phase 3 hardening: the folio is built only by the check-out action,
+        // never a second time by ApproveFolioAction (which would delete and
+        // re-insert every line and change the item ids).
+        [, $reservation, , $token] = $this->guestInRoom();
+
+        $inserts = $this->countItemInserts(function () use ($token) {
+            $this->approve($token)->assertOk()->assertJsonCount(1, 'data.items');
+        });
+
+        $this->assertSame(1, $inserts, 'one room-charge line, inserted once');
+        $folio = Folio::where('reservation_id', $reservation->id)->sole();
+        $this->assertNotNull($folio->approved_by_guest_at);
+        // Only one row was ever inserted: a second build would have deleted it
+        // and left a higher id behind.
+        $this->assertSame([$folio->items()->sole()->id], FolioItem::pluck('id')->all());
+        $this->assertSame(1, (int) FolioItem::max('id'));
+    }
+
+    public function test_express_checkout_refreshes_an_existing_folio_exactly_once(): void
+    {
+        [, $reservation, , $token] = $this->guestInRoom();
+
+        // The guest opened their bill first (GET /api/folio builds it).
+        $this->withToken($token)->getJson('/api/folio')->assertOk();
+        $before = Folio::where('reservation_id', $reservation->id)->sole();
+        $this->assertNull($before->approved_by_guest_at);
+
+        $inserts = $this->countItemInserts(function () use ($token, $before) {
+            $this->approve($token)
+                ->assertOk()
+                ->assertJsonPath('data.uuid', $before->uuid)
+                ->assertJsonPath('data.approved_by_guest_at', '2027-03-12T09:00:00+00:00')
+                ->assertJsonCount(1, 'data.items');
+        });
+
+        $this->assertSame(1, $inserts, 'the open folio is refreshed once under the check-out lock, not twice');
+        $after = Folio::where('reservation_id', $reservation->id)->sole();
+        $this->assertSame($before->id, $after->id);
+        $this->assertNotNull($after->approved_by_guest_at);
+        $this->assertSame(1, $after->items()->count());
+    }
+
+    public function test_refused_express_checkout_rolls_back_the_approval_stamp(): void
+    {
+        // FA-06-1 with a folio already on the refused booking: the 422 leaves
+        // it exactly as it was — no approval stamp, no rebuilt items.
+        [$guest, , $room, $token] = $this->guestInRoom();
+        $future = Reservation::factory()->confirmed()->create([
+            'guest_id'  => $guest->id,
+            'check_in'  => '2027-03-20',
+            'check_out' => '2027-03-22',
+        ]);
+        ReservationRoom::factory()->create(['reservation_id' => $future->id, 'room_type_id' => $room->room_type_id]);
+        $folio   = Folio::factory()->create(['reservation_id' => $future->id]);
+        $itemIds = FolioItem::factory()->count(2)->create(['folio_id' => $folio->id])->pluck('id')->all();
+
+        $this->approve($token)
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'reservation_state');
+
+        $fresh = $folio->fresh();
+        $this->assertNull($fresh->approved_by_guest_at);
+        $this->assertSame('open', $fresh->status->value);
+        $this->assertSame($itemIds, $fresh->items()->orderBy('id')->pluck('id')->all());
+        $this->assertSame(ReservationStatus::CONFIRMED, $future->fresh()->status);
+    }
+
+    public function test_a_failed_approval_stamp_rolls_back_the_whole_check_out(): void
+    {
+        // The stamp runs after the shared check-out has written everything, so
+        // this proves both share ApproveFolioAction's one transaction: a failure
+        // at the stamp undoes the check-out, the room-dirty write, the folio and
+        // the guest marker, and the deferred event never fires.
+        Event::fake([ReservationCheckedOut::class]);
+        [, $reservation, $room, $token] = $this->guestInRoom();
+        Event::listen('eloquent.updating: '.Folio::class, function (Folio $folio) {
+            if ($folio->isDirty('approved_by_guest_at')) {
+                throw new \RuntimeException('stamp failed');
+            }
+        });
+
+        $this->approve($token)->assertStatus(500);
+
+        $fresh = $reservation->fresh();
+        $this->assertSame(ReservationStatus::CHECKED_IN, $fresh->status);
+        $this->assertNull($fresh->checked_out_at);
+        $this->assertSame(0, Folio::where('reservation_id', $reservation->id)->count());
+        $this->assertSame(0, FolioItem::count());
+        $this->assertSame('available', $room->fresh()->status->value);
+        $this->assertSame(0, DB::table('room_status_history')->count());
+        $this->assertSame(0, DB::table('activity_log')->where('description', 'reservation.check_out_guest_express')->count());
+        Event::assertNotDispatched(ReservationCheckedOut::class);
     }
 
     public function test_approve_requires_a_guest_token(): void

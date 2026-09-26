@@ -85,7 +85,7 @@ Existing paths changed in behaviour are assign-room (breaking) and guest approve
 
 ## Test counts
 
-- Full suite: 1229/1229 passing, 6327 assertions (`php artisan test`, serial, `--parallel` is unavailable, `paratest` is not installed), 0 failures.
+- Full suite: 1237/1237 passing, 6372 assertions (`php artisan test`, serial, `--parallel` is unavailable, `paratest` is not installed), 0 failures. (Post-hardening; was 1229/1229 before the two null-guard regression tests below.)
 - Engineer-stage baseline was 1066/1071 with 5 legacy failures by design; all closed by the rewritten-in-place legacy tests plus the new Phase 3 specs.
 - New/updated specs: `tests/Feature/Reservations/{ReservationNotesTest, AvailableRoomsTest, CheckInTest, AssignRoomTest, CheckOutTest, ExpressCheckoutTest, ReservationIndexFilterTest}.php`; `tests/Unit/Booking/{RoomAvailabilityPredicateTest, HotelClockTest, CheckInReservationActionTest, CheckOutReservationActionTest}.php`; additive methods on `RoomBoardTest`, `AvailabilityGridTest`, `UpdateRoomStatusActionTest`; rewritten-in-place `RoomAssignmentAtBookingTest`, `StayTest`, `ReservationTest`, `NotificationTriggersTest` (method counts grew vs `b928abf`, none deleted).
 
@@ -96,6 +96,62 @@ Existing paths changed in behaviour are assign-room (breaking) and guest approve
 - 03-07 docs and Postman were delegated to Sonnet sub-agents.
 - The Postman force-checkout request uses request-level auth (the verify script requires it).
 - Close-stage QA fixes (post engineer/QA pass): `ApproveFolioAction` lock order and doubled folio build, missing room lock at check-in/assign-room, and the controller-side `Room` lookup in `checkIn`/`assignRoom`, see decisions 11-13.
+
+## Hardening follow-up (QA minor findings, carried forward from build commit `e78c64a`)
+
+Verified against the checked-out working tree that all three Phase 3 hardening
+fixes QA flagged were already applied and committed in `e78c64a` (decisions
+11-13 above):
+
+1. **Lock order (reservation before folio)** — `ApproveFolioAction` already
+   locks `Reservation::whereKey(...)->lockForUpdate()->first()` first, inside
+   its own transaction, before delegating to `CheckOutReservationAction`
+   (which re-locks the same row, re-entrant, then the folio row). Reservation
+   → folio order is consistent across the staff and guest paths; no code
+   change needed.
+2. **Single folio generation** — `ApproveFolioAction` no longer calls
+   `GenerateFolioAction` at all; it only delegates to
+   `CheckOutReservationAction` (single generate/refresh under its own lock)
+   and then locks and stamps `approved_by_guest_at` on the resulting folio
+   inside the same transaction. No code change needed.
+3. **Locked room read** — `CheckInReservationAction` and `AssignRoomAction`
+   already re-read the target `Room` with `lockForUpdate()` inside the
+   transaction, immediately before the maintenance/overlap checks, in lock
+   order reservation → room type → room. No code change needed.
+
+What genuinely needed closing this round, applied in this hardening pass:
+
+- **Null-guard on the locked room re-read** (QA minor, both actions): `Room`
+  uses `SoftDeletes`, so the locked re-read
+  (`Room::whereKey($target->id)->lockForUpdate()->first()`) can return `null`
+  if the room is soft-deleted between resolution and the lock. Previously the
+  next line dereferenced `$target->room_type_id` unguarded, a 500 instead of
+  a domain error. Fixed by null-guarding the re-read and reusing each
+  action's existing "no target room" exception — `NoAvailabilityException`
+  (`no_availability`, 409) in `CheckInReservationAction`,
+  `ReservationStateException` (`reservation_state`, 422) in
+  `AssignRoomAction`. No new `error_code`.
+- Added regression tests: `CheckInReservationActionTest::test_a_concurrently_deleted_room_is_refused_without_a_500`
+  and `AssignRoomTest::test_a_concurrently_deleted_room_is_refused_without_a_500`
+  (soft-delete the target room between resolution and the call, assert the
+  existing domain exception and empty context, assert nothing is written).
+- Added exactly-once folio generation tests to `ExpressCheckoutTest`
+  (`test_express_checkout_builds_a_new_folio_exactly_once`,
+  `test_express_checkout_refreshes_an_existing_folio_exactly_once`) proving
+  `folio_items.id` is stable across the guest express approve flow (one
+  `eloquent.created` per item, not a delete+reinsert cycle), and
+  `test_a_failed_approval_stamp_rolls_back_the_whole_check_out` proving a
+  failure at the `approved_by_guest_at` stamp rolls back the entire shared
+  transaction (check-out, room-dirty write, folio/items, guest marker, no
+  deferred event).
+- Added `CheckInReservationActionTest::test_maintenance_is_read_from_the_locked_room_row`
+  and `AssignRoomTest::test_maintenance_is_read_from_the_locked_room_row`
+  proving the maintenance check reads the re-read (locked) row, not a stale
+  pre-flip copy — a room flipped to maintenance immediately before the call
+  is refused. SQLite cannot show MySQL row-lock blocking; the test docblocks
+  say so.
+- Full suite green throughout: 1237/1237, 0 failures.
+- Commit: `fix(reservations): ...` (this hardening pass; see git log).
 
 ## Flagged carry-forwards
 

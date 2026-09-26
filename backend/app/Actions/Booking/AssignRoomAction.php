@@ -66,7 +66,13 @@ class AssignRoomAction
             // pre-assigned) outside any lock, so a concurrent PATCH
             // .../status to maintenance could otherwise land between that read
             // and this commit. Lock order stays reservation, room type, room.
+            // Room is soft-deletable, so a concurrent delete can make the re-read
+            // return null: fold that into the existing "no target room" refusal.
             $target = Room::whereKey($target->id)->lockForUpdate()->first();
+
+            if (! $target) {
+                throw new ReservationStateException(__('custom.errors.reservation_state'));
+            }
 
             if ((int) $target->room_type_id !== (int) $line->room_type_id) {
                 throw new ReservationStateException(__('custom.errors.reservation_state'));

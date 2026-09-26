@@ -7,6 +7,7 @@ use App\Enums\ReservationStatus;
 use App\Events\GuestCheckedIn;
 use App\Events\RoomAssigned;
 use App\Exceptions\ReservationStateException;
+use App\Exceptions\RoomOutOfOrderException;
 use App\Models\Reservation;
 use App\Models\ReservationRoom;
 use App\Models\Room;
@@ -277,6 +278,52 @@ class AssignRoomTest extends TestCase
         }
 
         $this->assertNull($stale->rooms()->first()->room_id);
+    }
+
+    public function test_maintenance_is_read_from_the_locked_room_row(): void
+    {
+        // As check-in: the service resolves the room before the transaction, so
+        // the action re-reads it under lock. On SQLite this proves the check
+        // uses the re-read row; MySQL's row-lock blocking is not observable here.
+        Event::fake([RoomAssigned::class]);
+        $current = $this->room('101');
+        $stale   = $this->room('102');
+        $stay    = $this->stay('checkedIn', $current);
+        Room::whereKey($stale->id)->update(['status' => 'maintenance']);
+        $this->assertSame('available', $stale->status->value, 'the caller still holds the pre-flip copy');
+
+        try {
+            app(AssignRoomAction::class)->handle($stay, $stale);
+            $this->fail('RoomOutOfOrderException expected');
+        } catch (RoomOutOfOrderException $e) {
+            $this->assertSame(['room_uuid' => $stale->uuid, 'housekeeping_status' => 'maintenance'], $e->context());
+        }
+
+        $this->assertSame($current->id, $stay->rooms()->first()->room_id);
+        Event::assertNotDispatched(RoomAssigned::class);
+    }
+
+    public function test_a_concurrently_deleted_room_is_refused_without_a_500(): void
+    {
+        // Room is soft-deletable (D-06 hardening): the target is resolved
+        // outside the transaction, so a concurrent delete can land before the
+        // locked re-read. That must fold into the existing "no target room"
+        // refusal, never an unhandled null-deref.
+        Event::fake([RoomAssigned::class]);
+        $current = $this->room('101');
+        $stale   = $this->room('102');
+        $stay    = $this->stay('checkedIn', $current);
+        $stale->delete();
+
+        try {
+            app(AssignRoomAction::class)->handle($stay, $stale);
+            $this->fail('ReservationStateException expected');
+        } catch (ReservationStateException $e) {
+            $this->assertSame([], $e->context());
+        }
+
+        $this->assertSame($current->id, $stay->rooms()->first()->room_id);
+        Event::assertNotDispatched(RoomAssigned::class);
     }
 
     public function test_requires_reservations_create(): void

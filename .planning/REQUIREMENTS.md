@@ -29,11 +29,11 @@ All routes are under `/api/v1`. Staff routes use `auth:users` + permission middl
 
 ### Guests & Stay
 
-- [ ] **GUEST-01**: Staff can browse and search the guest directory with filters (name, phone, email, stay status) (`GET /guests`, permission `guests.view`)
-- [ ] **GUEST-02**: Staff can open a guest profile that includes stay history, preferences and a derived pre-arrival checklist (documents, approval, preferences, arrival time) (`GET /guests/{guest}`)
-- [ ] **GUEST-03**: Staff can add internal notes to a guest (`POST /guests/{guest}/notes`, permission `guests.edit`)
+- [ ] **GUEST-01**: Staff can browse and search the guest directory with `search` (name, phone, email) and a derived `stay_status` filter (`in_house | departing | arriving | upcoming | past | none`), paginated with `per_page` (default 15, max 100) (`GET /guests`, permission `guests.view`; `GET /guests/{guest}/notes` lists notes)
+- [ ] **GUEST-02**: Staff can open a guest profile that includes stay history (25 most recent + `stays_total`/`has_more`), preferences, the current/next reservation with approval, document metadata and digital-key status, and a derived six-item pre-arrival checklist (`documents_uploaded, check_in_approved, preferences_set, arrival_time_set, room_assigned, digital_key_issued`) (`GET /guests/{guest}`)
+- [ ] **GUEST-03**: Staff can add append-only internal notes to a guest (`POST /guests/{guest}/notes`, permission `guests.edit`; readable under `guests.view`; never in guest-facing responses or the activity log)
 - [ ] **GUEST-04**: Guest preferences (bed type, pillow, floor, other) can be saved by the guest (`PATCH /auth/guest/preferences`) and by staff (`PATCH /guests/{guest}/preferences`)
-- [ ] **GUEST-05**: Guest can complete online check-in for an upcoming stay by submitting an arrival time; a digital key code (random, high-entropy, expires at check-out and is invalidated on check-out/cancel; no lock-hardware integration) is issued when the check-in approval is approved (`POST /stays/{reservation}/online-check-in`, key returned on the stay resource)
+- [ ] **GUEST-05**: Guest can complete online check-in for a confirmed upcoming stay by submitting an arrival time (`POST /stays/{reservation}/online-check-in`; non-owner 403 `forbidden`, closed window 422 `online_check_in_closed`); a display-only digital key code (random ~60-bit, encrypted at rest, hidden from staff responses/pushes/activity log, expires at hotel check-out time, revoked on check-out/cancel/rejection/expiry) is issued when the check-in approval is approved regardless of online check-in, and returned on `GET /stays/upcoming|active|status` while active; no lock hardware
 - [ ] **GUEST-06**: Guest ID scan uploads use the existing `POST /pre-arrival/documents` route; mobile wiring documented (no new route)
 
 ### Folio & Payments

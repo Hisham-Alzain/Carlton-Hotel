@@ -149,13 +149,13 @@ Plans:
 
 **Goal**: Staff work from a guest directory with profiles, notes, preferences and a live pre-arrival checklist. Guests save their preferences and complete online check-in to receive a digital key.
 **Mode:** mvp
-**Depends on**: Phase 1 (digital-key invalidation also hooks Phase 3's check-out verb)
+**Depends on**: Phase 3 (consumes `ReservationCheckedOut`, `config/hotel.php` and the hotel-local clock) and Phase 1
 **Requirements**: GUEST-01, GUEST-02, GUEST-03, GUEST-04, GUEST-05, GUEST-06
 **Success Criteria** (what must be TRUE):
 
-  1. Staff with `guests.view` search `GET /guests` by name, phone, email and stay status. They open `GET /guests/{guest}` to see stay history, preferences, and a pre-arrival checklist (documents, approval, preferences, arrival time) that is derived from current data rather than stored.
+  1. Staff with `guests.view` search `GET /guests` by name, phone, email and a derived `stay_status` (`in_house | departing | arriving | upcoming | past | none`). They open `GET /guests/{guest}` to see stay history, preferences, the current/next reservation and a six-item pre-arrival checklist (`documents_uploaded, check_in_approved, preferences_set, arrival_time_set, room_assigned, digital_key_issued`) derived from current data rather than stored.
   2. Staff with `guests.edit` add internal notes via `POST /guests/{guest}/notes`. Preferences (bed type, pillow, floor, other) saved by the guest via `PATCH /auth/guest/preferences` or by staff via `PATCH /guests/{guest}/preferences` appear on the profile. Staff notes never appear in any guest-facing response.
-  3. A guest with an upcoming stay submits an arrival time via `POST /stays/{reservation}/online-check-in`. Once the check-in approval is approved, the stay resource shows a random, high-entropy digital key code that expires at check-out. The code stops being returned after check-out or cancellation. A guest calling this for someone else's reservation gets 403.
+  3. A guest with a confirmed upcoming stay submits an arrival time via `POST /stays/{reservation}/online-check-in` (non-owner → 403 `forbidden`; after the check-in date → 422 `online_check_in_closed`). Once the check-in approval is approved (with or without online check-in), `GET /stays/upcoming|active|status` show a random, high-entropy digital key code that expires at the hotel's check-out time on the check-out date. The code stops being returned after check-out, cancellation, rejection or expiry, and never appears in staff responses, pushes or the activity log.
   4. An ID scan uploaded through the existing `POST /pre-arrival/documents` route counts toward the checklist, and the mobile guide documents that wiring. No new route is added.
   5. Contract gate: all new routes pass happy / 401 / 403 / 422 tests with the suite green, AR/EN keys exist, and the guest directory, profile, preferences, online check-in and digital key nodes are `api:true`. The guides and Postman are updated, and `guests.view` / `guests.edit` are seeded with role presets and listed in the summary.
 

@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Booking;
 
 use App\Base\BaseResource;
+use App\Support\StayPayload;
 use Illuminate\Http\Request;
 
 class ActiveStayResource extends BaseResource
@@ -31,6 +32,8 @@ class ActiveStayResource extends BaseResource
             ],
             // Null until staff generate the folio.
             'folio_total_usd' => $this->whenLoaded('folio', fn () => $this->folio?->total_usd),
+            // Phase 4 (D-12): online_check_in, digital_key, pre_arrival_checklist.
+            ...StayPayload::forGuest($this->resource),
         ];
     }
 }

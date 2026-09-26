@@ -1,6 +1,9 @@
 <?php
 namespace App\Models;
 
+use App\Enums\BedType;
+use App\Enums\FloorPreference;
+use App\Enums\PillowType;
 use App\Models\Reservation;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
@@ -8,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Guest extends Authenticatable
 {
@@ -16,6 +20,8 @@ class Guest extends Authenticatable
     protected $fillable = [
         'uuid', 'name', 'phone', 'phone_country', 'phone_verified_at',
         'email', 'email_verified_at', 'first_name', 'last_name', 'preferred_locale',
+        // Phase 4 (D-08): preferences.
+        'bed_type', 'pillow_type', 'floor_preference', 'preferences_other', 'preferences_updated_at',
     ];
 
     protected $hidden = [];
@@ -25,7 +31,27 @@ class Guest extends Authenticatable
         return [
             'phone_verified_at' => 'datetime',
             'email_verified_at' => 'datetime',
+            'bed_type'               => BedType::class,
+            'pillow_type'            => PillowType::class,
+            'floor_preference'       => FloorPreference::class,
+            'preferences_updated_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Restates the `App\Traits\LogsActivity` chain on purpose — a trait method
+     * cannot be reached through `parent::` — and adds the D-08 exclusions:
+     * the free-text note and the allergy-adjacent pillow choice never reach
+     * activity_log. A free-text-only edit therefore logs only
+     * `preferences_updated_at`, by design.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->logExcept(['preferences_other', 'pillow_type']);
     }
 
     public function markPhoneVerified(): void
@@ -74,5 +100,11 @@ class Guest extends Authenticatable
     public function conversations(): HasMany
     {
         return $this->hasMany(Conversation::class);
+    }
+
+    /** Internal staff notes (Phase 4, D-06): append-only, never on guest routes. */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(GuestNote::class);
     }
 }

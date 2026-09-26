@@ -50,8 +50,14 @@ return [
      * contains `password`, and Spatie never consults `$hidden`. Without this
      * list the bcrypt hash is copied into activity_log.attribute_changes on
      * staff creation and on every password change. This is the global exclusion
-     * point on purpose: the trait's options are fixed, so no model adds its
-     * own logExcept().
+     * point for secrets every model shares.
+     *
+     * The trait's options are the default. A model with its own sensitive
+     * columns overrides `getActivitylogOptions()` and adds `logExcept()`,
+     * restating the trait chain because a trait method cannot be called as
+     * `parent::`. Two models do so (Phase 4): `Guest` for `preferences_other`
+     * and `pillow_type` (D-08), and `Reservation` for `digital_key_code` and
+     * `digital_key_hash` (D-11).
      */
     'default_except_attributes' => ['password', 'remember_token'],
 

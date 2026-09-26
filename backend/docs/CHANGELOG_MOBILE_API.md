@@ -49,6 +49,9 @@ accepts an **optional** `room_uuid` (see §9).
 | What | Before | After |
 |---|---|---|
 | `POST /folio/approve` | silently checked out whatever reservation the entitlement lookup picked, even a future booking | runs the same check-out as the desk (the guest's room turns dirty, `ReservationCheckedOut` fires, logged as `reservation.check_out_guest_express`); returns `reservation_state` (422) when the guest's most recent booking is not the checked-in stay — previously that mismatch was a silent defect. `GET /folio` still uses the same selection rule, unchanged this phase. |
+| `GET /auth/guest/me` | no `preferences` key | additive `preferences` object (Phase 4, D-09) |
+| `GET /reservations` \| `/reservations/{uuid}` | nested `guest` had no `preferences` key | the nested `guest` object carries the same additive `preferences` object (Phase 4, FA-4.02-2) |
+| `GET /stays/status` \| `/stays/active` \| `/stays/upcoming` | no online check-in, key or checklist fields | additive `online_check_in`, `digital_key` (display-only, **NOT lock-grade**) and `pre_arrival_checklist` on the reservation, plus `Cache-Control: no-store, private` on all three responses (Phase 4, D-11/D-12) |
 
 ---
 
@@ -337,6 +340,58 @@ occupancy onto a shared `overlapping()` query · `Reservation` gains
 
 ---
 
+## 10 — Guests & Stay (Phase 4)
+
+**Why:** staff needed a guest directory and profile (notes, preferences, a
+derived pre-arrival checklist), and guests needed to save preferences and
+complete online check-in to receive a digital key ahead of arrival.
+
+**Migrations:** `create_guest_notes_table` · `add_preferences_to_guests_table`
+(`bed_type`, `pillow_type`, `floor_preference`, `preferences_other`,
+`preferences_updated_at`) · `add_online_check_in_to_reservations_table`
+(`arrival_time`, `online_check_in_submitted_at`, `digital_key_code`,
+`digital_key_hash`, `digital_key_issued_at`, `digital_key_expires_at`,
+`digital_key_revoked_at`, `digital_key_revoked_reason`). All three additive
+and reversible.
+
+**New:** `App\Models\GuestNote` · `App\Filters\GuestFilter` ·
+`App\Services\Guest\GuestService` ·
+`App\Http\Controllers\Admin\GuestController` ·
+`App\Actions\Guest\{AddGuestNoteAction,UpdateGuestPreferencesAction}` ·
+`App\Actions\Booking\{SubmitOnlineCheckInAction,IssueDigitalKeyAction,RevokeDigitalKeyAction,RevokeExpiredDigitalKeysAction}` ·
+`App\Support\{PreArrivalChecklist,StayPayload}` ·
+`App\Enums\{GuestStayStatus,PillowType,FloorPreference,DigitalKeyRevocationReason}` ·
+`App\Events\CheckInApproved` · scheduled command `stays:expire-digital-keys`
+(every 15 minutes) · new permissions `guests.view`, `guests.edit` (presets
+`reception`, `concierge`).
+
+**Changed:** `ApproveCheckInAction` issues/keeps the digital key on approval
+and revokes it on rejection · `CancelReservationAction` and the check-out path
+revoke the key · `UpcomingStayResource` / `ActiveStayResource` /
+`CheckInStatusResource` gain the Phase 4 stay blocks via `StayPayload` ·
+`GuestResource` (guest `me`) gains `preferences` · `Guest` and `Reservation`
+gain `logExcept` entries so the key and the allergy-adjacent `pillow_type` /
+free-text `preferences_other` never reach the activity log.
+
+**Key decisions**
+- The digital key is a **display-only credential, NOT lock-grade** — a random
+  ~60-bit code (`XXXX-XXXX-XXXX`), encrypted at rest, hidden from every staff
+  response, push, activity-log entry and Postman/Firestore artifact. It opens
+  no lock. See `PITFALLS.md` Pitfall 6's Phase 4 status note for the
+  preconditions before any real lock integration.
+- The pre-arrival checklist is derived at read time from already-loaded
+  relations — never stored, never a source of truth by itself.
+- ID scans (GUEST-06) reuse the existing `POST /pre-arrival/documents` route
+  with a client-side `type` convention (e.g. `id_card`) — no new route, no
+  OCR, `SubmitDocumentsRequest` unchanged.
+
+**Endpoints:** `GET /guests` · `GET /guests/{guest}` ·
+`GET /guests/{guest}/notes` · `POST /guests/{guest}/notes` ·
+`PATCH /guests/{guest}/preferences` (all staff) · `PATCH /auth/guest/preferences` ·
+`POST /stays/{reservation}/online-check-in` (guest app).
+
+---
+
 ## Full endpoint inventory (51 routes added or changed)
 
 ### Public (tier-1, no token)
@@ -356,12 +411,14 @@ GET    /public/dining-venues/{uuid}/tables
 ### Guest (tier-2, `auth:guests`)
 ```
 PUT    /auth/guest/profile
+PATCH  /auth/guest/preferences
 POST   /reviews/{type}/{uuid}
 GET    /stays/active
 GET    /stays/upcoming
 GET    /stays/past
 GET    /stays/{reservation}/receipt
 GET    /stays/{reservation}/receipt/pdf
+POST   /stays/{reservation}/online-check-in
 ```
 
 ### Guest with a booking (tier-3a, `has_booking`)

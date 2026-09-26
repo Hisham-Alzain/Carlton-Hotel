@@ -9,6 +9,9 @@ use App\Enums\Concerns\HasValues;
  *
  * A room type carries a *list* of these (`room_types.bed_types`), not a single
  * value — a suite may be sold as "1 king OR 2 twins".
+ *
+ * `EXTRA` is an inventory-only bed (a room type can offer it) and is rejected
+ * as a guest preference (Phase 4, D-08).
  */
 enum BedType: string
 {

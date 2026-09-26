@@ -11,7 +11,7 @@ class SeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_all_19_permissions_seeded(): void
+    public function test_all_21_permissions_seeded(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $expected = [
@@ -26,11 +26,13 @@ class SeederTest extends TestCase
             'service_requests.view', 'service_requests.assign', 'service_requests.update',
             'tickets.view', 'tickets.assign', 'tickets.respond',
             'pricing.edit', 'reports.view', 'staff.manage',
+            // Phase 4 (D-01): the guests group
+            'guests.view', 'guests.edit',
         ];
         foreach ($expected as $p) {
             $this->assertDatabaseHas('permissions', ['name' => $p, 'guard_name' => 'users']);
         }
-        $this->assertCount(19, Permission::where('guard_name', 'users')->get());
+        $this->assertCount(21, Permission::where('guard_name', 'users')->get());
     }
 
     public function test_all_7_role_presets_seeded(): void
@@ -102,11 +104,27 @@ class SeederTest extends TestCase
         $this->assertSame(['housekeeping', 'reception'], $holders);
     }
 
+    public function test_reception_and_concierge_presets_grant_the_guest_permissions(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        foreach (['guests.view', 'guests.edit'] as $permission) {
+            $holders = Role::where('guard_name', 'users')->with('permissions')->get()
+                ->filter(fn (Role $role) => $role->permissions->pluck('name')->contains($permission))
+                ->pluck('name')
+                ->sort()
+                ->values()
+                ->all();
+
+            $this->assertSame(['concierge', 'reception'], $holders, $permission);
+        }
+    }
+
     public function test_seeder_idempotent(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-        $this->assertCount(19, Permission::where('guard_name', 'users')->get());
+        $this->assertCount(21, Permission::where('guard_name', 'users')->get());
         $this->assertCount(7, Role::where('guard_name', 'users')->get());
 
         // Idempotent down to the pivot: re-running must not double up grants.

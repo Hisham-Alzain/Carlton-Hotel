@@ -4,6 +4,7 @@ namespace App\Http\Resources\Booking;
 
 use App\Base\BaseResource;
 use App\Models\Reservation;
+use App\Support\StayPayload;
 use Illuminate\Http\Request;
 
 /**
@@ -37,6 +38,8 @@ class CheckInStatusResource extends BaseResource
                 'nights_remaining' => $reservation->nightsRemaining(),
                 // Assigned at check-in, so null until the guest is in the room.
                 'room_number'      => $reservation->rooms->first()?->room?->number,
+                // Phase 4 (D-12): online_check_in, digital_key, pre_arrival_checklist.
+                ...StayPayload::forGuest($reservation),
             ] : null,
         ];
     }

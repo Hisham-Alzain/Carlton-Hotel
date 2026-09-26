@@ -26,7 +26,12 @@ class PermissionsGroupedTest extends TestCase
                     ->assertStatus(200)->assertJson(['success' => true]);
 
         $groups = $res->json('data');
-        $this->assertCount(9, $groups);
+        $this->assertCount(10, $groups);
+
+        // Phase 4 (D-01): the `guests` group holds the directory read and write.
+        $guestsGroup = collect($groups)->firstWhere('module', 'guests');
+        $this->assertNotNull($guestsGroup, 'guests group exists');
+        $this->assertSame(['guests.edit', 'guests.view'], collect($guestsGroup['permissions'])->sort()->values()->all());
 
         // Phase 2 (D-06): the new `rooms` group holds only the status verb.
         $roomsGroup = collect($groups)->firstWhere('module', 'rooms');

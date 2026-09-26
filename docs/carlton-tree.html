@@ -282,12 +282,14 @@ var TREE = {
    {"name":"stay status · entitlements","api":true,"dash":"na","mob":false,"ep":["GET /stays/status"]},
    {"name":"pre-arrival documents","api":true,"dash":"na","mob":true,"meta":"jpg · png · pdf ≤ 10 MB",
     "ep":["POST /pre-arrival/documents"]},
-   {"name":"check-in approvals","api":true,"dash":false,"mob":"na","meta":"staff approve docs · no screen",
+   {"name":"check-in approvals","api":true,"dash":false,"mob":"na","meta":"staff approve docs · no screen · approve issues the digital key",
     "ep":["GET /cms/check-in-approvals","PATCH /cms/check-in-approvals/{reservation}/approve"]},
-   {"name":"online check-in","api":false,"dash":"na","mob":"mock","meta":"arrival time · digital key — local only"},
-   {"name":"ID scan","api":false,"dash":"na","mob":"mock","meta":"camera only · no OCR or upload"},
-   {"name":"guest preferences","api":false,"dash":"mock","mob":"mock","meta":"bed · pillow — GetStorage",
-    "ep":["PATCH /guests/{id}/preferences (dashboard mock, never called)"]}
+   {"name":"online check-in","api":true,"dash":"na","mob":"mock","meta":"arrival time · digital key code, data field, no lock hardware",
+    "ep":["POST /stays/{reservation}/online-check-in"]},
+   {"name":"ID scan","api":true,"dash":"na","mob":"mock","meta":"reuses pre-arrival documents · no OCR",
+    "ep":["POST /pre-arrival/documents"]},
+   {"name":"guest preferences","api":true,"dash":"mock","mob":"mock","meta":"bed · pillow · floor · other",
+    "ep":["PATCH /auth/guest/preferences","PATCH /guests/{guest}/preferences"]}
   ]},
   {"name":"Folio & payments","kind":"section","api":true,"dash":"mock","mob":true,"children":[
    {"name":"my bill","api":true,"dash":"na","mob":true,"meta":"My Bill · Full Statement buttons stubbed",
@@ -344,8 +346,8 @@ var TREE = {
    {"name":"reports","api":false,"dash":"mock","mob":"na","ep":["GET /reports/dashboard (mock)"]}
   ]},
   {"name":"Guests & messaging","kind":"section","api":true,"dash":"mock","mob":true,"children":[
-   {"name":"guest directory · profile","api":false,"dash":"mock","mob":"na","meta":"notes · pre-arrival checklist",
-    "ep":["GET /guests (mock)","GET /guests/{id} (mock)","POST /guests/{id}/notes (mock)"]},
+   {"name":"guest directory · profile","api":true,"dash":"mock","mob":"na","meta":"notes · preferences · pre-arrival checklist · stay history",
+    "ep":["GET /guests","GET /guests/{guest}","GET /guests/{guest}/notes","POST /guests/{guest}/notes"]},
    {"name":"concierge chat — guest","api":true,"dash":"na","mob":"partial","meta":"page 1 only · agent persona hard-coded",
     "ep":["GET /conversations","GET /conversations/{uuid}/messages","POST /conversations"]},
    {"name":"concierge chat — staff inbox","api":true,"dash":false,"mob":"na","meta":"no screen",

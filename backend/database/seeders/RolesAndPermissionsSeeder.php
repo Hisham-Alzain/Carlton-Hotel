@@ -30,6 +30,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'service_requests.view', 'service_requests.assign', 'service_requests.update',
             'tickets.view', 'tickets.assign', 'tickets.respond',
             'pricing.edit', 'reports.view', 'staff.manage',
+            // Phase 4 (D-01): staff guest directory, profile, notes and preferences.
+            'guests.view', 'guests.edit',
         ];
 
         foreach ($permissions as $name) {
@@ -37,10 +39,10 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         $presets = [
-            'reception'      => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'service_requests.view', 'rooms.status'],
+            'reception'      => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'service_requests.view', 'rooms.status', 'guests.view', 'guests.edit'],
             'kitchen'        => ['service_requests.view', 'service_requests.update'],
             'housekeeping'   => ['service_requests.view', 'service_requests.update', 'rooms.status'],
-            'concierge'      => ['service_requests.view', 'service_requests.assign', 'service_requests.update'],
+            'concierge'      => ['service_requests.view', 'service_requests.assign', 'service_requests.update', 'guests.view', 'guests.edit'],
             'events'         => ['service_requests.view', 'tickets.view', 'tickets.assign', 'tickets.respond'],
             // Without this preset no seeded account except the super admin (who
             // passes via Gate::before, not via permission rows) can reach

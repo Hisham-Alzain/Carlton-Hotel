@@ -137,7 +137,7 @@ After login, the `permissions` array in the user object is the source of truth f
 
 A `super_admin` account bypasses all permission checks on the server.
 
-**Full permission catalog** (9 modules, 19 permissions): `reservations.view|create|cancel`, `folios.view|settle`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`.
+**Full permission catalog** (10 modules, 21 permissions): `reservations.view|create|cancel`, `folios.view|settle`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`, `guests.view|edit`.
 
 ### `cms.view` is enforced — gate read-only navigation on it
 
@@ -519,7 +519,7 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 ]
 ```
 
-9 modules: `reservations`, `folios`, `cms`, `rooms`, `service_requests`, `tickets`, `pricing`, `reports`, `staff`.
+10 modules: `reservations`, `folios`, `cms`, `rooms`, `service_requests`, `tickets`, `pricing`, `reports`, `guests`, `staff`.
 
 ---
 
@@ -532,10 +532,10 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 **Response `data`:** Array of presets:
 ```json
 [
-  { "name": "reception", "permissions": ["reservations.view", "reservations.create", "reservations.cancel", "folios.view", "folios.settle", "service_requests.view", "rooms.status"] },
+  { "name": "reception", "permissions": ["reservations.view", "reservations.create", "reservations.cancel", "folios.view", "folios.settle", "service_requests.view", "rooms.status", "guests.view", "guests.edit"] },
   { "name": "kitchen", "permissions": ["service_requests.view", "service_requests.update"] },
   { "name": "housekeeping", "permissions": ["service_requests.view", "service_requests.update", "rooms.status"] },
-  { "name": "concierge", "permissions": ["service_requests.view", "service_requests.assign", "service_requests.update"] },
+  { "name": "concierge", "permissions": ["service_requests.view", "service_requests.assign", "service_requests.update", "guests.view", "guests.edit"] },
   { "name": "events", "permissions": ["service_requests.view", "tickets.view", "tickets.assign", "tickets.respond"] },
   { "name": "content_editor", "permissions": ["cms.view", "cms.edit", "cms.restore"] },
   { "name": "content_manager", "permissions": ["cms.view", "cms.edit", "cms.restore", "cms.purge"] }
@@ -883,6 +883,8 @@ Empty values mean no filter; unknown query parameters are ignored. Example: `?st
 ```
 `notes` is returned to staff only; guest routes never include it.
 
+The nested `guest` object (here and on `GET /cms/reservations` rows) also carries the guest's `preferences` — `{ bed_type, pillow_type, floor_preference, other, updated_at }` (Phase 4, D-09), the same object `PATCH /guests/{uuid}/preferences` returns. The reservation payload never carries the digital key or any key column.
+
 ### POST /cms/reservations — `reservations.create`
 
 **Purpose:** Front-desk booking — reception creating a reservation for a guest at the desk or on the phone. There is no OTP step: the public two-step flow verifies a guest who is not present, whereas here staff vouch for them by holding the permission.
@@ -1154,6 +1156,8 @@ For the menu module specifically, see also Module: CMS Content — it is documen
 
 **Failure:** `not_found` (404) if the reservation has no submitted documents/approval row yet.
 
+Approving a `confirmed` or `checked_in` stay also issues the guest's digital key (Phase 4, D-11) — display-only, NOT lock-grade, and never returned to staff. Re-approving a stay that already holds an active key keeps that key rather than minting a new one. Rejecting revokes it. Either way the guest gets a push (`notifications.check_in_approved`) that never contains the code.
+
 ---
 
 ## Module: Folios & Express Checkout (`folios.view`, `folios.settle`)
@@ -1219,6 +1223,118 @@ The unified read+assign layer over `service_requests` and `tickets` (chatbot-cre
 - `GET /api/dashboard/summary` — `{ service_requests?: {status: count}, tickets?: {status: count}, event_inquiries?: {status: count} }`. Each block appears only if you hold the matching `.view` permission (`tickets.view` unlocks both `tickets` and `event_inquiries` — event inquiries reuse the same permission P6 already gated their own admin routes with). No permissions → `{}`, not a 403.
 
 **Tickets are chatbot-only for now.** Nothing creates a `Ticket` until P11's `CreateTicketAction` — the table and queue support them from P10 onward so nothing needs to change when P11 lands.
+
+---
+
+## Module: Guests (`guests.view` · `guests.edit`)
+
+Staff guest directory, profile, notes and preferences (Phase 4). Seeded on the `reception` and `concierge` presets only. **Staff cannot edit guest identity** (name, phone, email) — there is no `PATCH /guests/{guest}` and none is planned; only notes and preferences are staff-editable (D-13).
+
+### GET /guests — `guests.view`
+
+**Purpose:** The guest directory (search + stay filter), paginated (default 15, cap 100).
+
+**Request query:**
+
+| Param | Notes |
+|---|---|
+| `search` | Case-insensitive substring across `name`, `first_name`, `last_name`, `phone`, `email`. |
+| `phone`, `email` | Operators `eq`, `like` (`?phone[like]=0912`, `?email=a@b.com`). |
+| `preferred_locale` | Operators `eq`, `in`. |
+| `sort` / `sort_dir` | `sort` one of `name`, `last_name`, `created_at`; `sort_dir` `asc` (default) / `desc`. Default order (no `sort`): `last_name asc, name asc, id asc`. |
+| `stay_status` | One of `in_house`, `departing`, `arriving`, `upcoming`, `past`, `none`, evaluated against the hotel-local date. Non-exclusive predicates (an `in_house` filter also lists guests departing today) — the row's own `stay_status` below is the precedence-based one. Empty value = no filter. **Any other value is `422` `validation_failed` on `stay_status`.** |
+| `per_page` | Default 15, hard cap 100. |
+
+Guests with no reservations are listed (`stay_status: "none"`).
+
+**Row shape** (13 keys):
+```json
+{
+  "uuid": "...", "name": "...", "first_name": "...", "last_name": "...",
+  "phone": "...", "phone_country": "SY", "phone_verified": true,
+  "email": "...", "email_verified": true, "preferred_locale": "en",
+  "stay_status": "in_house",
+  "current_reservation": { "uuid": "...", "booking_code": "CARL-...", "status": "checked_in", "check_in": "2026-09-25", "check_out": "2026-09-28", "room_number": "812" },
+  "created_at": "..."
+}
+```
+`current_reservation` is `null` when the row's `stay_status` is `none`. `stay_status` precedence when several would apply: `departing > in_house > arriving > upcoming > past > none`.
+
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `validation_failed` (422, `errors.stay_status` on an unknown value).
+
+### GET /guests/{uuid} — `guests.view`
+
+**Purpose:** The "guest at the counter" profile — one bounded round trip: identity, stats, preferences, the target reservation in full, the derived pre-arrival checklist, recent stay history and recent notes. Staff-only — never reused on a guest route.
+
+**Response `data`** (21 keys):
+```json
+{
+  "uuid": "...", "name": "...", "first_name": "...", "last_name": "...",
+  "phone": "...", "phone_country": "SY", "phone_verified": true,
+  "email": "...", "email_verified": true, "preferred_locale": "en",
+  "created_at": "...", "stay_status": "in_house",
+  "stats": { "stays_count": 3, "cancelled_count": 0, "last_check_out": "2026-08-01" },
+  "preferences": { "bed_type": "king", "pillow_type": "firm", "floor_preference": "high", "other": "...", "updated_at": "..." },
+  "current_reservation": {
+    "uuid": "...", "booking_code": "CARL-...", "status": "checked_in",
+    "check_in": "2026-09-25", "check_out": "2026-09-28", "checked_in_at": "...",
+    "arrival_time": "18:30", "online_check_in_submitted_at": "...",
+    "room": { "uuid": "...", "number": "812", "floor": 8 },
+    "room_type": { "uuid": "...", "name": { "en": "...", "ar": "..." } },
+    "check_in_approval": { "uuid": "...", "status": "approved", "notes": null, "approved_by": { "uuid": "...", "name": "..." }, "updated_at": "..." },
+    "documents": [ { "uuid": "...", "type": "passport", "created_at": "..." } ],
+    "digital_key": { "issued_at": "...", "expires_at": "...", "revoked_at": null, "active": true }
+  },
+  "pre_arrival_checklist": { "reservation_uuid": "...", "complete": false, "items": [ "...six items, see below..." ] },
+  "stay_history": [ { "uuid": "...", "booking_code": "...", "status": "checked_out", "check_in": "...", "check_out": "...", "nights": 2, "room_number": "801", "room_type": { "uuid": "...", "name": { "en": "...", "ar": "..." } }, "total_usd": "270.00", "checked_in_at": "...", "checked_out_at": "..." } ],
+  "stays_total": 4, "has_more": false,
+  "notes": [ { "uuid": "...", "body": "...", "author": { "uuid": "...", "name": "..." }, "created_at": "..." } ],
+  "notes_count": 6
+}
+```
+
+- `current_reservation` is the in-house stay if any, else the next arrival; `null` when neither exists.
+- `documents` is metadata only — no `file_path`, no URL. `digital_key` here is the **staff shape** (`{issued_at, expires_at, revoked_at, active}`) — the code itself never appears in a staff response.
+- `pre_arrival_checklist` is derived, never stored, and is `null` without a target reservation. Six items, in order, each `{key, done, ...detail}`: `documents_uploaded` (`count`), `check_in_approved` (`status`), `preferences_set`, `arrival_time_set` (`arrival_time`), `room_assigned` (`room_number`), `digital_key_issued` (`expires_at`). `complete` is true only when all six are done; a guest declaring `floor_preference: "any"` still counts as `preferences_set`.
+- `stay_history` is the 25 most recent reservations of any status by `check_in desc`; `stays_total` counts every non-cancelled reservation and `has_more` is true when history was truncated to the 25-row window.
+- `notes` is the 10 newest; `notes_count` is the guest's total note count. The full list is `GET /guests/{uuid}/notes` below.
+
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `not_found` (404).
+
+### GET /guests/{uuid}/notes — `guests.view`
+
+**Purpose:** The guest's full note history, paginated newest first (default 15, cap 100; same tiebreak as the profile's `notes`: `created_at desc, id desc`).
+
+**Response `data`:** paginated `items` of `{ uuid, body, author: {uuid, name} | null, created_at }`.
+
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `not_found` (404).
+
+### POST /guests/{uuid}/notes — `guests.edit`
+
+**Purpose:** Add a free-text front-desk note about a guest. Append-only — there is no edit or delete route.
+
+**Request body:** `{ "body": "..." }` — required string, max 2000.
+
+**Response:** HTTP 201, `{ uuid, body, author: {uuid, name}, created_at }`, message `"Guest note added."`.
+
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `not_found` (404), `validation_failed` (422, `errors.body`).
+
+### PATCH /guests/{uuid}/preferences — `guests.edit`
+
+**Purpose:** Staff records a guest's room preferences on their behalf (e.g. taken over the phone).
+
+**Request body:** any of the four keys, PATCH semantics — a present key is written, an explicit `null` clears it, an absent key is left untouched. A body with **none** of the four keys is `422` on `errors.preferences`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `bed_type` | string, nullable | `king`, `queen`, `double`, `twin`, `single` — **`extra` is refused** (inventory-only, not a guest preference). |
+| `pillow_type` | string, nullable | `soft`, `medium`, `firm`, `feather`, `hypoallergenic`. |
+| `floor_preference` | string, nullable | `low`, `high`, `any` (`any` is a positive choice, not "no preference"). |
+| `other` | string, nullable | Max 500. |
+
+**Response `data`:** `{ bed_type, pillow_type, floor_preference, other, updated_at }` — the same shape `PATCH /auth/guest/preferences` returns on the guest side. Message `"Preferences updated."`.
+
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `not_found` (404), `validation_failed` (422 — including an unknown enum value, `extra` for `bed_type`, or `errors.preferences` on an empty body).
 
 ---
 
@@ -1326,4 +1442,4 @@ The unified read+assign layer over `service_requests` and `tickets` (chatbot-cre
 ## Coming in later phases
 
 - **P11** — AI chatbot creates the first `Ticket` rows (source=chatbot); nothing new for the dashboard to integrate beyond what P10 already built
-- **P12** — Reports (occupancy, revenue, reservations-by-source, request volume, ticket resolution — `reports.view`), guest directory (search + profile + history), hardening pass
+- **P12** — Reports (occupancy, revenue, reservations-by-source, request volume, ticket resolution — `reports.view`), hardening pass

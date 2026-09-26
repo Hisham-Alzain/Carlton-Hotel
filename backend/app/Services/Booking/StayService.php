@@ -2,11 +2,13 @@
 
 namespace App\Services\Booking;
 
+use App\Actions\Booking\SubmitOnlineCheckInAction;
 use App\Enums\ReservationStatus;
 use App\Models\Guest;
 use App\Models\Reservation;
 use App\Support\GuestEntitlement;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 /**
  * Read projections over `reservations` for the three mobile stay screens.
@@ -18,7 +20,17 @@ use Illuminate\Database\Eloquent\Builder;
 class StayService
 {
     protected array $with = ['rooms.roomType', 'rooms.room', 'folio'];
+
+    /**
+     * Relations StayPayload reads (Phase 4, D-12) on the three screens that
+     * carry it. `guest` is set from the token's guest instead of loaded.
+     */
+    protected array $payloadWith = ['checkInApproval', 'documents'];
     protected int $perPage = 15;
+
+    public function __construct(
+        private readonly SubmitOnlineCheckInAction $submitOnlineCheckIn,
+    ) {}
 
     /**
      * "Is the bearer of this token in the hotel right now?"
@@ -31,9 +43,10 @@ class StayService
     {
         $booked = GuestEntitlement::bookedReservations($guest);
 
-        // One extra query for the whole set, so the resource never lazy-loads.
+        // One query per relation for the whole set, so the resource never lazy-loads.
         if ($booked->isNotEmpty()) {
-            $booked->load('rooms.room');
+            $booked->load(['rooms.room', ...$this->payloadWith]);
+            $this->withGuest($booked, $guest);
         }
 
         $checkedIn = $booked->first(
@@ -55,9 +68,12 @@ class StayService
     public function active(Guest $guest): array
     {
         $data = $this->query($guest)
+            ->with($this->payloadWith)
             ->where('status', ReservationStatus::CHECKED_IN)
             ->orderByDesc('check_in')
             ->first();
+
+        $data?->setRelation('guest', $guest);
 
         return ['data' => $data, 'code' => 200];
     }
@@ -69,10 +85,27 @@ class StayService
     public function upcoming(Guest $guest): array
     {
         $data = $this->query($guest)
+            ->with($this->payloadWith)
             ->whereIn('status', [ReservationStatus::PENDING, ReservationStatus::CONFIRMED])
             ->whereDate('check_out', '>=', now()->startOfDay())
             ->orderBy('check_in')
             ->get();
+
+        $this->withGuest($data, $guest);
+
+        return ['data' => $data, 'code' => 200];
+    }
+
+    /**
+     * Online check-in (D-10), answered with the upcoming-stay payload: the
+     * reservation comes back loaded exactly as upcoming() loads it.
+     */
+    public function onlineCheckIn(Guest $guest, Reservation $reservation, string $arrivalTime): array
+    {
+        $data = $this->submitOnlineCheckIn->handle($reservation, $arrivalTime)['data'];
+
+        $data->load([...$this->with, ...$this->payloadWith]);
+        $data->setRelation('guest', $guest);
 
         return ['data' => $data, 'code' => 200];
     }
@@ -85,6 +118,12 @@ class StayService
             ->paginate($this->perPage);
 
         return ['data' => $data, 'code' => 200];
+    }
+
+    /** The token's guest owns every row here — hand it over instead of querying it. */
+    private function withGuest(Collection $reservations, Guest $guest): void
+    {
+        $reservations->each(fn (Reservation $r) => $r->setRelation('guest', $guest));
     }
 
     private function query(Guest $guest): Builder

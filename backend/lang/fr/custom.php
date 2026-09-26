@@ -38,6 +38,9 @@ return [
         'password_changed'        => 'Mot de passe modifié.',
         'review_submitted'        => 'Merci pour votre avis.',
         'review_moderated'        => 'Avis mis à jour.',
+        'guest_note_added'        => 'Note client ajoutée.',
+        'preferences_updated'     => 'Préférences mises à jour.',
+        'online_check_in_submitted' => 'Enregistrement en ligne envoyé.',
     ],
     'errors'     => [
         'server_error'           => 'Une erreur est survenue.',
@@ -65,6 +68,7 @@ return [
         'reservation_state'        => "Cette action n'est pas autorisée dans l'état actuel de la réservation.",
         'room_status_transition_invalid' => 'Cette chambre ne peut pas passer à ce statut depuis son statut actuel.',
         'reservation_outside_stay_window' => "L'enregistrement n'est possible qu'entre la date d'arrivée et la veille du départ.",
+        'online_check_in_closed' => "L'enregistrement en ligne est fermé pour ce séjour : il est possible jusqu'à la date d'arrivée.",
         'room_out_of_order' => 'Cette chambre est hors service (maintenance) et ne peut pas être attribuée.',
         'folio_unsettled' => "Le folio n'est pas réglé. Réglez-le avant le départ ou forcez le départ en indiquant un motif.",
         'hold_expired'             => 'La réservation provisoire a expiré. Veuillez recommencer votre réservation.',
@@ -89,6 +93,10 @@ return [
         'room_ready_body'      => 'Votre chambre a été attribuée. À très bientôt !',
         'inquiry_routed_title' => 'Nouvelle demande pour un événement',
         'inquiry_routed_body'  => 'Une nouvelle demande de :name a été transmise à votre service.',
+        'check_in_approved'    => [
+            'title' => 'Votre enregistrement est approuvé',
+            'body'  => "Votre clé numérique est prête dans l'application.",
+        ],
     ],
     'receipt'    => [
         'title'          => 'Reçu de séjour',

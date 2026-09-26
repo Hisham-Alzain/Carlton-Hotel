@@ -10,6 +10,11 @@ Artisan::command('inspire', function () {
 
 Schedule::command('booking:release-holds')->everyFiveMinutes();
 
+// Phase 4 (D-11): expired digital keys are already hidden at read time; the
+// sweep nulls the stored code and hash. Every 15 minutes per RESEARCH — D-11
+// fixes no cadence, so this line is the one place to tighten or loosen it.
+Schedule::command('stays:expire-digital-keys')->everyFifteenMinutes()->withoutOverlapping();
+
 // Nightly, off-peak, and never twice at once: emptying the bin force-deletes
 // through Eloquent so every row fires its media purge and its cascade, which is
 // hundreds of file unlinks on a big clear-out. `withoutOverlapping()` stops a

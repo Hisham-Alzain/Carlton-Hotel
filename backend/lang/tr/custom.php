@@ -38,6 +38,9 @@ return [
         'password_changed'        => 'Şifre değiştirildi.',
         'review_submitted'        => 'Değerlendirmeniz için teşekkür ederiz.',
         'review_moderated'        => 'Değerlendirme güncellendi.',
+        'guest_note_added'        => 'Misafir notu eklendi.',
+        'preferences_updated'     => 'Tercihler güncellendi.',
+        'online_check_in_submitted' => 'Çevrimiçi giriş gönderildi.',
     ],
     'errors'     => [
         'server_error'           => 'Bir hata oluştu.',
@@ -65,6 +68,7 @@ return [
         'reservation_state'        => 'Bu işlem, rezervasyonun mevcut durumunda yapılamaz.',
         'room_status_transition_invalid' => 'Bu oda mevcut durumundan bu duruma geçemez.',
         'reservation_outside_stay_window' => 'Giriş yalnızca varış tarihi ile ayrılıştan önceki gün arasında yapılabilir.',
+        'online_check_in_closed' => 'Bu konaklama için çevrimiçi giriş kapandı: varış tarihine kadar yapılabilir.',
         'room_out_of_order' => 'Bu oda bakımda olduğu için atanamaz.',
         'folio_unsettled' => 'Folyo kapatılmadı. Çıkıştan önce kapatın veya bir gerekçe ile çıkışı zorlayın.',
         'hold_expired'             => 'Rezervasyon bekletme süresi doldu. Lütfen yeni bir rezervasyon başlatın.',
@@ -89,6 +93,10 @@ return [
         'room_ready_body'      => 'Odanız atandı. Görüşmek üzere!',
         'inquiry_routed_title' => 'Yeni etkinlik talebi',
         'inquiry_routed_body'  => ':name tarafından gönderilen yeni bir talep departmanınıza yönlendirildi.',
+        'check_in_approved'    => [
+            'title' => 'Girişiniz onaylandı',
+            'body'  => 'Dijital anahtarınız uygulamada hazır.',
+        ],
     ],
     'receipt'    => [
         'title'          => 'Konaklama Makbuzu',

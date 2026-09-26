@@ -768,6 +768,47 @@
                     "response": []
                 },
                 {
+                    "name": "Guest — Update Preferences",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/guest/preferences",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "guest",
+                                "preferences"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"bed_type\": \"queen\",\n    \"pillow_type\": \"firm\",\n    \"floor_preference\": \"any\",\n    \"other\": \"Extra towels\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
                     "name": "[Guest] Logout",
                     "request": {
                         "method": "POST",
@@ -7680,6 +7721,48 @@
                         "description": "Omit `until` to default to the end of the current hotel day. Stored as an expiry so a forgotten toggle clears itself. Tier-3b (is_checked_in)."
                     },
                     "response": []
+                },
+                {
+                    "name": "Online check-in (Layla)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{layla_guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stays/{{layla_reservation_uuid}}/online-check-in",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stays",
+                                "{{layla_reservation_uuid}}",
+                                "online-check-in"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"arrival_time\": \"18:30\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "403 for another guest's stay, 422 reservation_state unless confirmed, 422 online_check_in_closed after the arrival date, the digital key appears on the stay reads only after staff approval."
+                    },
+                    "response": []
                 }
             ]
         },
@@ -7918,6 +8001,205 @@
                                 }
                             ]
                         }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "19 - Guests (Admin)",
+            "item": [
+                {
+                    "name": "List guests (search + stay_status)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/guests?search=a&stay_status=upcoming&per_page=15",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "guests"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "a"
+                                },
+                                {
+                                    "key": "stay_status",
+                                    "value": "upcoming"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "15"
+                                }
+                            ]
+                        },
+                        "description": "Requires guests.view."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Guest profile (Ahmad)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/guests/{{guest_uuid}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "guests",
+                                "{{guest_uuid}}"
+                            ]
+                        },
+                        "description": "Requires guests.view."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "List guest notes (Ahmad)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/guests/{{guest_uuid}}/notes",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "guests",
+                                "{{guest_uuid}}",
+                                "notes"
+                            ]
+                        },
+                        "description": "Requires guests.view."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add guest note (Ahmad)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/guests/{{guest_uuid}}/notes",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "guests",
+                                "{{guest_uuid}}",
+                                "notes"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"body\": \"Prefers a quiet room away from the lift.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires guests.edit."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update guest preferences (staff, Ahmad)",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/guests/{{guest_uuid}}/preferences",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "guests",
+                                "{{guest_uuid}}",
+                                "preferences"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"bed_type\": \"king\",\n    \"floor_preference\": \"high\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires guests.edit."
                     },
                     "response": []
                 }

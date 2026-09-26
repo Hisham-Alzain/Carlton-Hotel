@@ -38,6 +38,9 @@ return [
         'password_changed'        => 'Contraseña cambiada.',
         'review_submitted'        => 'Gracias por su reseña.',
         'review_moderated'        => 'Reseña actualizada.',
+        'guest_note_added'        => 'Nota del huésped añadida.',
+        'preferences_updated'     => 'Preferencias actualizadas.',
+        'online_check_in_submitted' => 'Check-in en línea enviado.',
     ],
     'errors'     => [
         'server_error'           => 'Se ha producido un error.',
@@ -65,6 +68,7 @@ return [
         'reservation_state'        => 'Esta acción no está permitida en el estado actual de la reserva.',
         'room_status_transition_invalid' => 'Esta habitación no puede pasar a ese estado desde su estado actual.',
         'reservation_outside_stay_window' => 'El check-in solo es posible entre la fecha de llegada y el día anterior a la salida.',
+        'online_check_in_closed' => 'El check-in en línea está cerrado para esta estancia: está disponible hasta la fecha de llegada.',
         'room_out_of_order' => 'Esta habitación está fuera de servicio (mantenimiento) y no se puede asignar.',
         'folio_unsettled' => 'El folio no está liquidado. Liquídelo antes de la salida o fuerce la salida indicando un motivo.',
         'hold_expired'             => 'La retención de la reserva ha caducado. Inicie una nueva reserva.',
@@ -89,6 +93,10 @@ return [
         'room_ready_body'      => 'Su habitación ya está asignada. ¡Hasta pronto!',
         'inquiry_routed_title' => 'Nueva consulta de evento',
         'inquiry_routed_body'  => 'Una nueva consulta de :name se ha derivado a su departamento.',
+        'check_in_approved'    => [
+            'title' => 'Tu check-in ha sido aprobado',
+            'body'  => 'Tu llave digital está lista en la app.',
+        ],
     ],
     'receipt'    => [
         'title'          => 'Recibo de la estancia',

@@ -38,6 +38,9 @@ return [
         'password_changed'        => 'Password changed.',
         'review_submitted'        => 'Thank you for your review.',
         'review_moderated'        => 'Review updated.',
+        'guest_note_added'        => 'Guest note added.',
+        'preferences_updated'     => 'Preferences updated.',
+        'online_check_in_submitted' => 'Online check-in submitted.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',
@@ -65,6 +68,7 @@ return [
         'reservation_state'        => 'This action is not allowed in the current reservation state.',
         'room_status_transition_invalid' => 'This room cannot move to that status from its current one.',
         'reservation_outside_stay_window' => 'Check-in is only possible between the arrival date and the day before departure.',
+        'online_check_in_closed' => 'Online check-in is closed for this stay: it is available until the arrival date.',
         'room_out_of_order' => 'This room is out of order (maintenance) and cannot be assigned.',
         'folio_unsettled' => 'The folio is not settled. Settle it before check-out, or force the check-out with a reason.',
         'hold_expired'             => 'The booking hold has expired. Please start a new reservation.',
@@ -89,6 +93,10 @@ return [
         'room_ready_body'      => 'Your room has been assigned. See you soon!',
         'inquiry_routed_title' => 'New event inquiry',
         'inquiry_routed_body'  => 'A new inquiry from :name has been routed to your department.',
+        'check_in_approved'    => [
+            'title' => 'Your check-in is approved',
+            'body'  => 'Your digital key is ready in the app.',
+        ],
     ],
     'receipt'    => [
         'title'          => 'Stay Receipt',

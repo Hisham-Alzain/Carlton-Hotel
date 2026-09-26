@@ -6,6 +6,7 @@ use App\Actions\Service\SetDndAction;
 use App\Base\BaseController;
 use App\Exceptions\NoActiveReservationException;
 use App\Exceptions\NotFoundException;
+use App\Http\Requests\Booking\SubmitOnlineCheckInRequest;
 use App\Http\Requests\Service\SetDndRequest;
 use App\Http\Resources\Booking\ActiveStayResource;
 use App\Http\Resources\Booking\CheckInStatusResource;
@@ -40,7 +41,9 @@ class StayController extends BaseController
         $result         = $this->stays->checkInStatus($request->user('guests'));
         $result['data'] = new CheckInStatusResource($result['data']);
 
-        return $this->respondFromService($result, request: $request);
+        // May carry the digital key code (D-11): never cached.
+        return $this->respondFromService($result, request: $request)
+            ->header('Cache-Control', 'no-store, private');
     }
 
     /**
@@ -53,7 +56,8 @@ class StayController extends BaseController
         $result = $this->stays->active($request->user('guests'));
         $result['data'] = $result['data'] ? new ActiveStayResource($result['data']) : null;
 
-        return $this->respondFromService($result, request: $request);
+        return $this->respondFromService($result, request: $request)
+            ->header('Cache-Control', 'no-store, private');
     }
 
     public function upcoming(Request $request): JsonResponse
@@ -61,7 +65,25 @@ class StayController extends BaseController
         $result = $this->stays->upcoming($request->user('guests'));
         $result['data'] = UpcomingStayResource::collection($result['data']);
 
-        return $this->respondFromService($result, request: $request);
+        return $this->respondFromService($result, request: $request)
+            ->header('Cache-Control', 'no-store, private');
+    }
+
+    /**
+     * Online check-in (D-10). Ownership is checked in the FormRequest (403);
+     * the answer carries the digital key block, so it is never cached.
+     */
+    public function onlineCheckIn(SubmitOnlineCheckInRequest $request, Reservation $reservation): JsonResponse
+    {
+        $result = $this->stays->onlineCheckIn(
+            $request->user('guests'),
+            $reservation,
+            $request->validated('arrival_time'),
+        );
+        $result['data'] = new UpcomingStayResource($result['data']);
+
+        return $this->respondFromService($result, 'custom.messages.online_check_in_submitted', $request)
+            ->header('Cache-Control', 'no-store, private');
     }
 
     public function past(Request $request): JsonResponse

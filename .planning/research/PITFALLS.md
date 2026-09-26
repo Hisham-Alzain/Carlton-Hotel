@@ -111,6 +111,8 @@ The guest-facing "digital key" (per PROJECT.md, tied to online check-in — arri
 
 **Phase to address:** Guest directory / online check-in / digital key phase.
 
+**Phase 4 status:** Implemented as a **display-only credential, NOT lock-grade** — a random ~60-bit code (12 chars from a restricted alphabet, formatted `XXXX-XXXX-XXXX`, never derived from the reservation uuid, guest phone or any other client-visible id), encrypted at rest (`digital_key_code`, `encrypted` cast), with an HMAC-SHA256 lookup hash (`digital_key_hash`) for a future verify endpoint that does not exist yet. Hidden from every staff response (`staffDigitalKey()` never returns the code), from the `check_in_approved` push, and `logExcept`-ed out of the activity log. Expires at the reservation's `check_out` date at the hotel's configured check-out time (`HOTEL_CHECK_OUT_TIME`, default `12:00`, hotel-local) and is revoked on check-out, cancellation, rejection of check-in, and by a 15-minute scheduled sweep (`stays:expire-digital-keys`) for anything past expiry. Preconditions before this could become a real lock-grade credential: non-static OTP delivery (the current OTP dispatcher is a local-only stub), Sanctum token expiry (guest tokens do not currently expire), and a hash-based verifier endpoint (none exists — `digital_key_hash` is stored for one but nothing reads it yet). See `backend/docs/API_GUIDE_MOBILE.md` and the Phase 4 `SUMMARY.md` for the client-facing wording.
+
 ---
 
 ### Pitfall 7: PII leakage through free-text guest notes and preferences

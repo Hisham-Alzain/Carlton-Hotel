@@ -7,6 +7,8 @@ use App\Http\Requests\Auth\LinkBookingCodeRequest;
 use App\Http\Requests\Auth\RequestOtpRequest;
 use App\Http\Requests\Auth\UpdateGuestProfileRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
+use App\Http\Requests\Guest\UpdateGuestPreferencesRequest;
+use App\Http\Resources\Guest\GuestPreferencesResource;
 use App\Http\Resources\GuestResource;
 use App\Services\Auth\AuthGuestService;
 use Illuminate\Http\JsonResponse;
@@ -64,6 +66,14 @@ class GuestAuthController extends BaseController
     {
         $result = $this->service->updateProfile($request->user('guests'), $request->validated());
         return $this->success(new GuestResource($result['data']), 'custom.messages.profile_updated', 200, $request);
+    }
+
+    // Phase 4 (D-09): the guest's own preferences. The identity comes only from
+    // the bearer token; any guest identifier in the body is ignored (T-04-05).
+    public function updatePreferences(UpdateGuestPreferencesRequest $request): JsonResponse
+    {
+        $result = $this->service->updatePreferences($request->user('guests'), $request->validated());
+        return $this->success(new GuestPreferencesResource($result['data']), 'custom.messages.preferences_updated', 200, $request);
     }
 
     // Revokes the calling token and, when sent, deregisters this device's FCM token.

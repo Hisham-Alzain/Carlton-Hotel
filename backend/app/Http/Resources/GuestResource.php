@@ -3,6 +3,7 @@ namespace App\Http\Resources;
 
 use App\Base\BaseResource;
 use App\Enums\ReservationStatus;
+use App\Http\Resources\Guest\GuestPreferencesResource;
 
 class GuestResource extends BaseResource
 {
@@ -28,6 +29,8 @@ class GuestResource extends BaseResource
             'email'          => $this->email,
             'email_verified' => (bool) $this->email_verified_at,
             'preferred_locale'        => $this->preferred_locale,
+            // Phase 4 (D-09): the same object the preferences PATCH routes return.
+            'preferences'             => new GuestPreferencesResource($this->resource),
             // Two-flag entitlement (ARCHITECTURE §3.7): has_booking unlocks pre-arrival tier, is_checked_in unlocks in-room tier.
             'has_booking'             => $booked->isNotEmpty(),
             'is_checked_in'           => $booked->contains(fn ($r) => $r->status === ReservationStatus::CHECKED_IN),

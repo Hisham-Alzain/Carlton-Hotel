@@ -5,6 +5,7 @@ use App\Actions\Auth\LinkBookingCodeAction;
 use App\Actions\Auth\RequestOtpAction;
 use App\Actions\Auth\UpdateGuestProfileAction;
 use App\Actions\Auth\VerifyOtpAction;
+use App\Actions\Guest\UpdateGuestPreferencesAction;
 use App\Enums\OtpChannel;
 use App\Enums\OtpPurpose;
 use App\Models\Guest;
@@ -17,6 +18,7 @@ class AuthGuestService
         private readonly VerifyOtpAction      $verifyOtp,
         private readonly LinkBookingCodeAction $linkBookingCode,
         private readonly UpdateGuestProfileAction $updateProfile,
+        private readonly UpdateGuestPreferencesAction $updatePreferences,
     ) {}
 
     public function requestOtp(string $identifier, OtpChannel|string $channel, OtpPurpose|string $purpose): array
@@ -43,6 +45,12 @@ class AuthGuestService
     public function updateProfile(Guest $guest, array $data): array
     {
         return $this->updateProfile->handle($guest, $data);
+    }
+
+    /** The token's own guest only — the route carries no guest identifier (T-04-05). */
+    public function updatePreferences(Guest $guest, array $data): array
+    {
+        return $this->updatePreferences->handle($guest, $data);
     }
 
     public function logout(Guest $guest, ?string $deviceToken = null): array

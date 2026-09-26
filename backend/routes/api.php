@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AmenityController as AdminAmenityController;
 use App\Http\Controllers\Admin\CheckInApprovalController;
+use App\Http\Controllers\Admin\GuestController as AdminGuestController;
 use App\Http\Controllers\Admin\HomeSliderController as AdminHomeSliderController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Api\HomeSliderController as ApiHomeSliderController;
@@ -122,6 +123,8 @@ Route::prefix('auth')->group(function () {
         Route::middleware('auth:guests')->group(function () {
             Route::get('/me',      [GuestAuthController::class, 'me']);
             Route::put('/profile', [GuestAuthController::class, 'updateProfile']);
+            // Phase 4 (D-09): no guest identifier — the token's own guest only.
+            Route::patch('/preferences', [GuestAuthController::class, 'updatePreferences']);
             Route::post('/logout', [GuestAuthController::class, 'logout']);
         });
     });
@@ -548,6 +551,8 @@ Route::middleware('auth:guests')->prefix('stays')->group(function () {
     Route::get('/active',   [StayController::class, 'active']);
     Route::get('/upcoming', [StayController::class, 'upcoming']);
     Route::get('/past',     [StayController::class, 'past']);
+    // Phase 4 (D-10): owner-only via the FormRequest; plain auth:guests.
+    Route::post('/{reservation}/online-check-in', [StayController::class, 'onlineCheckIn']);
     Route::get('/{reservation}/receipt',     [StayController::class, 'receipt']);
     Route::get('/{reservation}/receipt/pdf', [StayController::class, 'receiptPdf']);
 });
@@ -591,6 +596,24 @@ Route::middleware('auth:users')->prefix('cms/reservations')->group(function () {
     });
     Route::middleware('permission:folios.settle')->group(function () {
         Route::post('/{reservation}/settle', [PaymentController::class, 'settleReservation']);
+    });
+});
+
+// ──────────────────────────────────────────────────────────────────────
+// Phase 4 — Staff guest directory, profile, notes and preferences (D-01)
+//
+// Reads on guests.view, writes on guests.edit (reception + concierge presets).
+// Notes are append-only: there is deliberately no PUT/PATCH/DELETE on them.
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware('auth:users')->prefix('guests')->group(function () {
+    Route::middleware('permission:guests.view')->group(function () {
+        Route::get('/',              [AdminGuestController::class, 'index']);
+        Route::get('/{guest}',       [AdminGuestController::class, 'show']);
+        Route::get('/{guest}/notes', [AdminGuestController::class, 'notes']);
+    });
+    Route::middleware('permission:guests.edit')->group(function () {
+        Route::post('/{guest}/notes', [AdminGuestController::class, 'storeNote']);
+        Route::patch('/{guest}/preferences', [AdminGuestController::class, 'updatePreferences']);
     });
 });
 

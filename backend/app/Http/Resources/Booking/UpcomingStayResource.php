@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Booking;
 
 use App\Base\BaseResource;
+use App\Support\StayPayload;
 use Illuminate\Http\Request;
 
 class UpcomingStayResource extends BaseResource
@@ -24,6 +25,8 @@ class UpcomingStayResource extends BaseResource
             'check_out'    => $this->check_out?->toDateString(),
             'nights'       => $this->nights(),
             'is_cancellable' => $this->status->isCancellable(),
+            // Phase 4 (D-12): online_check_in, digital_key, pre_arrival_checklist.
+            ...StayPayload::forGuest($this->resource),
         ];
     }
 }

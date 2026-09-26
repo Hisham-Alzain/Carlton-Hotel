@@ -93,7 +93,7 @@ Both gates reject with `error_code: no_active_reservation` (403) when unmet — 
 
 ## Endpoint index
 
-Every endpoint the app can reach — 59 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
+Every endpoint the app can reach — 61 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
 
 | Tier | Method | Path | Section |
 |---|---|---|---|
@@ -103,6 +103,7 @@ Every endpoint the app can reach — 59 in total. Tier column: **P** public (no 
 | P | POST | `/auth/guest/link-booking-code` | [Guest Auth](#module-guest-auth) |
 | G | GET | `/auth/guest/me` | [Guest Auth](#module-guest-auth) |
 | G | PUT | `/auth/guest/profile` | [Guest Auth](#module-guest-auth) |
+| G | PATCH | `/auth/guest/preferences` | [Guest Auth](#module-guest-auth) |
 | G | POST | `/auth/guest/logout` | [Guest Auth](#module-guest-auth) |
 | P | GET | `/public/home-sliders` | [Content](#module-content-tier-1-public) |
 | P | GET | `/public/room-types` | [Content](#module-content-tier-1-public) |
@@ -142,6 +143,7 @@ Every endpoint the app can reach — 59 in total. Tier column: **P** public (no 
 | G | GET | `/stays/past` | [Stays](#module-stays) |
 | G | GET | `/stays/{uuid}/receipt` | [Stays](#module-stays) |
 | G | GET | `/stays/{uuid}/receipt/pdf` | [Stays](#module-stays) |
+| G | POST | `/stays/{uuid}/online-check-in` | [Stays](#module-stays) |
 | S | PATCH | `/stays/active/dnd` | [Stays](#module-stays) |
 | A | POST | `/service-bookings` | [In-Stay & Pre-Arrival](#module-in-stay--pre-arrival-services) |
 | A | POST | `/dining-venues/{uuid}/table-reservations` | [In-Stay & Pre-Arrival](#module-in-stay--pre-arrival-services) |
@@ -371,6 +373,7 @@ Show `masked_contact` so the guest knows where to look.
 | `phone_verified` / `email_verified` | `false` = contact not yet OTP-verified. |
 | `preferred_locale` | `en` or `ar`. Mirror into app locale on first login. |
 | `first_name` / `last_name` | Null until the profile is completed — see below. |
+| `preferences` | `{ bed_type, pillow_type, floor_preference, other, updated_at }` on `me`, on the profile PUT response and wherever the guest object is nested (e.g. `GET /reservations` items' `guest`) — the same object `PATCH /auth/guest/preferences` returns (Phase 4, D-09). |
 
 ### PUT /api/auth/guest/profile
 
@@ -393,6 +396,27 @@ Send only the fields you are changing — omitted fields are left alone.
 **Response `data`:** the full guest object (same shape as `GET /api/auth/guest/me`).
 
 **Failure `error_code`s:** `verified_contact_immutable` (409), `validation_failed` (422 — includes a phone that could not be parsed, or an email/phone already taken by another guest).
+
+---
+
+### PATCH /api/auth/guest/preferences
+
+**Purpose:** Save the guest's own room preferences (bed, pillow, floor, free-text note) — surfaced back to reception on the guest's profile.
+
+**Who can call:** Tier-2 (any guest token).
+
+**Request body:** PATCH semantics — a present key is written, an explicit `null` clears it, an absent key is left alone. Sending none of the four keys is `422` on `errors.preferences`.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `bed_type` | string, nullable | sometimes | `king`, `queen`, `double`, `twin`, `single` — **`extra` is refused** (inventory-only bed, never a guest preference). |
+| `pillow_type` | string, nullable | sometimes | `soft`, `medium`, `firm`, `feather`, `hypoallergenic`. |
+| `floor_preference` | string, nullable | sometimes | `low`, `high`, `any` (`any` is a positive "no preference" choice, not the absence of one). |
+| `other` | string, nullable | sometimes | Max 500. |
+
+**Response `data`** (HTTP 200): `{ "bed_type": "king", "pillow_type": "firm", "floor_preference": "high", "other": "Extra towels please", "updated_at": "2026-09-26T10:00:00+00:00" }`, message `"Preferences updated."`. The same object also appears as `preferences` on `GET /api/auth/guest/me`.
+
+**Failure `error_code`s:** `unauthenticated` (401), `validation_failed` (422 — unknown enum value, `extra` for `bed_type`, or `errors.preferences` on a body with none of the four keys).
 
 ---
 
@@ -742,6 +766,8 @@ No file URL is returned to the guest.
 
 Submitting documents (re)opens a `pending` check-in approval on the reservation — staff review and approve/reject it (dashboard-side).
 
+**ID scan (GUEST-06):** the camera/ID-scan screen uploads its captured image through this same route — there is no separate ID-scan endpoint and no OCR. Set `documents[0][type]` to a label such as `id_card` (a **client convention**, not a server-enforced value — the server accepts any string up to 255 characters for `type`). The upload counts toward the pre-arrival checklist's `documents_uploaded` item the same as any other document, and staff review it in the same check-in approval screen. `SubmitDocumentsRequest` and this route are unchanged by Phase 4.
+
 **Failure `error_code`s:** `no_active_reservation` (403), `validation_failed` (422, bad mime/size).
 
 ---
@@ -854,6 +880,30 @@ Both flags are `false` with `reservation: null` for a guest who has only ever br
 
 **Failure `error_code`s:** `unauthenticated` (401).
 
+**Phase 4 (D-12):** when `reservation` is present it also carries `online_check_in`, `digital_key` and `pre_arrival_checklist` — see the block below `GET /api/stays/active`. This response, like the other two stay reads, is sent with `Cache-Control: no-store, private` because it can carry the digital key.
+
+### POST /api/stays/{uuid}/online-check-in
+
+**Purpose:** Submit the hotel-local arrival time ahead of a confirmed stay and open the pre-arrival approval, up to and including the arrival day.
+
+**Who can call:** Tier-2 (any guest token) — ownership of the reservation is checked in the request, not by a stay-state gate.
+
+**Request body:** `{ "arrival_time": "18:30" }` — required, `H:i` hotel-local wall time (`7:30` and `18:30:00` are both rejected).
+
+**Behavior:** the reservation must be `confirmed`; hotel-today must be on or before the stay's `check_in` date. A resubmission overwrites the previous `arrival_time` and `online_check_in_submitted_at` — both calls return `200`. Opens a `pending` check-in approval if none exists yet; it never downgrades one that is already `approved` or `rejected`. Does **not** touch the digital key — issuance is a staff decision made on approval, not gated on online check-in.
+
+**Response `data`** (HTTP 200): the reservation in the `GET /api/stays/upcoming` item shape (see below), message `"Online check-in submitted."`. `Cache-Control: no-store, private` — the payload can carry the digital key.
+
+**Failure `error_code`s:**
+
+| Code | HTTP | Notes |
+|---|---|---|
+| `forbidden` | 403 | The reservation belongs to another guest. |
+| `reservation_state` | 422 | Not `confirmed`. `context: { status, allowed: ["confirmed"] }`. |
+| `online_check_in_closed` | 422 | Hotel-today is after `check_in`. `context: { check_in, today }` (`Y-m-d`). Online check-in is available up to and including the arrival date, never after. |
+| `validation_failed` | 422 | Bad `arrival_time` format. |
+| `unauthenticated` | 401 | |
+
 ### GET /api/stays/active
 
 `data` is a single object, or `null` when you are not currently checked in.
@@ -867,10 +917,15 @@ Both flags are `false` with `reservation: null` for a guest who has only ever br
 | `nights` / `nights_remaining` | `nights_remaining` floors at 0 |
 | `dnd` | `{enabled, until}` |
 | `folio_total_usd` | `null` until staff generate the folio |
+| `online_check_in` | `{ arrival_time, submitted_at, approval_status }` (Phase 4, D-12). `arrival_time` is `H:i` hotel-local, `null` before submission. |
+| `digital_key` | `{ code, issued_at, expires_at }` while a key is active for this stay, else `null` (Phase 4, D-11). `code` looks like `XXXX-XXXX-XXXX`. **Display-only, NOT lock-grade — it opens no lock.** Never cache or log this field. Expires at `check_out` at the hotel's configured check-out time. |
+| `pre_arrival_checklist` | Six-item derived checklist, same shape the staff profile shows — see `API_GUIDE_DASHBOARD.md` Module: Guests. |
+
+This response carries `Cache-Control: no-store, private` because of `digital_key`.
 
 ### GET /api/stays/upcoming
 
-`data` is an array (you may hold several future bookings), soonest first. `pending_verification` holds are excluded.
+`data` is an array (you may hold several future bookings), soonest first. `pending_verification` holds are excluded. `Cache-Control: no-store, private` on this response too.
 
 | Field | Notes |
 |---|---|
@@ -880,6 +935,7 @@ Both flags are `false` with `reservation: null` for a guest who has only ever br
 | `price_usd` | Reservation total |
 | `check_in` / `check_out` / `nights` | |
 | `is_cancellable` | Whether `DELETE /api/reservations/{uuid}` will succeed |
+| `online_check_in` / `digital_key` / `pre_arrival_checklist` | Same three Phase 4 blocks as `GET /api/stays/active` above — see that row for shapes. `digital_key` is display-only and **NOT lock-grade**. |
 
 ### GET /api/stays/past
 
@@ -1001,7 +1057,7 @@ One ongoing support conversation with staff per guest — no thread management n
 
 Live delivery mirrors to Firestore (`chats` collection, one doc per message keyed by `uuid`, filter by `conversation_uuid`) — subscribe there for real-time updates instead of polling; MySQL via the endpoints above remains the source of truth for history/pagination.
 
-**Push triggers already wired:** a welcome notification on first-ever device registration, and a "room ready" push when staff check you in, and again if you are moved to another room during your stay. Order-status and ticket-reply pushes land once P10's operations queue grows a status-change action (not yet built) and P11 ships the chatbot.
+**Push triggers already wired:** a welcome notification on first-ever device registration, a "room ready" push when staff check you in (and again if you are moved to another room during your stay), and, since Phase 4, a "check-in approved" push (`notifications.check_in_approved`: title "Your check-in is approved", body "Your digital key is ready in the app.") when staff approve the pre-arrival check-in — **the push never contains the key code**, only the notice that one is ready; fetch `GET /api/stays/active` or `/status` for the actual value. Order-status and ticket-reply pushes land once P10's operations queue grows a status-change action (not yet built) and P11 ships the chatbot.
 
 ---
 

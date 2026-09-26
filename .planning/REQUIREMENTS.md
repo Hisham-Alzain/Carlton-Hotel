@@ -39,9 +39,9 @@ All routes are under `/api/v1`. Staff routes use `auth:users` + permission middl
 ### Folio & Payments
 
 - [ ] **FOLIO-01**: Staff can read the folio of a reservation, including line items and payments (`GET /cms/reservations/{reservation}/folio`; 404 `folio_missing` if none)
-- [ ] **FOLIO-02**: Staff can post a manual line item to an open folio; totals are recalculated in one locked transaction (`POST /cms/folios/{folio}/line-items`, permission `folios.post`)
-- [ ] **FOLIO-03**: A line item can be disputed and the dispute resolved, by the guest (`PATCH /folio/items/{item}/dispute`) and by staff (`PATCH /cms/folios/{folio}/line-items/{item}/dispute`); open disputes are flagged on the folio and in night-audit checks but do not block check-out
-- [ ] **FOLIO-04**: Staff can record a payment against a folio using the existing manual payment methods (`POST /cms/folios/{folio}/payments`)
+- [ ] **FOLIO-02**: Staff can post a charge or credit line to an open folio (`kind`, `quantity × unit_price_usd`, credits need a reason and may reverse a charge); totals are recalculated by a DB SUM in one locked transaction; a settled folio returns 422 `folio_settled`, a credit may not exceed the reversed charge or take the balance below zero; an optional `Idempotency-Key` makes retries safe (`POST /cms/folios/{folio}/line-items`, permission `folios.post`); `GenerateFolioAction` reconciles by source instead of rebuilding so posted rows survive refreshes
+- [ ] **FOLIO-03**: A line item can be disputed (history table, one open dispute per item) and the dispute resolved or rejected, by the guest (`PATCH /folio/items/{item}/dispute`; another guest's item → 404 `not_found`) and by staff (`PATCH /cms/folios/{folio}/line-items/{item}/dispute`, permission `folios.dispute`); open disputes are flagged on the folio and in night-audit checks, never block check-out and never move money (refunds are posted as credit lines)
+- [ ] **FOLIO-04**: Staff can record a manual payment against a folio (`POST /cms/folios/{folio}/payments`, permission `folios.settle`, `Idempotency-Key` required); the balance counts folio and reservation-level payments; overpayment → 422 `folio_overpayment`, settled folio → 422 `folio_settled`; a payment that brings the balance to zero settles the folio automatically, and a folio whose balance is already zero can be closed without a payment via the settle route
 
 ### Housekeeping & Guest Services
 

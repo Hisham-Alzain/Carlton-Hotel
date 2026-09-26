@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 3
 current_phase_name: Reservations — Front-Desk Verbs
 status: complete
-stopped_at: Phase 3 closed (auto)
-last_updated: "2026-09-26T00:00:00.000Z"
+stopped_at: Phase 4 context gathered (auto); Phase 3 hardening pending
+last_updated: "2026-09-26T02:12:14.560Z"
 last_activity: 2026-09-26
-last_activity_desc: "Phase 3 closed: notes/available-rooms/check-in/check-out desk verbs, assign-room narrowed (breaking), guest express checkout delegated to shared check-out, status/folio_status list filters, docs/Postman/tree closure. Full suite 1229/1229 green."
+last_activity_desc: "Phase 3 closed: notes/available-rooms/check-in/check-out desk verbs, assign-room narrowed (breaking, D-03), guest express checkout delegated to the shared check-out action, status/folio_status list filters, docs/Postman/tree closure. Full suite 1229/1229 green."
 progress:
-  total_phases: 3
-  completed_phases: 1
+  total_phases: 4
+  completed_phases: 0
   total_plans: 15
-  completed_plans: 9
+  completed_plans: 3
 ---
 
 # Project State
@@ -100,6 +100,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-26T00:00:00.000Z
-Stopped at: Phase 3 closed (auto)
-Resume file: .planning/phases/03-reservations-front-desk-verbs/SUMMARY.md
+Last session: 2026-09-26T02:12:14.522Z
+Stopped at: Phase 4 context gathered (auto); Phase 3 hardening pending
+Resume file: .planning/phases/04-guests-stay/04-CONTEXT.md

@@ -3,9 +3,8 @@
 namespace App\Services\Folio;
 
 use App\Models\Folio;
-use App\Models\Payment;
 use App\Models\Reservation;
-use Illuminate\Support\Collection;
+use App\Support\FolioLedger;
 
 /**
  * Assembles a stay's receipt.
@@ -19,18 +18,20 @@ class ReceiptService
 {
     public function forReservation(Reservation $reservation): ?array
     {
-        $folio = Folio::with('items')->where('reservation_id', $reservation->id)->first();
+        $folio = Folio::with(['items' => fn ($query) => $query->orderBy('id')])
+            ->where('reservation_id', $reservation->id)
+            ->first();
 
         // No folio means nothing was ever billed (e.g. a cancelled stay).
         if (! $folio) {
             return null;
         }
 
-        $payments = $this->paymentsFor($reservation, $folio);
-
-        $paid = $payments
-            ->where('status', 'completed')
-            ->sum(fn (Payment $payment) => (float) $payment->amount_usd);
+        // Payments are polymorphic and, depending on the settle path taken, are
+        // recorded against either the folio or the reservation. The shared
+        // ledger query collects both so a receipt never under-reports what the
+        // guest paid, and agrees with FolioResource.balance_due_usd (D-03).
+        $payments = $folio->ledgerPayments()->orderBy('created_at')->orderBy('id')->get();
 
         $reservation->loadMissing('guest');
 
@@ -38,23 +39,7 @@ class ReceiptService
             'reservation'     => $reservation,
             'folio'           => $folio,
             'payments'        => $payments,
-            'balance_due_usd' => round((float) $folio->total_usd - $paid, 2),
+            'balance_due_usd' => FolioLedger::balance((string) $folio->total_usd, FolioLedger::paid($payments)),
         ];
-    }
-
-    /**
-     * Payments are polymorphic and, depending on the settle path taken, are
-     * recorded against either the folio or the reservation. Both are collected
-     * so a receipt never under-reports what the guest paid.
-     */
-    private function paymentsFor(Reservation $reservation, Folio $folio): Collection
-    {
-        return Payment::query()
-            ->where(function ($query) use ($reservation, $folio) {
-                $query->where(fn ($q) => $q->where('payable_type', Folio::class)->where('payable_id', $folio->id))
-                    ->orWhere(fn ($q) => $q->where('payable_type', Reservation::class)->where('payable_id', $reservation->id));
-            })
-            ->orderBy('created_at')
-            ->get();
     }
 }

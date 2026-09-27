@@ -16,7 +16,7 @@ class Payment extends Model
 
     protected $fillable = [
         'payable_type', 'payable_id', 'method',
-        'amount_usd', 'recorded_by', 'note', 'status',
+        'amount_usd', 'recorded_by', 'note', 'status', 'idempotency_key',
     ];
 
     protected $casts = ['amount_usd' => 'decimal:2'];

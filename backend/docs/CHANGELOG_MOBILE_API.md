@@ -22,7 +22,7 @@ nine commits (`2fd294f` → `5d254a7`).
 
 ## ⚠️ Breaking changes
 
-Four, all affecting the **dashboard**, none affecting existing mobile builds.
+Five, all affecting the **dashboard**, none affecting existing mobile builds.
 
 | What | Before | After |
 |---|---|---|
@@ -30,6 +30,7 @@ Four, all affecting the **dashboard**, none affecting existing mobile builds.
 | Room type create/update `amenities` | `["WiFi"]` | `[{uuid, is_highlight?, sort_order?}]` — omit the key to leave the pivot untouched, send `[]` to clear |
 | `POST`/`PUT /cms/menu-categories` | venue-less | `dining_venue_uuid` now **required** |
 | `POST /cms/reservations/{uuid}/assign-room` | checked the guest in (status to `checked_in`, stamped `checked_in_at`, pushed "room ready") | pure assignment: `status` and `checked_in_at` unchanged; check in with `POST /cms/reservations/{uuid}/check-in` |
+| `POST /cms/folios/{folio}/settle` | already-settled answered 422 `reservation_state`; `amount_usd` required | answers 422 `folio_settled` (context `folio_uuid`, `settled_at`); `amount_usd` optional, a folio with nothing due closes without a payment (Phase 5, D-14) |
 
 The legacy `room_types.amenities` JSON column still exists and is still
 writable, but no resource reads it — a data migration lifted its contents into
@@ -52,6 +53,8 @@ accepts an **optional** `room_uuid` (see §9).
 | `GET /auth/guest/me` | no `preferences` key | additive `preferences` object (Phase 4, D-09) |
 | `GET /reservations` \| `/reservations/{uuid}` | nested `guest` had no `preferences` key | the nested `guest` object carries the same additive `preferences` object (Phase 4, FA-4.02-2) |
 | `GET /stays/status` \| `/stays/active` \| `/stays/upcoming` | no online check-in, key or checklist fields | additive `online_check_in`, `digital_key` (display-only, **NOT lock-grade**) and `pre_arrival_checklist` on the reservation, plus `Cache-Control: no-store, private` on all three responses (Phase 4, D-11/D-12) |
+| `GET /folio` | items: `uuid`, `description`, `amount_usd`, `source_type`; no payments or balance; item uuids changed on every call | additive `payments`, `paid_usd`, `balance_due_usd` (signed), `open_disputes_count`, and item fields `quantity`, `unit_price_usd`, `posted_by`, `posted_at`, `reason`, `reverses_item_uuid`, `dispute`; item uuids are now stable between calls (Phase 5, D-02/D-06) |
+| `POST /folio/approve` | same folio shape as `GET /folio` | the same additive folio shape (Phase 5, D-02) |
 
 ---
 
@@ -392,7 +395,54 @@ free-text `preferences_other` never reach the activity log.
 
 ---
 
-## Full endpoint inventory (51 routes added or changed)
+## 11 — Folio extensions (Phase 5)
+
+**Why:** the front desk needed to read a folio, post charges and credits, take
+payments safely under retries, and handle line-item disputes; the guest needed
+to dispute a line on their bill. Totals had to stay exact under concurrent use.
+
+**Migrations:** `add_ledger_columns_to_folio_items_table` (`quantity`,
+`unit_price_usd`, `source_line`, `posted_by`, `reason`, `reverses_item_id`,
+`idempotency_key`; `source_type` narrowed to 32 characters; unique
+`(folio_id, idempotency_key)` and `(folio_id, source_type, source_id, source_line)`) ·
+`add_idempotency_key_to_payments_table` (unique per payable) ·
+`create_folio_item_disputes_table`. All three additive and reversible.
+
+**New:** `App\Actions\Folio\{PostFolioItemAction,RecordFolioPaymentAction,RaiseFolioDisputeAction,ResolveFolioDisputeAction}` ·
+`App\Http\Requests\Folio\{PostFolioItemRequest,RecordFolioPaymentRequest,StaffFolioDisputeRequest,GuestFolioDisputeRequest}` ·
+`App\Models\FolioItemDispute` · `App\Enums\{FolioItemSource,FolioDisputeStatus}` ·
+`App\Support\FolioLedger` (bcmath money helpers) · `App\Support\IdempotentWrite` ·
+exceptions `folio_missing` (404), `folio_settled`, `folio_credit_exceeds_item`,
+`folio_credit_exceeds_balance`, `folio_overpayment`, `folio_item_dispute_open`,
+`folio_dispute_state` (422), `idempotency_conflict` (409) · new permissions
+`folios.post`, `folios.dispute` (preset `reception`).
+
+**Changed:** `GenerateFolioAction` reconciles instead of rebuilding (stable
+item uuids; desk lines, credited lines and disputed lines survive) under its
+own folio row lock · every folio response gains `payments`, `paid_usd`,
+`balance_due_usd`, `open_disputes_count` and the new item fields · the
+receipt balance is computed by the same ledger helper (still a JSON number) ·
+`SettleFolioAction` closes a folio with nothing due without a payment ·
+`POST /cms/reservations/{uuid}/settle` refuses once the folio is settled.
+
+**Key decisions**
+- The folio is an append-only ledger: corrections are credit rows, never edits;
+  there is no edit or delete route for a line item or a payment.
+- Money is exact decimal-string arithmetic (bcmath) end to end; the only float
+  is the argument handed to the payment gateway interface.
+- `Idempotency-Key` is optional on line items and required on folio payments;
+  a replay returns the current folio (200), a reused key with a different
+  payload is `idempotency_conflict` (409).
+- A dispute is a flag, never a check-out gate and never a money movement.
+
+**Endpoints:** `GET /cms/reservations/{reservation}/folio` ·
+`POST /cms/folios/{folio}/line-items` · `POST /cms/folios/{folio}/payments` ·
+`PATCH /cms/folios/{folio}/line-items/{item}/dispute` (all staff) ·
+`PATCH /folio/items/{item}/dispute` (guest app).
+
+---
+
+## Full endpoint inventory (53 routes added or changed)
 
 ### Public (tier-1, no token)
 ```
@@ -430,6 +480,8 @@ POST   /dining-venues/{diningVenue}/table-reservations
 ```
 PATCH  /stays/active/dnd
 POST   /service-requests            (extended: service_item_uuid)
+GET    /folio                        (extended: payments, balance, disputes)
+PATCH  /folio/items/{item}/dispute
 ```
 
 ### Admin (`auth:users` + `cms.edit` unless noted)

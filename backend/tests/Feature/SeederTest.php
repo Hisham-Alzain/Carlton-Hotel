@@ -11,12 +11,16 @@ class SeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_all_21_permissions_seeded(): void
+    public function test_all_23_permissions_seeded(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $expected = [
             'reservations.view', 'reservations.create', 'reservations.cancel',
             'folios.view', 'folios.settle',
+            // Phase 5 (D-05): posting charges and credits
+            'folios.post',
+            // Phase 5 (D-11): staff dispute raise/resolve/reject
+            'folios.dispute',
             // cms.restore and cms.purge are the recycle bin, split off cms.edit
             // because undoing a delete and destroying a record permanently are
             // not edits — see RolesAndPermissionsSeeder and RecycleBinTest.
@@ -32,7 +36,7 @@ class SeederTest extends TestCase
         foreach ($expected as $p) {
             $this->assertDatabaseHas('permissions', ['name' => $p, 'guard_name' => 'users']);
         }
-        $this->assertCount(21, Permission::where('guard_name', 'users')->get());
+        $this->assertCount(23, Permission::where('guard_name', 'users')->get());
     }
 
     public function test_all_7_role_presets_seeded(): void
@@ -120,11 +124,41 @@ class SeederTest extends TestCase
         }
     }
 
+    public function test_folio_posting_follows_the_folios_settle_holders(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $holders = fn (string $permission) => Role::where('guard_name', 'users')->with('permissions')->get()
+            ->filter(fn (Role $role) => $role->permissions->pluck('name')->contains($permission))
+            ->pluck('name')
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame($holders('folios.settle'), $holders('folios.post'));
+        $this->assertSame(['reception'], $holders('folios.post'));
+    }
+
+    public function test_folio_dispute_follows_the_folios_post_holders(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $holders = fn (string $permission) => Role::where('guard_name', 'users')->with('permissions')->get()
+            ->filter(fn (Role $role) => $role->permissions->pluck('name')->contains($permission))
+            ->pluck('name')
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame($holders('folios.post'), $holders('folios.dispute'));
+        $this->assertSame(['reception'], $holders('folios.dispute'));
+    }
+
     public function test_seeder_idempotent(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-        $this->assertCount(21, Permission::where('guard_name', 'users')->get());
+        $this->assertCount(23, Permission::where('guard_name', 'users')->get());
         $this->assertCount(7, Role::where('guard_name', 'users')->get());
 
         // Idempotent down to the pivot: re-running must not double up grants.

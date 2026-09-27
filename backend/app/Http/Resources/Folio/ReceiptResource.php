@@ -49,7 +49,9 @@ class ReceiptResource extends BaseResource
                 'status'     => $payment->status,
                 'created_at' => $payment->created_at?->toIso8601String(),
             ])->all(),
-            'balance_due_usd' => $this->resource['balance_due_usd'],
+            // The receipt contract documents a number (API_GUIDE_MOBILE); the value
+            // is exact to the cent before this conversion (D-03).
+            'balance_due_usd' => 0 + $this->resource['balance_due_usd'],
         ];
     }
 }

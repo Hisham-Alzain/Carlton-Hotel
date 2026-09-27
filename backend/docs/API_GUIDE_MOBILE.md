@@ -93,7 +93,7 @@ Both gates reject with `error_code: no_active_reservation` (403) when unmet — 
 
 ## Endpoint index
 
-Every endpoint the app can reach — 61 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
+Every endpoint the app can reach — 62 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
 
 | Tier | Method | Path | Section |
 |---|---|---|---|
@@ -153,6 +153,7 @@ Every endpoint the app can reach — 61 in total. Tier column: **P** public (no 
 | S | POST | `/transport-requests` | [Folio](#module-folio--express-checkout) |
 | S | GET | `/folio` | [Folio](#module-folio--express-checkout) |
 | S | POST | `/folio/approve` | [Folio](#module-folio--express-checkout) |
+| S | PATCH | `/folio/items/{item}/dispute` | [Folio](#module-folio--express-checkout) |
 | G | POST | `/device-tokens` | [Notifications & Chat](#module-notifications--chat-tier-2--any-guest-token) |
 | G | GET | `/conversations` | [Notifications & Chat](#module-notifications--chat-tier-2--any-guest-token) |
 | G | POST | `/conversations` | [Notifications & Chat](#module-notifications--chat-tier-2--any-guest-token) |
@@ -1006,16 +1007,40 @@ All tier-3b (`is_checked_in`).
 **Response `data`:**
 ```json
 {
-  "uuid": "...", "reservation_uuid": "...", "status": "open",
-  "subtotal_usd": "380.00", "total_usd": "380.00",
+  "uuid": "...", "status": "open",
+  "subtotal_usd": "389.00", "total_usd": "389.00",
   "approved_by_guest_at": null, "settled_at": null,
   "items": [
-    { "uuid": "...", "description": "Room charge", "amount_usd": "300.00", "source_type": "reservation" },
-    { "uuid": "...", "description": "Pool Cabana", "amount_usd": "80.00", "source_type": "service_booking" }
-  ]
+    {
+      "uuid": "...", "description": "Room charge", "amount_usd": "300.00", "source_type": "reservation",
+      "quantity": 1, "unit_price_usd": null, "posted_by": null, "posted_at": null,
+      "reason": null, "reverses_item_uuid": null, "dispute": null
+    },
+    {
+      "uuid": "...", "description": "Pool Cabana", "amount_usd": "80.00", "source_type": "service_booking",
+      "quantity": 1, "unit_price_usd": null, "posted_by": null, "posted_at": null,
+      "reason": null, "reverses_item_uuid": null,
+      "dispute": {
+        "uuid": "...", "status": "open", "reason": "I did not book this.", "raised_by": "guest",
+        "raised_at": "2026-09-26T11:00:00+00:00", "resolved_at": null, "resolution_note": null
+      }
+    },
+    {
+      "uuid": "...", "description": "Minibar", "amount_usd": "9.00", "source_type": "manual",
+      "quantity": 2, "unit_price_usd": "4.50",
+      "posted_by": { "uuid": "...", "name": "Front Desk" }, "posted_at": "2026-09-26T10:05:00+00:00",
+      "reason": null, "reverses_item_uuid": null, "dispute": null
+    }
+  ],
+  "payments": [
+    { "uuid": "...", "method": "cash", "amount_usd": "100.00", "status": "completed", "note": null, "created_at": "..." }
+  ],
+  "paid_usd": "100.00",
+  "balance_due_usd": "289.00",
+  "open_disputes_count": 1
 }
 ```
-The folio recalculates on every call (room charge + confirmed/completed priced service bookings) until it's `settled`, after which it's frozen. `status`: `open` or `settled`. Requesting service bookings with no price (e.g. a restaurant table) or plain service requests don't appear as line items — only priced bookable extras do, for now.
+The folio is reconciled on every call until it's `settled`, after which it's frozen. Item `uuid`s stay the same between calls, and lines added by the front desk (`source_type` `manual` for a charge, `credit` for a negative correction), credited lines and disputed lines always stay on the bill. `status`: `open` or `settled`. Money fields are 2-decimal strings. `paid_usd` counts completed payments; `balance_due_usd` is `total_usd` minus `paid_usd`, and it is signed: a negative value means the hotel owes you (refunds are handled at the desk). `dispute` is the item's latest dispute or `null`; disputes never change amounts. `open_disputes_count` counts the items with an open dispute.
 
 ### POST /api/folio/approve
 
@@ -1024,6 +1049,22 @@ The folio recalculates on every call (room charge + confirmed/completed priced s
 **Response `data`:** same Folio shape as above, now with `approved_by_guest_at` set. **This also transitions your reservation to `checked_out`.** It does not settle payment — that's still a front-desk/admin action (cash or already paid on arrival).
 
 **Failure:** `no_active_reservation` (403), `reservation_state` (422, your most recent booking is not the checked-in stay).
+
+### PATCH /api/folio/items/{uuid}/dispute
+
+**Purpose:** Dispute a line on your bill ("I didn't order this").
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `reason` | string | ✅ | Max 500 |
+
+**Response `data`** (HTTP 200, message "Dispute raised."): the item, in the item shape of `GET /api/folio`, with its new `dispute` (`status: "open"`, `raised_by: "guest"`).
+
+**Behavior:** one open dispute per item; once the hotel decides, the item's `dispute.status` becomes `resolved` or `rejected` with a `resolution_note`, and you may dispute it again. Disputing never changes an amount; if the hotel agrees, it adds a credit line to your bill. Works on open and settled bills.
+
+**Failure `error_code`s:** `not_found` (404: not your item, or no such item — someone else's item always answers 404, never 403), `no_active_reservation` (403), `folio_item_dispute_open` (422, `context: { item_uuid, dispute_uuid }`), `validation_failed` (422).
 
 ### POST /api/transport-requests
 

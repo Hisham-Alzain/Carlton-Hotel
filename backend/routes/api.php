@@ -579,6 +579,10 @@ Route::middleware('auth:users')->prefix('cms/reservations')->group(function () {
         Route::get   ('/{reservation}', [AdminReservationController::class, 'show']);
         Route::get   ('/{reservation}/available-rooms', [AdminReservationController::class, 'availableRooms']);
     });
+    Route::middleware('permission:folios.view')->group(function () {
+        // Phase 5 (D-01): staff folio read; pure read, 404 folio_missing when none.
+        Route::get('/{reservation}/folio', [AdminFolioController::class, 'showForReservation']);
+    });
     Route::middleware('permission:reservations.create')->group(function () {
         // Front-desk booking — reception creating a reservation for a guest.
         Route::post  ('/',                          [AdminReservationController::class, 'store']);
@@ -694,6 +698,8 @@ Route::middleware(['auth:users', 'permission:reservations.create'])->prefix('cms
 Route::middleware(['auth:guests', 'is_checked_in'])->group(function () {
     Route::get ('/folio',                  [ApiFolioController::class, 'show']);
     Route::post('/folio/approve',          [ApiFolioController::class, 'approve']);
+    // Phase 5 (D-10): own items only; a foreign item is 404 like an unknown one.
+    Route::patch('/folio/items/{item}/dispute', [ApiFolioController::class, 'dispute']);
     Route::post('/transport-requests',     [TransportRequestController::class, 'store']);
 });
 
@@ -704,6 +710,16 @@ Route::middleware('auth:users')->prefix('cms/folios')->group(function () {
     });
     Route::middleware('permission:folios.settle')->group(function () {
         Route::post('/{folio}/settle', [AdminFolioController::class, 'settle']);
+        // Phase 5 (D-13): Idempotency-Key required; auto-settles at zero balance.
+        Route::post('/{folio}/payments', [AdminFolioController::class, 'recordPayment']);
+    });
+    Route::middleware('permission:folios.post')->group(function () {
+        // Phase 5 (D-05): append-only; there is deliberately no PUT/PATCH/DELETE for a line item.
+        Route::post('/{folio}/line-items', [AdminFolioController::class, 'postItem']);
+    });
+    Route::middleware('permission:folios.dispute')->group(function () {
+        // Phase 5 (D-11): item must belong to the folio (scoped binding + service check); resolution never moves money.
+        Route::patch('/{folio}/line-items/{item}/dispute', [AdminFolioController::class, 'dispute'])->scopeBindings();
     });
 });
 

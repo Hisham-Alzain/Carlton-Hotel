@@ -28,6 +28,11 @@ class PermissionsGroupedTest extends TestCase
         $groups = $res->json('data');
         $this->assertCount(10, $groups);
 
+        // Phase 5 (D-05, D-11): the `folios` group gains folios.post and folios.dispute.
+        $foliosGroup = collect($groups)->firstWhere('module', 'folios');
+        $this->assertNotNull($foliosGroup, 'folios group exists');
+        $this->assertSame(['folios.dispute', 'folios.post', 'folios.settle', 'folios.view'], collect($foliosGroup['permissions'])->sort()->values()->all());
+
         // Phase 4 (D-01): the `guests` group holds the directory read and write.
         $guestsGroup = collect($groups)->firstWhere('module', 'guests');
         $this->assertNotNull($guestsGroup, 'guests group exists');

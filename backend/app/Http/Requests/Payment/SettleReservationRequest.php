@@ -12,7 +12,7 @@ class SettleReservationRequest extends BaseRequest
     {
         return [
             'method'     => ['required', Rule::enum(PaymentMethod::class)],
-            'amount_usd' => ['required', 'numeric', 'min:0.01'],
+            'amount_usd' => ['required', 'numeric', 'min:0.01', 'max:99999.99'],
             'note'       => ['nullable', 'string', 'max:1000'],
         ];
     }

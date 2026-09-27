@@ -137,7 +137,7 @@ After login, the `permissions` array in the user object is the source of truth f
 
 A `super_admin` account bypasses all permission checks on the server.
 
-**Full permission catalog** (10 modules, 21 permissions): `reservations.view|create|cancel`, `folios.view|settle`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`, `guests.view|edit`.
+**Full permission catalog** (10 modules, 23 permissions): `reservations.view|create|cancel`, `folios.view|settle|post|dispute`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`, `guests.view|edit`.
 
 ### `cms.view` is enforced — gate read-only navigation on it
 
@@ -182,7 +182,7 @@ Most are route middleware, which is the norm. Two families are not, and are enfo
 
 ### Role presets
 
-Seven presets: `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `content_editor`, `content_manager` — see Module: Reference Data below for exactly which permissions each preset grants. The last two are the only presets that grant `cms.*`; without one of them no seeded account except the super admin can reach `/api/cms/*`. `content_manager` is `content_editor` plus `cms.purge`, and is the only preset that may empty the recycle bin. `housekeeping` and `reception` also hold `rooms.status`.
+Seven presets: `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `content_editor`, `content_manager` — see Module: Reference Data below for exactly which permissions each preset grants. The last two are the only presets that grant `cms.*`; without one of them no seeded account except the super admin can reach `/api/cms/*`. `content_manager` is `content_editor` plus `cms.purge`, and is the only preset that may empty the recycle bin. `housekeeping` and `reception` also hold `rooms.status`. `reception` also holds `folios.post` and `folios.dispute`.
 
 ---
 
@@ -532,7 +532,7 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 **Response `data`:** Array of presets:
 ```json
 [
-  { "name": "reception", "permissions": ["reservations.view", "reservations.create", "reservations.cancel", "folios.view", "folios.settle", "service_requests.view", "rooms.status", "guests.view", "guests.edit"] },
+  { "name": "reception", "permissions": ["reservations.view", "reservations.create", "reservations.cancel", "folios.view", "folios.settle", "folios.post", "folios.dispute", "service_requests.view", "rooms.status", "guests.view", "guests.edit"] },
   { "name": "kitchen", "permissions": ["service_requests.view", "service_requests.update"] },
   { "name": "housekeeping", "permissions": ["service_requests.view", "service_requests.update", "rooms.status"] },
   { "name": "concierge", "permissions": ["service_requests.view", "service_requests.assign", "service_requests.update", "guests.view", "guests.edit"] },
@@ -864,8 +864,9 @@ Paginated (15 per page), all reservations, newest first.
 |---|---|---|---|
 | `status` | string or array | no | A reservation status. `?status=a,b`, `?status[in]=a,b` or repeated `?status[]=a&status[]=b` all filter to that set. Values are not validated — an unknown status simply matches nothing. |
 | `folio_status` | string | no | `open` or `settled`. Only reservations that have a folio are matched. Any other value is `validation_failed` (422, `errors.folio_status`). |
+| `has_open_disputes` | string | no | `1` lists reservations whose folio has an open line-item dispute; `0` lists the rest, including reservations without a folio. Any other value is `validation_failed` (422, `errors.has_open_disputes`). Combines with `folio_status`. |
 
-Empty values mean no filter; unknown query parameters are ignored. Example: `?status=checked_out&folio_status=open` lists stays that left with an open folio — forced check-outs and guest express checkouts.
+Empty values mean no filter; unknown query parameters are ignored. Example: `?status=checked_out&folio_status=open` lists stays that left with an open folio — forced check-outs and guest express checkouts. `?status[in]=checked_in,checked_out&has_open_disputes=1` lists in-house and departed stays with a disputed charge still open.
 
 ### GET /cms/reservations/{uuid} — `reservations.view`
 
@@ -1006,7 +1007,7 @@ Example `validation_failed` when `early_check_in` is sent without a reason: `"er
 
 **Behavior:** only `checked_in`; no date guard. The folio is generated (if missing) or refreshed (if open). An open folio is refused with `folio_unsettled` unless `force: true` comes from a `folios.settle` holder: then check-out proceeds, the folio stays open (settle it later with `POST /cms/folios/{folio}/settle`), and the override is logged as `reservation.check_out_forced` (properties `folio_uuid`, `folio_status`, `total_usd`, `reason`). `force` on an already-settled folio is ignored. Every assigned room moves to `dirty` (a system change, reason `check-out`). An internal `ReservationCheckedOut` event fires after commit.
 
-**Response `data`:** the reservation plus `folio: { uuid, status, total_usd }`, message "Guest checked out.".
+**Response `data`:** the reservation plus `folio: { uuid, status, total_usd, open_disputes_count }`, message "Guest checked out.". An open line-item dispute never blocks check-out: only the folio status (`folio_unsettled`) does; `open_disputes_count` is a flag for the desk.
 
 **Failure `error_code`s:** `reservation_state` (422, `context: { status, allowed: ["checked_in"] }`), `folio_unsettled` (422, `context: { folio_uuid, total_usd, can_force }` — the folio named by `folio_uuid` exists with current charges and can be settled with `POST /cms/folios/{folio}/settle`; show a "Force check-out" action only when `can_force` is `true`), `forbidden` (403, `force` sent without `folios.settle`, whatever the folio state), `validation_failed` (422), `unauthorized` (401), `not_found` (404).
 
@@ -1044,14 +1045,14 @@ Example `validation_failed` when `early_check_in` is sent without a reason: `"er
 | `amount_usd` | number | ✅ | Min 0.01 |
 | `note` | string | optional | Max 1000 |
 
-**Behavior:** creates a `Payment` record with `recorded_by` = your user; if the reservation was `pending`, transitions it to `confirmed` (no-op on already-confirmed/other states).
+**Behavior:** creates a `Payment` record with `recorded_by` = your user; if the reservation was `pending`, transitions it to `confirmed` (no-op on already-confirmed/other states). Money taken here counts toward the folio balance (`balance_due_usd` subtracts reservation-level payments), so pre-departure deposits belong on this route. Once the reservation's folio is settled this route answers `folio_settled` (422, `context: { folio_uuid, settled_at }`) and records nothing.
 
 **Response `data`** (message: "Payment recorded successfully."):
 ```json
 { "uuid": "...", "method": "cash", "amount_usd": "270.00", "status": "completed", "note": "...", "recorded_by": "staff-uuid", "created_at": "..." }
 ```
 
-**Failure `error_code`s:** `payment_failed` (422, gateway rejected — unreachable with the current cash-only driver), `validation_failed` (422).
+**Failure `error_code`s:** `folio_settled` (422, the reservation's folio is already settled), `payment_failed` (422, gateway rejected — unreachable with the current cash-only driver), `validation_failed` (422).
 
 ### Reservation status reference
 
@@ -1160,42 +1161,157 @@ Approving a `confirmed` or `checked_in` stay also issues the guest's digital key
 
 ---
 
-## Module: Folios & Express Checkout (`folios.view`, `folios.settle`)
+## Module: Folios & Express Checkout (`folios.view`, `folios.post`, `folios.settle`, `folios.dispute`)
 
 The guest's approve now runs the same check-out as the desk (rooms turn dirty, `ReservationCheckedOut` fires, logged as `reservation.check_out_guest_express`), still without a balance check. `POST /cms/folios/{reservation}/generate` returns the folio unchanged once the reservation is checked out.
 
+**Ledger rules** (Phase 5):
+
+- The folio is an append-only ledger. Corrections are **credit rows, never edits**: there is no `PATCH`/`DELETE` for a line item or a payment, and there never will be.
+- Totals (`subtotal_usd`, `total_usd`) are recomputed from the stored rows under a row lock after every write, so two desks posting at once never lose a line.
+- Regeneration (the generate route, the guest's `GET /folio`, check-out) **reconciles instead of rebuilding**: item uuids are stable across refreshes, and desk charges, credits, credited rows and disputed rows survive it unchanged. A generated line a credit or a dispute points at is frozen (never deleted, never repriced).
+- `balance_due_usd` = `total_usd` minus completed payments whose payable is the folio **or its reservation**. It is signed (negative means the hotel owes the guest) and never clamped. Refunds are not subtracted yet.
+- A dispute never moves money. A refund-worthy dispute is settled by posting a credit with `reverses_item_uuid`.
+- Pre-departure money goes through `POST /cms/reservations/{uuid}/settle`; the folio payments route is the departure desk. A payment that brings the balance to zero settles the folio automatically (logged `folio.auto_settled`); there is no reopen.
+
+### Idempotency-Key
+
+A request header, at most 64 characters. **Optional** on `POST /cms/folios/{folio}/line-items`, **required** on `POST /cms/folios/{folio}/payments` (missing: `validation_failed` with `errors.idempotency_key` = "An Idempotency-Key header is required for this request."). A body field named `idempotency_key` is ignored; only the header counts.
+
+- The same key with the same payload returns **200** and the folio as it is **now** (not a byte-identical copy of the first response), without writing again. This holds even after the folio has settled.
+- The same key with a different payload returns `idempotency_conflict` (409, `context: { idempotency_key }`). For payments a different recording staff user counts as a different payload.
+- Keys never expire. The settle routes do not take the header yet.
+
+Generate one UUID per user action (per click on "Post" / "Take payment") and reuse it on every retry of that action.
+
 ### POST /cms/folios/{reservation}/generate — `folios.view`
 
-**Purpose:** Generate/refresh a reservation's folio (idempotent — one folio per reservation).
+**Purpose:** Generate/refresh a reservation's folio (idempotent — one folio per reservation). Refreshing reconciles the generated lines in place; see the ledger rules above.
 
 **Request:** No body. **Response `data`:** Folio object (see shape below).
 
-### POST /cms/folios/{folio}/settle — `folios.settle`
+### GET /cms/reservations/{reservation}/folio — `folios.view`
 
-**Purpose:** Record cash/on-arrival payment against a folio and close it.
+**Purpose:** Read a reservation's folio. A pure read for a reservation in any status: it never generates or refreshes anything.
+
+**Response `data`:** the folio shape below, message "Success.".
+
+**Failure `error_code`s:** `folio_missing` (404, `context: { reservation_uuid, reservation_status }` — the reservation has no folio yet; call `POST /cms/folios/{reservation}/generate` first), `not_found` (404, unknown reservation), `unauthorized` (401), `forbidden` (403).
+
+**Folio shape** (every folio response uses it: generate, settle, line items, payments, this read, the guest's `GET /folio` and approve):
+```json
+{
+  "uuid": "…", "reservation_uuid": "…", "status": "open",
+  "subtotal_usd": "309.00", "total_usd": "309.00",
+  "approved_by_guest_at": null, "settled_at": null,
+  "items": [
+    {
+      "uuid": "…", "description": "Room charge", "amount_usd": "300.00", "source_type": "reservation",
+      "quantity": 1, "unit_price_usd": null, "posted_by": null, "posted_at": null,
+      "reason": null, "reverses_item_uuid": null, "dispute": null
+    },
+    {
+      "uuid": "…", "description": "Minibar", "amount_usd": "9.00", "source_type": "manual",
+      "quantity": 2, "unit_price_usd": "4.50",
+      "posted_by": { "uuid": "…", "name": "Front Desk" }, "posted_at": "2026-09-26T10:05:00+00:00",
+      "reason": null, "reverses_item_uuid": null,
+      "dispute": {
+        "uuid": "…", "status": "open", "reason": "I did not order this.", "raised_by": "guest",
+        "raised_at": "2026-09-26T11:00:00+00:00", "resolved_at": null, "resolution_note": null
+      }
+    }
+  ],
+  "payments": [
+    { "uuid": "…", "method": "cash", "amount_usd": "100.00", "status": "completed", "note": null, "created_at": "…" }
+  ],
+  "paid_usd": "100.00",
+  "balance_due_usd": "209.00",
+  "open_disputes_count": 1
+}
+```
+
+- Money fields are 2-decimal strings. `paid_usd` counts completed payments on the folio or its reservation; `payments[]` lists every payment of both (a pending one is listed but not counted) and omits `recorded_by`.
+- `source_type` is `reservation`, `service_booking`, `service_request` (generated), `manual` (a desk charge) or `credit` (a negative line). `quantity`/`unit_price_usd`/`posted_by`/`posted_at` describe desk lines; generated lines carry `unit_price_usd: null`, `posted_by: null`, `posted_at: null`.
+- `reverses_item_uuid` is the item a credit reverses (null otherwise). `dispute` is the item's latest dispute or `null`; `raised_by` is `guest` or `staff`.
+- Items are ordered by posting order; payments by time (then insertion order).
+- `reservation_uuid` is present on this read; other routes may omit it.
+
+### POST /cms/folios/{folio}/line-items — `folios.post`
+
+**Purpose:** Post a charge (minibar, laundry, damage) or a credit (a correction or goodwill) to an open folio. Header `Idempotency-Key` optional (see above).
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `kind` | string | no | `charge` (default) or `credit` |
+| `description` | string | ✅ | Max 255 |
+| `quantity` | integer | no | 1–999, default 1 |
+| `unit_price_usd` | string | ✅ | Up to 2 decimals, 0.01–99999.99. Send it as a string (`"4.50"`). |
+| `reason` | string | required for a credit | Max 255 |
+| `reverses_item_uuid` | string (uuid) | no | Credits only (`validation_failed` on a charge); must be an item of this folio |
+
+**Behavior:** the line total is `quantity × unit_price_usd`, stored negative for a credit. A credit that reverses an item may not exceed what remains of that item after earlier credits against it (`folio_credit_exceeds_item`, checked first); no credit may take `balance_due_usd` below zero (`folio_credit_exceeds_balance`; reservation deposits count). A credit without `reverses_item_uuid` is a goodwill credit. The reservation's status is not a guard (a forced check-out's open folio still accepts lines); a settled folio refuses.
+
+**Response `data`:** the full folio shape. **201** with message "Folio line item posted.", or **200** on an `Idempotency-Key` replay.
+
+**Failure `error_code`s:** `folio_settled` (422, `context: { folio_uuid, settled_at }`), `folio_credit_exceeds_item` (422, `context: { item_uuid, remaining_usd, amount_usd }`), `folio_credit_exceeds_balance` (422, `context: { balance_due_usd, amount_usd }`), `idempotency_conflict` (409), `validation_failed` (422), `unauthorized` (401), `forbidden` (403), `not_found` (404).
+
+### POST /cms/folios/{folio}/payments — `folios.settle`
+
+**Purpose:** Take a manual payment against a folio at the departure desk. Header `Idempotency-Key` **required** (see above).
 
 **Request body:**
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `method` | string | ✅ | `cash` or `on_arrival` |
-| `amount_usd` | number | ✅ | Min 0.01 |
+| `amount_usd` | string | ✅ | Up to 2 decimals, 0.01–99999.99, and at most `balance_due_usd` |
 | `note` | string | optional | Max 1000 |
 
-**Behavior:** row-locks the folio, guards against double-settle, records a `Payment`, sets folio `status: "settled"` + `settled_at`. Does not touch reservation status (that's the guest's `folio/approve` action, or a separate admin flow).
+**Behavior:** row-locks the folio; a settled folio refuses; an amount above `balance_due_usd` is refused (so a folio whose balance is already `0.00`, e.g. covered by a reservation deposit, refuses any payment — close it with the settle route instead). The payment that brings the balance to `0.00` settles the folio (`status: "settled"`, `settled_at` set, logged `folio.auto_settled`), after which it passes the check-out gate.
 
-**Response `data`** (message: "Folio settled."):
-```json
-{
-  "uuid": "...", "reservation_uuid": "...", "status": "settled",
-  "subtotal_usd": "300.00", "total_usd": "300.00",
-  "approved_by_guest_at": null, "settled_at": "2026-07-16T10:05:00+00:00",
-  "items": [ { "uuid": "...", "description": "Room charge", "amount_usd": "300.00", "source_type": "reservation" } ]
-}
-```
-Note this response is the Folio, not a Payment object — the settlement's own `Payment` record isn't surfaced inline here.
+**Response `data`:** the full folio shape. **201** with message "Folio payment recorded.", or **200** on a replay (also after the payment auto-settled the folio).
 
-**Failure `error_code`s:** `reservation_state` (422, already settled — double-settle guard), `payment_failed` (422), `validation_failed` (422).
+**Failure `error_code`s:** `folio_overpayment` (422, `context: { balance_due_usd, amount_usd }`), `folio_settled` (422, `context: { folio_uuid, settled_at }`), `idempotency_conflict` (409), `validation_failed` (422, including a missing `Idempotency-Key`), `unauthorized` (401), `forbidden` (403), `not_found` (404).
+
+### PATCH /cms/folios/{folio}/line-items/{item}/dispute — `folios.dispute`
+
+**Purpose:** Raise a dispute on a line item on the guest's behalf, or close the open one as resolved or rejected.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `action` | string | ✅ | `raise`, `resolve` or `reject` |
+| `reason` | string | required for `raise` | Max 500 |
+| `note` | string | required for `resolve`/`reject` | Max 1000. The guest sees it as `resolution_note`. |
+
+**Behavior:** the item must belong to the folio in the URL (404 otherwise). One open dispute per item; a new one may be raised after the previous one is resolved or rejected. Allowed on open and settled folios. A decision never moves money — to refund a disputed charge, post a credit with `reverses_item_uuid` through the line-items route. An open dispute never blocks check-out.
+
+**Response `data`:** the item with its latest `dispute`, message "Dispute raised." / "Dispute resolved." / "Dispute rejected.".
+
+**Failure `error_code`s:** `folio_item_dispute_open` (422, `context: { item_uuid, dispute_uuid }` — raise while one is open), `folio_dispute_state` (422, `context: { item_uuid, status }` — resolve/reject with no open dispute; `status` is the latest dispute's status or `null`), `validation_failed` (422), `unauthorized` (401), `forbidden` (403), `not_found` (404). The guest raises their own disputes through `PATCH /folio/items/{item}/dispute` (mobile guide).
+
+### POST /cms/folios/{folio}/settle — `folios.settle`
+
+> ⚠️ **Contract change (Phase 5):** settling an already-settled folio now answers `folio_settled` (422, context folio_uuid and settled_at) instead of `reservation_state`.
+
+**Purpose:** Close a folio, recording a final cash/on-arrival payment when money is still due.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `method` | string | only with `amount_usd` | `cash` or `on_arrival` |
+| `amount_usd` | number or string | optional | Up to 2 decimals, min 0.01 |
+| `note` | string | optional | Max 1000 |
+
+**Behavior:** row-locks the folio. When `balance_due_usd` is already `0.00` or below (e.g. a prepaid stay whose reservation deposit covers the total), the folio closes **without a payment** — even if an amount was sent — with message "Folio settled; nothing was due, so no payment was recorded." (logged `folio.settled_no_payment`). Otherwise an amount is required (`validation_failed`, `errors.amount_usd`) and is recorded as before, then the folio closes with message "Folio settled.". Either way `status: "settled"` and `settled_at` are set and the folio passes the check-out gate. Does not touch reservation status.
+
+**Response `data`:** the full folio shape (not a Payment object).
+
+**Failure `error_code`s:** `folio_settled` (422, `context: { folio_uuid, settled_at }`), `payment_failed` (422), `validation_failed` (422).
 
 ---
 
@@ -1427,7 +1543,7 @@ Guests with no reservations are listed (`stay_status: "none"`).
 | `no_availability` | 409 | Last room raced away during booking, or check-in auto-pick found no free room of the type for the stay dates |
 | `room_already_assigned` | 409 | Room already assigned to another reservation for overlapping dates |
 | `invalid_promo` | 422 | Promo code invalid/expired |
-| `reservation_state` | 422 | Action not valid for the reservation's/folio's current state |
+| `reservation_state` | 422 | Action not valid for the reservation's current state |
 | `hold_expired` | 422 | Soft-hold window passed before OTP verification |
 | `payment_failed` | 422 | Payment gateway rejected the charge |
 | `inquiry_state` | 422 | Invalid event-inquiry status transition |
@@ -1436,6 +1552,14 @@ Guests with no reservations are listed (`stay_status: "none"`).
 | `reservation_outside_stay_window` | 422 | Check-in outside the hotel-local stay window |
 | `room_out_of_order` | 422 | The room is in maintenance |
 | `folio_unsettled` | 422 | Check-out with an open folio; `context.can_force` says whether the caller may force it |
+| `folio_missing` | 404 | The reservation has no folio yet; call `POST /cms/folios/{reservation}/generate` first |
+| `folio_settled` | 422 | The folio is already settled and can no longer change (line items, payments, settle, reservation-level settle) |
+| `folio_credit_exceeds_item` | 422 | A credit is larger than what remains of the item it reverses; `context.remaining_usd` |
+| `folio_credit_exceeds_balance` | 422 | A credit would take the folio balance below zero; `context.balance_due_usd` |
+| `folio_overpayment` | 422 | A folio payment is larger than the balance due; `context.balance_due_usd` |
+| `folio_item_dispute_open` | 422 | The line item already has an open dispute; `context.dispute_uuid` |
+| `folio_dispute_state` | 422 | Resolve/reject on a line item with no open dispute; `context.status` |
+| `idempotency_conflict` | 409 | The `Idempotency-Key` was already used for a different request |
 
 ---
 

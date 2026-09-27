@@ -4268,6 +4268,312 @@
                     "response": []
                 },
                 {
+                    "name": "[Admin] Read folio (Ahmad, captures ahmad_folio_uuid and ahmad_folio_item_uuid)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const body = pm.response.json();",
+                                    "    pm.environment.set('ahmad_folio_uuid', body.data.uuid);",
+                                    "    pm.environment.set('ahmad_folio_item_uuid', body.data.items[0].uuid);",
+                                    "    console.log('ahmad_folio_uuid / ahmad_folio_item_uuid captured');",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{reception_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{reception_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/reservations/{{ahmad_reservation_uuid}}/folio",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "reservations",
+                                "{{ahmad_reservation_uuid}}",
+                                "folio"
+                            ]
+                        },
+                        "description": "Pure read (folios.view): never generates. 404 folio_missing means call Generate/refresh folio first. The folio shape carries payments, paid_usd, balance_due_usd (signed) and open_disputes_count; items carry quantity, unit_price_usd, posted_by, posted_at, reason, reverses_item_uuid and dispute."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Admin] Post a line item (charge; see description for a credit)",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// One fresh key per send. To demo a safe retry, disable this line and resend: the second call answers 200 without writing again.",
+                                    "pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{reception_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{reception_token}}"
+                            },
+                            {
+                                "key": "Idempotency-Key",
+                                "value": "{{idempotency_key}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/folios/{{ahmad_folio_uuid}}/line-items",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "folios",
+                                "{{ahmad_folio_uuid}}",
+                                "line-items"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"description\": \"Minibar\",\n    \"quantity\": 2,\n    \"unit_price_usd\": \"4.50\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "folios.post. Append-only: there is no edit or delete for a line; corrections are credits. A credit uses {\"kind\": \"credit\", \"description\": \"Minibar correction\", \"unit_price_usd\": \"4.50\", \"reason\": \"Item not consumed\", \"reverses_item_uuid\": \"<charge uuid>\"}. Idempotency-Key is optional here; resending with the same key and body returns 200 without a second line, the same key with a different body returns 409 idempotency_conflict."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Guest] Dispute a line item",
+                    "request": {
+                        "method": "PATCH",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{guest_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/folio/items/{{ahmad_folio_item_uuid}}/dispute",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "folio",
+                                "items",
+                                "{{ahmad_folio_item_uuid}}",
+                                "dispute"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"reason\": \"I did not order this.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Own items only: any item that is not yours answers 404 not_found. One open dispute per item (422 folio_item_dispute_open). Never changes an amount."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Admin] Resolve a dispute",
+                    "request": {
+                        "method": "PATCH",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{reception_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{reception_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/folios/{{ahmad_folio_uuid}}/line-items/{{ahmad_folio_item_uuid}}/dispute",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "folios",
+                                "{{ahmad_folio_uuid}}",
+                                "line-items",
+                                "{{ahmad_folio_item_uuid}}",
+                                "dispute"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"action\": \"resolve\",\n    \"note\": \"Checked with the outlet; charge confirmed.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "folios.dispute. action: raise (with reason, max 500), resolve or reject (with note, max 1000; the guest sees it). The item must belong to the folio in the URL. Resolving never moves money: to refund, post a credit with reverses_item_uuid. 422 folio_dispute_state when there is no open dispute to close."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Admin] Record a payment (cash)",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// One fresh key per send. To demo a safe retry, disable this line and resend: the second call answers 200 without writing again.",
+                                    "pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{reception_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{reception_token}}"
+                            },
+                            {
+                                "key": "Idempotency-Key",
+                                "value": "{{idempotency_key}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/folios/{{ahmad_folio_uuid}}/payments",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "folios",
+                                "{{ahmad_folio_uuid}}",
+                                "payments"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"method\": \"cash\",\n    \"amount_usd\": \"50.00\",\n    \"note\": \"Partial payment at the desk\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "folios.settle. The Idempotency-Key header is required (422 validation_failed without it). The amount may not exceed balance_due_usd (422 folio_overpayment). A payment that brings the balance to zero settles the folio automatically."
+                    },
+                    "response": []
+                },
+                {
                     "name": "[Guest] ⚠️ Approve checkout (destructive — flips reservation to checked_out)",
                     "request": {
                         "method": "POST",
@@ -4409,7 +4715,8 @@
                                     "language": "json"
                                 }
                             }
-                        }
+                        },
+                        "description": "amount_usd is optional: a folio with nothing due (e.g. covered by a reservation deposit) closes without a payment (\"Folio settled; nothing was due, so no payment was recorded.\"). With money due, send method + amount_usd as before. Settling twice answers 422 folio_settled."
                     },
                     "response": []
                 }

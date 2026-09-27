@@ -3,12 +3,16 @@
 namespace Tests\Feature\Payment;
 
 use App\Contracts\PaymentGatewayInterface;
+use App\Enums\FolioStatus;
 use App\Enums\ReservationStatus;
+use App\Models\Folio;
+use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\User;
 use App\Payments\ManualDriver;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RecordsRowLocks;
 use Tests\TestCase;
 
 /**
@@ -16,7 +20,7 @@ use Tests\TestCase;
  */
 class PaymentTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, RecordsRowLocks;
 
     protected function setUp(): void
     {
@@ -190,5 +194,91 @@ class PaymentTest extends TestCase
             'method'     => 'cash',
             'amount_usd' => 100.00,
         ])->assertUnauthorized();
+    }
+
+    // ── Phase 5 (D-13, D-14, D-15): legacy reservation settle ───────────
+
+    public function test_amount_is_stored_as_an_exact_decimal(): void
+    {
+        $user        = $this->makeReception();
+        $reservation = $this->makeReservation('confirmed');
+
+        $this->actingAs($user, 'users')
+             ->postJson("/api/cms/reservations/{$reservation->uuid}/settle", ['method' => 'cash', 'amount_usd' => 150.5])
+             ->assertOk()
+             ->assertJsonPath('data.amount_usd', '150.50');
+
+        $this->assertSame('150.50', Payment::sole()->amount_usd);
+    }
+
+    public function test_reservation_settle_is_refused_once_the_folio_is_settled(): void
+    {
+        $user        = $this->makeReception();
+        $reservation = $this->makeReservation('checked_in');
+        $folio       = Folio::factory()->create([
+            'reservation_id' => $reservation->id, 'status' => FolioStatus::SETTLED, 'settled_at' => now(),
+        ]);
+
+        $this->actingAs($user, 'users')
+             ->postJson("/api/cms/reservations/{$reservation->uuid}/settle", ['method' => 'cash', 'amount_usd' => 10])
+             ->assertStatus(422)
+             ->assertJsonPath('success', false)
+             ->assertJsonPath('error_code', 'folio_settled')
+             ->assertJsonPath('context.folio_uuid', $folio->uuid);
+
+        $this->assertSame(0, Payment::count());
+    }
+
+    public function test_reservation_settle_still_works_with_an_open_folio_or_none(): void
+    {
+        $user = $this->makeReception();
+        $open = $this->makeReservation('checked_in');
+        Folio::factory()->create(['reservation_id' => $open->id]);
+        $none = $this->makeReservation('confirmed');
+
+        $this->actingAs($user, 'users')
+             ->postJson("/api/cms/reservations/{$open->uuid}/settle", ['method' => 'cash', 'amount_usd' => 10])
+             ->assertOk();
+        $this->actingAs($user, 'users')
+             ->postJson("/api/cms/reservations/{$none->uuid}/settle", ['method' => 'cash', 'amount_usd' => 10])
+             ->assertOk();
+
+        $this->assertSame(2, Payment::count());
+    }
+
+    public function test_reservation_settle_locks_the_reservation_then_the_folio(): void
+    {
+        $user        = $this->makeReception();
+        $reservation = $this->makeReservation('checked_in');
+        Folio::factory()->create(['reservation_id' => $reservation->id]);
+
+        $locked = $this->lockedSelects(fn () => $this->actingAs($user, 'users')
+            ->postJson("/api/cms/reservations/{$reservation->uuid}/settle", ['method' => 'cash', 'amount_usd' => 10])
+            ->assertOk());
+
+        $tables = array_map(fn (string $sql) => preg_match('/from "(\w+)"/', $sql, $m) ? $m[1] : null, $locked);
+        $this->assertSame(['reservations', 'folios'], array_values(array_unique($tables)));
+    }
+
+    /**
+     * The legacy request still validates `numeric`, so any numeric the rule
+     * accepts must be answered with a 200 or a 422, never a 500, and never
+     * recorded as a silently truncated amount (Phase 5 moved this path to
+     * bcmath; behaviour was to stay unchanged otherwise).
+     */
+    public function test_numeric_amounts_the_rule_accepts_never_crash_or_truncate(): void
+    {
+        $user        = $this->makeReception();
+        $reservation = $this->makeReservation('confirmed');
+
+        foreach (['1e3', '10.555'] as $amount) {
+            $response = $this->actingAs($user, 'users')
+                ->postJson("/api/cms/reservations/{$reservation->uuid}/settle", ['method' => 'cash', 'amount_usd' => $amount]);
+
+            $this->assertContains($response->status(), [200, 422], "amount {$amount} answered {$response->status()}");
+            if ($response->status() === 200) {
+                $this->assertNotSame('10.55', $response->json('data.amount_usd'), '10.555 must not be truncated to 10.55');
+            }
+        }
     }
 }

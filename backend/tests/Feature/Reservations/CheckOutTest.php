@@ -161,7 +161,9 @@ class CheckOutTest extends TestCase
             ->assertJsonPath('data.rooms.0.room_uuid', $room->uuid)
             ->assertJsonPath('data.guest.uuid', $reservation->guest->uuid);
 
-        $this->assertSame(['uuid', 'status', 'total_usd'], array_keys($response->json('data.folio')));
+        // Phase 5 (D-12): the summary gains open_disputes_count, a flag and never a gate.
+        $this->assertSame(['uuid', 'status', 'total_usd', 'open_disputes_count'], array_keys($response->json('data.folio')));
+        $this->assertSame(0, $response->json('data.folio.open_disputes_count'));
 
         $fresh = $room->fresh();
         $this->assertSame('dirty', $fresh->status->value);

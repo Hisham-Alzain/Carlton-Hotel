@@ -36,12 +36,17 @@ abstract class BaseRequest extends FormRequest
         return [
             'required'         => __('custom.validation.required',         ['attribute' => ':attribute']),
             'required_if'      => __('custom.validation.required_if',      ['attribute' => ':attribute', 'other' => ':other', 'value' => ':value']),
+            // Laravel's text: "The method field is required when amount usd is present." (05-06)
+            'required_with'    => __('custom.validation.required_with',    ['attribute' => ':attribute', 'values' => ':values']),
             'required_without' => __('custom.validation.required_without', ['attribute' => ':attribute', 'values' => ':values']),
             'present'          => __('custom.validation.present',          ['attribute' => ':attribute']),
             'string'           => __('custom.validation.string',           ['attribute' => ':attribute']),
             'boolean'          => __('custom.validation.boolean',          ['attribute' => ':attribute']),
             'integer'          => __('custom.validation.integer',          ['attribute' => ':attribute']),
             'numeric'          => __('custom.validation.numeric',          ['attribute' => ':attribute']),
+            // Laravel's own text: "The unit price usd field must have 0-2 decimal places."
+            // (`:decimal` renders as `0-2` for `decimal:0,2`), checked with tinker in 05-03.
+            'decimal'          => __('custom.validation.decimal',          ['attribute' => ':attribute', 'decimal' => ':decimal']),
             'array'            => __('custom.validation.array',            ['attribute' => ':attribute']),
             'email'            => __('custom.validation.email',            ['attribute' => ':attribute']),
             'date'             => __('custom.validation.date',             ['attribute' => ':attribute']),
@@ -59,6 +64,10 @@ abstract class BaseRequest extends FormRequest
             'mimes'            => __('custom.validation.mimes',            ['attribute' => ':attribute', 'values' => ':values']),
             'unique'           => __('custom.validation.unique',           ['attribute' => ':attribute']),
             'exists'           => __('custom.validation.exists',           ['attribute' => ':attribute']),
+            // Laravel's text: "The x field must be a valid UUID." (05-04)
+            'uuid'             => __('custom.validation.uuid',             ['attribute' => ':attribute']),
+            // Laravel's text: "The r field is prohibited unless kind is in credit." (05-04)
+            'prohibited_unless' => __('custom.validation.prohibited_unless', ['attribute' => ':attribute', 'other' => ':other', 'values' => ':values']),
             'distinct'         => __('custom.validation.distinct',          ['attribute' => ':attribute']),
             'current_password' => __('custom.validation.current_password', ['attribute' => ':attribute']),
             'confirmed'        => __('custom.validation.confirmed',        ['attribute' => ':attribute']),

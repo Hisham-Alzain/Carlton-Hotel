@@ -27,7 +27,8 @@ class ExpressCheckoutTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const FOLIO_KEYS = ['uuid', 'status', 'subtotal_usd', 'total_usd', 'approved_by_guest_at', 'settled_at', 'items'];
+    // Phase 5 (D-02): one folio shape everywhere, so approve carries the ledger keys too.
+    private const FOLIO_KEYS = ['uuid', 'status', 'subtotal_usd', 'total_usd', 'approved_by_guest_at', 'settled_at', 'items', 'payments', 'paid_usd', 'balance_due_usd', 'open_disputes_count'];
 
     protected function setUp(): void
     {
@@ -217,11 +218,13 @@ class ExpressCheckoutTest extends TestCase
         // re-insert every line and change the item ids).
         [, $reservation, , $token] = $this->guestInRoom();
 
-        $inserts = $this->countItemInserts(function () use ($token) {
-            $this->approve($token)->assertOk()->assertJsonCount(1, 'data.items');
+        $response = null;
+        $inserts  = $this->countItemInserts(function () use ($token, &$response) {
+            $response = $this->approve($token)->assertOk()->assertJsonCount(1, 'data.items');
         });
 
         $this->assertSame(1, $inserts, 'one room-charge line, inserted once');
+        $this->assertSame(FolioItem::sole()->uuid, $response->json('data.items.0.uuid'));
         $folio = Folio::where('reservation_id', $reservation->id)->sole();
         $this->assertNotNull($folio->approved_by_guest_at);
         // Only one row was ever inserted: a second build would have deleted it
@@ -234,20 +237,25 @@ class ExpressCheckoutTest extends TestCase
     {
         [, $reservation, , $token] = $this->guestInRoom();
 
-        // The guest opened their bill first (GET /api/folio builds it).
-        $this->withToken($token)->getJson('/api/folio')->assertOk();
-        $before = Folio::where('reservation_id', $reservation->id)->sole();
+        // The guest opened their bill twice first (GET /api/folio builds, then reconciles it).
+        $firstUuid  = $this->withToken($token)->getJson('/api/folio')->assertOk()->json('data.items.0.uuid');
+        $secondUuid = $this->withToken($token)->getJson('/api/folio')->assertOk()->json('data.items.0.uuid');
+        $before     = Folio::where('reservation_id', $reservation->id)->sole();
         $this->assertNull($before->approved_by_guest_at);
 
-        $inserts = $this->countItemInserts(function () use ($token, $before) {
-            $this->approve($token)
+        $approvedUuid = null;
+        $inserts      = $this->countItemInserts(function () use ($token, $before, &$approvedUuid) {
+            $approvedUuid = $this->approve($token)
                 ->assertOk()
                 ->assertJsonPath('data.uuid', $before->uuid)
                 ->assertJsonPath('data.approved_by_guest_at', '2027-03-12T09:00:00+00:00')
-                ->assertJsonCount(1, 'data.items');
+                ->assertJsonCount(1, 'data.items')
+                ->json('data.items.0.uuid');
         });
 
-        $this->assertSame(1, $inserts, 'the open folio is refreshed once under the check-out lock, not twice');
+        $this->assertSame(0, $inserts, 'the open folio is reconciled in place, never re-inserted (D-06)');
+        $this->assertSame($firstUuid, $secondUuid, 'item uuids are stable across refreshes (D-06)');
+        $this->assertSame($firstUuid, $approvedUuid);
         $after = Folio::where('reservation_id', $reservation->id)->sole();
         $this->assertSame($before->id, $after->id);
         $this->assertNotNull($after->approved_by_guest_at);

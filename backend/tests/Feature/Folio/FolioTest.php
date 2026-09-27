@@ -173,7 +173,9 @@ class FolioTest extends TestCase
         $this->actingAs($settler, 'users')
              ->postJson("/api/cms/folios/{$folioUuid}/settle", ['method' => 'cash', 'amount_usd' => 300])
              ->assertStatus(422)
-             ->assertJson(['error_code' => 'reservation_state']);
+             // Phase 5 (D-14): the dedicated folio_settled code replaces reservation_state here.
+             ->assertJson(['error_code' => 'folio_settled'])
+             ->assertJsonPath('context.folio_uuid', $folioUuid);
     }
 
     public function test_guest_approve_marks_reservation_checked_out(): void

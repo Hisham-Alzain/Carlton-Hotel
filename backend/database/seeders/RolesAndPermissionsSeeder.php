@@ -14,7 +14,9 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $permissions = [
             'reservations.view', 'reservations.create', 'reservations.cancel',
-            'folios.view', 'folios.settle',
+            // Phase 5 (D-05): folios.post (posting charges/credits) goes to every holder of folios.settle.
+            // folios.dispute (staff dispute raise/resolve/reject) goes to the same presets (D-11).
+            'folios.view', 'folios.settle', 'folios.post', 'folios.dispute',
             // `cms.restore` and `cms.purge` are split off `cms.edit` because
             // neither is an edit. Restoring is undo, and belongs with editing —
             // an editor who can delete must be able to take it back. Purging
@@ -39,7 +41,7 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         $presets = [
-            'reception'      => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'service_requests.view', 'rooms.status', 'guests.view', 'guests.edit'],
+            'reception'      => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'folios.post', 'folios.dispute', 'service_requests.view', 'rooms.status', 'guests.view', 'guests.edit'],
             'kitchen'        => ['service_requests.view', 'service_requests.update'],
             'housekeeping'   => ['service_requests.view', 'service_requests.update', 'rooms.status'],
             'concierge'      => ['service_requests.view', 'service_requests.assign', 'service_requests.update', 'guests.view', 'guests.edit'],

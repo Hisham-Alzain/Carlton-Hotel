@@ -306,6 +306,12 @@ class ReservationService
 
     public function checkOut(Reservation $reservation, CheckOutMode $mode, User $actor, ?string $reason): array
     {
-        return $this->checkOut->handle($reservation, $mode, $actor, $reason);
+        $result = $this->checkOut->handle($reservation, $mode, $actor, $reason);
+
+        // Phase 5 (D-12): the check-out summary shows open disputes as a flag;
+        // CheckOutReservationAction itself never looks at them.
+        $result['data']->folio?->loadCount('openDisputes');
+
+        return $result;
     }
 }

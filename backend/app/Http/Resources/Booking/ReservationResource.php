@@ -36,11 +36,14 @@ class ReservationResource extends BaseResource
             'guest'          => new GuestResource($this->whenLoaded('guest')),
             'promo_code'     => $this->whenLoaded('promoCode', fn () => $this->promoCode?->code),
             // Only the check-out response loads the folio (D-14).
-            'folio'          => $this->whenLoaded('folio', fn () => $this->folio ? [
+            // Phase 5 (D-12): open_disputes_count only when the service counted it (no query here).
+            'folio'          => $this->whenLoaded('folio', fn () => $this->folio ? array_merge([
                 'uuid'      => $this->folio->uuid,
                 'status'    => $this->folio->status,
                 'total_usd' => $this->folio->total_usd,
-            ] : null),
+            ], array_key_exists('open_disputes_count', $this->folio->getAttributes())
+                ? ['open_disputes_count' => (int) $this->folio->open_disputes_count]
+                : []) : null),
         ];
     }
 }

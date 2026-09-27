@@ -60,6 +60,7 @@ return [
         'forbidden'              => "Vous n'avez pas l'autorisation d'effectuer cette action.",
         'validation_failed'      => 'Les données fournies sont invalides.',
         'too_many_requests'      => 'Trop de requêtes. Veuillez réessayer plus tard.',
+        'method_not_allowed'     => 'Méthode non autorisée.',
         'external_service_error' => "Une erreur s'est produite sur un service externe.",
         'otp_expired'            => 'Le code de vérification a expiré.',
         'otp_invalid'            => 'Le code de vérification est invalide.',

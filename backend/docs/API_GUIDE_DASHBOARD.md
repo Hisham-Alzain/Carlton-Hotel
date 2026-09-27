@@ -1727,6 +1727,7 @@ An invalid move is `422 service_booking_transition_invalid` with `context: { fro
 | `forbidden` | 403 | Missing permission, escalation attempt, or super_admin protection |
 | `not_found` | 404 | Resource not found (or, for reservation ownership checks, deliberately masking "not yours") |
 | `validation_failed` | 422 | Form validation failed |
+| `method_not_allowed` | 405 | Known path called with a verb it does not serve (e.g. `POST` on a read-only list); the `Allow` header lists the accepted verbs. Previously answered `500 server_error` |
 | `too_many_requests` | 429 | Rate limited |
 | `server_error` | 500 | Unexpected error — show generic message, log `request_id` |
 | `no_availability` | 409 | Last room raced away during booking, or check-in auto-pick found no free room of the type for the stay dates |

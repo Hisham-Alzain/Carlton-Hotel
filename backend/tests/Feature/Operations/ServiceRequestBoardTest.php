@@ -307,11 +307,10 @@ class ServiceRequestBoardTest extends TestCase
 
         foreach (['postJson', 'putJson', 'patchJson', 'deleteJson'] as $verb) {
             foreach ([self::URL, self::URL . '/' . $request->uuid] as $url) {
-                // Never 2xx. (The global handler currently renders a 405
-                // MethodNotAllowedHttpException as 500 server_error — pre-existing,
-                // recorded in 06-06-SUMMARY; the route list itself has no write verb.)
-                $status = $this->withToken($token)->{$verb}($url, ['status' => 'completed'])->status();
-                $this->assertGreaterThanOrEqual(400, $status, "{$verb} {$url} answered {$status}");
+                // The board is read-only: every write verb is a 405 envelope.
+                $this->withToken($token)->{$verb}($url, ['status' => 'completed'])
+                    ->assertStatus(405)
+                    ->assertJsonPath('error_code', 'method_not_allowed');
             }
         }
 

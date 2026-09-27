@@ -475,6 +475,9 @@ existing `POST /api/service-requests`.
 - New error codes (422): `housekeeping_task_transition_invalid`,
   `housekeeping_task_closed`, `service_booking_transition_invalid`,
   `departure_service_readonly`.
+- Fix (additive, all routes): a wrong HTTP verb on a known path now answers
+  `405` with the standard error envelope, `error_code: method_not_allowed`, and
+  an `Allow` header, instead of `500 server_error`. No client change required.
 
 ---
 

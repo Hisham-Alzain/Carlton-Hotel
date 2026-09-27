@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
@@ -98,6 +99,17 @@ return Application::configure(basePath: dirname(__DIR__))
                     'context'    => null,
                     'request_id' => $requestId,
                 ], 404);
+            }
+            // A known path hit with a verb it does not serve. Without this
+            // branch it fell through to the 500 below; the Allow header is kept.
+            if ($e instanceof MethodNotAllowedHttpException) {
+                return response()->json([
+                    'success'    => false,
+                    'message'    => __('custom.errors.method_not_allowed'),
+                    'error_code' => 'method_not_allowed',
+                    'context'    => null,
+                    'request_id' => $requestId,
+                ], 405)->withHeaders($e->getHeaders());
             }
             if ($e instanceof TooManyRequestsHttpException) {
                 return response()->json([

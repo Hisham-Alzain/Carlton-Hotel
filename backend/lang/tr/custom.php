@@ -60,6 +60,7 @@ return [
         'forbidden'              => 'Bu işlemi gerçekleştirme izniniz yok.',
         'validation_failed'      => 'Girilen veriler geçersiz.',
         'too_many_requests'      => 'Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.',
+        'method_not_allowed'     => 'Yönteme izin verilmiyor.',
         'external_service_error' => 'Harici bir serviste hata oluştu.',
         'otp_expired'            => 'Doğrulama kodunun süresi doldu.',
         'otp_invalid'            => 'Doğrulama kodu geçersiz.',

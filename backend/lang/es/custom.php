@@ -60,6 +60,7 @@ return [
         'forbidden'              => 'No tiene permiso para realizar esta acción.',
         'validation_failed'      => 'Los datos proporcionados no son válidos.',
         'too_many_requests'      => 'Demasiadas solicitudes. Inténtelo de nuevo más tarde.',
+        'method_not_allowed'     => 'Método no permitido.',
         'external_service_error' => 'Se ha producido un error en un servicio externo.',
         'otp_expired'            => 'El código de verificación ha caducado.',
         'otp_invalid'            => 'El código de verificación no es válido.',

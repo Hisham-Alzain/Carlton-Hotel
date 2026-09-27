@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+//TODD: check if there any hardcoded strings in the app and replace them with the relevant translations
 class AppTranslations {
   // Dialogs
   static String get loading => 'dialogs.loading'.tr;
@@ -309,6 +310,7 @@ class AppTranslations {
   static String get howMayIAssist => 'concierge.howMayIAssist'.tr;
   static String get helpDescription => 'concierge.helpDescription'.tr;
   static String get conciergeComingSoon => 'concierge.comingSoon'.tr;
+  static String get attachmentTooLarge => 'concierge.attachmentTooLarge'.tr;
 
   // Stays
   static String get staysTitle => 'stays.title'.tr;

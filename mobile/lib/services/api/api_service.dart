@@ -57,6 +57,7 @@ class ApiService extends GetxService {
   /// dev setup here) as long as `adb reverse tcp:8000 tcp:8000` is active — so a
   /// plain `flutter run` needs no flag. Re-run adb reverse after replugging USB.
   /// (`10.0.2.2` is emulator-only and is unreachable from a real phone.)
+  /// TODO: change to production api
   static const String host = String.fromEnvironment(
     'API_HOST',
     defaultValue: 'http://localhost:8000',

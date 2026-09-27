@@ -66,7 +66,7 @@ All routes are under `/api/v1`. Staff routes use `auth:users` + permission middl
 - [ ] **TICKET-07**: Staff can escalate a ticket to another staff member with a reason; escalation is timestamped (`POST /support-tickets/{ticket}/escalate`)
 - [ ] **OPS-01**: Staff can claim an operations-queue item for themselves (`PATCH /operations/queue/{type}/{uuid}/claim`)
 - [ ] **OPS-02**: Staff can list assignable staff filtered by department/permission (`GET /operations/staff`)
-- [ ] **OPS-03**: Queue items expose their `type` so the dashboard can build `{type}/{uuid}` paths
+- [ ] **OPS-03**: Queue items expose their `queue_type` path segment so the dashboard can build `{queue_type}/{uuid}` paths
 
 ### Events & Dining
 

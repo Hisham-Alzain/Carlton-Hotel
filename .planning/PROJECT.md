@@ -76,6 +76,7 @@ Every screen the dashboard and guest app already show works against a real, test
 | Phases built by `council-build` workflow instead of `/gsd-execute-phase` | Adds QA test-and-fix loop, consultant/council escalation and delegated grunt work per module | — Pending |
 | Housekeeping tasks are a real table; departure services are a projection | Assignment/timing must persist; departures are derivable from bookings + requests | — Pending |
 | Support-ticket replies stored in `ticket_actions`; `Message` mirroring reserved (nullable `message_id`) not implemented | Council (2026-09-25): no confirmed requirement for guest-visible replies; avoids undocumented duplicated data | — Pending |
+| **Debt:** `tickets.*` doubles as the guest-relations permission set — widening `reception`/`concierge` with `tickets.view/.assign/.respond` (Phase 7) also grants read of `/cms/conversations` (guest chat PII) and, per the Phase 7 council, `/cms/event-inquiries` (RFP leads, contact PII, budgets), plus re-status/assign on event inquiries via `tickets.assign` | Council A4 (2026-09-27): avoids a new permission string for a narrow slice; accepted as a known coupling, not a bug | Split into `support_tickets.*` if the owner objects once the blast radius is visible in review — Pending |
 
 ## Evolution
 

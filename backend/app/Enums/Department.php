@@ -36,6 +36,10 @@ enum Department: string
             'housekeeping' => self::HOUSEKEEPING,
             'laundry'      => self::HOUSEKEEPING,
             'maintenance'  => self::MAINTENANCE,
+            // Phase 6 departure services (D-19): explicit, because a legacy
+            // late_checkout would otherwise fall back to concierge.
+            'late_checkout' => self::RECEPTION,
+            'luggage'       => self::CONCIERGE,
             default        => self::CONCIERGE,
         };
     }

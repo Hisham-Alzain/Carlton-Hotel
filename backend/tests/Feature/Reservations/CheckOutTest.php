@@ -327,6 +327,32 @@ class CheckOutTest extends TestCase
         $this->assertCount(0, $this->forcedRows());
     }
 
+    public function test_check_out_records_the_effective_mode(): void
+    {
+        // Plain staff check-out.
+        $plain = $this->checkedInStay('settled');
+        $this->checkOut($plain)->assertOk()->assertJsonPath('data.check_out_mode', 'none');
+        $this->assertSame('none', DB::table('reservations')->where('id', $plain->id)->value('check_out_mode'));
+        $this->assertSame(CheckOutMode::NONE, $plain->fresh()->check_out_mode);
+
+        // Forced over an open folio by a folios.settle holder.
+        $forced = $this->checkedInStay('open');
+        $this->checkOut($forced, ['force' => true, 'reason' => 'Company pays'])
+            ->assertOk()
+            ->assertJsonPath('data.check_out_mode', 'staff_force');
+        $this->assertSame('staff_force', DB::table('reservations')->where('id', $forced->id)->value('check_out_mode'));
+
+        // A settled folio ignores force: recorded as an ordinary check-out.
+        $settled = $this->checkedInStay('settled');
+        $this->checkOut($settled, ['force' => true, 'reason' => 'Habit'])
+            ->assertOk()
+            ->assertJsonPath('data.check_out_mode', 'none');
+        $this->assertSame('none', DB::table('reservations')->where('id', $settled->id)->value('check_out_mode'));
+
+        // Rows never checked out read null.
+        $this->assertNull($this->checkedInStay('settled')->fresh()->check_out_mode);
+    }
+
     public function test_check_out_never_changes_a_settled_folio(): void
     {
         $reservation = $this->checkedInStay('settled');

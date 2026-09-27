@@ -91,6 +91,19 @@ class ExpressCheckoutTest extends TestCase
         $this->assertNull($history[0]->changed_by);
     }
 
+    public function test_express_checkout_records_guest_express_privately(): void
+    {
+        [, $reservation, , $token] = $this->guestInRoom();
+
+        $response = $this->approve($token)->assertOk();
+
+        $this->assertSame('guest_express', DB::table('reservations')->where('id', $reservation->id)->value('check_out_mode'));
+        $this->assertSame(CheckOutMode::GUEST_EXPRESS, $reservation->fresh()->check_out_mode);
+
+        // Staff-only (D-20): the guest response carries no check_out_mode at any depth.
+        $this->assertStringNotContainsString('check_out_mode', json_encode($response->json('data')));
+    }
+
     public function test_guest_express_is_unguarded_by_the_folio_balance(): void
     {
         [, $reservation, , $token] = $this->guestInRoom();

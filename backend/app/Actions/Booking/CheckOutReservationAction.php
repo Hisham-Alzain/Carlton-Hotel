@@ -34,7 +34,7 @@ use Illuminate\Support\Facades\DB;
  *     refreshed in step 2 is kept and `context.folio_uuid` names a real folio
  *     the desk can settle (FA-05-7); nothing else is written on that path;
  *  4. stamp `checked_out` / `checked_out_at` (no date guard: same-day and early
- *     departure are allowed);
+ *     departure are allowed) and the effective check-out mode (Phase 6, D-20);
  *  5. ensure every assigned room is dirty through UpdateRoomStatusAction, the
  *     single writer of room status, as a system change (null actor);
  *  6. log the override (STAFF_FORCE with the staff causer and reason;
@@ -85,6 +85,7 @@ class CheckOutReservationAction
             $locked->update([
                 'status'         => ReservationStatus::CHECKED_OUT,
                 'checked_out_at' => now(),
+                'check_out_mode' => $effective,
             ]);
 
             $this->dirtyAssignedRooms($locked);

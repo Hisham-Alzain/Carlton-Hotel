@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CheckOutMode;
 use App\Enums\PaymentMethod;
 use App\Enums\ReservationSource;
 use App\Enums\ReservationStatus;
@@ -32,7 +33,7 @@ class Reservation extends Model
         'check_in', 'check_out', 'checked_in_at', 'checked_out_at', 'dnd_until',
         'status', 'hold_expires_at', 'payment_method',
         'total_usd', 'promo_code_id', 'last_name', 'phone', 'notes',
-        'arrival_time', 'online_check_in_submitted_at',
+        'arrival_time', 'online_check_in_submitted_at', 'check_out_mode',
     ];
 
     /** The key and its hash never serialise (D-11); guests read it through StayPayload. */
@@ -46,6 +47,7 @@ class Reservation extends Model
         'check_out'       => 'date',
         'checked_in_at'   => 'datetime',
         'checked_out_at'  => 'datetime',
+        'check_out_mode'  => CheckOutMode::class,
         'dnd_until'       => 'datetime',
         'hold_expires_at' => 'datetime',
         'total_usd'       => 'decimal:2',

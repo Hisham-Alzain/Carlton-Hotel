@@ -32,6 +32,16 @@ class RolePresetsTest extends TestCase
         $this->assertNotNull($reception);
         $this->assertContains('reservations.view', $reception['permissions']);
         $this->assertContains('folios.settle', $reception['permissions']);
+        // Phase 6 (D-06): reception reads, creates and assigns tasks but does not move them.
+        $this->assertContains('housekeeping.assign', $reception['permissions']);
+        $this->assertNotContains('housekeeping.update', $reception['permissions']);
+        // Phase 6 post-build ruling: reception moves service-request status (not assign).
+        $this->assertContains('service_requests.update', $reception['permissions']);
+        $this->assertNotContains('service_requests.assign', $reception['permissions']);
+
+        $housekeeping = collect($roles)->firstWhere('name', 'housekeeping');
+        $this->assertNotNull($housekeeping);
+        $this->assertContains('housekeeping.update', $housekeeping['permissions']);
 
         $contentEditor = collect($roles)->firstWhere('name', 'content_editor');
         $this->assertNotNull($contentEditor);

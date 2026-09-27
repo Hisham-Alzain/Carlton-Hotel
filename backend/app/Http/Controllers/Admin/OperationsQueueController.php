@@ -34,7 +34,13 @@ class OperationsQueueController extends BaseController
 
     public function updateStatus(string $type, string $uuid, UpdateRequestStatusRequest $request): JsonResponse
     {
-        $result = $this->service->updateStatus($type, $uuid, $request->validated('status'), $request->user('users'));
+        $result = $this->service->updateStatus(
+            $type,
+            $uuid,
+            $request->validated('status'),
+            $request->user('users'),
+            $request->validated('reason'),
+        );
         $result['data'] = new OperationsQueueItemResource($result['data']);
         return $this->respondFromService($result, request: $request);
     }

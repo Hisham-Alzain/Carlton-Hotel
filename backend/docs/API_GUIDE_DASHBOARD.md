@@ -137,7 +137,7 @@ After login, the `permissions` array in the user object is the source of truth f
 
 A `super_admin` account bypasses all permission checks on the server.
 
-**Full permission catalog** (10 modules, 23 permissions): `reservations.view|create|cancel`, `folios.view|settle|post|dispute`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`, `guests.view|edit`.
+**Full permission catalog** (11 modules, 26 permissions): `reservations.view|create|cancel`, `folios.view|settle|post|dispute`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`, `guests.view|edit`, `housekeeping.view|assign|update`.
 
 ### `cms.view` is enforced — gate read-only navigation on it
 
@@ -174,7 +174,7 @@ The split is structural, so it also holds for content types added after this rev
 Most are route middleware, which is the norm. Two families are not, and are enforced just as strictly:
 
 - **`staff.manage`** — checked by `StaffPolicy` (registered on the `User` model), not by middleware. It gates all six `/staff` routes plus `GET /api/permissions` and `GET /api/roles`. A `403` from those endpoints means `staff.manage` is missing, even though the route carries no `permission:` middleware.
-- **`service_requests.assign` / `service_requests.update` / `tickets.assign` / `tickets.respond`** — checked inside `OperationsQueueService`, which derives the required permission from the `{type}` segment of the URL because it differs per type. See *Module: Operations Queue & Dashboard*.
+- **`service_requests.assign` / `service_requests.update` / `tickets.assign` / `tickets.respond` / `housekeeping.assign` / `housekeeping.update`** — checked inside `OperationsQueueService`, which derives the required permission from the `{type}` segment of the URL (`service-requests`, `tickets`, `housekeeping-tasks`) because it differs per type. See *Module: Operations Queue & Dashboard*. The dedicated `/housekeeping/tasks` routes, by contrast, carry ordinary `permission:` route middleware (`housekeeping.view|assign|update`) — see *Module: Housekeeping*.
 
 ### Genuinely inert — do not build UI against these
 
@@ -182,7 +182,7 @@ Most are route middleware, which is the norm. Two families are not, and are enfo
 
 ### Role presets
 
-Seven presets: `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `content_editor`, `content_manager` — see Module: Reference Data below for exactly which permissions each preset grants. The last two are the only presets that grant `cms.*`; without one of them no seeded account except the super admin can reach `/api/cms/*`. `content_manager` is `content_editor` plus `cms.purge`, and is the only preset that may empty the recycle bin. `housekeeping` and `reception` also hold `rooms.status`. `reception` also holds `folios.post` and `folios.dispute`.
+Seven presets: `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `content_editor`, `content_manager` — see Module: Reference Data below for exactly which permissions each preset grants. The last two are the only presets that grant `cms.*`; without one of them no seeded account except the super admin can reach `/api/cms/*`. `content_manager` is `content_editor` plus `cms.purge`, and is the only preset that may empty the recycle bin. `housekeeping` and `reception` also hold `rooms.status`. `reception` also holds `folios.post` and `folios.dispute`. Since Phase 6, `housekeeping` holds all three `housekeeping.*` permissions (it runs the task board); `reception` holds `housekeeping.view` and `housekeeping.assign` (it can see and hand off tasks, but not move them through their statuses).
 
 ---
 
@@ -515,11 +515,15 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
   {
     "module": "service_requests",
     "permissions": ["service_requests.view", "service_requests.assign", "service_requests.update"]
+  },
+  {
+    "module": "housekeeping",
+    "permissions": ["housekeeping.view", "housekeeping.assign", "housekeeping.update"]
   }
 ]
 ```
 
-10 modules: `reservations`, `folios`, `cms`, `rooms`, `service_requests`, `tickets`, `pricing`, `reports`, `guests`, `staff`.
+11 modules: `reservations`, `folios`, `cms`, `rooms`, `service_requests`, `tickets`, `pricing`, `reports`, `guests`, `staff`, `housekeeping`.
 
 ---
 
@@ -532,9 +536,9 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 **Response `data`:** Array of presets:
 ```json
 [
-  { "name": "reception", "permissions": ["reservations.view", "reservations.create", "reservations.cancel", "folios.view", "folios.settle", "folios.post", "folios.dispute", "service_requests.view", "rooms.status", "guests.view", "guests.edit"] },
+  { "name": "reception", "permissions": ["reservations.view", "reservations.create", "reservations.cancel", "folios.view", "folios.settle", "folios.post", "folios.dispute", "service_requests.view", "service_requests.update", "rooms.status", "guests.view", "guests.edit", "housekeeping.view", "housekeeping.assign"] },
   { "name": "kitchen", "permissions": ["service_requests.view", "service_requests.update"] },
-  { "name": "housekeeping", "permissions": ["service_requests.view", "service_requests.update", "rooms.status"] },
+  { "name": "housekeeping", "permissions": ["service_requests.view", "service_requests.update", "rooms.status", "housekeeping.view", "housekeeping.assign", "housekeeping.update"] },
   { "name": "concierge", "permissions": ["service_requests.view", "service_requests.assign", "service_requests.update", "guests.view", "guests.edit"] },
   { "name": "events", "permissions": ["service_requests.view", "tickets.view", "tickets.assign", "tickets.respond"] },
   { "name": "content_editor", "permissions": ["cms.view", "cms.edit", "cms.restore"] },
@@ -876,13 +880,13 @@ Empty values mean no filter; unknown query parameters are ignored. Example: `?st
   "uuid": "...", "booking_code": "CARL-XXXXXXXX", "status": "confirmed",
   "check_in": "2026-07-20", "check_out": "2026-07-22", "nights": 2,
   "source": "direct", "payment_method": "cash", "total_usd": "270.00", "hold_expires_at": null,
-  "checked_in_at": null, "checked_out_at": null,
+  "checked_in_at": null, "checked_out_at": null, "check_out_mode": null,
   "rooms": [ { "room_type": { "...room type..." }, "room_uuid": "...", "room_number": "801", "price_usd": "270.00" } ],
   "guest": { "uuid": "...", "name": "...", "phone": "...", "email": "..." },
   "promo_code": null, "notes": "VIP, late arrival"
 }
 ```
-`notes` is returned to staff only; guest routes never include it.
+`notes` is returned to staff only; guest routes never include it. `check_out_mode` (Phase 6, D-20) is also staff-only: `none`, `staff_force` or `guest_express`, recording how the check-out folio gate was passed; `null` for a stay not yet checked out and for stays checked out before this column existed.
 
 The nested `guest` object (here and on `GET /cms/reservations` rows) also carries the guest's `preferences` — `{ bed_type, pillow_type, floor_preference, other, updated_at }` (Phase 4, D-09), the same object `PATCH /guests/{uuid}/preferences` returns. The reservation payload never carries the digital key or any key column.
 
@@ -1008,6 +1012,8 @@ Example `validation_failed` when `early_check_in` is sent without a reason: `"er
 **Behavior:** only `checked_in`; no date guard. The folio is generated (if missing) or refreshed (if open). An open folio is refused with `folio_unsettled` unless `force: true` comes from a `folios.settle` holder: then check-out proceeds, the folio stays open (settle it later with `POST /cms/folios/{folio}/settle`), and the override is logged as `reservation.check_out_forced` (properties `folio_uuid`, `folio_status`, `total_usd`, `reason`). `force` on an already-settled folio is ignored. Every assigned room moves to `dirty` (a system change, reason `check-out`). An internal `ReservationCheckedOut` event fires after commit.
 
 **Response `data`:** the reservation plus `folio: { uuid, status, total_usd, open_disputes_count }`, message "Guest checked out.". An open line-item dispute never blocks check-out: only the folio status (`folio_unsettled`) does; `open_disputes_count` is a flag for the desk.
+
+The reservation carries a staff-only `check_out_mode` (`none`, `staff_force`, `guest_express`; historical rows read `null`) recording how the gate was passed — see `GET /cms/reservations/{uuid}` above. Phase 6: checking out also opens a turnover housekeeping task per assigned room (due at `now + HOTEL_TURNOVER_SLA_MINUTES`, high priority when a confirmed same-day arrival already holds the room) — see *Module: Housekeeping*.
 
 **Failure `error_code`s:** `reservation_state` (422, `context: { status, allowed: ["checked_in"] }`), `folio_unsettled` (422, `context: { folio_uuid, total_usd, can_force }` — the folio named by `folio_uuid` exists with current charges and can be settled with `POST /cms/folios/{folio}/settle`; show a "Force check-out" action only when `can_force` is `true`), `forbidden` (403, `force` sent without `folios.settle`, whatever the folio state), `validation_failed` (422), `unauthorized` (401), `not_found` (404).
 
@@ -1331,14 +1337,16 @@ No push notification is sent to staff (the dashboard is web; it live-subscribes 
 
 ## Module: Operations Queue & Dashboard (P10)
 
-The unified read+assign layer over `service_requests` and `tickets` (chatbot-created — empty until P11 ships). Every mutation mirrors live to the same Firestore `ops_queue` collection service-request creation already writes to (see `API_GUIDE_MOBILE.md`). The queue only ever shows **active** work — completed/cancelled service requests and resolved/closed tickets are excluded, not just paginated away.
+The unified read+assign layer over `service_requests`, `tickets` (chatbot-created — empty until P11 ships) and, since Phase 6, `housekeeping_tasks` — a single registry (`OperationsQueueType`) drives every type-dependent rule below. Every mutation mirrors live to the same Firestore `ops_queue` collection service-request creation already writes to (see `API_GUIDE_MOBILE.md`). The queue only ever shows **active** work — completed/cancelled service requests, resolved/closed tickets and closed housekeeping tasks (`done`/`cancelled`) are excluded, not just paginated away.
 
-- `GET /api/operations/queue` — merged, newest-first, paginated. Requires `service_requests.view` **or** `tickets.view`; each table is included only if the caller holds its own `.view` permission (holding just one silently omits the other, not a 403). Each item: `{ type: "service_request"|"ticket", uuid, subject, department, status, priority, assigned_user_uuid, created_at }`. `subject` is the service request's `type` or the ticket's `subject`. `priority` is always a string (`low`/`normal`/`high`) — ticket priority is stored as a 1–3 int internally but normalized here so the field never changes type between rows.
-- `PATCH /api/operations/queue/{type}/{uuid}/assign` — `{ "user_uuid": "..." }`. `{type}` is `service-requests` or `tickets`. Permission differs by type: `service_requests.assign` / `tickets.assign`.
-- `PATCH /api/operations/queue/{type}/{uuid}/status` — `{ "status": "..." }`, validated against that item's own status enum. Permission: `service_requests.update` / `tickets.respond` (ticket status changes reuse the chat-reply permission — resolving a ticket is a form of responding to it).
-- `GET /api/dashboard/summary` — `{ service_requests?: {status: count}, tickets?: {status: count}, event_inquiries?: {status: count} }`. Each block appears only if you hold the matching `.view` permission (`tickets.view` unlocks both `tickets` and `event_inquiries` — event inquiries reuse the same permission P6 already gated their own admin routes with). No permissions → `{}`, not a 403.
+- `GET /api/operations/queue` — merged, newest-first, paginated. Requires `service_requests.view` **or** `tickets.view` **or** `housekeeping.view`; each of the three tables is included only if the caller holds its own `.view` permission (holding just one or two silently omits the rest, not a 403). Each item: `{ type: "service_request"|"ticket"|"housekeeping_task", uuid, subject, department, status, priority, assigned_user_uuid, created_at, room_number, allowed_statuses }`. `subject` is the service request's `type`, the ticket's `subject`, or the housekeeping task's `type`; `department` is always `housekeeping` for a task row. `priority` is always a string (`low`/`normal`/`high`) — ticket priority is stored as a 1–3 int internally but normalized here so the field never changes type between rows. `room_number` (string or `null`) and `allowed_statuses` (the D-05-style transition targets from the row's current status) are on **every** row regardless of type — a service request's `room_number` comes from its reservation's first assigned room, a ticket's is always `null`. Each of the three types is fetched with its own 500-row cap before the merge (3 × 500 at most); a type with more than 500 open rows is silently truncated (a SQL `UNION` is deferred).
+- `PATCH /api/operations/queue/{type}/{uuid}/assign` — `{ "user_uuid": "..." }`. `{type}` is `service-requests`, `tickets` or `housekeeping-tasks`. Permission differs by type: `service_requests.assign` / `tickets.assign` / `housekeeping.assign`. Assigning a `pending` housekeeping task moves it to `assigned` (same rule as the dedicated `/housekeeping/tasks/{task}/assign` verb); assigning an already-assigned or in-progress task only swaps the assignee; a `done`/`cancelled` task answers `422 housekeeping_task_closed`.
+- `PATCH /api/operations/queue/{type}/{uuid}/status` — `{ "status": "...", "reason"?: "..." }`, validated against that item's own status enum. Permission: `service_requests.update` / `tickets.respond` / `housekeeping.update` (ticket status changes reuse the chat-reply permission — resolving a ticket is a form of responding to it). A housekeeping task enforces the D-05 transition table and answers `422 housekeeping_task_transition_invalid` (`context: { from, to, allowed }`) on an invalid move — requests and tickets have no server-side transition table.
+- `GET /api/dashboard/summary` — `{ service_requests?: {status: count}, tickets?: {status: count}, event_inquiries?: {status: count}, housekeeping_tasks?: {status: count} }`. Each block appears only if you hold the matching `.view` permission (`tickets.view` unlocks both `tickets` and `event_inquiries` — event inquiries reuse the same permission P6 already gated their own admin routes with; `housekeeping.view` unlocks `housekeeping_tasks`). No permissions → `{}`, not a 403.
 
 **Tickets are chatbot-only for now.** Nothing creates a `Ticket` until P11's `CreateTicketAction` — the table and queue support them from P10 onward so nothing needs to change when P11 lands.
+
+**Firestore mirror (D-11b):** `ops_queue` now carries a third status vocabulary. A housekeeping-task change mirrors to document id `housekeeping_task_{uuid}` (versus `service_request_{uuid}` and `ticket_{uuid}`) with payload `{ uuid, department, status, priority, guest_uuid, assigned_user_uuid, created_at, task_type, room_uuid, room_number }` — no guest name or phone (task rows carry room and stay identifiers only). Subscribers must branch on the document id prefix to know which status vocabulary a row's `status` belongs to.
 
 ---
 
@@ -1528,6 +1536,187 @@ Guests with no reservations are listed (`stay_status: "none"`).
 
 ---
 
+## Module: Housekeeping (`housekeeping.view` · `housekeeping.assign` · `housekeeping.update`)
+
+The task board behind the room-status lifecycle (Phase 6, D-01..D-11). Every write goes through one of three single writers, so lock order, history rows and the Firestore mirror live in exactly one place each; there is no `PATCH`/`DELETE` outside the two verbs below and no bulk endpoint.
+
+- `GET /housekeeping/tasks` — `housekeeping.view`.
+- `GET /housekeeping/tasks/{task}` — `housekeeping.view`.
+- `POST /housekeeping/tasks` — `housekeeping.assign`.
+- `PATCH /housekeeping/tasks/{task}/assign` — `housekeeping.assign`.
+- `PATCH /housekeeping/tasks/{task}/status` — `housekeeping.update`.
+
+### GET /housekeeping/tasks
+
+**Request query (filters, all optional, blank = no filter):**
+
+| Param | Notes |
+|---|---|
+| `status` | eq/in — `pending`, `assigned`, `in_progress`, `done`, `cancelled` |
+| `type` | eq/in — `turnover`, `stayover`, `inspection`, `request` |
+| `priority` | eq/in — `low`, `normal`, `high` |
+| `room` | a room number or a room uuid |
+| `assignee` | a staff uuid, or `unassigned`; anything else is `422` |
+| `due_at[gte\|lte]` | an instant, compared in UTC |
+| `due_date` | `Y-m-d`, the hotel-local day of `due_at` (`HotelClock::dayWindow()`); anything else is `422` |
+
+Sortable: `due_at`, `created_at`, `priority` (by rank high > normal > low, not alphabetically), always with `id` as the tiebreak. Default order (no `sort`): `due_at` ascending with undated tasks last, then `id` ascending.
+
+**Task shape:**
+```json
+{
+  "uuid": "...", "type": "turnover", "status": "pending", "priority": "high", "notes": null,
+  "room": { "uuid": "...", "number": "101", "floor": 1, "status": "dirty" },
+  "reservation": { "uuid": "...", "booking_code": "...", "check_out": "2026-09-28" },
+  "assigned_user": null,
+  "service_request_uuid": null,
+  "due_at": "2026-09-27T14:00:00+00:00", "started_at": null, "completed_at": null,
+  "created_at": "...", "updated_at": "...",
+  "allowed_statuses": ["assigned", "in_progress", "cancelled"]
+}
+```
+`show` also returns `history` — the last 10 status-history rows, newest first, each `{ from_status, to_status, reason, changed_by, created_at }`. `allowed_statuses` lists the D-05 transition targets from the current status, so the dashboard never re-implements the state machine — an empty array on `done`/`cancelled` means hide every status action.
+
+### POST /housekeeping/tasks — `housekeeping.assign`
+
+**Purpose:** Create a turnover, stayover or inspection task by hand — also the recovery path if a listener ever fails to open one.
+
+**Request body:** `{ "room_uuid", "type": "turnover"|"stayover"|"inspection", "due_at"?, "priority"?, "notes"? }`. `type: request` is refused — request tasks are system-made from a service request.
+
+**Response:** `201` with message `custom.messages.housekeeping_task_created` when a new task opens; `200` with `custom.messages.housekeeping_task_exists` and the existing open task of that room+type when one already exists (D-02 dedupe — one open task per room and type). No `DELETE`.
+
+### PATCH /housekeeping/tasks/{task}/assign — `housekeeping.assign`
+
+**Request body:** `{ "user_uuid" }`. `pending → assigned` (writes a history row, reason `assigned`); `assigned`/`in_progress` swaps the assignee (activity log only, no history row); `done`/`cancelled` → `422 housekeeping_task_closed`.
+
+### PATCH /housekeeping/tasks/{task}/status — `housekeeping.update`
+
+**Request body:** `{ "status", "reason"? }`.
+
+**Transition table (D-05):**
+
+| From | Allowed to |
+|---|---|
+| `pending` | `assigned`, `in_progress`, `cancelled` |
+| `assigned` | `in_progress`, `cancelled` |
+| `in_progress` | `done`, `cancelled` |
+| `done`, `cancelled` | none (terminal) |
+
+An invalid move is `422 housekeeping_task_transition_invalid` with `context: { from, to, allowed }` and writes nothing. Moving to `in_progress` stamps `started_at` (once) and self-assigns the task to the calling staff member if it is still unassigned; moving to `done` stamps `completed_at`/`completed_by`.
+
+**Room coupling (D-07), turnover tasks only:** `done` on a `dirty` room turns it `available` through the same `UpdateRoomStatusAction` the room board uses (reason `turnover`); an `available` room is left alone; a `maintenance` room stays in maintenance (activity property `room_left_in_maintenance: true`). `cancelled` never touches the room, and no other task type ever writes `rooms.status`. Conversely, marking a room `dirty → available` on the front-desk room board (any reason other than `turnover`) closes that room's open turnover task straight to `done` (history reason `room_board`) — the one place a task skips the transition table above, because the board is reporting a physical fact, not asking permission.
+
+**Automatic tasks:** a `turnover` task opens per assigned room when a stay checks out (`due_at = now + HOTEL_TURNOVER_SLA_MINUTES`, default 120; `priority: high` when a confirmed same-day arrival already holds the room, else `normal`). A `request` task opens when a service request routes to the `housekeeping` department, linked 1:1 to it via `service_request_uuid`; the task reaching `done` completes the request (if it is still active), and the request reaching `completed`/`cancelled` cancels the task — either direction is loop-safe. Both listeners are synchronous and never throw on business failure; a failure is logged, and `POST /housekeeping/tasks` (or `php artisan housekeeping:reconcile`, run by hand) recovers a missed one.
+
+**Failure `error_code`s:** `housekeeping_task_transition_invalid` (422), `housekeeping_task_closed` (422), `validation_failed` (422), `unauthorized` (401), `forbidden` (403), `not_found` (404).
+
+---
+
+## Module: Service Request Board (`service_requests.view`)
+
+Read-only staff view of the guest service-request table (Phase 6, D-15..D-17) — a richer companion to the operations queue's service-request rows, for a screen dedicated to requests. **Writes are not here**: progress a row through `PATCH /operations/queue/service-requests/{uuid}/assign|status` (no write aliases under this path, D-17).
+
+- `GET /cms/service-requests` — `service_requests.view`.
+- `GET /cms/service-requests/{serviceRequest}` — `service_requests.view`.
+
+**Request query (filters, all optional):** `status`, `department`, `priority`, `type` (eq/in); `created_at[gte|lte]`; `assignee` (uuid or `unassigned`); `room` (room number, via the reservation's assigned rooms); `date` (`Y-m-d`, hotel-local day of `created_at`); `guest` (a guest uuid exact, else a case-insensitive fragment of name/first/last name). Sortable: `created_at`, `priority`, `status`, with `id` descending as the tiebreak. Default order: `created_at` descending.
+
+**Row shape:**
+```json
+{
+  "uuid": "...", "type": "late_checkout", "category_code": "late_checkout",
+  "department": "reception", "status": "new", "priority": "normal", "notes": null,
+  "created_at": "...", "updated_at": "...",
+  "guest": { "uuid": "...", "name": "..." },
+  "reservation": { "uuid": "...", "booking_code": "...", "check_out": "2026-09-28", "room_number": "812" },
+  "service_item": { "uuid": "...", "name": {"en": "...", "ar": "..."}, "expected_minutes": 15, "price_usd": null },
+  "assigned_user": null,
+  "housekeeping_task": null
+}
+```
+`category_code` is the catalogue category snapshotted into `type` when the request came from `GET /public/service-catalog`, else `null` for a legacy free-string request. `housekeeping_task` is `{ uuid, status }` when a housekeeping-department request opened a linked task (`null` otherwise), so the board can show turnover/room-clean progress without a second call.
+
+**Failure `error_code`s:** `validation_failed` (422), `unauthorized` (401), `forbidden` (403), `not_found` (404).
+
+---
+
+## Module: Departure Services (`service_requests.view` · `service_requests.update`)
+
+A same-screen view of everything a departing stay still needs today — transfer pickups, late-checkout and luggage requests, and guest express checkouts — projected live over existing tables (Phase 6, D-18..D-22). Nothing is persisted for this module; a status change writes straight to the row's own source.
+
+### GET /departure-services — `service_requests.view`
+
+**Departing set:** reservations `checked_in` or `checked_out` whose `check_out` is the requested date, or whose `checked_out_at` falls in that date's hotel-local day.
+
+**Kinds:**
+
+| `kind` | Source | Notes |
+|---|---|---|
+| `transfer` | `ServiceBooking` (`bookable_type: transfer`) | Excludes arrival pickups — bookings scheduled before the date's hotel-local midnight |
+| `late_checkout` | `ServiceRequest` (`type: late_checkout`) | |
+| `luggage` | `ServiceRequest` (`type: luggage`) | |
+| `express_checkout` | `Reservation` (`check_out_mode: guest_express`) | Read-only, always `stage: resolved` |
+
+**Request query:** `date` (`Y-m-d` hotel-local, default today, bounded to today ± 30 days — outside the window is `422`), `kind[in]`, `status[in]` (validated against the union of both status vocabularies below).
+
+**Response `data`:** `{ items: [...], meta: { count, truncated } }` — **unpaginated**, capped at 500 rows, ordered `scheduled_at` ascending (nulls last), then `created_at`, then `uuid`. `meta.truncated` is `true` when there was more than the cap; `meta.count` is the number of rows actually returned. At most ~7 queries regardless of how many rows come back.
+
+**Row shape:**
+```json
+{
+  "uuid": "...", "kind": "transfer", "source_type": "service_booking",
+  "status": "pending", "stage": "open", "allowed_statuses": ["confirmed", "cancelled"],
+  "scheduled_at": "2026-09-28T09:00:00+00:00", "notes": null,
+  "reservation": { "uuid": "...", "booking_code": "...", "check_out": "2026-09-28", "checked_out_at": null, "status": "checked_in" },
+  "guest": { "uuid": "...", "name": "...", "phone": "..." },
+  "room_number": "812", "assigned_user_uuid": null, "created_at": "..."
+}
+```
+`uuid` is the bare source row's own uuid (a booking, a request, or a reservation for `express_checkout`) — there is no departure-service table or id of its own. `source_type` is `service_booking`, `service_request` or `reservation`, and is the hint to send back on the PATCH below.
+
+**`stage` vocabulary** (D-21) — the same three values across every kind, so the dashboard builds one status pill instead of two state machines:
+
+| `stage` | Transfer booking (`status`) | Request (`status`) | `express_checkout` |
+|---|---|---|---|
+| `open` | `pending` | `new` | — |
+| `in_progress` | `confirmed` | `in_progress` | — |
+| `resolved` | `completed`, `cancelled` | `completed`, `cancelled` | always |
+
+`allowed_statuses` is the enforced transition table for a booking or the D-05-style targets for a request; empty for `express_checkout` (read-only).
+
+### PATCH /departure-services/{uuid}/status — `service_requests.update`
+
+Of the seeded presets, `reception`, `concierge`, `housekeeping` and `kitchen` hold `service_requests.update` (reception so the front desk can progress `late_checkout` rows, which route to its department). `reception` still does not hold `service_requests.assign`. An account with `service_requests.view` only gets `403` here.
+
+**Request body:** `{ "status", "reason"?, "source_type"? }`.
+
+**Resolution order:** when `source_type` is sent, resolve directly against that source; otherwise probe in order **transfer booking → late_checkout/luggage request → guest-express reservation**. A `source_type` hint that does not match the uuid's real source is `404`, same as an unknown uuid.
+
+**Behavior:** `status` is first checked against the union of the booking and request vocabularies (`422 validation_failed` on `status` if it's in neither); once the source resolves, `status` is re-checked against **that source's own family** (a request-only value against a resolved booking is also `422 validation_failed` on `status`). A booking delegates to the D-22 transition table below; a request delegates to the same writer the operations queue uses (`PATCH /operations/queue/service-requests/{uuid}/status`) — any request status is accepted, exactly as on the queue. An `express_checkout` row is always `422 departure_service_readonly` — it is derived from the stay, not written here. Returns the refreshed row in the shape above.
+
+**Booking transition table (D-22), enforced by `UpdateServiceBookingStatusAction`:**
+
+| From | Allowed to |
+|---|---|
+| `pending` | `confirmed`, `cancelled` |
+| `confirmed` | `completed`, `cancelled` |
+| `cancelled`, `completed` | none (terminal) |
+
+An invalid move is `422 service_booking_transition_invalid` with `context: { from, to, allowed }`. **Confirming a transfer is what makes the next folio generation bill it** — `GenerateFolioAction` only bills bookings in `confirmed` or `completed`.
+
+**Failure `error_code`s:** `validation_failed` (422 — bad `status` value, or a value outside the resolved source's family), `service_booking_transition_invalid` (422), `departure_service_readonly` (422), `not_found` (404 — unknown uuid, a spa/table booking, a request of some other type, a non-express reservation, or a `source_type` hint that doesn't match), `unauthorized` (401), `forbidden` (403).
+
+**Known gaps:** no `POST /departure-services` (staff cannot create a departure service by hand) and no `GET /departure-services/{uuid}` — workaround for both: `POST /service-requests` as the guest (or ask them to raise it through the app).
+
+### Dashboard handoff (Phase 6)
+
+- Rename any `luggage_storage` filter chip to **`luggage`** — that is the seeded catalogue code and the request `type`, there is no `luggage_storage` value anywhere in this API.
+- Hide every status action on a row whose `allowed_statuses` is empty (this is how an `express_checkout` row signals read-only, and how a terminal task/booking/request signals it is done).
+- `GET /departure-services` returns unpaginated `data.items` — page it client-side if needed, and show a "more available" indicator from `meta.truncated` rather than assuming `meta.count` is the true total.
+- The `stage` vocabulary is always `open` | `in_progress` | `resolved`, regardless of kind — build one status pill, not one per kind.
+
+---
+
 ## Error codes quick reference
 
 | Code | HTTP | Meaning |
@@ -1560,6 +1749,10 @@ Guests with no reservations are listed (`stay_status: "none"`).
 | `folio_item_dispute_open` | 422 | The line item already has an open dispute; `context.dispute_uuid` |
 | `folio_dispute_state` | 422 | Resolve/reject on a line item with no open dispute; `context.status` |
 | `idempotency_conflict` | 409 | The `Idempotency-Key` was already used for a different request |
+| `housekeeping_task_transition_invalid` | 422 | Housekeeping task status change not allowed from the current state; `context: { from, to, allowed }` |
+| `housekeeping_task_closed` | 422 | Assign attempted on a `done`/`cancelled` housekeeping task |
+| `service_booking_transition_invalid` | 422 | Service-booking (transfer) status change not allowed from the current state; `context: { from, to, allowed }` |
+| `departure_service_readonly` | 422 | Status change attempted on an `express_checkout` departure row, which is derived from the stay |
 
 ---
 

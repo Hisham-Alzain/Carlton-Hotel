@@ -3,27 +3,46 @@
 namespace App\Http\Resources\Operations;
 
 use App\Base\BaseResource;
+use App\Enums\Department;
+use App\Models\HousekeepingTask;
 use App\Models\ServiceRequest;
+use App\Support\OperationsQueueType;
 use Illuminate\Http\Request;
 
+/**
+ * One row of the merged operations queue: a service request, a ticket or a
+ * housekeeping task (Phase 6, D-14). `room_number` and `allowed_statuses` are
+ * on every row; relations must be loaded by OperationsQueueType::baseQuery().
+ */
 class OperationsQueueItemResource extends BaseResource
 {
     public function toArray(Request $request): array
     {
         $item = $this->resource;
-        $isServiceRequest = $item instanceof ServiceRequest;
+        $type = OperationsQueueType::forModel($item);
 
         return [
-            'type'               => $isServiceRequest ? 'service_request' : 'ticket',
+            'type'               => $type->itemType,
             'uuid'               => $item->uuid,
-            'subject'            => $isServiceRequest ? $item->type : $item->subject,
-            'department'         => $item->department?->value,
+            'subject'            => match (true) {
+                $item instanceof ServiceRequest   => $item->type,
+                $item instanceof HousekeepingTask => $item->type->value,
+                default                           => $item->subject,
+            },
+            'department'         => $item instanceof HousekeepingTask
+                ? Department::HOUSEKEEPING->value
+                : $item->department?->value,
             'status'             => $item->status?->value,
-            // priority is a string enum on ServiceRequest but an int scale on
-            // Ticket — normalized so this field never changes type per row.
-            'priority'           => ($isServiceRequest ? $item->priority : $item->priorityLabel())?->value,
+            // priority is a string enum on ServiceRequest/HousekeepingTask but
+            // an int scale on Ticket — normalized so this field never changes
+            // type per row.
+            'priority'           => ($item instanceof ServiceRequest || $item instanceof HousekeepingTask
+                ? $item->priority
+                : $item->priorityLabel())?->value,
             'assigned_user_uuid' => $item->assignedUser?->uuid,
             'created_at'         => $item->created_at?->toIso8601String(),
+            'room_number'        => $type->roomNumber($item),
+            'allowed_statuses'   => $type->allowedStatuses($item),
         ];
     }
 }

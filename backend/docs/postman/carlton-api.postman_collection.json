@@ -7837,9 +7837,97 @@
                         }
                     },
                     "response": []
+                },
+                {
+                    "name": "Assign housekeeping task (queue)",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/operations/queue/housekeeping-tasks/{{housekeeping_task_uuid}}/assign",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "operations",
+                                "queue",
+                                "housekeeping-tasks",
+                                "{{housekeeping_task_uuid}}",
+                                "assign"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_uuid\": \"{{staff_target_uuid}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires housekeeping.assign. A pending task moves to assigned; assigned/in_progress just swaps the assignee."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update housekeeping task status (queue)",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/operations/queue/housekeeping-tasks/{{housekeeping_task_uuid}}/status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "operations",
+                                "queue",
+                                "housekeeping-tasks",
+                                "{{housekeeping_task_uuid}}",
+                                "status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"in_progress\",\n    \"reason\": \"started cleaning\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires housekeeping.update. Validated against the D-05 transition table; an invalid move answers 422 housekeeping_task_transition_invalid."
+                    },
+                    "response": []
                 }
             ],
-            "description": "Assign/status permission differs by {type} (service-requests vs tickets) — see the role-specific examples above. GET routes just need service_requests.view|tickets.view, which {{staff_token}} (super_admin) always has."
+            "description": "Assign/status permission differs by {type} (service-requests vs tickets vs housekeeping-tasks, Phase 6) — see the role-specific examples above. GET routes just need service_requests.view|tickets.view|housekeeping.view, which {{staff_token}} (super_admin) always has."
         },
         {
             "name": "17 - Stays (Guest)",
@@ -8511,6 +8599,368 @@
                     "response": []
                 }
             ]
+        },
+        {
+            "name": "20 - Housekeeping & Departures (Admin)",
+            "item": [
+                {
+                    "name": "List housekeeping tasks",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/housekeeping/tasks?status[in]=pending,assigned&due_date=2026-09-28",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "housekeeping",
+                                "tasks"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status[in]",
+                                    "value": "pending,assigned"
+                                },
+                                {
+                                    "key": "due_date",
+                                    "value": "2026-09-28"
+                                }
+                            ]
+                        },
+                        "description": "Requires housekeeping.view."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Show housekeeping task",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/housekeeping/tasks/{{housekeeping_task_uuid}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "housekeeping",
+                                "tasks",
+                                "{{housekeeping_task_uuid}}"
+                            ]
+                        },
+                        "description": "Requires housekeeping.view. Includes the last 10 status-history rows."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create housekeeping task",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/housekeeping/tasks",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "housekeeping",
+                                "tasks"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"room_uuid\": \"{{room_uuid}}\",\n    \"type\": \"turnover\",\n    \"priority\": \"normal\",\n    \"notes\": \"Guest requested extra towels before turnover.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires housekeeping.assign. 201 when a new task opens, 200 with the existing open task of that room+type when deduped."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Assign housekeeping task",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/housekeeping/tasks/{{housekeeping_task_uuid}}/assign",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "housekeeping",
+                                "tasks",
+                                "{{housekeeping_task_uuid}}",
+                                "assign"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_uuid\": \"{{staff_target_uuid}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires housekeeping.assign. pending -> assigned; assigned/in_progress swaps the assignee; done/cancelled answers 422 housekeeping_task_closed."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update housekeeping task status",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/housekeeping/tasks/{{housekeeping_task_uuid}}/status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "housekeeping",
+                                "tasks",
+                                "{{housekeeping_task_uuid}}",
+                                "status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"in_progress\",\n    \"reason\": \"started cleaning\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires housekeeping.update. Invalid moves answer 422 housekeeping_task_transition_invalid with context {from, to, allowed}."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "List service requests (board)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/service-requests?status[in]=new,in_progress",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "service-requests"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status[in]",
+                                    "value": "new,in_progress"
+                                }
+                            ]
+                        },
+                        "description": "Requires service_requests.view. Read-only — write through PATCH /operations/queue/service-requests/{uuid}/assign|status (folder 16)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Show service request (board)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/service-requests/{{service_request_uuid}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "service-requests",
+                                "{{service_request_uuid}}"
+                            ]
+                        },
+                        "description": "Requires service_requests.view."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "List departure services",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/departure-services?date=2026-09-28&kind[in]=transfer,late_checkout",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "departure-services"
+                            ],
+                            "query": [
+                                {
+                                    "key": "date",
+                                    "value": "2026-09-28"
+                                },
+                                {
+                                    "key": "kind[in]",
+                                    "value": "transfer,late_checkout"
+                                }
+                            ]
+                        },
+                        "description": "Requires service_requests.view. Unpaginated data.items (capped at 500) plus data.meta {count, truncated}."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update departure service status",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/departure-services/{{departure_service_uuid}}/status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "departure-services",
+                                "{{departure_service_uuid}}",
+                                "status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"confirmed\",\n    \"source_type\": \"service_booking\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires service_requests.update (reception does NOT hold it by default). {uuid} is the bare source uuid (transfer booking here); source_type resolves it directly. Confirming a transfer is what makes the next folio generation bill it. An express_checkout row always answers 422 departure_service_readonly."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Phase 6: the housekeeping task board, the read-only service-request board, and the departure-services projection (transfers, late_checkout/luggage requests, express checkouts). Housekeeping task assign/status can also be reached through the operations queue (folder 16, {type} = housekeeping-tasks) — both surfaces are kept deliberately (D-13)."
         }
     ]
 }

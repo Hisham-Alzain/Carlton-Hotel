@@ -39,7 +39,7 @@ class ServiceCatalogTest extends TestCase
 
     // ── Public catalog ────────────────────────────────────────────────────
 
-    public function test_seeded_catalog_exposes_the_eight_categories(): void
+    public function test_seeded_catalog_exposes_the_ten_categories(): void
     {
         $this->seed(GuestServiceCatalogSeeder::class);
 
@@ -49,7 +49,108 @@ class ServiceCatalogTest extends TestCase
         $this->assertSame([
             'room_service', 'housekeeping', 'laundry', 'concierge',
             'transport', 'restaurant', 'maintenance', 'do_not_disturb',
+            'late_checkout', 'luggage',
         ], $codes);
+    }
+
+    // ── Departure categories (Phase 6, D-19, D-23) ────────────────────────
+
+    public function test_departure_categories_are_direct_with_an_unpriced_default_item(): void
+    {
+        $this->seed(GuestServiceCatalogSeeder::class);
+
+        $data = collect($this->getJson('/api/public/service-catalog')->assertOk()->json('data'));
+
+        foreach (['late_checkout' => 'reception', 'luggage' => 'concierge'] as $code => $department) {
+            $row = $data->firstWhere('code', $code);
+            $this->assertSame('direct', $row['kind']);
+            $this->assertSame([], $row['items']);
+            $this->assertNotEmpty($row['default_item_uuid']);
+
+            $category = ServiceCategory::where('code', $code)->firstOrFail();
+            $this->assertSame($department, $category->department->value);
+
+            $item = ServiceItem::where('uuid', $row['default_item_uuid'])->firstOrFail();
+            $this->assertTrue((bool) $item->is_default);
+            $this->assertNull($item->price_usd);
+        }
+    }
+
+    public function test_catalog_seeder_is_idempotent(): void
+    {
+        $this->seed(GuestServiceCatalogSeeder::class);
+        $this->seed(GuestServiceCatalogSeeder::class);
+
+        $this->assertSame(10, ServiceCategory::count());
+
+        foreach (['late_checkout', 'luggage'] as $code) {
+            $category = ServiceCategory::where('code', $code)->firstOrFail();
+            $this->assertSame(1, ServiceItem::where('service_category_id', $category->id)->count());
+            $this->assertSame(1, ServiceItem::where('service_category_id', $category->id)->where('is_default', true)->count());
+        }
+    }
+
+    private function defaultItemUuid(string $code): string
+    {
+        return ServiceItem::whereHas('category', fn ($q) => $q->where('code', $code))
+            ->where('is_default', true)->value('uuid');
+    }
+
+    public function test_late_checkout_chip_routes_to_reception_without_notes(): void
+    {
+        $this->seed(GuestServiceCatalogSeeder::class);
+        $guest = $this->checkedInGuest();
+
+        $this->withToken($guest->createToken('guest')->plainTextToken)
+            ->postJson('/api/service-requests', ['service_item_uuid' => $this->defaultItemUuid('late_checkout')])
+            ->assertCreated()
+            ->assertJsonPath('data.type', 'late_checkout')
+            ->assertJsonPath('data.department', 'reception');
+    }
+
+    public function test_luggage_chip_routes_to_concierge(): void
+    {
+        $this->seed(GuestServiceCatalogSeeder::class);
+        $guest = $this->checkedInGuest();
+
+        $this->withToken($guest->createToken('guest')->plainTextToken)
+            ->postJson('/api/service-requests', ['service_item_uuid' => $this->defaultItemUuid('luggage'), 'notes' => '3 bags at 11:00'])
+            ->assertCreated()
+            ->assertJsonPath('data.type', 'luggage')
+            ->assertJsonPath('data.department', 'concierge');
+    }
+
+    public function test_legacy_late_checkout_type_routes_to_reception(): void
+    {
+        $guest = $this->checkedInGuest();
+
+        $this->withToken($guest->createToken('guest')->plainTextToken)
+            ->postJson('/api/service-requests', ['type' => 'late_checkout'])
+            ->assertCreated()
+            ->assertJsonPath('data.department', 'reception');
+    }
+
+    public function test_departure_requests_never_reach_the_folio(): void
+    {
+        $this->seed(GuestServiceCatalogSeeder::class);
+        $guest       = Guest::factory()->create();
+        $reservation = Reservation::factory()->checkedIn()->create(['guest_id' => $guest->id, 'total_usd' => 100.00]);
+        $generate    = fn () => app(\App\Actions\Folio\GenerateFolioAction::class)->handle($reservation->fresh())['data'];
+
+        $before = $generate();
+        $count  = $before->items->count();
+        $total  = (string) $before->total_usd;
+
+        $token = $guest->createToken('guest')->plainTextToken;
+        foreach (['late_checkout', 'luggage'] as $code) {
+            $this->withToken($token)
+                ->postJson('/api/service-requests', ['service_item_uuid' => $this->defaultItemUuid($code)])
+                ->assertCreated();
+        }
+
+        $after = $generate();
+        $this->assertSame($count, $after->items->count());
+        $this->assertSame($total, (string) $after->total_usd);
     }
 
     public function test_catalog_categories_carry_their_items_with_expected_time(): void

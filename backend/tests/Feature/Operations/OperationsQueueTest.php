@@ -48,7 +48,8 @@ class OperationsQueueTest extends TestCase
         $this->withToken($this->staffToken('service_requests.view', 'tickets.view'))
             ->getJson('/api/operations/queue')
             ->assertOk()
-            ->assertJsonCount(2, 'data.items');
+            ->assertJsonCount(2, 'data.items')
+            ->assertJsonStructure(['data' => ['items' => ['*' => ['room_number', 'allowed_statuses']]]]);
     }
 
     public function test_queue_excludes_a_table_the_caller_cannot_view(): void
@@ -120,6 +121,11 @@ class OperationsQueueTest extends TestCase
         $this->assertEquals($assignee->id, $request->fresh()->assigned_user_id);
         $this->assertCount(1, $fake->mirrors);
         $this->assertEquals('ops_queue', $fake->mirrors[0]['collection']);
+        $this->assertSame("service_request_{$request->uuid}", $fake->mirrors[0]['document']);
+        $this->assertSame(
+            ['uuid', 'department', 'status', 'priority', 'guest_uuid', 'assigned_user_uuid', 'created_at', 'type'],
+            array_keys($fake->mirrors[0]['data']),
+        );
     }
 
     public function test_assigning_a_ticket_without_tickets_assign_permission_is_forbidden(): void

@@ -4,24 +4,25 @@ namespace App\Services\Operations;
 
 use App\Actions\Operations\AssignRequestAction;
 use App\Actions\Operations\UpdateRequestStatusAction;
-use App\Enums\ServiceRequestStatus;
-use App\Enums\TicketStatus;
 use App\Exceptions\ForbiddenException;
-use App\Exceptions\NotFoundException;
 use App\Models\EventInquiry;
-use App\Models\ServiceRequest;
-use App\Models\Ticket;
 use App\Models\User;
+use App\Support\OperationsQueueType;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 
+/**
+ * The merged operations queue. Every per-type rule (model, permissions, open
+ * statuses, eager loads) comes from the OperationsQueueType registry (D-12).
+ */
 class OperationsQueueService
 {
-    // A queue shows unresolved work, not history — completed/cancelled and
-    // resolved/closed items are excluded before the bound below is even
-    // applied, so the cap only ever trims a genuinely large *active* backlog.
-    // Bounded per-table fetch for the merged queue — a true cross-table merge
-    // can't be paginated at the DB layer, so each side is capped rather than
-    // pulled unbounded (see P10_TICKETS.md).
+    // A queue shows unresolved work, not history — closed items are excluded
+    // before the bound below is even applied, so the cap only ever trims a
+    // genuinely large *active* backlog. Bounded per-type fetch for the merged
+    // queue — a true cross-table merge can't be paginated at the DB layer, so
+    // each type is capped (3 × 500 at most) rather than pulled unbounded (see
+    // P10_TICKETS.md; SQL UNION deferred, D-12).
     private const MERGE_FETCH_LIMIT = 500;
 
     public function __construct(
@@ -33,21 +34,18 @@ class OperationsQueueService
     {
         $items = collect();
 
-        if ($user->can('service_requests.view')) {
-            $items = $items->concat(
-                ServiceRequest::with('assignedUser')
-                    ->whereIn('status', ServiceRequestStatus::active())
-                    ->latest()->limit(self::MERGE_FETCH_LIMIT)->get()
-            );
-        }
-        if ($user->can('tickets.view')) {
-            $items = $items->concat(
-                Ticket::with('assignedUser')
-                    ->whereIn('status', TicketStatus::active())
-                    ->latest()->limit(self::MERGE_FETCH_LIMIT)->get()
-            );
+        foreach (OperationsQueueType::all() as $type) {
+            if ($user->can($type->viewPermission)) {
+                $items = $items->concat(
+                    $type->queueQuery()->latest()->orderByDesc('id')->limit(self::MERGE_FETCH_LIMIT)->get()
+                );
+            }
         }
 
+        // sortByDesc is stable: rows with an equal created_at keep their
+        // concatenation order — registry order (service_request, ticket,
+        // housekeeping_task), then id descending inside one type — so the
+        // order is identical across calls (HK-05).
         $sorted = $items->sortByDesc(fn ($item) => $item->created_at)->values();
         $page   = max(1, $page);
 
@@ -66,15 +64,19 @@ class OperationsQueueService
     {
         $summary = [];
 
-        if ($user->can('service_requests.view')) {
-            $summary['service_requests'] = ServiceRequest::selectRaw('status, count(*) as count')
+        foreach (OperationsQueueType::all() as $type) {
+            if (! $user->can($type->viewPermission)) {
+                continue;
+            }
+
+            $summary[$type->summaryKey] = $type->modelClass::selectRaw('status, count(*) as count')
                 ->groupBy('status')->pluck('count', 'status');
-        }
-        if ($user->can('tickets.view')) {
-            $summary['tickets'] = Ticket::selectRaw('status, count(*) as count')
-                ->groupBy('status')->pluck('count', 'status');
-            $summary['event_inquiries'] = EventInquiry::selectRaw('status, count(*) as count')
-                ->groupBy('status')->pluck('count', 'status');
+
+            // Event inquiries have no queue arm; their counts ride with tickets (P10).
+            if ($type->segment === 'tickets') {
+                $summary['event_inquiries'] = EventInquiry::selectRaw('status, count(*) as count')
+                    ->groupBy('status')->pluck('count', 'status');
+            }
         }
 
         return ['data' => $summary, 'code' => 200];
@@ -82,44 +84,46 @@ class OperationsQueueService
 
     public function assign(string $type, string $uuid, string $userUuid, User $actor): array
     {
-        $this->assertCan($actor, $type, 'assign');
-        $item = $this->resolve($type, $uuid);
+        $this->assertCan($actor, $this->requiredPermission($type, 'assign'));
+        $item   = $this->resolve($type, $uuid);
         $target = User::where('uuid', $userUuid)->firstOrFail();
 
-        return $this->assignAction->handle($item, $target);
+        $result = $this->assignAction->handle($item, $target, $actor);
+
+        return ['data' => $this->reload($type, $result['data']), 'code' => $result['code']];
     }
 
-    public function updateStatus(string $type, string $uuid, string $status, User $actor): array
+    public function updateStatus(string $type, string $uuid, string $status, User $actor, ?string $reason = null): array
     {
-        $this->assertCan($actor, $type, 'status');
+        $this->assertCan($actor, $this->requiredPermission($type, 'status'));
         $item = $this->resolve($type, $uuid);
 
-        return $this->statusAction->handle($item, $status);
+        $result = $this->statusAction->handle($item, $status, $actor, $reason);
+
+        return ['data' => $this->reload($type, $result['data']), 'code' => $result['code']];
     }
 
-    private function resolve(string $type, string $uuid): ServiceRequest|Ticket
+    private function resolve(string $type, string $uuid): Model
     {
-        return match ($type) {
-            'service-requests' => ServiceRequest::where('uuid', $uuid)->firstOrFail(),
-            'tickets'           => Ticket::where('uuid', $uuid)->firstOrFail(),
-            default             => throw new NotFoundException(__('custom.errors.not_found')),
-        };
+        return OperationsQueueType::fromSegment($type)->modelClass::where('uuid', $uuid)->firstOrFail();
     }
 
     private function requiredPermission(string $type, string $operation): string
     {
-        return match (true) {
-            $type === 'service-requests' && $operation === 'assign' => 'service_requests.assign',
-            $type === 'service-requests' && $operation === 'status' => 'service_requests.update',
-            $type === 'tickets' && $operation === 'assign'          => 'tickets.assign',
-            $type === 'tickets' && $operation === 'status'          => 'tickets.respond',
-            default => throw new NotFoundException(__('custom.errors.not_found')),
-        };
+        $entry = OperationsQueueType::fromSegment($type);
+
+        return $operation === 'assign' ? $entry->assignPermission : $entry->statusPermission;
     }
 
-    private function assertCan(User $actor, string $type, string $operation): void
+    /** Re-read through the registry so the response carries room_number and the assignee without lazy loads. */
+    private function reload(string $type, Model $item): Model
     {
-        if (! $actor->can($this->requiredPermission($type, $operation))) {
+        return OperationsQueueType::fromSegment($type)->baseQuery()->whereKey($item->getKey())->firstOrFail();
+    }
+
+    private function assertCan(User $actor, string $permission): void
+    {
+        if (! $actor->can($permission)) {
             throw new ForbiddenException(__('custom.errors.forbidden'));
         }
     }

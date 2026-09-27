@@ -34,6 +34,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'pricing.edit', 'reports.view', 'staff.manage',
             // Phase 4 (D-01): staff guest directory, profile, notes and preferences.
             'guests.view', 'guests.edit',
+            // Phase 6 (D-06): the housekeeping task board. view = list/show,
+            // assign = create and assign, update = move a task through its statuses.
+            'housekeeping.view', 'housekeeping.assign', 'housekeeping.update',
         ];
 
         foreach ($permissions as $name) {
@@ -41,9 +44,9 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         $presets = [
-            'reception'      => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'folios.post', 'folios.dispute', 'service_requests.view', 'rooms.status', 'guests.view', 'guests.edit'],
+            'reception'      => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'folios.post', 'folios.dispute', 'service_requests.view', 'service_requests.update', 'rooms.status', 'guests.view', 'guests.edit', 'housekeeping.view', 'housekeeping.assign'],
             'kitchen'        => ['service_requests.view', 'service_requests.update'],
-            'housekeeping'   => ['service_requests.view', 'service_requests.update', 'rooms.status'],
+            'housekeeping'   => ['service_requests.view', 'service_requests.update', 'rooms.status', 'housekeeping.view', 'housekeeping.assign', 'housekeeping.update'],
             'concierge'      => ['service_requests.view', 'service_requests.assign', 'service_requests.update', 'guests.view', 'guests.edit'],
             'events'         => ['service_requests.view', 'tickets.view', 'tickets.assign', 'tickets.respond'],
             // Without this preset no seeded account except the super admin (who

@@ -26,7 +26,12 @@ class PermissionsGroupedTest extends TestCase
                     ->assertStatus(200)->assertJson(['success' => true]);
 
         $groups = $res->json('data');
-        $this->assertCount(10, $groups);
+        $this->assertCount(11, $groups);
+
+        // Phase 6 (D-06): the `housekeeping` group holds the task board verbs.
+        $hkGroup = collect($groups)->firstWhere('module', 'housekeeping');
+        $this->assertNotNull($hkGroup, 'housekeeping group exists');
+        $this->assertSame(['housekeeping.assign', 'housekeeping.update', 'housekeeping.view'], collect($hkGroup['permissions'])->sort()->values()->all());
 
         // Phase 5 (D-05, D-11): the `folios` group gains folios.post and folios.dispute.
         $foliosGroup = collect($groups)->firstWhere('module', 'folios');

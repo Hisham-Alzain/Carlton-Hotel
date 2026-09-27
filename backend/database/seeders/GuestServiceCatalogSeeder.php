@@ -9,9 +9,14 @@ use App\Models\ServiceItem;
 use Illuminate\Database\Seeder;
 
 /**
- * The eight top-level services the mobile app shows, and the microservices
+ * The ten top-level services the mobile app shows, and the microservices
  * under them. Idempotent: keyed on category `code` and item name so re-running
  * never duplicates rows.
+ *
+ * `late_checkout` (reception) and `luggage` (concierge) were added in Phase 6
+ * for departure services and the quick-request chips (D-19, D-23). Their
+ * default items are unpriced on purpose, so a request that was never granted
+ * never lands on a folio (fees are deferred).
  *
  * `expected_minutes` values are seeds for operations to tune, not promises.
  * `price_usd` is null for complimentary items; a value is billed to the folio
@@ -117,6 +122,28 @@ class GuestServiceCatalogSeeder extends Seeder
             'name' => ['en' => 'Do Not Disturb', 'ar' => 'عدم الإزعاج'],
             'description' => ['en' => 'Hold all visits to your room.', 'ar' => 'إيقاف جميع الزيارات إلى غرفتك.'],
             'items' => [],
+        ],
+        [
+            'code' => 'late_checkout', 'kind' => ServiceCategoryKind::DIRECT, 'department' => Department::RECEPTION,
+            'icon' => 'late_checkout', 'sort' => 8,
+            'name' => ['en' => 'Late Checkout', 'ar' => 'تأخير المغادرة'],
+            'description' => ['en' => 'Ask to keep your room past check-out time.', 'ar' => 'اطلب الاحتفاظ بغرفتك بعد موعد المغادرة.'],
+            'items' => [
+                ['en' => 'Late Checkout Request', 'ar' => 'طلب تأخير المغادرة',
+                 'den' => 'Tell us what time you would like to leave.', 'dar' => 'أخبرنا بالوقت الذي تودّ المغادرة فيه.',
+                 'minutes' => 15, 'price' => null, 'default' => true],
+            ],
+        ],
+        [
+            'code' => 'luggage', 'kind' => ServiceCategoryKind::DIRECT, 'department' => Department::CONCIERGE,
+            'icon' => 'luggage', 'sort' => 9,
+            'name' => ['en' => 'Luggage', 'ar' => 'الأمتعة'],
+            'description' => ['en' => 'Luggage storage and help with your bags.', 'ar' => 'حفظ الأمتعة والمساعدة في حمل حقائبك.'],
+            'items' => [
+                ['en' => 'Luggage Assistance', 'ar' => 'المساعدة في الأمتعة',
+                 'den' => 'Tell us how many bags and when.', 'dar' => 'أخبرنا بعدد الحقائب والوقت.',
+                 'minutes' => 20, 'price' => null, 'default' => true],
+            ],
         ],
     ];
 

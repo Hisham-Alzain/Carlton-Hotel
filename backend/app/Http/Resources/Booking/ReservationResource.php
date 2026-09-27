@@ -22,6 +22,8 @@ class ReservationResource extends BaseResource
             // User. Guest routes resolve a Guest and the public verify route
             // nobody, so the key is absent there.
             'notes'          => $this->when($request->user() instanceof User, $this->notes),
+            // Phase 6 (D-20): staff-only, null for stays checked out before the column existed.
+            'check_out_mode' => $this->when($request->user() instanceof User, fn () => $this->check_out_mode?->value),
             // Surfaced for staff too, so housekeeping can see the flag the guest set.
             'dnd'            => [
                 'enabled' => $this->isDndActive(),

@@ -2,9 +2,12 @@
 
 use App\Http\Controllers\Admin\AmenityController as AdminAmenityController;
 use App\Http\Controllers\Admin\CheckInApprovalController;
+use App\Http\Controllers\Admin\DepartureServiceController;
 use App\Http\Controllers\Admin\GuestController as AdminGuestController;
 use App\Http\Controllers\Admin\HomeSliderController as AdminHomeSliderController;
+use App\Http\Controllers\Admin\HousekeepingTaskController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
+use App\Http\Controllers\Admin\ServiceRequestBoardController;
 use App\Http\Controllers\Api\HomeSliderController as ApiHomeSliderController;
 use App\Http\Controllers\Admin\ServiceCategoryController as AdminServiceCategoryController;
 use App\Http\Controllers\Admin\ServiceItemController as AdminServiceItemController;
@@ -747,11 +750,12 @@ Route::middleware('auth:users')->prefix('cms/conversations')->group(function () 
 
 // ──────────────────────────────────────────────────────────────────────
 // P10 — Staff Ops Dashboard + Tickets: unified queue over service_requests
-// + tickets. Assign/status permission is checked in-service per {type}
-// (service-requests|tickets) since it differs per operation — see
-// OperationsQueueService::requiredPermission().
+// + tickets, plus housekeeping tasks since Phase 6 (HK-05, D-12). Assign/status
+// permission is checked in-service per {type} (service-requests|tickets|
+// housekeeping-tasks; tasks need housekeeping.assign / housekeeping.update)
+// since it differs per operation — see App\Support\OperationsQueueType.
 // ──────────────────────────────────────────────────────────────────────
-Route::middleware(['auth:users', 'permission:service_requests.view|tickets.view'])
+Route::middleware(['auth:users', 'permission:service_requests.view|tickets.view|housekeeping.view'])
     ->get('/operations/queue', [OperationsQueueController::class, 'index']);
 
 Route::middleware('auth:users')->prefix('operations/queue/{type}/{uuid}')->group(function () {
@@ -775,3 +779,41 @@ Route::middleware('auth:users')->prefix('front-desk')->group(function () {
         Route::get('/rates-grid',        [FrontDeskController::class, 'ratesGrid']);
     });
 });
+
+// ──────────────────────────────────────────────────────────────────────
+// Phase 6 — Housekeeping task board (D-05..D-08). view = list/show,
+// assign = create and assign, update = status. No DELETE (D-08).
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware('auth:users')->prefix('housekeeping/tasks')->group(function () {
+    Route::middleware('permission:housekeeping.view')->group(function () {
+        Route::get('/',       [HousekeepingTaskController::class, 'index']);
+        Route::get('/{task}', [HousekeepingTaskController::class, 'show']);
+    });
+
+    Route::middleware('permission:housekeeping.assign')->group(function () {
+        Route::post('/',               [HousekeepingTaskController::class, 'store']);
+        Route::patch('/{task}/assign', [HousekeepingTaskController::class, 'assign']);
+    });
+
+    Route::middleware('permission:housekeeping.update')->patch('/{task}/status', [HousekeepingTaskController::class, 'updateStatus']);
+});
+
+// ──────────────────────────────────────────────────────────────────────
+// Phase 6 — Staff service-request board (read-only; writes go through
+// /operations/queue/service-requests/{uuid}/assign|status, D-17).
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware(['auth:users', 'permission:service_requests.view'])->prefix('cms/service-requests')->group(function () {
+    Route::get('/',                 [ServiceRequestBoardController::class, 'index']);
+    Route::get('/{serviceRequest}', [ServiceRequestBoardController::class, 'show']);
+});
+
+// ──────────────────────────────────────────────────────────────────────
+// Phase 6 — Departure services (projection over transfer bookings,
+// late_checkout / luggage requests and express check-outs, D-18..D-22).
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware(['auth:users', 'permission:service_requests.view'])
+    ->get('/departure-services', [DepartureServiceController::class, 'index']);
+// {uuid} is the bare source uuid (booking, request or reservation), so no
+// model binding. No POST and no GET by uuid (known gaps, D-22).
+Route::middleware(['auth:users', 'permission:service_requests.update'])
+    ->patch('/departure-services/{uuid}/status', [DepartureServiceController::class, 'updateStatus']);

@@ -841,6 +841,16 @@ Send **either** `service_item_uuid` (preferred) **or** `type`. When an item is s
 
 `expected_minutes` is an integer — format and localize it yourself ("~30 min" / "٣٠ دقيقة"). `null` means no time is promised. Adding a category server-side needs no app release, so treat an unknown `kind` as "hide".
 
+### Quick-request chips (Phase 6)
+
+The home screen's request chips are the `is_default` item of each **`kind: direct`** category from `GET /public/service-catalog`: **concierge, transport, maintenance, late_checkout, luggage**. `late_checkout` and `luggage` are new this phase — seeded unpriced (`price_usd: null`), so an un-granted request never lands on a folio. `late_checkout` routes to the reception department and `luggage` to concierge; both are free, and a granted late checkout does **not** change the stay's `check_out` date in this version (it completes as a note for the desk to act on).
+
+A chip taps straight through to `POST /api/service-requests { "service_item_uuid": "<default_item_uuid>", "notes"? }` — the same route as every other catalog request. `default_item_uuid` is present on a `direct` category even though its `items` array is always empty, so the chip never needs a second call to find the item to post.
+
+Do-not-disturb stays on its own toggle route, `PATCH /api/stays/active/dnd` — it is not a catalogue category and never creates a service request. `POST /api/transport-requests` still works but is legacy; prefer the `transport` chip above, which posts through the catalogue like every other request. Use the app's own default chip icon for any `icon` value the app does not recognize — the catalogue can grow `icon` values with no app release.
+
+This phase adds no guest-facing route: the endpoint index above is unchanged.
+
 ---
 
 ## Module: Stays

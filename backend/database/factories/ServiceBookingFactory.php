@@ -8,6 +8,7 @@ use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\ServiceBooking;
 use App\Models\SpaService;
+use App\Models\Transfer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ServiceBookingFactory extends Factory
@@ -24,5 +25,14 @@ class ServiceBookingFactory extends Factory
             'scheduled_at'   => $this->faker->dateTimeBetween('+1 day', '+10 days'),
             'status'         => ServiceBookingStatus::PENDING,
         ];
+    }
+
+    /** A transfer booking (the default stays a spa booking). */
+    public function transfer(): static
+    {
+        return $this->state([
+            'bookable_type' => BookableType::TRANSFER->value,
+            'bookable_id'   => Transfer::factory(),
+        ]);
     }
 }

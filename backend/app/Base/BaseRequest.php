@@ -53,6 +53,7 @@ abstract class BaseRequest extends FormRequest
             'date_format'      => __('custom.validation.date_format',      ['attribute' => ':attribute', 'format' => ':format']),
             'after'            => __('custom.validation.after',            ['attribute' => ':attribute', 'date' => ':date']),
             'after_or_equal'   => __('custom.validation.after_or_equal',   ['attribute' => ':attribute', 'date' => ':date']),
+            'before_or_equal'  => __('custom.validation.before_or_equal',  ['attribute' => ':attribute', 'date' => ':date']),
             'max'              => __('custom.validation.max',              ['attribute' => ':attribute', 'max' => ':max']),
             'min'              => __('custom.validation.min',              ['attribute' => ':attribute', 'min' => ':min']),
             'gte'              => __('custom.validation.gte',              ['attribute' => ':attribute', 'value' => ':value']),

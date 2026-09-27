@@ -11,7 +11,7 @@ class SeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_all_23_permissions_seeded(): void
+    public function test_all_26_permissions_seeded(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $expected = [
@@ -32,11 +32,35 @@ class SeederTest extends TestCase
             'pricing.edit', 'reports.view', 'staff.manage',
             // Phase 4 (D-01): the guests group
             'guests.view', 'guests.edit',
+            // Phase 6 (D-06): the housekeeping task board
+            'housekeeping.view', 'housekeeping.assign', 'housekeeping.update',
         ];
         foreach ($expected as $p) {
             $this->assertDatabaseHas('permissions', ['name' => $p, 'guard_name' => 'users']);
         }
-        $this->assertCount(23, Permission::where('guard_name', 'users')->get());
+        $this->assertCount(26, Permission::where('guard_name', 'users')->get());
+    }
+
+    public function test_housekeeping_permissions_are_granted_to_housekeeping_and_reception(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $roles   = Role::where('guard_name', 'users')->with('permissions')->get();
+        $holders = fn (string $permission) => $roles
+            ->filter(fn (Role $role) => $role->permissions->pluck('name')->contains($permission))
+            ->pluck('name')->sort()->values()->all();
+
+        $this->assertSame(['housekeeping', 'reception'], $holders('housekeeping.view'));
+        $this->assertSame(['housekeeping', 'reception'], $holders('housekeeping.assign'));
+        $this->assertSame(['housekeeping'], $holders('housekeeping.update'));
+        $this->assertSame(['concierge', 'housekeeping', 'kitchen', 'reception'], $holders('service_requests.update'));
+        $this->assertSame(['concierge'], $holders('service_requests.assign'));
+
+        // D-06: the other operational presets are unchanged.
+        $perms = fn (string $name) => $roles->firstWhere('name', $name)->permissions->pluck('name')->sort()->values()->all();
+        $this->assertSame(['service_requests.update', 'service_requests.view'], $perms('kitchen'));
+        $this->assertSame(['guests.edit', 'guests.view', 'service_requests.assign', 'service_requests.update', 'service_requests.view'], $perms('concierge'));
+        $this->assertSame(['service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view'], $perms('events'));
     }
 
     public function test_all_7_role_presets_seeded(): void
@@ -158,7 +182,7 @@ class SeederTest extends TestCase
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-        $this->assertCount(23, Permission::where('guard_name', 'users')->get());
+        $this->assertCount(26, Permission::where('guard_name', 'users')->get());
         $this->assertCount(7, Role::where('guard_name', 'users')->get());
 
         // Idempotent down to the pivot: re-running must not double up grants.

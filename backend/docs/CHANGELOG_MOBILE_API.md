@@ -442,6 +442,42 @@ receipt balance is computed by the same ledger helper (still a JSON number) ·
 
 ---
 
+## 12 — Housekeeping & guest services (Phase 6)
+
+**Why:** housekeeping needed a task board wired to room status, staff needed a
+dedicated service-request board and a departure-services view over transfers,
+late checkouts and luggage requests, and the app's quick-request chips needed
+two more direct categories to post against.
+
+**Migrations:** `create_housekeeping_tasks_table`, `create_housekeeping_task_status_history_table`,
+`add_check_out_mode_to_reservations_table`. All three additive and reversible.
+
+**Catalogue:** two new `kind: direct` categories, `late_checkout` (reception)
+and `luggage` (concierge), each with one `is_default` item and `price_usd: null`
+— unpriced on purpose, so an un-granted request never bills the folio. The app
+falls back to its default chip icon for either category's `icon` key if it is
+not one the app already recognizes.
+
+**Chip mapping:** see `API_GUIDE_MOBILE.md` → *Module: Service Catalog* →
+*Quick-request chips (Phase 6)*. No new guest route — chips post through the
+existing `POST /api/service-requests`.
+
+**Dashboard-only (no app-visible change):**
+- New: `GET|POST /housekeeping/tasks`, `GET /housekeeping/tasks/{task}`,
+  `PATCH /housekeeping/tasks/{task}/assign|status`,
+  `PATCH /operations/queue/housekeeping-tasks/{uuid}/assign|status`,
+  `GET /cms/service-requests`, `GET /cms/service-requests/{serviceRequest}`,
+  `GET /departure-services`, `PATCH /departure-services/{uuid}/status`.
+- Additive: `GET /operations/queue` gate widens to
+  `service_requests.view|tickets.view|housekeeping.view`; queue rows gain
+  `room_number` and `allowed_statuses`; `GET /dashboard/summary` gains
+  `housekeeping_tasks`; new permissions `housekeeping.view|assign|update`.
+- New error codes (422): `housekeeping_task_transition_invalid`,
+  `housekeeping_task_closed`, `service_booking_transition_invalid`,
+  `departure_service_readonly`.
+
+---
+
 ## Full endpoint inventory (53 routes added or changed)
 
 ### Public (tier-1, no token)

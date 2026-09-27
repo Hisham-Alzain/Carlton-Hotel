@@ -2,6 +2,8 @@
 
 namespace App\Actions\Cms;
 
+use App\Actions\Housekeeping\CloseOpenTurnoverTaskAction;
+use App\Actions\Housekeeping\UpdateHousekeepingTaskStatusAction;
 use App\Enums\RoomStatus;
 use App\Exceptions\RoomStatusTransitionException;
 use App\Models\Room;
@@ -21,9 +23,16 @@ use Illuminate\Support\Facades\DB;
  *
  * A null actor records a system change (check-out's ensure-dirty, Phase 3
  * D-08): `status_changed_by` and `room_status_history.changed_by` stay null.
+ *
+ * Phase 6 (D-04): a dirty → available change closes the room's open turnover
+ * task through CloseOpenTurnoverTaskAction (room locked before task), unless
+ * the caller is the task path itself (reason `turnover`), which has already
+ * closed its task.
  */
 class UpdateRoomStatusAction
 {
+    public function __construct(private readonly CloseOpenTurnoverTaskAction $closeTurnover) {}
+
     public function handle(Room $room, RoomStatus $to, ?string $reason, ?User $actor): array
     {
         return DB::transaction(function () use ($room, $to, $reason, $actor) {
@@ -54,6 +63,15 @@ class UpdateRoomStatusAction
                 'changed_by'  => $actor?->getKey(),
                 'reason'      => $reason,
             ]);
+
+            // Phase 6 (D-04): the room board's dirty → available closes the
+            // room's open turnover task, still under this room lock. The task
+            // path passes reason `turnover` and has already closed its task.
+            if ($from === RoomStatus::DIRTY
+                && $to === RoomStatus::AVAILABLE
+                && $reason !== UpdateHousekeepingTaskStatusAction::ROOM_STATUS_REASON) {
+                $this->closeTurnover->handle($locked, $actor);
+            }
 
             return ['data' => $locked->fresh(), 'code' => 200];
         });

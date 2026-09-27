@@ -15,6 +15,7 @@ import 'package:get/get.dart';
 import 'services/get_storage_service.dart';
 
 Future<void> main() async {
+  //TODO: drop all the unused assets icons or images and replace all icons that are svg with relevent ones from flutter iccons
   WidgetsFlutterBinding.ensureInitialized();
 
   // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

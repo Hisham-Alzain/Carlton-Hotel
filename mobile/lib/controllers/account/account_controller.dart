@@ -33,6 +33,7 @@ class AccountController extends GetxController {
     message: AppTranslations.sectionComingSoon(label),
   );
 
+  //TODO: no sign out api is called it is static
   void confirmSignOut() {
     showSignOutSheet(
       onConfirm: () async {
@@ -44,4 +45,6 @@ class AccountController extends GetxController {
       },
     );
   }
+
+  //TODO: no delete account api
 }

@@ -24,13 +24,14 @@ class PreArrivalDocumentsController extends GetxController {
   static const List<String> documentTypes = ['passport', 'id_card', 'visa'];
 
   Future<void> pickDocuments() async {
-    // v12 `pickFiles` implies multiple selection; `allowMultiple` is deprecated.
-    final result = await FilePicker.pickFiles(
+    // v12 `pickFiles` implies multiple selection (`allowMultiple` is deprecated)
+    // and returns the picked list directly — empty on cancel, never null.
+    final picked = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: allowedExtensions,
     );
-    if (result == null) return;
-    for (final file in result.files) {
+
+    for (final file in picked) {
       final path = file.path;
       if (path == null) continue;
       docs.add(

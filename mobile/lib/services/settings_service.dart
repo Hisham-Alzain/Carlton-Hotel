@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 
 class SettingsService extends GetxService {
   /// Reactive state
+  /// TODO: add the mising locals and currencies and check if it is compatible with the backend
   final Rx<Locale> locale = const Locale('en').obs;
   final Rx<Language> language = Language(name: 'English', local: 'en').obs;
   final Rx<Currency> currency = currencies.first.obs;

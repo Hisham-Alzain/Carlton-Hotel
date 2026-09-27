@@ -47,11 +47,11 @@ All routes are under `/api/v1`. Staff routes use `auth:users` + permission middl
 
 - [ ] **HK-01**: Housekeeping and front desk can list housekeeping tasks with filters (status, room, assignee, type, due date) (`GET /housekeeping/tasks`)
 - [ ] **HK-02**: A housekeeping task can be assigned to a staff member (`PATCH /housekeeping/tasks/{task}/assign`)
-- [ ] **HK-03**: A housekeeping task can move through its statuses; completing a turnover task moves the room to inspected/available (`PATCH /housekeeping/tasks/{task}/status`)
-- [ ] **HK-04**: A turnover task is created automatically on check-out, and a housekeeping-department service request creates a request-type task
+- [ ] **HK-03**: A housekeeping task moves through `pending → assigned → in_progress → done` (or `cancelled`) with a status history; completing a turnover task moves a `dirty` room to `available` via `UpdateRoomStatusAction` (a `maintenance` room is left untouched; no `inspected` state) (`PATCH /housekeeping/tasks/{task}/status`, permission `housekeeping.update`)
+- [ ] **HK-04**: A turnover task is created automatically on check-out (exactly one open turnover per room, deduped at the database level), and a service request routed to `Department::HOUSEKEEPING` creates a request-type task; the room board's `dirty → available` click closes the open turnover task
 - [ ] **HK-05**: Housekeeping tasks appear in the merged operations queue as a third item type (`/operations/queue/housekeeping-tasks/{uuid}`), reusing the polymorphic assign/status actions
 - [ ] **SVC-01**: Staff can view a service-request board with filters and use the existing assign/status actions (`GET /cms/service-requests`, permission `service_requests.view`)
-- [ ] **SVC-02**: Staff can list departure services (transfers, late checkout, luggage, express checkout) for departing reservations (`GET /departure-services`)
+- [ ] **SVC-02**: Staff can list departure services (transfer bookings, `late_checkout` and `luggage` requests from two newly seeded direct categories, express checkouts derived from `reservations.check_out_mode`) for reservations departing on a hotel-local date, as an unpaginated projection with `stage`, `allowed_statuses` and `meta.truncated` (`GET /departure-services`)
 - [ ] **SVC-03**: Staff can progress a departure service's status; the change is delegated to the underlying booking or request (`PATCH /departure-services/{uuid}/status`)
 - [ ] **SVC-04**: Guest quick-request chips map to direct-category catalogue items via the existing service-request route; mapping documented for mobile (no new route)
 

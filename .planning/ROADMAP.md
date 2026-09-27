@@ -223,14 +223,14 @@ Plans:
 
 **Goal**: Housekeeping works from a task board wired to room status. Staff see and progress service requests and departure services through the shared operational endpoints.
 **Mode:** mvp
-**Depends on**: Phase 2, Phase 3
+**Depends on**: Phase 2, Phase 3, Phase 4 (`HotelClock::checkOutAt`, sync-listener precedent) and Phase 5 (folio billing of bookings)
 **Requirements**: HK-01, HK-02, HK-03, HK-04, HK-05, SVC-01, SVC-02, SVC-03, SVC-04
 **Success Criteria** (what must be TRUE):
 
-  1. Checking a reservation out creates exactly one open turnover task for the room, and repeated triggers never create a duplicate open task. A housekeeping-department service request creates a request-type task.
-  2. Staff list tasks via `GET /housekeeping/tasks` with filters (status, room, assignee, type, due date), assign them, and move them through their statuses. Completing a turnover task moves the room to inspected/available on the room board. The same tasks appear in the merged operations queue as the `housekeeping-tasks` type and can be assigned and progressed via `/operations/queue/housekeeping-tasks/{uuid}`.
+  1. Checking a reservation out creates exactly one open turnover task for the room, and repeated triggers never create a duplicate open task (database-level dedupe). A service request routed to `Department::HOUSEKEEPING` creates a request-type task; completing it completes the request, and closing the request cancels its open task.
+  2. Staff list tasks via `GET /housekeeping/tasks` with filters (status, room, assignee, type, due date), assign them, and move them through their statuses. Completing a turnover task moves a `dirty` room to `available` on the room board (a `maintenance` room is left untouched), and the room board's `dirty → available` click closes the open turnover task. The same tasks appear in the merged operations queue as the `housekeeping-tasks` type (rows carry `room_number` and `allowed_statuses`) and can be assigned and progressed via `/operations/queue/housekeeping-tasks/{uuid}`.
   3. Staff with `service_requests.view` filter the service-request board (`GET /cms/service-requests`) and use the existing assign/status actions on it. The mobile guide maps each guest quick-request chip to a direct-category catalogue item submitted through the existing service-request route.
-  4. `GET /departure-services` lists transfers, late checkout, luggage and express checkout for departing reservations. `PATCH /departure-services/{uuid}/status` changes the status on the underlying booking or request, and the next listing shows the change.
+  4. `GET /departure-services` lists transfers, late checkout, luggage (two newly seeded `direct` categories with unpriced default items) and express checkout (derived from the new `reservations.check_out_mode`) for reservations departing on a hotel-local date, with `stage`, `allowed_statuses` and `meta.truncated`. `PATCH /departure-services/{uuid}/status` changes the status on the underlying booking or request (express-checkout rows are read-only), and the next listing shows the change.
   5. Contract gate: all new routes pass happy / 401 / 403 / 422 tests with the suite green, AR/EN keys exist, and the housekeeping, service-request board and departure-services nodes are `api:true`. The guides and Postman are updated, and housekeeping permissions are seeded and listed in the summary.
 
 **Reuses**: `AssignRequestAction` / `UpdateRequestStatusAction` (polymorphic union, adding a third arm), `OperationsQueueService`, `ServiceRequest`, `ServiceBooking`, `Transfer`, `ServiceItem` / `ServiceCategory`, the Phase 3 check-out event, `service_requests.view` / `.assign` / `.update`

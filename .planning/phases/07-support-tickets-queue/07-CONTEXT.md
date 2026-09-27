@@ -1,7 +1,7 @@
 # Phase 7: Support Tickets & Queue - Context
 
 **Gathered:** 2026-09-27
-**Status:** Locked decisions captured. **NOT yet ready for planning** — see Gate below.
+**Status:** Locked decisions captured. Gate MET (Phase 6 committed d8ac795/613a980/a17c293, suite 1709 green). Ready for planning. **Post-research consultant decisions (PR-1..PR-8, end of file) override earlier text where they differ.**
 **Decided by:** Fable 5.1 consultant (owner delegated all decisions, instruction 2026-09-26: route decisions to the consultant/council, never ask the owner). Eight decisions were flagged `convene: true` and reviewed by one ai-council (Architect conf 78, Skeptic/Red Team conf 72, Risk & Security conf 78; council confidence 76, no member voted to reject). Ten binding amendments (A1–A10) are folded into the decisions below and marked `(council A#)`. Full text: `07-DISCUSSION-LOG.md`.
 
 ## Gate (council A10)
@@ -524,3 +524,16 @@ These fixes have been applied directly to `.planning/ROADMAP.md` (Phase 7 sectio
 *Phase: 07-support-tickets-queue*
 *Context gathered: 2026-09-27*
 *Gate: research/planning begins only after Phase 6 is committed and green (council A10).*
+
+## Post-research consultant decisions (2026-09-27) — override earlier text
+
+Fable consultant, after 07-RESEARCH.md; verified against `routes/api.php` and `RolesAndPermissionsSeeder`.
+
+- **PR-1 (research Q1):** `service_request_closed` (new 422, five locales) applies to BOTH the plain service-request assign route and the queue claim. Terminal set = the registry's open-status complement. Record in SUMMARY as an additive 422 on an existing route. Confidence high.
+- **PR-2 (research Q2, D-18):** ticket show response gains `latest_escalation {level, target_user{uuid,name}, reason, created_at} | null`, derived from the loaded `actions[]` (no extra query). The list omits it (`escalation_level` + `escalated` filter suffice). Appended to D-13's field list as additive.
+- **PR-3 (research Q3):** `actions[]` on show = newest 200, returned ascending, plus top-level `actions_truncated: bool`. Load via a separate ordered query `limit(201)`, not per-parent eager `limit()`.
+- **PR-4 (correction a, D-10):** permission catalogue is 26 permissions / 11 groups (after Phase 6). D-10's "24" is a slip. Phase 7 adds no permission strings; pin 26.
+- **PR-5 (correction b, A3):** reception keeps service-request assignability (holds `service_requests.update`); reception becomes un-assignable to housekeeping tasks (holds `housekeeping.assign` without `housekeeping.update`). The handoff table uses this.
+- **PR-6 (correction c, A4):** accepted write widening — `tickets.respond` gates `POST /cms/conversations/{c}/messages`, so reception/concierge can reply to guest chat. Pin read AND reply in `RolePresetsTest`; named in the PROJECT.md debt entry. Logged amendment to A4, no re-convene.
+- **PR-7 (correction d, D-09):** `AssigneeEligibility` and the ~12 existing test re-pins land in the same plan, with a `UserFactory` eligible-assignee state.
+- **PR-8 (correction e):** query budget stays 6 (list) / 6 (show). Use a batched users query and `withSum`/subselects; if `withSum` on HasManyThrough fails, fall back to an `addSelect` subquery. Do not raise the budget.

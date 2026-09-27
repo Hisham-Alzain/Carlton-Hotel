@@ -1,3 +1,4 @@
+import 'package:carlton/components/check_in/arrival_time_sheet.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/l10n/app_translations.dart';
@@ -75,6 +76,15 @@ class CheckInController extends GetxController {
   /// there is what made the Complete button look dead.
   Future<void> completeAndExit() async {
     if (isCompleting.value) return;
+    // Arrival time is part of check-in, and no wizard tab collects it — so the
+    // sheet opens here, in the flow, rather than turning the guest away to find
+    // the Home checklist row. Dismissing it without a pick cancels the attempt.
+    if (!service.isStepComplete(PreArrivalStep.arrivalTime)) {
+      await showArrivalTimeSheet();
+      if (isClosed || !service.isStepComplete(PreArrivalStep.arrivalTime)) {
+        return;
+      }
+    }
     isCompleting.value = true;
     final outcome = await service.completeCheckIn();
     if (isClosed) return;
@@ -91,7 +101,7 @@ class CheckInController extends GetxController {
     }
 
     Get.back<void>();
-    // Home owns the state decision (HomeController.resolveHomeState) — hand it
+    // The session owns the state decision (MiddlewareService.homeState) — hand it
     // the refresh, don't set activeBooking from here. The reservation is now
     // `checked_in`, so re-resolving lands there.
     //
@@ -111,8 +121,8 @@ class CheckInController extends GetxController {
       PreArrivalStep.identity => AppTranslations.stepIdentity,
       PreArrivalStep.specialRequests => AppTranslations.stepSpecialRequests,
       PreArrivalStep.contactDetails => AppTranslations.stepContactDetails,
-      // arrivalTime is not a required step, so it can never land here.
-      _ => AppTranslations.stepIdentity,
+      PreArrivalStep.arrivalTime => AppTranslations.setArrivalTime,
+      null => AppTranslations.stepIdentity,
     };
     return AppTranslations.finishStepsFirst(label);
   }

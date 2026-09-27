@@ -10,6 +10,7 @@ import 'package:carlton/theme/theme.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:get/get.dart';
 import 'services/get_storage_service.dart';
 
@@ -42,6 +43,14 @@ class MainApp extends StatelessWidget {
     final settings = Get.find<SettingsService>();
 
     return GetMaterialApp(
+      // Home's hero video only plays while Main is the top route; see
+      // HomeController.setRouteVisible.
+      routingCallback: (routing) {
+        if (routing == null || !Get.isRegistered<HomeController>()) return;
+        Get.find<HomeController>().setRouteVisible(
+          routing.current == Routes.main,
+        );
+      },
       debugShowCheckedModeBanner: false,
       initialRoute: Routes.splashScreen,
       getPages: Pages.getPages,

@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/components/cards/custom_room_result_card.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
@@ -17,7 +18,7 @@ class ChooseRoomView extends StatelessWidget {
 
     return CustomScaffold(
       appBar: AppBar(
-        title: Text('Choose Your Room'),
+        title: Text(AppTranslations.chooseYourRoom),
         iconTheme: IconThemeData(color: Colors.black),
         actions: [
           Container(
@@ -32,84 +33,93 @@ class ChooseRoomView extends StatelessWidget {
           ),
         ],
       ),
-      body: Obx(
-        () {
-          final TextTheme textStyle = Get.textTheme;
-          return CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsetsGeometry.all(10),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    spacing: 10,
-                    children: [
-                      AnimatedSmoothIndicator(
-                        activeIndex: 1,
-                        count: 6,
-                        effect: SlideEffect(
-                          dotHeight: 5,
-                          dotWidth: 50,
-                          spacing: 20,
-                          activeDotColor: AppColors.primary,
-                          dotColor: AppColors.iceBlue,
-                        ),
+      body: Obx(() {
+        final TextTheme textStyle = Get.textTheme;
+        return CustomScrollView(
+          // The pagination mixin's controller: nearing the bottom loads the
+          // next page of room types.
+          controller: controller.scrollController,
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsetsGeometry.all(10),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  spacing: 10,
+                  children: [
+                    AnimatedSmoothIndicator(
+                      activeIndex: 1,
+                      count: 6,
+                      effect: SlideEffect(
+                        dotHeight: 5,
+                        dotWidth: 50,
+                        spacing: 20,
+                        activeDotColor: AppColors.primary,
+                        dotColor: AppColors.iceBlue,
                       ),
-                      PillContainer(
-                        padding: const EdgeInsets.all(10),
-                        backgroundColor: AppColors.pearlCream,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                controller.dateSummary,
-                                style: textStyle.labelMedium?.copyWith(
-                                  fontFamily: 'DM Sans',
-                                  color: AppColors.inkBlack,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              controller.guestSummary,
+                    ),
+                    PillContainer(
+                      padding: const EdgeInsets.all(10),
+                      backgroundColor: AppColors.pearlCream,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              controller.dateSummary,
                               style: textStyle.labelMedium?.copyWith(
-                                fontFamily: 'Plus Jakarta Sans',
-                                color: AppColors.walnutGold,
+                                fontFamily: 'DM Sans',
+                                color: AppColors.inkBlack,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          Text(
+                            controller.guestSummary,
+                            style: textStyle.labelMedium?.copyWith(
+                              fontFamily: 'Plus Jakarta Sans',
+                              color: AppColors.walnutGold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              if (controller.roomsLoading.value)
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 60),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.all(10),
-                  sliver: SliverList.builder(
-                    itemCount: controller.rooms.length,
-                    itemBuilder: (_, index) {
-                      final room = controller.rooms[index];
-                      return CustomRoomResultCard(
-                        room: room,
-                        nights: controller.nights,
-                        onSelect: () => controller.selectRoom(room),
-                        onTap: () => controller.openRoomDetails(room),
-                      );
-                    },
-                  ),
+            ),
+            if (controller.roomsLoading.value)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 60),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
-            ],
-          );
-        },
-      ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.all(10),
+                sliver: SliverList.builder(
+                  itemCount: controller.rooms.length,
+                  itemBuilder: (_, index) {
+                    final room = controller.rooms[index];
+                    return CustomRoomResultCard(
+                      room: room,
+                      nights: controller.nights,
+                      roomsAvailable: controller.availableFor(room),
+                      onSelect: () => controller.selectRoom(room),
+                      onTap: () => controller.openRoomDetails(room),
+                    );
+                  },
+                ),
+              ),
+            if (controller.loadingMore.value)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ),
+          ],
+        );
+      }),
     );
   }
 }

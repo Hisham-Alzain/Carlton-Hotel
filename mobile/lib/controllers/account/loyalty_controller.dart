@@ -3,12 +3,17 @@ import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/loyalty.dart';
 import 'package:get/get.dart';
 
-/// Demo-only. Holds the rewards standing the Loyalty screen renders.
+/// Holds the rewards standing the Loyalty screen renders.
 ///
-/// No endpoint exists yet, so the account and ledger below are hardcoded here
-/// rather than in `DemoData` — they are shaped like the eventual
-/// `GET /loyalty/account` payload so swapping in the call replaces the two
-/// getters and nothing in the view.
+/// **The only screen in the app not backed by the API.** The backend exposes no
+/// loyalty routes at all — no points, tier or ledger tables, nothing under
+/// `routes/api.php` — so there is nothing to call. The figures below are
+/// hardcoded and shaped like the eventual payload, so wiring it up later
+/// replaces these two getters and nothing in the view.
+///
+/// Until those endpoints exist this screen shows invented numbers to the guest.
+/// That is a deliberate, known gap, recorded here rather than left to be
+/// discovered.
 class LoyaltyController extends GetxController {
   LoyaltyAccount get account => const LoyaltyAccount(
     memberId: 'CH-48219',

@@ -167,7 +167,7 @@ class RoomOption {
   });
 
   /// Stamps a real `room_type_uuid` onto an otherwise-demo option (used when a
-  /// booking starts from an API-backed room — see `DemoData.roomDetailsFor`).
+  /// booking starts from an API-backed room).
   RoomOption copyWith({String? uuid}) => RoomOption(
     uuid: uuid ?? this.uuid,
     id: id,
@@ -212,28 +212,64 @@ class RoomOption {
     );
   }
 
+  /// Maps the server's amenity `icon` key to a bundled SVG. Only files that
+  /// exist in assets/icons/ may appear here — a missing asset throws
+  /// "Unable to load asset" on every rebuild of the room screen.
   static String _amenityAsset(String icon) {
-    const present = {'jacuzzi', 'desk', 'tv', 'coffee', 'butler', 'view'};
-    return present.contains(icon)
-        ? 'assets/icons/$icon.svg'
-        : 'assets/icons/view.svg';
+    const assets = {
+      'jacuzzi': 'jacuzzi',
+      'coffee': 'coffee',
+      'butler': 'butler',
+      'view': 'view',
+      'balcony': 'view',
+      'safe': 'lock',
+      'desk': 'space',
+      'wifi': 'wifi',
+    };
+    return 'assets/icons/${assets[icon] ?? 'view'}.svg';
   }
 }
 
+/// One selectable extra on the booking wizard's Add-Ons step.
+///
+/// These are the real bookables the hotel sells alongside a room — spa
+/// treatments (`GET /public/spa-services`), poolside cabanas
+/// (`GET /public/pool-cabanas`) and airport transfers
+/// (`GET /public/transfers`). [id] is the server `uuid` and [bookableType] the
+/// morph alias `POST /service-bookings` expects, so a selection made here can
+/// be submitted verbatim once the reservation exists.
 class AddOn {
+  /// The bookable's server uuid, sent as `bookable_uuid`.
   final String id;
+
+  /// `spa_service` | `pool_cabana` | `transfer` — the `bookable_type` the
+  /// booking endpoint validates against its `BookableType` enum.
+  final String bookableType;
   final String iconPath;
   final String title;
+
+  /// Duration, capacity, or whatever the endpoint gave us for this kind. Empty
+  /// when it gave us nothing — the row hides the line rather than inventing
+  /// one.
   final String subtitle;
-  final int price;
+
+  /// USD decimal string straight off the wire (`"120.00"`). Kept as text so it
+  /// is rendered through `MoneyFormat.usdString` in the guest's currency
+  /// instead of being rounded to an int here.
+  final String priceUsd;
 
   const AddOn({
     required this.id,
+    required this.bookableType,
     required this.iconPath,
     required this.title,
     required this.subtitle,
-    required this.price,
+    required this.priceUsd,
   });
+
+  /// The numeric value, for totals. Unparseable reads as 0 rather than throwing
+  /// mid-build.
+  double get price => double.tryParse(priceUsd) ?? 0;
 }
 
 enum PaymentMethod {

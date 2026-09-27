@@ -87,7 +87,7 @@ class CustomPaymentCardPreview extends StatelessWidget {
                     _field(
                       AppTranslations.cardholder,
                       cardholderName.isEmpty
-                          ? 'YOUR NAME'
+                          ? AppTranslations.yourNameCaps
                           : cardholderName.toUpperCase(),
                     ),
                     _field(

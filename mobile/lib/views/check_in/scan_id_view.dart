@@ -34,7 +34,9 @@ class ScanIdView extends GetView<ScanIdController> {
       body: Obx(() {
         final ScanStage stage = controller.stage.value;
         if (stage == ScanStage.success) return const _CapturedPhotoReview();
-        if (stage == ScanStage.unavailable) return const _CameraUnavailableBody();
+        if (stage == ScanStage.unavailable) {
+          return const _CameraUnavailableBody();
+        }
 
         return Column(
           children: [
@@ -67,7 +69,10 @@ class _CameraCaptureArea extends GetView<ScanIdController> {
   final bool scanning;
   final bool initializing;
 
-  const _CameraCaptureArea({required this.scanning, required this.initializing});
+  const _CameraCaptureArea({
+    required this.scanning,
+    required this.initializing,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -91,26 +96,24 @@ class _CameraCaptureArea extends GetView<ScanIdController> {
                   if (initializing)
                     const _CameraLoadingPlaceholder()
                   else
-                    Obx(
-                      () {
-                        final CameraController? cam =
-                            controller.cameraController.value;
-                        if (cam == null || !cam.value.isInitialized) {
-                          return const _CameraLoadingPlaceholder();
-                        }
-                        // The sensor is never card-shaped: cover the frame and
-                        // let the sides crop, rather than letterboxing.
-                        return FittedBox(
-                          fit: BoxFit.cover,
-                          clipBehavior: Clip.hardEdge,
-                          child: SizedBox(
-                            width: cam.value.previewSize?.height ?? 1,
-                            height: cam.value.previewSize?.width ?? 1,
-                            child: CameraPreview(cam),
-                          ),
-                        );
-                      },
-                    ),
+                    Obx(() {
+                      final CameraController? cam =
+                          controller.cameraController.value;
+                      if (cam == null || !cam.value.isInitialized) {
+                        return const _CameraLoadingPlaceholder();
+                      }
+                      // The sensor is never card-shaped: cover the frame and
+                      // let the sides crop, rather than letterboxing.
+                      return FittedBox(
+                        fit: BoxFit.cover,
+                        clipBehavior: Clip.hardEdge,
+                        child: SizedBox(
+                          width: cam.value.previewSize?.height ?? 1,
+                          height: cam.value.previewSize?.width ?? 1,
+                          child: CameraPreview(cam),
+                        ),
+                      );
+                    }),
                   const _IdFrameBrackets(),
                   if (!scanning && !initializing) const _SweepingScanLine(),
                   if (scanning)

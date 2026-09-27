@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/account/custom_list_row.dart';
 import 'package:carlton/components/account/custom_settings_section.dart';
 import 'package:carlton/components/custom_initial_avatar.dart';
@@ -53,48 +54,50 @@ class AccountView extends GetView<AccountController> {
           ),
           const SizedBox(height: 24),
           CustomSettingsSection(
-            title: 'Account',
+            title: AppTranslations.navAccount,
             children: [
               CustomListRow(
                 iconAsset: 'assets/icons/acc_profile.svg',
-                title: 'My Profile',
-                onTap: () => controller.comingSoon('My Profile'),
+                title: AppTranslations.myProfile,
+                onTap: controller.editProfile,
               ),
               CustomListRow(
                 iconAsset: 'assets/icons/acc_preferences.svg',
-                title: 'Preferences',
+                title: AppTranslations.checkInTabPreferences,
                 onTap: controller.openPreferences,
               ),
               CustomListRow(
                 iconAsset: 'assets/icons/acc_notifications.svg',
-                title: 'Notifications',
-                onTap: () => controller.comingSoon('Notifications'),
+                title: AppTranslations.notifications,
+                onTap: () =>
+                    controller.comingSoon(AppTranslations.notifications),
               ),
               CustomListRow(
                 iconAsset: 'assets/icons/acc_payments.svg',
-                title: 'Saved Payments',
-                onTap: () => controller.comingSoon('Saved Payments'),
+                title: AppTranslations.savedPayments,
+                onTap: () =>
+                    controller.comingSoon(AppTranslations.savedPayments),
               ),
               CustomListRow(
                 iconAsset: 'assets/icons/acc_security.svg',
-                title: 'Security',
-                onTap: () => controller.comingSoon('Security'),
+                title: AppTranslations.security,
+                onTap: () => controller.comingSoon(AppTranslations.security),
               ),
             ],
           ),
           const SizedBox(height: 24),
           CustomSettingsSection(
-            title: 'Support',
+            title: AppTranslations.support,
             children: [
               CustomListRow(
                 iconAsset: 'assets/icons/acc_help.svg',
-                title: 'Help & Support',
-                onTap: () => controller.comingSoon('Help & Support'),
+                title: AppTranslations.helpAndSupport,
+                onTap: controller.openSupport,
               ),
               CustomListRow(
                 iconAsset: 'assets/icons/acc_legal.svg',
-                title: 'Legal',
-                onTap: () => controller.comingSoon('Legal'),
+                title: AppTranslations.legal,
+                onTap: controller.openLegal,
               ),
             ],
           ),
@@ -112,8 +115,8 @@ class AccountView extends GetView<AccountController> {
             textStyle: textStyle.labelLarge?.copyWith(
               fontWeight: FontWeight.w600,
             ),
-            child: const RowTextComponent(
-              text: 'Sign Out',
+            child: RowTextComponent(
+              text: AppTranslations.signOut,
               icon: Icons.logout,
               iconSize: 18,
               spacing: 6,

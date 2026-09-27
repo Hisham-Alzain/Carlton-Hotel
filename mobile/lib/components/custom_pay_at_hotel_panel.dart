@@ -55,7 +55,7 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'No payment required now',
+                  AppTranslations.noPaymentRequiredNow,
                   style: textStyle.labelMedium?.copyWith(
                     fontFamily: 'DM Sans',
                     color: AppColors.graphite,
@@ -75,8 +75,8 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                   style: _headingStyle(textStyle),
                 ),
                 Text(
-                  'Your reservation is secured without any charge today. '
-                  'Payment will be collected at the front desk upon check-in.',
+                  '${AppTranslations.reservationSecuredNoCharge} '
+                  '${AppTranslations.paymentAtFrontDesk}',
                   style: textStyle.labelMedium?.copyWith(
                     fontFamily: 'DM Sans',
                     color: AppColors.inkBlack,
@@ -84,7 +84,7 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                 ),
                 // 14, not 4: the old spacer sat between two 10px gaps.
                 Text(
-                  'Accepted Payment Methods at Hotel',
+                  AppTranslations.acceptedPaymentMethods,
                   style: _headingStyle(textStyle),
                 ),
                 _MethodRow(
@@ -117,7 +117,7 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          'Free cancellation up to 48 hours before arrival',
+                          AppTranslations.freeCancellation48h,
                           style: textStyle.labelMedium?.copyWith(
                             fontFamily: 'DM Sans',
                             color: AppColors.inkBlack,

@@ -14,7 +14,7 @@ Future<void> showSignOutSheet({required VoidCallback onConfirm}) {
     showClose: false,
     child: CustomEmptyPlaceholder(
       iconWidget: SvgPicture.asset(
-        'assets/icons/acc_signout.svg',
+        'assets/icons/act_checkout.svg',
         width: 28,
         height: 28,
         colorFilter: const ColorFilter.mode(

@@ -105,7 +105,11 @@ class CustomRequestCard extends StatelessWidget {
                 ),
                 PopupMenuItem(
                   value: onCancel,
-                  child: _menuRow(Icons.delete_outline, 'Cancel Request', 15),
+                  child: _menuRow(
+                    Icons.delete_outline,
+                    AppTranslations.cancelRequestLabel,
+                    15,
+                  ),
                 ),
               ],
             ),

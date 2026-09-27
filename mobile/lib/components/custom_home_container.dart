@@ -1,4 +1,6 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
+import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
@@ -11,14 +13,19 @@ class CustomHomeContainer extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  /// Bundled hero still shown until [videoController] is ready. Always an
-  /// `assets/…` path (see `DemoData.hero*ImagePath`) — these are marketing
-  /// stills that ship with the app, not content the API serves.
-  final String assetPath;
+  /// The hero background: a `/public/home-sliders` photo URL, or a bundled
+  /// `assets/…` still from [AppAssets] when the slider has no photo (and for
+  /// the video hero, where the still is only the poster). [CustomImage] accepts
+  /// either.
+  final String imagePath;
   final VideoPlayerController? videoController;
   final bool videoReady;
-  final String primaryLabel;
-  final String secondaryLabel;
+
+  /// Null falls back to the localized default (Book Now / Explore), resolved in
+  /// `build` so the text follows a language switch instead of freezing at the
+  /// locale that was active when this widget was constructed.
+  final String? primaryLabel;
+  final String? secondaryLabel;
   final VoidCallback? onPrimary;
   final VoidCallback? onSecondary;
   final double height;
@@ -27,11 +34,11 @@ class CustomHomeContainer extends StatelessWidget {
     required this.location,
     required this.title,
     required this.subtitle,
-    required this.assetPath,
+    required this.imagePath,
     this.videoController,
     this.videoReady = false,
-    this.primaryLabel = 'Book Now',
-    this.secondaryLabel = 'Explore',
+    this.primaryLabel,
+    this.secondaryLabel,
     this.onPrimary,
     this.onSecondary,
     this.height = 500,
@@ -47,7 +54,7 @@ class CustomHomeContainer extends StatelessWidget {
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
       child: Stack(
         children: [
-          Positioned.fill(child: _background(context)),
+          Positioned.fill(child: _background()),
           const Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -135,13 +142,19 @@ class CustomHomeContainer extends StatelessWidget {
                         child: CustomFilledButton(
                           width: 300,
                           onPressed: onPrimary,
-                          child: Text(primaryLabel.toUpperCase()),
+                          child: Text(
+                            (primaryLabel ?? AppTranslations.bookNowLabel)
+                                .toUpperCase(),
+                          ),
                         ),
                       ),
                       CustomOutlinedButton(
                         width: 300,
                         onPressed: onSecondary,
-                        child: Text(secondaryLabel.toUpperCase()),
+                        child: Text(
+                          (secondaryLabel ?? AppTranslations.exploreLabel)
+                              .toUpperCase(),
+                        ),
                       ),
                     ],
                   ),
@@ -181,7 +194,7 @@ class CustomHomeContainer extends StatelessWidget {
     return spans;
   }
 
-  Widget _background(BuildContext context) {
+  Widget _background() {
     final heroVideoController = videoController;
     if (heroVideoController != null && videoReady) {
       return FittedBox(
@@ -193,14 +206,8 @@ class CustomHomeContainer extends StatelessWidget {
         ),
       );
     }
-    // Full-bleed 4x Figma export: decode at screen width, not native size.
-    return Image.asset(
-      assetPath,
-      fit: BoxFit.cover,
-      cacheWidth:
-          (MediaQuery.sizeOf(context).width *
-                  MediaQuery.devicePixelRatioOf(context))
-              .round(),
-    );
+    // Either a slider URL or a bundled 4x Figma export; CustomImage decodes
+    // both at screen width rather than native size.
+    return CustomImage(source: imagePath, fit: BoxFit.cover);
   }
 }

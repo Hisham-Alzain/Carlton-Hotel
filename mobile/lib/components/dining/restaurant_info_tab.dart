@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/dining/custom_gallery_grid.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/models/home_models.dart';
@@ -39,14 +40,14 @@ class RestaurantInfoTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'About',
+            AppTranslations.about,
             style: textStyle.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.inkBlack,
             ),
           ),
           Text(
-            about.isNotEmpty ? about : 'Details coming soon.',
+            about.isNotEmpty ? about : AppTranslations.detailsComingSoon,
             style: textStyle.labelMedium?.copyWith(
               fontFamily: 'DM Sans',
               height: 1.5,
@@ -66,32 +67,32 @@ class RestaurantInfoTab extends StatelessWidget {
               children: [
                 _InfoRow(
                   icon: 'assets/icons/clock.svg',
-                  label: 'Hours',
+                  label: AppTranslations.hours,
                   value: restaurant.hours,
                 ),
                 _InfoRow(
                   icon: 'assets/icons/location.svg',
-                  label: 'Location',
+                  label: AppTranslations.locationLabel,
                   value: restaurant.location,
                 ),
                 _InfoRow(
                   icon: 'assets/icons/cuisine.svg',
-                  label: 'Cuisine',
+                  label: AppTranslations.cuisineLabel,
                   value: restaurant.cuisine,
                 ),
                 _InfoRow(
                   icon: 'assets/icons/rating.svg',
-                  label: 'Rating',
+                  label: AppTranslations.ratingLabel,
                   value:
                       '${restaurant.rating} / 5.0 · '
-                      '${restaurant.reviews} reviews',
+                      '${AppTranslations.reviewsCount(restaurant.reviews)}',
                 ),
               ],
             ),
           ),
           if (gallery.isNotEmpty) ...[
             Text(
-              'Gallery',
+              AppTranslations.gallery,
               style: textStyle.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.inkBlack,
@@ -106,7 +107,7 @@ class RestaurantInfoTab extends StatelessWidget {
             // This tab renders inside the detail view's TabBarView, so the
             // DefaultTabController is above us in the tree.
             onPressed: () => DefaultTabController.of(context).animateTo(2),
-            child: const Text('Reserve a table'),
+            child: Text(AppTranslations.reserveATable),
           ),
         ],
       ),

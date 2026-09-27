@@ -1,5 +1,5 @@
 import 'package:carlton/constants/preference_options.dart';
-import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/enums/enums.dart';
 import 'package:carlton/models/check_in/arrival_slot.dart';
 import 'package:carlton/models/check_in/check_in_enums.dart';
 import 'package:carlton/models/check_in/pre_arrival_step.dart';
@@ -16,7 +16,8 @@ import 'package:get/get.dart';
 /// the Home tab and the check-in wizard read the same instance. Home is the
 /// consumer (progress bar, checklist ticks); the wizard is the producer.
 ///
-/// Demo-only: nothing persists. A restart returns to the seeded 1/4 state.
+/// Device-local: nothing persists across a restart, which returns to the 1/4
+/// state and refetches the reservation from `GET /stays/upcoming`.
 /// How long the digital-key activation animation runs before the key
 /// reports itself active.
 const _digitalKeyActivationDuration = Duration(seconds: 2);
@@ -25,7 +26,7 @@ class CheckInService extends GetxService {
   static CheckInService get find => Get.find<CheckInService>();
 
   final Rx<ReservationSummary> reservation = Rx<ReservationSummary>(
-    DemoData.preArrivalReservation,
+    ReservationSummary.empty,
   );
 
   /// Seeded with `contactDetails` so Home opens at 1/4, matching Figma 2237:4237.
@@ -59,7 +60,7 @@ class CheckInService extends GetxService {
   /// passport. Called from [MiddlewareService.signOut], the single place a
   /// session ends.
   void reset() {
-    reservation.value = DemoData.preArrivalReservation;
+    reservation.value = ReservationSummary.empty;
     completed
       ..clear()
       ..add(PreArrivalStep.contactDetails);
@@ -69,6 +70,21 @@ class CheckInService extends GetxService {
     preferences.value = PreferenceOptions.defaultStayPreferences;
     key.value = DigitalKeyStatus.idle;
     arrivalSlot.value = null;
+  }
+
+  /// True when the guest holds a booking they have not yet checked in to — the
+  /// window the pre-arrival checklist covers, and what Home switches its body
+  /// on.
+  ///
+  /// Reads [MiddlewareService.homeState] rather than re-deriving it, so the
+  /// check-in flow and Home can never disagree about which state the guest is
+  /// in. Reading it inside an `Obx` subscribes
+  /// to `MiddlewareService.guest`, which is what flips it after check-in.
+  /// Widget tests construct this service without the session singleton, so an
+  /// unregistered MiddlewareService reads as "no booking" instead of throwing.
+  bool get isPreArrival {
+    if (!Get.isRegistered<MiddlewareService>()) return false;
+    return MiddlewareService.find.homeState == HomeViewState.preCheckIn;
   }
 
   int get totalSteps => PreArrivalStep.values.length;
@@ -111,23 +127,19 @@ class CheckInService extends GetxService {
 
   /// The steps that actually gate check-in.
   ///
-  /// Deliberately NOT `PreArrivalStep.values`. [PreArrivalStep.arrivalTime] is
-  /// settable from exactly one place — Home's checklist sheet — and no wizard
-  /// tab marks it, so requiring it made "Complete Check-In" permanently
-  /// unreachable for a guest who went straight through the wizard. Arrival time
-  /// is a courtesy the hotel likes to have, not a precondition for occupying a
-  /// room that is already paid for.
-  ///
-  /// Home still shows progress out of all four rows; this set is only about
-  /// what blocks the transition.
+  /// Every checklist row, arrival time included: the hotel plans the room and
+  /// the welcome around the guest's ETA. It stays reachable from the wizard —
+  /// "Complete Check-In" opens the arrival-time sheet when it is missing
+  /// (CheckInController.completeAndExit) — as well as from Home's checklist.
   static const Set<PreArrivalStep> requiredSteps = {
     PreArrivalStep.contactDetails,
     PreArrivalStep.identity,
+    PreArrivalStep.arrivalTime,
     PreArrivalStep.specialRequests,
   };
 
   /// Every *required* checklist row done — the rule for being allowed to check
-  /// in. See [requiredSteps] for why this is not all four.
+  /// in. See [requiredSteps].
   bool get isReadyToCheckIn => requiredSteps.every(completed.contains);
 
   /// The required steps still outstanding, in checklist order. Drives the
@@ -140,9 +152,9 @@ class CheckInService extends GetxService {
 
   /// Loads the guest's own reservation for the wizard's booking panel.
   ///
-  /// Best-effort: on failure the seeded placeholder stays, which is the same
-  /// state the wizard opened in. Never surfaces a dialog — the guest came here
-  /// to check in, and a fetch failure should not block that.
+  /// Best-effort: on failure [ReservationSummary.empty] stays, which is the
+  /// same state the wizard opened in. Never surfaces a dialog — the guest came
+  /// here to check in, and a fetch failure should not block that.
   Future<void> loadReservation() async {
     // Both are permanent singletons from main.dart, but this service is also
     // constructed directly in widget tests, where neither exists.

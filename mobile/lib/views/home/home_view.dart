@@ -1,13 +1,16 @@
 import 'package:carlton/components/cards/custom_discover_card.dart';
 import 'package:carlton/components/cards/custom_home_card.dart';
+import 'package:carlton/components/custom_info_banner.dart';
 import 'package:carlton/components/custom_home_container.dart';
 import 'package:carlton/components/home/custom_active_booking_card.dart';
 import 'package:carlton/components/home/custom_active_requests_card.dart';
 import 'package:carlton/components/home/custom_ai_concierge_banner.dart';
 import 'package:carlton/components/home/custom_current_bill_card.dart';
 import 'package:carlton/components/home/pre_arrival_sections.dart';
-import 'package:carlton/services/check_in_service.dart';
-import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/constants/app_assets.dart';
+import 'package:carlton/enums/enums.dart';
+import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/models/home_models.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
@@ -56,6 +59,7 @@ class HomeView extends GetView<HomeController> {
   /// Pre-arrival sections (Figma `75:133`) — booked but not checked in. Half
   /// the list is existing widgets; only the top three are new.
   static const preArrivalSections = <Widget>[
+    _PendingBookingSection(),
     PreArrivalStaySection(),
     PreArrivalChecklistSection(),
     _AirportTransferSection(),
@@ -70,27 +74,22 @@ class HomeView extends GetView<HomeController> {
   /// short-circuits the whole subtree when the identical const list comes
   /// back, which is what stops an unrelated profile edit from rebuilding every
   /// carousel. Do not replace these with computed lists.
-  static List<Widget> sectionsFor({
-    required bool hasReservation,
-    required bool isPreArrival,
-  }) {
-    if (!hasReservation) return exploreSections;
-    return isPreArrival ? preArrivalSections : reservationSections;
-  }
+  static List<Widget> sectionsFor(HomeViewState state) => switch (state) {
+    HomeViewState.defaultHome => exploreSections,
+    HomeViewState.preCheckIn => preArrivalSections,
+    HomeViewState.activeBooking => reservationSections,
+  };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // This Obx subscribes only to the guest (hasReservation reads
-      // MiddlewareService.guest.value through a getter) and the pre-arrival
-      // flag. When it fires without either actually flipping — a profile edit
-      // reassigns guest — it hands back the same const section instances and
-      // Element.updateChild short-circuits the whole subtree.
+      // This Obx subscribes only to the guest (currentState reads
+      // MiddlewareService.guest.value through a getter). When it fires without
+      // the state actually flipping — a profile edit reassigns guest — it hands
+      // back the same const section instances and Element.updateChild
+      // short-circuits the whole subtree.
       body: Obx(() {
-        final sections = sectionsFor(
-          hasReservation: controller.hasReservation,
-          isPreArrival: CheckInService.find.isPreArrival.value,
-        );
+        final sections = sectionsFor(controller.currentState);
         return RefreshIndicator(
           onRefresh: controller.refreshHome,
           color: AppColors.primary,
@@ -121,6 +120,27 @@ class HomeView extends GetView<HomeController> {
 // Reservation-state sections
 // ═══════════════════════════════════════════════════════════════════════════
 
+/// Top of the pre-arrival Home while the booking still awaits the hotel's
+/// confirmation: the rest of the pre-arrival layout already shows the stay, so
+/// this only adds the status note.
+class _PendingBookingSection extends GetView<HomeController> {
+  const _PendingBookingSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (!controller.upcomingPending.value) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: CustomInfoBanner(
+          iconPath: 'assets/icons/clock.svg',
+          message: AppTranslations.awaitingHotelConfirmation,
+        ),
+      );
+    });
+  }
+}
+
 /// The stay hero. Checked in → the interactive card; booked but not yet
 /// arrived → the same card read-only; neither → nothing.
 class _ActiveStaySection extends GetView<HomeController> {
@@ -131,7 +151,9 @@ class _ActiveStaySection extends GetView<HomeController> {
     return Obx(() {
       // Placeholder while the first /stays/active fetch is in flight —
       // otherwise this collapses to nothing and the card pops in.
-      if (controller.bookingLoading.value) return const _CardShimmer(height: 220);
+      if (controller.bookingLoading.value) {
+        return const _CardShimmer(height: 220);
+      }
 
       final stay = controller.activeStay.value;
       if (stay != null) {
@@ -172,7 +194,9 @@ class _ActiveRequestsSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.bookingLoading.value) return const _CardShimmer(height: 140);
+      if (controller.bookingLoading.value) {
+        return const _CardShimmer(height: 140);
+      }
       if (controller.activeStay.value == null) return const SizedBox.shrink();
       return CustomActiveRequestsCard(
         // toList() both snapshots the list and registers the read — passing
@@ -193,7 +217,9 @@ class _CurrentBillSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.bookingLoading.value) return const _CardShimmer(height: 160);
+      if (controller.bookingLoading.value) {
+        return const _CardShimmer(height: 160);
+      }
       if (controller.activeStay.value == null) return const SizedBox.shrink();
       return CustomCurrentBillCard(
         lines: controller.billLines.toList(),
@@ -235,18 +261,23 @@ class _VideoHeroSection extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => CustomHomeContainer(
-        assetPath: DemoData.heroHomeImagePath,
+    return Obx(() {
+      final slider = controller.videoHeroSlider;
+      return CustomHomeContainer(
+        // The video is the actual visual here; the still is only the poster
+        // shown before it is ready, so it stays the bundled asset regardless of
+        // what photo the slider carries.
+        imagePath: AppAssets.heroHomeImagePath,
         videoController: controller.videoController,
         videoReady: controller.isVideoReady.value,
-        location: 'Damascus · Syria',
-        title: 'Where every\n*moment* is composed',
-        subtitle: 'A landmark of luxury in the heart of Damascus',
+        location: slider?.location.value ?? AppTranslations.heroLocation,
+        title: slider?.headerText.value ?? AppTranslations.heroVideoTitle,
+        subtitle:
+            slider?.descriptionText.value ?? AppTranslations.heroVideoSubtitle,
         onPrimary: controller.bookNow,
         onSecondary: controller.explore,
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -255,14 +286,18 @@ class _DiningHeroSection extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomHomeContainer(
-      assetPath: DemoData.heroDiningImagePath,
-      location: 'Damascus · Syria',
-      title: 'Refined *flavors*,\ntimeless elegance.',
-      subtitle: 'A refined dining experience, timeless hospitality.',
-      onPrimary: controller.bookNow,
-      onSecondary: controller.explore,
-    );
+    return Obx(() {
+      final slider = controller.diningHeroSlider;
+      return CustomHomeContainer(
+        imagePath: slider?.photo ?? AppAssets.heroDiningImagePath,
+        location: slider?.location.value ?? AppTranslations.heroLocation,
+        title: slider?.headerText.value ?? AppTranslations.heroDiningTitle,
+        subtitle:
+            slider?.descriptionText.value ?? AppTranslations.heroDiningSubtitle,
+        onPrimary: controller.bookNow,
+        onSecondary: controller.explore,
+      );
+    });
   }
 }
 
@@ -274,16 +309,22 @@ class _ExperiencesHeroSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return SectionContainer(
-      title: 'Experiences',
-      onPressed: () => controller.discoverAll('Experiences'),
-      child: CustomHomeContainer(
-        assetPath: DemoData.heroExperienceImagePath,
-        location: 'Damascus · Syria',
-        title: 'A Quiet *Luxury*\nExperience',
-        subtitle: 'Explore authentic experiences, crafted just for you.',
-        onPrimary: controller.bookNow,
-        onSecondary: controller.explore,
-      ),
+      title: AppTranslations.experiences,
+      onPressed: () => controller.discoverAll(DiscoverSection.experiences),
+      child: Obx(() {
+        final slider = controller.experiencesHeroSlider;
+        return CustomHomeContainer(
+          imagePath: slider?.photo ?? AppAssets.heroExperienceImagePath,
+          location: slider?.location.value ?? AppTranslations.heroLocation,
+          title:
+              slider?.headerText.value ?? AppTranslations.heroExperiencesTitle,
+          subtitle:
+              slider?.descriptionText.value ??
+              AppTranslations.heroExperiencesSubtitle,
+          onPrimary: controller.bookNow,
+          onSecondary: controller.explore,
+        );
+      }),
     );
   }
 }
@@ -399,7 +440,7 @@ class _RailEmpty extends StatelessWidget {
       ),
       title: title,
       subtitle: subtitle,
-      primaryLabel: onRetry != null ? 'Retry' : null,
+      primaryLabel: onRetry != null ? AppTranslations.retry : null,
       onPrimary: onRetry,
     );
   }
@@ -417,8 +458,8 @@ class _RoomsCarousel extends GetView<HomeController> {
       // and it leaves itemBuilder closing over a plain list.
       final rooms = controller.rooms.toList();
       return SectionContainer(
-        title: 'Rooms & Suites',
-        onPressed: () => controller.discoverAll('Rooms'),
+        title: AppTranslations.roomsSuites,
+        onPressed: () => controller.discoverAll(DiscoverSection.rooms),
         child: SizedBox(
           height: 400,
           child: loading
@@ -426,11 +467,11 @@ class _RoomsCarousel extends GetView<HomeController> {
               : rooms.isEmpty
               ? _RailEmpty(
                   title: controller.contentError.value
-                      ? "Couldn't load rooms"
-                      : 'No rooms available',
+                      ? AppTranslations.roomsLoadFailed
+                      : AppTranslations.noRoomsAvailable,
                   subtitle: controller.contentError.value
-                      ? 'Check your connection and try again.'
-                      : 'New rooms will appear here as they open up.',
+                      ? AppTranslations.checkConnectionShort
+                      : AppTranslations.roomsAppearWhenOpen,
                   onRetry: controller.contentError.value
                       ? controller.refreshHome
                       : null,
@@ -470,8 +511,8 @@ class _DiningCarousel extends GetView<HomeController> {
       final loading = controller.contentLoading.value;
       final restaurants = controller.restaurants.toList();
       return SectionContainer(
-        title: 'Dining & Restaurants',
-        onPressed: () => controller.discoverAll('Dining'),
+        title: AppTranslations.diningRestaurants,
+        onPressed: () => controller.discoverAll(DiscoverSection.dining),
         child: SizedBox(
           height: 400,
           child: loading
@@ -479,11 +520,11 @@ class _DiningCarousel extends GetView<HomeController> {
               : restaurants.isEmpty
               ? _RailEmpty(
                   title: controller.contentError.value
-                      ? "Couldn't load restaurants"
-                      : 'No restaurants yet',
+                      ? AppTranslations.restaurantsLoadFailed
+                      : AppTranslations.noRestaurantsYet,
                   subtitle: controller.contentError.value
-                      ? 'Check your connection and try again.'
-                      : 'Our venues will be listed here soon.',
+                      ? AppTranslations.checkConnectionShort
+                      : AppTranslations.venuesListedSoon,
                   onRetry: controller.contentError.value
                       ? controller.refreshHome
                       : null,
@@ -514,7 +555,7 @@ class _DiningCarousel extends GetView<HomeController> {
   }
 }
 
-/// Experiences are seeded from [DemoData] and never mutate, so this rail has
+/// Experiences come from `GET /public/experiences`, so this rail has
 /// no reactive state and needs no Obx or loading branch.
 class _ExperiencesCarousel extends GetView<HomeController> {
   const _ExperiencesCarousel();
@@ -522,8 +563,8 @@ class _ExperiencesCarousel extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return SectionContainer(
-      title: 'Experiences',
-      onPressed: () => controller.discoverAll('Experiences'),
+      title: AppTranslations.experiences,
+      onPressed: () => controller.discoverAll(DiscoverSection.experiences),
       child: SizedBox(
         height: 350,
         child: ListView.builder(

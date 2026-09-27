@@ -64,7 +64,7 @@ class CustomAiConciergeBanner extends StatelessWidget {
                             // where a white border would read as a halo.
                             const CustomLogoAvatar(size: 25, borderWidth: 0),
                             Text(
-                              'AI Concierge',
+                              AppTranslations.aiConciergeTitle,
                               style: textStyle.labelSmall?.copyWith(
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.inkBlack,

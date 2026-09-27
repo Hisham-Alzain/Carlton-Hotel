@@ -19,7 +19,11 @@ import 'package:carlton/views/home/ai_concierge_view.dart';
 import 'package:carlton/views/main/main_view.dart';
 import 'package:carlton/views/auth/sign_in_view.dart';
 import 'package:carlton/views/account/loyalty_view.dart';
+import 'package:carlton/views/account/legal_view.dart';
 import 'package:carlton/views/account/preferences_view.dart';
+import 'package:carlton/views/account/support_view.dart';
+import 'package:carlton/views/stays/folio_view.dart';
+import 'package:carlton/views/discover/experience_detail_view.dart';
 import 'package:carlton/views/dining/restaurant_detail_view.dart';
 import 'package:carlton/views/services/service_category_detail_view.dart';
 import 'package:carlton/views/splash_screen/splash_screen_view.dart';
@@ -39,9 +43,13 @@ abstract class Routes {
   static const findBooking = '/find-booking';
   static const aiConcierge = '/ai-concierge';
   static const discover = '/discover';
+  static const experienceDetail = '/discover/experience';
   static const serviceCategory = '/services/category';
   static const preferences = '/account/preferences';
   static const loyalty = '/account/loyalty';
+  static const support = '/account/support';
+  static const legal = '/account/legal';
+  static const folio = '/stays/bill';
   static const restaurantDetail = '/dining/restaurant';
 
   // Booking flow (5 steps, sharing one permanent BookingFlowController).
@@ -137,6 +145,26 @@ abstract class Pages {
       name: Routes.loyalty,
       page: () => const LoyaltyView(),
       binding: LoyaltyBinding(),
+    ),
+    GetPage(
+      name: Routes.folio,
+      page: () => const FolioView(),
+      binding: FolioBinding(),
+    ),
+    GetPage(
+      name: Routes.support,
+      page: () => const SupportView(),
+      binding: SupportBinding(),
+    ),
+    GetPage(
+      name: Routes.legal,
+      page: () => const LegalView(),
+      binding: LegalBinding(),
+    ),
+    GetPage(
+      name: Routes.experienceDetail,
+      page: () => const ExperienceDetailView(),
+      binding: ExperienceBinding(),
     ),
     GetPage(
       name: Routes.restaurantDetail,

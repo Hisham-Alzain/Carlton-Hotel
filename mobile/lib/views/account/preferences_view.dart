@@ -1,7 +1,8 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/account/custom_dropdown_field.dart';
 import 'package:carlton/components/account/custom_list_row.dart';
 import 'package:carlton/components/account/custom_settings_section.dart';
-import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/constants/preference_options.dart';
 import 'package:carlton/controllers/account/preferences_controller.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -15,7 +16,7 @@ class PreferencesView extends GetView<PreferencesController> {
   Widget build(BuildContext context) {
     return CustomScaffold(
       appBar: AppBar(
-        title: const Text('Preferences'),
+        title: Text(AppTranslations.checkInTabPreferences),
         iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: Obx(
@@ -23,42 +24,42 @@ class PreferencesView extends GetView<PreferencesController> {
           padding: const EdgeInsets.all(16),
           children: [
             CustomDropdownField(
-              label: 'Language',
+              label: AppTranslations.language,
               value: controller.languageLabel,
-              options: DemoData.languageOptions,
+              options: PreferenceOptions.languageOptions,
               selectedId: controller.languageId,
               onSelected: controller.chooseLanguage,
             ),
             const SizedBox(height: 20),
             CustomDropdownField(
-              label: 'Currency',
+              label: AppTranslations.currency,
               value: controller.currencyLabel,
-              options: DemoData.currencyOptions,
+              options: PreferenceOptions.currencyOptions,
               selectedId: controller.currencyId,
               onSelected: controller.chooseCurrency,
             ),
             const SizedBox(height: 28),
             CustomSettingsSection(
-              title: 'Stay Preferences',
+              title: AppTranslations.stayPreferences,
               children: [
                 CustomDropdownField(
-                  label: 'Bed Type',
+                  label: AppTranslations.bedType,
                   value: controller.bedLabel,
-                  options: DemoData.bedOptions,
+                  options: PreferenceOptions.bedOptions,
                   selectedId: controller.bedId.value,
                   onSelected: controller.chooseBed,
                 ),
                 CustomDropdownField(
-                  label: 'Pillow',
+                  label: AppTranslations.pillowLabel,
                   value: controller.pillowLabel,
-                  options: DemoData.pillowOptions,
+                  options: PreferenceOptions.pillowOptions,
                   selectedId: controller.pillowId.value,
                   onSelected: controller.choosePillow,
                 ),
                 CustomDropdownField(
-                  label: 'Mattress Type',
+                  label: AppTranslations.mattressType,
                   value: controller.mattressLabel,
-                  options: DemoData.mattressOptions,
+                  options: PreferenceOptions.mattressOptions,
                   selectedId: controller.mattressId.value,
                   onSelected: controller.chooseMattress,
                 ),
@@ -66,22 +67,31 @@ class PreferencesView extends GetView<PreferencesController> {
             ),
             const SizedBox(height: 28),
             CustomSettingsSection(
-              title: 'Room Type',
+              title: AppTranslations.roomType,
               children: [
                 CustomListRow(
-                  title: 'Smoking Room',
-                  subtitle: 'Request smoking-permitted room',
-                  trailing: _switch(controller.smoking.value, controller.toggleSmoking),
+                  title: AppTranslations.smokingRoom,
+                  subtitle: AppTranslations.smokingRoomSubtitle,
+                  trailing: _switch(
+                    controller.smoking.value,
+                    controller.toggleSmoking,
+                  ),
                 ),
                 CustomListRow(
-                  title: 'Early Check-in',
-                  subtitle: 'Request early check-in when available',
-                  trailing: _switch(controller.earlyCheckIn.value, controller.toggleEarlyCheckIn),
+                  title: AppTranslations.earlyCheckIn,
+                  subtitle: AppTranslations.earlyCheckInSubtitle,
+                  trailing: _switch(
+                    controller.earlyCheckIn.value,
+                    controller.toggleEarlyCheckIn,
+                  ),
                 ),
                 CustomListRow(
-                  title: 'Late Check-out',
-                  subtitle: 'Request late check-out when available',
-                  trailing: _switch(controller.lateCheckout.value, controller.toggleLateCheckout),
+                  title: AppTranslations.lateCheckOut,
+                  subtitle: AppTranslations.lateCheckOutSubtitle,
+                  trailing: _switch(
+                    controller.lateCheckout.value,
+                    controller.toggleLateCheckout,
+                  ),
                 ),
               ],
             ),

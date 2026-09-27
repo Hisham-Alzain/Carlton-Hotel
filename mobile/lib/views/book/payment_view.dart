@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/booking_price_breakdown.dart';
 import 'package:carlton/components/booking_summary_header.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
@@ -33,7 +34,7 @@ class PaymentView extends StatelessWidget {
 
     return CustomScaffold(
       appBar: AppBar(
-        title: Text('Review Booking'),
+        title: Text(AppTranslations.reviewBooking),
         iconTheme: IconThemeData(color: Colors.black),
         actions: [
           Container(
@@ -48,75 +49,73 @@ class PaymentView extends StatelessWidget {
           ),
         ],
       ),
-      body: Obx(
-        () {
-          final TextTheme textStyle = Get.textTheme;
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 10,
-              children: [
-                AnimatedSmoothIndicator(
-                  activeIndex: 4,
-                  count: 6,
-                  effect: SlideEffect(
-                    dotHeight: 5,
-                    dotWidth: 50,
-                    spacing: 20,
-                    activeDotColor: AppColors.primary,
-                    dotColor: AppColors.iceBlue,
+      body: Obx(() {
+        final TextTheme textStyle = Get.textTheme;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 10,
+            children: [
+              AnimatedSmoothIndicator(
+                activeIndex: 4,
+                count: 6,
+                effect: SlideEffect(
+                  dotHeight: 5,
+                  dotWidth: 50,
+                  spacing: 20,
+                  activeDotColor: AppColors.primary,
+                  dotColor: AppColors.iceBlue,
+                ),
+              ),
+              BookingSummaryHeader(
+                roomName: controller.selectedRoom.value!.name,
+                roomImage: controller.selectedRoom.value!.images.first,
+                dateRange: controller.dateRange,
+                nights: controller.nights,
+                totalDisplay: controller.totalDisplay,
+                priceBreakdown: BookingPriceBreakdown(
+                  summary: controller.priceSummary,
+                ),
+              ),
+              // CustomPromoBox(
+              //   promoCodeController: controller.promoCtrl,
+              //   onApply: controller.applyPromo,
+              // ),
+              Text(
+                AppTranslations.paymentMethod,
+                style: textStyle.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.inkBlack,
+                ),
+              ),
+              ...PaymentMethod.values.map(
+                (method) => CustomSelectableCard(
+                  title: method.label,
+                  subtitle: method.subtitle,
+                  controlType: SelectableControl.radio,
+                  selected: controller.paymentMethod.value == method,
+                  onTap: () => controller.selectPaymentMethod(method),
+                  leading: _leadingIcon(
+                    _methodIconPaths[method]!,
+                    controller.paymentMethod.value == method,
                   ),
                 ),
-                BookingSummaryHeader(
-                  roomName: controller.selectedRoom.value!.name,
-                  roomImage: controller.selectedRoom.value!.images.first,
-                  dateRange: controller.dateRange,
-                  nights: controller.nights,
-                  totalDisplay: controller.totalDisplay,
-                  priceBreakdown: BookingPriceBreakdown(
-                    summary: controller.priceSummary,
-                  ),
-                ),
-                // CustomPromoBox(
-                //   promoCodeController: controller.promoCtrl,
-                //   onApply: controller.applyPromo,
-                // ),
-                Text(
-                  'Payment Method',
-                  style: textStyle.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.inkBlack,
-                  ),
-                ),
-                ...PaymentMethod.values.map(
-                  (method) => CustomSelectableCard(
-                    title: method.label,
-                    subtitle: method.subtitle,
-                    controlType: SelectableControl.radio,
-                    selected: controller.paymentMethod.value == method,
-                    onTap: () => controller.selectPaymentMethod(method),
-                    leading: _leadingIcon(
-                      _methodIconPaths[method]!,
-                      controller.paymentMethod.value == method,
-                    ),
-                  ),
-                ),
-                _methodBody(controller),
-                CustomFilledButton(
-                  backgroundColor: controller.canReviewBooking
-                      ? AppColors.lagoonTeal
-                      : AppColors.pearlGrey,
-                  onPressed: controller.canReviewBooking
-                      ? controller.reviewBooking
-                      : null,
-                  child: const Text('Continue'),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+              _methodBody(controller),
+              CustomFilledButton(
+                backgroundColor: controller.canReviewBooking
+                    ? AppColors.lagoonTeal
+                    : AppColors.pearlGrey,
+                onPressed: controller.canReviewBooking
+                    ? controller.reviewBooking
+                    : null,
+                child: Text(AppTranslations.continueButtonLabel),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 
@@ -148,34 +147,32 @@ class PaymentView extends StatelessWidget {
           ],
         );
       case PaymentMethod.applePay:
-        return const CustomWalletPanel(
+        return CustomWalletPanel(
           iconPath: 'assets/icons/pay_apple.svg',
           badgeColor: AppColors.white10,
           tintGlyphWhite: true,
           title: 'Apple Pay',
-          subtitle: 'One tap, secure, instant',
+          subtitle: AppTranslations.walletTagline,
           bullets: [
-            'Uses your saved card from Wallet',
-            'Authorized with Face ID or Touch ID',
-            'No card details shared with Apple Pay',
+            AppTranslations.applePaySubtitle,
+            AppTranslations.applePayFaceId,
+            AppTranslations.applePayNoCardShared,
           ],
-          footerNote:
-              "Apple Pay isn't available yet — choose Pay at Hotel to confirm.",
+          footerNote: AppTranslations.applePayUnavailable,
         );
       case PaymentMethod.googlePay:
-        return const CustomWalletPanel(
+        return CustomWalletPanel(
           iconPath: 'assets/icons/google.svg',
           badgeColor: AppColors.white,
           tintGlyphWhite: false,
           title: 'Google Pay',
-          subtitle: 'Fast and secure checkout',
+          subtitle: AppTranslations.googlePaySubtitle,
           bullets: [
-            'Uses your saved Google payment method',
-            "Protected by Google's security systems",
-            'Instant payment confirmation',
+            AppTranslations.googlePaySavedMethod,
+            AppTranslations.googlePaySecurity,
+            AppTranslations.googlePayInstant,
           ],
-          footerNote:
-              "Google Pay isn't available yet — choose Pay at Hotel to confirm.",
+          footerNote: AppTranslations.googlePayUnavailable,
         );
       case PaymentMethod.payAtHotel:
         return const CustomPayAtHotelPanel();
@@ -203,8 +200,7 @@ class _ComingSoonNote extends StatelessWidget {
           const Icon(Icons.info_outline, size: 18, color: AppColors.dimGrey),
           Expanded(
             child: Text(
-              "Card payments aren't available yet — choose Pay at Hotel to "
-              'confirm your booking.',
+              AppTranslations.cardUnavailable,
               style: Get.textTheme.labelMedium?.copyWith(
                 fontFamily: 'DM Sans',
                 color: AppColors.dimGrey,

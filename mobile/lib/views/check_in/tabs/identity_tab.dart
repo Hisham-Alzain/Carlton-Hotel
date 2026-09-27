@@ -199,8 +199,20 @@ class _VerifiedCard extends GetView<CheckInController> {
                         ),
                       ),
                       Text(
-                        'Passport #${controller.service.documentNumber.value} · '
-                        '${controller.service.reservation.value.guestName}',
+                        // Parts joined only when present: no OCR endpoint reads
+                        // the number off the scan, so it is usually blank, and
+                        // an unconditional template printed "Passport # · Name".
+                        [
+                          if (controller
+                              .service
+                              .documentNumber
+                              .value
+                              .isNotEmpty)
+                            AppTranslations.passportNumber(
+                              controller.service.documentNumber.value,
+                            ),
+                          controller.service.reservation.value.guestName,
+                        ].where((part) => part.isNotEmpty).join(' · '),
                         style: Get.textTheme.bodySmall?.copyWith(
                           color: AppColors.mediumGrey,
                         ),

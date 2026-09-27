@@ -25,7 +25,7 @@ import 'ui/api_dialog_handler.dart';
 ///
 /// ```dart
 /// final response = await ApiService.find.post<Map<String, dynamic>>(
-///   path: '/user/auth/login',
+///   path: '/auth/guest/verify-otp',
 ///   data: {'phone': phone},
 ///   showLoading: true,
 /// );

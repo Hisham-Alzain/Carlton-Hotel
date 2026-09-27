@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
@@ -96,7 +97,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
                     ),
                   ),
                   Text(
-                    '${widget.dateRange} · ${widget.nights} nights',
+                    '${widget.dateRange} · ${AppTranslations.nightsCount(widget.nights)}',
                     style: textStyle.labelMedium?.copyWith(
                       fontFamily: 'DM Sans',
                       color: AppColors.white73,
@@ -141,14 +142,14 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Total',
+                          AppTranslations.total,
                           style: textStyle.labelLarge?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: AppColors.inkBlack,
                           ),
                         ),
                         Text(
-                          'Includes taxes and service fees',
+                          AppTranslations.includesTaxesAndFees,
                           style: textStyle.labelSmall?.copyWith(
                             fontFamily: 'DM Sans',
                             color: AppColors.primary,
@@ -185,7 +186,9 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
         backgroundColor: AppColors.linenGrey,
         radius: 4,
         child: RowTextComponent(
-          text: _expanded ? 'Hide price details' : 'View price details',
+          text: _expanded
+              ? AppTranslations.hidePriceDetails
+              : AppTranslations.viewPriceDetails,
           textStyle: textStyle.labelSmall?.copyWith(
             fontFamily: 'DM Sans',
             color: AppColors.primary,

@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/extensions/price_extension.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
@@ -78,7 +79,7 @@ class CustomMenuItemTile extends StatelessWidget {
                           vertical: 3,
                         ),
                         child: Text(
-                          'Vegan',
+                          AppTranslations.vegan,
                           style: textStyle.labelSmall?.copyWith(
                             fontFamily: 'DM Sans',
                             fontWeight: FontWeight.w600,

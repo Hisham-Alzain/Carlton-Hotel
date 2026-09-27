@@ -26,8 +26,8 @@ class Reservation {
     this.holdExpiresAt,
   });
 
-  /// The guest is in-house. Drives [HomeViewState.activeBooking] — see
-  /// `HomeController.resolveHomeState`.
+  /// The guest is in-house. (Home's own state comes from the `/me`
+  /// entitlements — see `MiddlewareService.homeState`.)
   bool get isCheckedIn => status == 'checked_in';
 
   /// Whether this reservation is still live enough for Home to render it.

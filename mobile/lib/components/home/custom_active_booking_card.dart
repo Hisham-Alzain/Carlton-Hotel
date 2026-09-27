@@ -131,7 +131,7 @@ class CustomActiveBookingCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'nights left',
+                          AppTranslations.nightsLeft,
                           style: textStyle.labelSmall?.copyWith(
                             fontFamily: 'DM Sans',
                             color: Colors.white.withValues(alpha: 0.55),
@@ -251,9 +251,7 @@ class _DndRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  doNotDisturb
-                      ? 'On — staff will not disturb you'
-                      : 'Off — staff may contact you',
+                  doNotDisturb ? AppTranslations.dndOn : AppTranslations.dndOff,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: textStyle.labelSmall?.copyWith(

@@ -105,7 +105,7 @@ class CustomHomeCard extends StatelessWidget {
                               fontWeight: FontWeight.w400,
                             ),
                           ),
-                          const TextSpan(text: ' /night'),
+                          TextSpan(text: AppTranslations.priceNightSuffix),
                         ],
                       ),
                     ),

@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/models/booking_models.dart';
@@ -60,7 +61,9 @@ class CustomActiveStayCard extends StatelessWidget {
                                 SvgPicture.asset('assets/icons/bed.svg'),
                                 Flexible(
                                   child: Text(
-                                    '${stay.subtitle ?? stay.roomName}, Checked In',
+                                    AppTranslations.checkedInRoom(
+                                      stay.subtitle ?? stay.roomName,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                     style: textStyle.labelSmall?.copyWith(
                                       fontWeight: FontWeight.w700,
@@ -82,7 +85,7 @@ class CustomActiveStayCard extends StatelessWidget {
 
                           RowTextComponent(
                             spacing: 10,
-                            title: 'Checked in since',
+                            title: AppTranslations.checkedInSincePrefix,
                             text: stay.checkedInSince ?? '',
                             titleStyle: textStyle.labelSmall?.copyWith(
                               fontWeight: FontWeight.w300,
@@ -96,7 +99,7 @@ class CustomActiveStayCard extends StatelessWidget {
 
                           RowTextComponent(
                             spacing: 10,
-                            title: 'Nights remaining',
+                            title: AppTranslations.nightsRemainingPrefix,
                             text: '${stay.nightsRemaining}',
                             titleStyle: textStyle.labelSmall?.copyWith(
                               fontWeight: FontWeight.w300,
@@ -119,13 +122,13 @@ class CustomActiveStayCard extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: _dateBox(
-                                  'CHECK-IN',
+                                  AppTranslations.checkInTitle,
                                   stay.checkInLabel ?? '',
                                 ),
                               ),
                               Expanded(
                                 child: _dateBox(
-                                  'CHECK-OUT',
+                                  AppTranslations.checkOutLabel,
                                   stay.checkOutLabel ?? '',
                                 ),
                               ),
@@ -155,7 +158,7 @@ class CustomActiveStayCard extends StatelessWidget {
                   borderColor: AppColors.white39,
                   borderWidth: 0.8,
                   child: Text(
-                    'REQUEST SERVICE',
+                    AppTranslations.requestServiceCaps,
                     style: textStyle.labelSmall?.copyWith(
                       color: AppColors.primary,
                     ),
@@ -169,7 +172,7 @@ class CustomActiveStayCard extends StatelessWidget {
                   borderColor: AppColors.white39,
                   borderWidth: 0.8,
                   child: Text(
-                    'EXPRESS CHECKOUT',
+                    AppTranslations.expressCheckoutCaps,
                     style: textStyle.labelSmall?.copyWith(
                       color: AppColors.primary,
                     ),

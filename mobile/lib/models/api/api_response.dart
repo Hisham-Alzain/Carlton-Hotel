@@ -8,9 +8,9 @@ import 'package:carlton/models/pagination.dart';
 /// touching [data]:
 ///
 /// ```dart
-/// final res = await _api.get<List<dynamic>>(path: '/cities');
+/// final res = await _api.get<List<dynamic>>(path: '/public/room-types');
 /// if (res.statusCode != 200) return;
-/// cities.assignAll(res.data!.map((e) => City.fromJson(e)));
+/// rooms.assignAll(res.data!.map((e) => RoomType.fromJson(e)));
 /// ```
 ///
 /// [data] is null exactly when the call failed. Dart can't promote it from a

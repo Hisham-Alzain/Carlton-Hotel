@@ -3,6 +3,7 @@
 namespace Tests\Feature\Booking;
 
 use App\Enums\FolioStatus;
+use App\Enums\ReservationStatus;
 use App\Models\Folio;
 use App\Models\Guest;
 use App\Models\Reservation;
@@ -94,6 +95,84 @@ class StayTest extends TestCase
     }
 
     // ── Upcoming ──────────────────────────────────────────────────────────
+
+    // ── Self check-in ─────────────────────────────────────────────────────
+
+    public function test_guest_can_self_check_in_to_a_confirmed_booking_on_arrival_day(): void
+    {
+        $guest       = Guest::factory()->create();
+        $reservation = $this->stayFor($guest, 'confirmed', assignRoom: true, attributes: [
+            'check_in'  => now()->toDateString(),
+            'check_out' => now()->addDays(2)->toDateString(),
+        ]);
+
+        $this->actingAs($guest, 'guests')
+            ->postJson('/api/stays/check-in')
+            ->assertOk()
+            ->assertJsonPath('data.room_number', '812');
+
+        $reservation->refresh();
+        $this->assertSame(ReservationStatus::CHECKED_IN, $reservation->status);
+        $this->assertNotNull($reservation->checked_in_at);
+
+        $this->actingAs($guest, 'guests')
+            ->getJson('/api/stays/status')
+            ->assertJsonPath('data.is_checked_in', true);
+    }
+
+    public function test_self_check_in_is_refused_while_the_booking_awaits_the_hotel(): void
+    {
+        $guest       = Guest::factory()->create();
+        // The factory default is `pending` — every guest-made booking starts so.
+        $reservation = $this->stayFor($guest, 'confirmed', assignRoom: true, attributes: [
+            'status'    => ReservationStatus::PENDING,
+            'check_in'  => now()->toDateString(),
+            'check_out' => now()->addDays(2)->toDateString(),
+        ]);
+
+        $this->actingAs($guest, 'guests')
+            ->postJson('/api/stays/check-in')
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'reservation_state');
+
+        $this->assertSame(ReservationStatus::PENDING, $reservation->fresh()->status);
+    }
+
+    public function test_self_check_in_is_refused_before_the_arrival_day(): void
+    {
+        $guest       = Guest::factory()->create();
+        $reservation = $this->stayFor($guest, 'confirmed', assignRoom: true, attributes: [
+            'check_in'  => now()->addDays(3)->toDateString(),
+            'check_out' => now()->addDays(5)->toDateString(),
+        ]);
+
+        $this->actingAs($guest, 'guests')
+            ->postJson('/api/stays/check-in')
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'reservation_state');
+
+        $this->assertSame(ReservationStatus::CONFIRMED, $reservation->fresh()->status);
+    }
+
+    public function test_self_check_in_is_idempotent_for_a_guest_already_in_house(): void
+    {
+        $guest = Guest::factory()->create();
+        $this->stayFor($guest, 'checkedIn', assignRoom: true, attributes: [
+            'check_in'      => now()->subDay()->toDateString(),
+            'check_out'     => now()->addDays(2)->toDateString(),
+            'checked_in_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($guest, 'guests')
+            ->postJson('/api/stays/check-in')
+            ->assertOk()
+            ->assertJsonPath('data.room_number', '812');
+    }
+
+    public function test_self_check_in_requires_a_guest_token(): void
+    {
+        $this->postJson('/api/stays/check-in')->assertUnauthorized();
+    }
 
     public function test_upcoming_returns_booking_code_and_price(): void
     {

@@ -7,12 +7,14 @@ import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/cache/cache_manager.dart';
 import 'package:shimmer/shimmer.dart';
 
-/// Never pass a literal `assets/…` path to this widget — use `Image.asset` /
-/// `SvgPicture.asset` directly (with a `cacheWidth` for anything full-bleed).
-/// The asset branch below exists only because `DemoData` still stands in for
-/// the API: model-driven sources (`room.images`, `restaurant.imagePath`, …)
-/// are asset paths today and storage URLs after integration. Delete the branch
-/// when `DemoData` goes.
+/// Prefer `Image.asset` / `SvgPicture.asset` directly for a literal `assets/…`
+/// path you control at the call site.
+///
+/// The asset branch below is still load-bearing: a source can be either a
+/// storage URL (`venue.images`, `slider.photo`, a promotion banner) or a bundled
+/// brand still from [AppAssets] used as its fallback, and the caller chooses
+/// between them at runtime — see the hero sections, which fall back to a bundled
+/// poster when the CMS published no photo.
 class CustomImage extends StatelessWidget {
   /// Either a bundled asset path (`assets/…`), an absolute URL (`http…`), or a
   /// storage-relative path that [url] expands against the API storage host.
@@ -108,8 +110,14 @@ class CustomImage extends StatelessWidget {
       height: height,
       width: width,
       fit: fit ?? BoxFit.cover,
-      memCacheWidth: _cacheDim(width, devicePixelRatio),
-      memCacheHeight: _cacheDim(height, devicePixelRatio),
+      // Decode at displayed size, never native: the CMS serves ~2 MB PNG heroes,
+      // and a full-bleed image passes no width, so it used to decode at full
+      // resolution. Fall back to the screen width, like the asset branch does,
+      // and give only one dimension so the decoder keeps the aspect ratio.
+      memCacheWidth: _cacheDim(
+        width ?? MediaQuery.maybeSizeOf(context)?.width,
+        devicePixelRatio,
+      ),
       placeholder: (_, _) => _shimmer(),
       errorWidget: (_, failedUrl, error) {
         if (!kReleaseMode) log('Image Error [$failedUrl]: $error');

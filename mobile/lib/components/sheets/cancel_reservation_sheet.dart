@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/custom_info_banner.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -40,7 +41,7 @@ class CancelReservationSheet extends StatelessWidget {
           ),
         ),
         Text(
-          'Cancel Reservation?',
+          AppTranslations.cancelReservationTitle,
           textAlign: TextAlign.center,
           style: textStyle.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
@@ -54,22 +55,24 @@ class CancelReservationSheet extends StatelessWidget {
               color: AppColors.steelGrey,
             ),
             children: [
-              TextSpan(text: 'Your reservation for the ${stay.roomName}'),
-              if (dates.isNotEmpty)
-                TextSpan(
-                  text: ' on $dates',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              const TextSpan(text: ' will be cancelled.'),
+              // One sentence per variant rather than three glued fragments: the
+              // date clause sits mid-sentence in English and at the front in
+              // Turkish, which no fixed span order can express.
+              TextSpan(
+                text: dates.isEmpty
+                    ? AppTranslations.cancelReservationBody(stay.roomName)
+                    : AppTranslations.cancelReservationBodyDated(
+                        stay.roomName,
+                        dates,
+                      ),
+              ),
             ],
           ),
           textAlign: TextAlign.center,
         ),
-        const CustomInfoBanner(
+        CustomInfoBanner(
           tone: InfoBannerTone.warning,
-          message:
-              'Free cancellation is currently available for this booking, '
-              'no charges will apply.',
+          message: AppTranslations.freeCancellationNoCharges,
         ),
       ],
     );

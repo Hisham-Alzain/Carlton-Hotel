@@ -102,7 +102,9 @@ class SplashScreenController extends GetxController
     // stay dashboard, so re-read the session rather than trusting the one we
     // checked before the await.
     if (!MiddlewareService.find.isAuthenticated) return;
-    await HomeController.restoreAndGoHome();
+    // goHome, not restoreAndGoHome: /me was refreshed just above, and a second
+    // round trip would only delay the splash.
+    await HomeController.goHome();
   }
 
   @override

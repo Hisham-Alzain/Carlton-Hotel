@@ -194,11 +194,46 @@ class RoomKeyTab extends GetView<CheckInController> {
                       // Dart: the artwork is a rotated key card composited over
                       // a photo with a gold tile pattern, so any hand-drawn
                       // version would be an approximation.
-                      Image.asset(
-                        'assets/images/key_card_art.png',
+                      //
+                      // The artwork's "ROOM #…" lines are blank in the PNG and
+                      // drawn here from the reservation, so the card shows the
+                      // guest's own room — or `####` before one is assigned.
+                      // The Positioned box maps the erased 232 × 281 source
+                      // region (x 86–178, y 154–215) onto the 53 × 65 render.
+                      SizedBox(
                         width: 53,
                         height: 65,
-                        fit: BoxFit.contain,
+                        child: Stack(
+                          children: [
+                            Image.asset(
+                              'assets/images/key_card_art.png',
+                              width: 53,
+                              height: 65,
+                              fit: BoxFit.contain,
+                            ),
+                            Positioned(
+                              left: 53 * 86 / 232,
+                              width: 53 * 92 / 232,
+                              top: 65 * 154 / 281,
+                              height: 65 * 61 / 281,
+                              child: FittedBox(
+                                child: Text(
+                                  AppTranslations.keyCardRoomLabel(
+                                    reservation.roomNumber.isEmpty
+                                        ? '####'
+                                        : reservation.roomNumber,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontFamily: 'The Seasons',
+                                    color: AppColors.white,
+                                    height: 1.1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

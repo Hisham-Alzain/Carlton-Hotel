@@ -85,7 +85,7 @@ class CustomCardForm extends StatelessWidget {
                       child: CustomTextField(
                         controller: cvvController,
                         textInputType: TextInputType.number,
-                        captionLabel: 'CVV / CVC',
+                        captionLabel: AppTranslations.cvv,
                         labelColor: AppColors.inkBlack,
                         hintText: '•••',
                         fillColor: AppColors.whisperGrey,
@@ -98,7 +98,7 @@ class CustomCardForm extends StatelessWidget {
                 CustomTextField(
                   controller: cardholderNameController,
                   textInputType: TextInputType.name,
-                  captionLabel: 'Name on Card',
+                  captionLabel: AppTranslations.nameOnCard,
                   labelColor: AppColors.inkBlack,
                   hintText: AppTranslations.cardholderHint,
                   fillColor: AppColors.whisperGrey,
@@ -107,7 +107,7 @@ class CustomCardForm extends StatelessWidget {
                 // iconSize 14 matches lock.svg's own 13.997 viewBox, which is
                 // what the unsized SvgPicture rendered at before.
                 RowTextComponent(
-                  text: '256-bit SSL encrypted · PCI DSS compliant',
+                  text: AppTranslations.cardSecurityNote,
                   iconPath: 'assets/icons/lock.svg',
                   iconSize: 14,
                   iconColor: AppColors.taupeBrown,

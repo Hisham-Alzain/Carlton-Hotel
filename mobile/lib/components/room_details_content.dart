@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/cards/custom_rating_label.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image_carousel.dart';
@@ -99,20 +100,24 @@ class RoomDetailsContent extends StatelessWidget {
                     color: AppColors.dimGrey,
                   ),
                 ),
-                Text('Highlights', style: _headingStyle(textStyle)),
-                _pairedGrid(room.highlights, _highlightTile, runSpacing: 10),
-                Text('All Amenities', style: _headingStyle(textStyle)),
-                _pairedGrid(room.amenities, _amenityTile, runSpacing: 10),
-                const CustomInfoBanner(
-                  message: 'Free cancellation until 48 hours before check-in.',
+                Text(
+                  AppTranslations.highlights,
+                  style: _headingStyle(textStyle),
                 ),
+                _pairedGrid(room.highlights, _highlightTile, runSpacing: 10),
+                Text(
+                  AppTranslations.allAmenities,
+                  style: _headingStyle(textStyle),
+                ),
+                _pairedGrid(room.amenities, _amenityTile, runSpacing: 10),
+                CustomInfoBanner(message: AppTranslations.freeCancellation),
                 PillContainer(
                   // The row no longer pads itself, so absorb the 10 it used to
                   // add on top of the pill's own 10.
                   padding: const EdgeInsets.all(20),
                   backgroundColor: AppColors.cream,
                   child: CustomPriceSummaryRow(
-                    title: 'Total for $nights night${nights == 1 ? '' : 's'}',
+                    title: AppTranslations.totalForNights(nights),
                     value: '\$$stayTotal',
                     titleStyle: textStyle.labelMedium?.copyWith(
                       fontFamily: 'DM Sans',

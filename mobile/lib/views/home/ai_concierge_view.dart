@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:carlton/components/chat/custom_agent_header.dart';
 import 'package:carlton/components/chat/custom_chat_bubble.dart';
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/home/ai_concierge_controller.dart';
 import 'package:carlton/components/custom_chat_text_field.dart';
 import 'package:carlton/components/custom_circle_icon_button.dart';
@@ -91,7 +90,9 @@ class AiConciergeView extends GetView<AiConciergeController> {
     final field = CustomChatTextField(
       controller: controller.messageController,
       canSend: canSend,
-      hintText: isChat ? 'Send a message' : 'Ask me anything...',
+      hintText: isChat
+          ? AppTranslations.sendAMessage
+          : AppTranslations.askMeAnything,
       onSendTap: controller.send,
     );
 
@@ -190,19 +191,21 @@ class _CustomerServiceTab extends StatelessWidget {
     return Column(
       spacing: 10,
       children: [
-        CustomAgentHeader(
-          name: DemoData.csAgentName,
-          role: DemoData.csAgentRole,
-          initial: DemoData.csAgentInitial,
-          onCall: controller.callAgent,
+        // Scoped: the hotel's name arrives with the settings fetch, after this
+        // tab can already be on screen.
+        Obx(
+          () => CustomAgentHeader(
+            name: controller.agentName.value,
+            role: AppTranslations.guestRelations,
+            initial: controller.agentInitial,
+            onCall: controller.callAgent,
+          ),
         ),
         const Divider(height: 1, thickness: 1, color: AppColors.black06),
         _QuickReplies(controller: controller),
         // Only the message list observes the thread — the agent header and the
         // quick-reply chips above it are static for the tab's lifetime.
-        Expanded(
-          child: Obx(() => _thread(controller)),
-        ),
+        Expanded(child: Obx(() => _thread(controller))),
       ],
     );
   }
@@ -232,7 +235,7 @@ class _CustomerServiceTab extends StatelessWidget {
           ),
           child: CustomChatBubble(
             message: controller.messages[i],
-            agentInitial: DemoData.csAgentInitial,
+            agentInitial: controller.agentInitial,
           ),
         ),
       ),
@@ -261,7 +264,7 @@ class _ThreadEmpty extends StatelessWidget {
               color: AppColors.silverGrey,
             ),
             Text(
-              'Start a conversation with our team',
+              AppTranslations.startConversation,
               textAlign: TextAlign.center,
               style: textStyle.titleSmall?.copyWith(
                 color: AppColors.inkBlack,
@@ -269,7 +272,7 @@ class _ThreadEmpty extends StatelessWidget {
               ),
             ),
             Text(
-              'Send a message and Guest Relations will reply here.',
+              AppTranslations.guestRelationsWillReply,
               textAlign: TextAlign.center,
               style: textStyle.labelMedium?.copyWith(color: AppColors.ashGrey),
             ),
@@ -303,14 +306,14 @@ class _ThreadError extends StatelessWidget {
               color: AppColors.silverGrey,
             ),
             Text(
-              "Couldn't load your messages",
+              AppTranslations.loadMessagesFailed,
               textAlign: TextAlign.center,
               style: textStyle.titleSmall?.copyWith(
                 color: AppColors.inkBlack,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
+            TextButton(onPressed: onRetry, child: Text(AppTranslations.retry)),
           ],
         ),
       ),
@@ -400,17 +403,20 @@ class _QuickReplies extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
 
+    final replies = AiConciergeController.quickReplies;
+    if (replies.isEmpty) return const SizedBox.shrink();
+
     return SizedBox(
       height: 34,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: DemoData.csQuickReplies.length,
+        itemCount: replies.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) => Material(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(30),
           child: InkWell(
-            onTap: () => controller.quickReply(DemoData.csQuickReplies[i]),
+            onTap: () => controller.quickReply(replies[i]),
             borderRadius: BorderRadius.circular(30),
             child: PillContainer(
               height: 34,
@@ -421,7 +427,7 @@ class _QuickReplies extends StatelessWidget {
               child: Center(
                 widthFactor: 1,
                 child: Text(
-                  DemoData.csQuickReplies[i],
+                  replies[i],
                   style: textStyle.labelMedium?.copyWith(
                     fontFamily: 'DM Sans',
                     color: AppColors.inkBlack,

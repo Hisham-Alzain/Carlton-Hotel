@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/custom_price_summary.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -26,12 +27,13 @@ class BookingPriceBreakdown extends StatelessWidget {
         spacing: 10,
         children: [
           CustomPriceSummaryRow(
-            title: '${summary.roomName} · ${summary.nights} nights',
+            title:
+                '${summary.roomName} · ${AppTranslations.nightsCount(summary.nights)}',
             value: summary.subtotal,
           ),
           if (summary.hasDiscount)
             CustomPriceSummaryRow(
-              title: 'Promo ${summary.promoCode}',
+              title: AppTranslations.promoLine(summary.promoCode),
               value: summary.discount,
               titleColor: AppColors.successGreen,
               valueColor: AppColors.successGreen,
@@ -46,14 +48,14 @@ class BookingPriceBreakdown extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Total',
+                    AppTranslations.total,
                     style: textStyle.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.inkBlack,
                     ),
                   ),
                   Text(
-                    'Final total for your stay',
+                    AppTranslations.finalTotalForStay,
                     style: textStyle.labelSmall?.copyWith(
                       fontFamily: 'DM Sans',
                       color: AppColors.primary,

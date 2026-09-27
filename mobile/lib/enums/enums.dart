@@ -17,8 +17,8 @@ enum SelectableControl { checkbox, radio }
 /// no current reservation (Explore & Book), or an active stay (stay card).
 enum ServicesHomeState { guestBrowse, exploreAndBook, activeStay }
 
-/// Which body Home renders, resolved from the guest's current reservation by
-/// `HomeController.resolveHomeState` — the single owner of this decision.
+/// Which body Home renders, derived from the `/me` entitlements by
+/// `MiddlewareService.homeState` — the single owner of this decision.
 ///
 /// [preCheckIn] covers the whole booked-but-not-yet-checked-in span. There is
 /// no arrival-time window: a guest with a booking that is not yet checked in

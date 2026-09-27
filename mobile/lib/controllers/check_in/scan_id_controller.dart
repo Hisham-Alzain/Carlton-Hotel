@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/check_in/check_in_enums.dart';
 import 'package:carlton/routes/routes.dart';
@@ -278,8 +277,11 @@ class ScanIdController extends GetxController
   /// Promotes the captured document to verified and returns to the Identity
   /// tab, which re-renders in its verified state.
   void confirm() {
+    // No OCR or document-verification endpoint exists to read the number off
+    // the scan, so it stays blank rather than being invented. The captured photo
+    // is the real artefact; the Identity tab hides the number line when empty.
     service.markIdentityVerified(
-      DemoData.demoPassportNumber,
+      '',
       imagePath: capturedPhoto.value?.path ?? '',
     );
     if (Get.currentRoute == Routes.scanId) Get.back<void>();

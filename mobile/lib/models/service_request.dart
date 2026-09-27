@@ -104,9 +104,24 @@ class ServiceRequest {
   /// null for legacy free-string requests.
   final ServiceCatalogOption? serviceItem;
 
-  /// Optional leading thumbnail — carried by demo/home rows; null for API rows
-  /// (they render the status glyph instead).
-  final String? iconAsset;
+  /// Leading icon for the request row, from the request's service type
+  /// (`category_code`, else `type`). The API carries no artwork, so every
+  /// type maps to a bundled SVG; an unknown type gets the generic request icon
+  /// rather than an empty tile.
+  String get iconAsset {
+    const icons = {
+      'room_service': 'room_service_bell',
+      'restaurant': 'cuisine',
+      'housekeeping': 'bed_outline',
+      'laundry': 'softpillow',
+      'concierge': 'act_concierge',
+      'transport': 'location',
+      'maintenance': 'warning',
+      'do_not_disturb': 'door',
+    };
+    final name = icons[categoryCode] ?? icons[type] ?? 'act_request';
+    return 'assets/icons/$name.svg';
+  }
 
   const ServiceRequest({
     required this.uuid,
@@ -118,7 +133,6 @@ class ServiceRequest {
     this.createdAt,
     this.categoryCode,
     this.serviceItem,
-    this.iconAsset,
   });
 
   factory ServiceRequest.fromJson(Map<String, dynamic> json) => ServiceRequest(

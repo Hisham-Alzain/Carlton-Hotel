@@ -1,5 +1,5 @@
 import 'package:carlton/components/sheets/service_request_sheet.dart';
-import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/constants/service_tiles.dart';
 import 'package:carlton/constants/error_codes.dart';
 import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
@@ -8,17 +8,24 @@ import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/home_models.dart';
 import 'package:carlton/models/service_catalog_item.dart';
 import 'package:carlton/models/service_item.dart';
+import 'package:carlton/mixins/paginated_controller_mixin.dart';
+import 'package:carlton/models/pagination.dart';
 import 'package:carlton/models/service_request.dart';
 import 'package:carlton/models/stay.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/middleware_service.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 class ServicesController extends GetxController
-    with GetSingleTickerProviderStateMixin {
+    with
+        GetSingleTickerProviderStateMixin,
+        PaginatedControllerMixin<ServiceRequest> {
+  final CancelToken _cancelToken = CancelToken();
+
   // Drives the themed Material TabBar (All Services / Active Requests).
   late final TabController tabController;
   final RxInt tabIndex = 0.obs;
@@ -46,14 +53,19 @@ class ServicesController extends GetxController
 
   // The eight hub tiles are decorative demo (icons/subtitles); each carries a
   // stable [ServiceItem.code] matched against the fetched catalog.
-  final List<ServiceItem> services = DemoData.services;
+  final List<ServiceItem> services = ServiceTiles.services;
 
   /// Live service catalog (`GET /public/service-catalog`, active only) and the
   /// guest's own active requests (`GET /service-requests`, checked-in only) —
   /// first-page fetch only, same rationale as Discover (not the paginated
   /// mixin).
   final RxList<ServiceCatalogItem> catalog = <ServiceCatalogItem>[].obs;
-  final RxList<ServiceRequest> activeRequests = <ServiceRequest>[].obs;
+
+  /// The guest's own requests, paged through [PaginatedControllerMixin]:
+  /// `GET /service-requests` returns 15 per page, and over a long stay a guest
+  /// can pass that. Kept under this name so the view and [submitRequest] read
+  /// it unchanged.
+  RxList<ServiceRequest> get activeRequests => items;
 
   /// Do Not Disturb switch state (the `toggle`-kind tile), backed by
   /// `PATCH /stays/active/dnd`. Optimistic; reverts on failure.
@@ -68,21 +80,25 @@ class ServicesController extends GetxController
         tabIndex.value = tabController.index;
       }
     });
+    initPagination(_cancelToken);
     _loadCatalog();
     if (MiddlewareService.find.isCheckedIn) {
-      _loadActiveRequests();
+      loadItems(_cancelToken);
       _loadActiveStay();
     }
   }
 
   @override
   void onClose() {
+    _cancelToken.cancel();
     tabController.dispose();
+    // Chains into PaginatedControllerMixin.onClose → disposes scrollController.
     super.onClose();
   }
 
-  /// Fetches the public service catalog. A failure leaves the grid on its demo
-  /// tiles (tap falls through to "coming soon") rather than erroring.
+  /// Fetches the public service catalog. A failure leaves the grid on its
+  /// artwork-only tiles (tap falls through to "coming soon") rather than
+  /// erroring — the tiles carry no behaviour of their own.
   Future<void> _loadCatalog() async {
     final res = await ApiService.find.get<List<dynamic>>(
       path: '/public/service-catalog',
@@ -97,16 +113,24 @@ class ServicesController extends GetxController
         .toList();
   }
 
-  /// Loads the guest's own service requests (tier-3b — checked in). Empty is a
-  /// valid state, not an error.
-  Future<void> _loadActiveRequests() async {
+  /// One page of the guest's own service requests (tier-3b — checked in).
+  /// Empty is a valid state, not an error.
+  @override
+  Future<({List<ServiceRequest> items, Pagination pagination})?> fetchPage(
+    int page,
+    CancelToken cancelToken,
+  ) async {
     final res = await ApiService.find.get<List<dynamic>>(
       path: '/service-requests',
+      queryParameters: {'page': page},
       showErrorDialog: false,
+      cancelToken: cancelToken,
     );
-    if (isClosed) return;
-    if (res.statusCode != 200 || res.data == null) return;
-    activeRequests.value = ServiceRequest.listFromJson(res.data!);
+    if (res.statusCode != 200 || res.data == null) return null;
+    return (
+      items: ServiceRequest.listFromJson(res.data!),
+      pagination: res.meta ?? Pagination(),
+    );
   }
 
   /// Loads the active-stay header (`GET /stays/active`, tier-3b) for the Services
@@ -134,8 +158,28 @@ class ServicesController extends GetxController
 
   void switchTab(int index) => tabController.animateTo(index);
 
-  void quickRequest(String label) =>
-      CustomSnackbars.showInfo(message: AppTranslations.itemSelected(label));
+  /// The "Quick Requests" chips: every `direct`-kind catalog category, which is
+  /// exactly the set that can be submitted in one tap (a `catalog` category
+  /// needs its item list first, `link`/`toggle` are not requests at all). Empty
+  /// until the catalog lands, and empty is a real answer — the section hides.
+  List<ServiceCatalogItem> get quickRequests => catalog
+      .where(
+        (c) =>
+            c.kind == 'direct' &&
+            (c.defaultItemUuid != null && c.defaultItemUuid!.isNotEmpty),
+      )
+      .toList();
+
+  /// Submits a quick-request chip through the same sheet as the grid tile, so
+  /// the chip posts a real `POST /service-requests` instead of acknowledging
+  /// itself with a snackbar.
+  void quickRequest(ServiceCatalogItem item) => openServiceRequest(
+    ServiceCatalogOption(
+      uuid: item.defaultItemUuid!,
+      name: item.name,
+      description: item.description,
+    ),
+  );
 
   /// Opens a services-hub grid tile by its stable [tileCode], routing on the
   /// matching catalog item's [ServiceCatalogItem.kind]. Unknown codes/kinds

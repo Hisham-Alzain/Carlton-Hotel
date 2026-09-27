@@ -5,9 +5,9 @@ import 'package:intl/intl.dart';
 /// Immutable snapshot of the reservation the check-in flow operates on.
 ///
 /// Built from `GET /stays/upcoming` via [ReservationSummary.fromUpcomingStay].
-/// The DemoData constant survives only as the pre-fetch placeholder — check-in
-/// is a real state transition, so the booking shown while performing it has to
-/// be the guest's own.
+/// Check-in is a real state transition, so the booking shown while performing
+/// it is always the guest's own — [empty] covers only the frames before that
+/// fetch lands.
 class ReservationSummary {
   final String guestName;
   final String suiteName;
@@ -32,6 +32,23 @@ class ReservationSummary {
     required this.stayRangeLabel,
     required this.bookingRef,
   });
+
+  /// The pre-fetch state: every field blank, so the panel renders as absent
+  /// rather than showing a stand-in booking. `CheckInService.loadReservation()`
+  /// replaces it with the guest's real upcoming stay, and `reset()` restores it
+  /// on sign-out.
+  static const empty = ReservationSummary(
+    guestName: '',
+    suiteName: '',
+    roomNumber: '',
+    floorLabel: '',
+    checkInDate: '',
+    checkInTime: '',
+    checkOutDate: '',
+    checkOutTime: '',
+    stayRangeLabel: '',
+    bookingRef: '',
+  );
 
   /// Maps the guest's next reservation onto the wizard's booking panel.
   ///

@@ -20,13 +20,32 @@ class CustomRoomResultCard extends StatelessWidget {
   final VoidCallback onSelect;
   final VoidCallback? onTap;
 
+  /// Rooms free over the guest's dates, from `GET /public/availability`, or null
+  /// when the check has not answered. Null renders as bookable — the
+  /// reservation endpoint re-checks, so an unanswered pre-check must not hide a
+  /// room that is free.
+  final int? roomsAvailable;
+
   const CustomRoomResultCard({
     required this.room,
     required this.nights,
     required this.onSelect,
     this.onTap,
+    this.roomsAvailable,
     super.key,
   });
+
+  bool get _soldOut => roomsAvailable == 0;
+
+  /// Only shown when the hotel is nearly out: "3 left" is useful, "9 left" is
+  /// noise, and an unanswered check has nothing to say.
+  String get _scarcityLabel {
+    final count = roomsAvailable;
+    if (count == null || count <= 0 || count > 3) return '';
+    return count == 1
+        ? AppTranslations.lastRoom
+        : AppTranslations.roomsLeft('$count');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +129,7 @@ class CustomRoomResultCard extends StatelessWidget {
                         spacing: 10,
                         children: [
                           SvgPicture.asset(
-                            'assets/icons/star.svg',
+                            'assets/icons/rating.svg',
                             width: 20,
                             height: 20,
                             colorFilter: const ColorFilter.mode(
@@ -167,7 +186,7 @@ class CustomRoomResultCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Total for $nights night${nights == 1 ? '' : 's'}',
+                            AppTranslations.totalForNights(nights),
                             style: textStyle.labelMedium?.copyWith(
                               fontFamily: 'DM Sans',
                               color: AppColors.taupeBrown,
@@ -180,12 +199,30 @@ class CustomRoomResultCard extends StatelessWidget {
                               color: AppColors.primary,
                             ),
                           ),
+                          // Real scarcity off the availability check, not a
+                          // marketing nudge: absent unless the count is low.
+                          if (_scarcityLabel.isNotEmpty)
+                            Text(
+                              _scarcityLabel,
+                              style: textStyle.labelSmall?.copyWith(
+                                fontFamily: 'DM Sans',
+                                color: AppColors.brickRed,
+                              ),
+                            ),
                         ],
                       ),
                       CustomFilledButton(
-                        backgroundColor: AppColors.lagoonTeal,
+                        // Greyed rather than hidden: a sold-out room still tells
+                        // the guest the hotel has it, which is why the card stays.
+                        backgroundColor: _soldOut
+                            ? AppColors.mediumGrey
+                            : AppColors.lagoonTeal,
                         onPressed: onSelect,
-                        child: Text(AppTranslations.selectRoom),
+                        child: Text(
+                          _soldOut
+                              ? AppTranslations.soldOut
+                              : AppTranslations.selectRoom,
+                        ),
                       ),
                     ],
                   ),

@@ -127,22 +127,18 @@ class _RequestRow extends StatelessWidget {
                   height: 30,
                   radius: 8,
                   backgroundColor: AppColors.primary06,
-                  // PillContainer.child is non-nullable, so a request with no icon
-                  // gets an empty box rather than null.
-                  child: request.iconAsset != null
-                      ? Opacity(
-                          opacity: 0.7,
-                          child: SvgPicture.asset(
-                            request.iconAsset!,
-                            width: 16,
-                            height: 16,
-                            colorFilter: const ColorFilter.mode(
-                              AppColors.primary,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                        )
-                      : const SizedBox.shrink(),
+                  child: Opacity(
+                    opacity: 0.7,
+                    child: SvgPicture.asset(
+                      request.iconAsset,
+                      width: 16,
+                      height: 16,
+                      colorFilter: const ColorFilter.mode(
+                        AppColors.primary,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
                 ),
                 Expanded(
                   child: Column(

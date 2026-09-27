@@ -62,6 +62,7 @@ return [
         'payment_failed'           => 'No se ha podido procesar el pago.',
         'inquiry_state'            => 'Esta transición de estado no está permitida.',
         'no_active_reservation'    => 'Esta acción requiere una reserva activa.',
+        'check_in_not_available'   => "El check-in se abre el día de tu llegada, una vez que el hotel haya confirmado tu reserva.",
         'no_table_available'       => 'No hay ninguna mesa disponible para esa hora y ese número de comensales.',
         'verified_contact_immutable' => 'Este dato de contacto ya está verificado. Verifique el nuevo con un código para cambiarlo.',
         'ancestor_trashed'         => 'Este elemento no se puede restaurar mientras el registro al que pertenece siga en la papelera. Restaure primero ese registro.',

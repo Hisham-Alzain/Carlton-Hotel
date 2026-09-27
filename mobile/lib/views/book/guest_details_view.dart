@@ -115,7 +115,7 @@ class GuestDetailsView extends StatelessWidget {
                       inputFormatters: [controller.phone.formatter],
                       textInputType: TextInputType.phone,
                       textDirection: TextDirection.ltr,
-                      captionLabel: 'Phone Number*',
+                      captionLabel: AppTranslations.phoneNumberRequired,
                       labelColor: AppColors.inkBlack,
                       hintText: AppTranslations.phoneNumberHint,
                       fillColor: AppColors.whisperGrey,
@@ -133,8 +133,7 @@ class GuestDetailsView extends StatelessWidget {
                 textInputType: TextInputType.multiline,
                 captionLabel: AppTranslations.specialRequestsTitle,
                 labelColor: AppColors.inkBlack,
-                hintText:
-                    'Any dietary needs, room preferences, or special occasions…',
+                hintText: AppTranslations.dietaryNotesHint,
                 maxLines: 3,
                 fillColor: AppColors.whisperGrey,
               ),

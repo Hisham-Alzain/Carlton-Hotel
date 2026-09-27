@@ -1,10 +1,17 @@
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/constants/error_codes.dart';
+import 'package:carlton/extensions/price_extension.dart';
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/controllers/main/main_controller.dart';
+import 'package:carlton/controllers/home/home_controller.dart';
+import 'package:carlton/controllers/stays/stays_controller.dart';
 import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
 import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
+import 'package:carlton/models/api/api_response.dart';
+import 'package:carlton/mixins/paginated_controller_mixin.dart';
 import 'package:carlton/models/booking_models.dart';
+import 'package:carlton/models/pagination.dart';
+import 'package:carlton/models/localized.dart';
 import 'package:carlton/models/quote.dart';
 import 'package:carlton/models/reservation.dart';
 import 'package:carlton/models/room_type.dart';
@@ -12,6 +19,7 @@ import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/middleware_service.dart';
 import 'package:carlton/views/book/room_details_sheet.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -29,7 +37,10 @@ import 'package:intl/intl.dart';
 /// starting a new booking must call it explicitly (see
 /// BookView/StaysController.startBooking), otherwise a completed booking's
 /// guest/card details would carry into the next one.
-class BookingFlowController extends GetxController {
+class BookingFlowController extends GetxController
+    with PaginatedControllerMixin<RoomOption> {
+  final CancelToken _cancelToken = CancelToken();
+
   // Dates + guests
   final DateTime firstDay = DateUtils.dateOnly(DateTime.now());
   final DateTime lastDay = DateTime(2100, 12, 31);
@@ -45,10 +56,32 @@ class BookingFlowController extends GetxController {
 
   // Room + add-ons
   // Choose-Room list — fetched from GET /public/room-types (mapped to the
-  // booking option). Add-ons stay demo (no backend concept).
-  final RxList<RoomOption> rooms = <RoomOption>[].obs;
-  final RxBool roomsLoading = false.obs;
-  final List<AddOn> addOns = DemoData.addOns;
+  // booking option). Add-ons are the real bookable extras: spa services, pool
+  // cabanas and transfers.
+  /// The Choose-Room list, paged through [PaginatedControllerMixin]:
+  /// `GET /public/room-types` returns 15 per page. Kept under these names so the
+  /// Choose-Room view reads them unchanged.
+  RxList<RoomOption> get rooms => items;
+  RxBool get roomsLoading => loading;
+
+  /// `room_type_uuid` -> rooms free over the selected dates, from
+  /// `GET /public/availability`. A uuid absent from this map means "not asked"
+  /// (no dates yet, or the check failed) and is treated as bookable: the
+  /// reservation endpoint re-checks availability and returns `no_availability`,
+  /// so a failed pre-check must not hide a room that is actually free.
+  final RxMap<String, int> roomsAvailable = <String, int>{}.obs;
+
+  /// Rooms free over the selected dates, or null when unknown. Zero is a real
+  /// answer — the card shows "Sold out" and refuses selection.
+  int? availableFor(RoomOption room) => roomsAvailable[room.uuid];
+
+  /// False only when the check came back with none left.
+  bool isBookable(RoomOption room) => (roomsAvailable[room.uuid] ?? 1) > 0;
+
+  /// The Add-Ons step's catalogue, fetched from the three public bookable
+  /// endpoints. Rx because it lands after the step can already be on screen.
+  final RxList<AddOn> addOns = <AddOn>[].obs;
+  final RxBool addOnsLoading = false.obs;
   final Rxn<RoomOption> selectedRoom = Rxn<RoomOption>();
   final RxSet<String> selectedAddOnIds = <String>{}.obs;
 
@@ -113,20 +146,23 @@ class BookingFlowController extends GetxController {
   String get dateRange {
     final start = rangeStart.value;
     final end = rangeEnd.value;
-    if (start == null || end == null) return 'Select your dates';
+    if (start == null || end == null) return AppTranslations.selectYourDates;
     final f = DateFormat('MMM d');
     return '${f.format(start)} → ${f.format(end)}';
   }
 
   /// "Aug 14 → Aug 16 · 2 nights" — used by the Plan footer and Choose Room
   /// context bar (Figma shows the nights there).
-  String get dateSummary =>
-      hasDates ? '$dateRange · $nights nights' : dateRange;
+  String get dateSummary => hasDates
+      ? '$dateRange · ${AppTranslations.nightsCount(nights)}'
+      : dateRange;
 
   String get guestSummary {
-    final a = '${adults.value} Adult ${adults.value == 1 ? '' : 's'}';
+    // Through the plural helpers: the old inline suffix rendered "2 Adult s"
+    // (a stray space before the s) and could not be translated at all.
+    final a = AppTranslations.adultsCount(adults.value);
     if (children.value == 0) return a;
-    return '$a, ${children.value} Child ${children.value == 1 ? '' : 'ren'}';
+    return '$a, ${AppTranslations.childrenCount(children.value)}';
   }
 
   /// "Aug 14 → Aug 16 · \$280/night" — the Add-Ons summary tile (Figma omits
@@ -134,7 +170,8 @@ class BookingFlowController extends GetxController {
   String get roomDetailSummary {
     final room = selectedRoom.value;
     if (room == null) return dateSummary;
-    return '$dateRange · \$${room.pricePerNight}/night';
+    return '$dateRange · '
+        '${AppTranslations.perNight(room.pricePerNight.toDouble().formatPrice())}';
   }
 
   /// Fallback subtotal (room nightly × nights) used only for a pure-demo room
@@ -209,13 +246,23 @@ class BookingFlowController extends GetxController {
     rangeEnd.value = null;
   }
 
-  void searchRooms() {
+  Future<void> searchRooms() async {
     if (!hasDates) {
-      CustomSnackbars.showInfo(message: 'Select your dates first');
+      CustomSnackbars.showInfo(message: AppTranslations.selectYourDatesFirst);
       return;
     }
-    // Room already chosen on Home → skip Choose-Room, go straight to add-ons.
-    if (roomPreselected.value && selectedRoom.value != null) {
+    // Room already chosen on Home → skip Choose-Room, go straight to add-ons,
+    // after checking that room is free on the picked dates (the Choose-Room
+    // list does this for every room; this path would otherwise skip it).
+    final preselected = selectedRoom.value;
+    if (roomPreselected.value && preselected != null) {
+      roomsAvailable.remove(preselected.uuid);
+      await _loadAvailability([preselected]);
+      if (isClosed) return;
+      if (!isBookable(preselected)) {
+        CustomSnackbars.showInfo(message: AppTranslations.roomSoldOut);
+        return;
+      }
       Get.toNamed(Routes.addOns);
       return;
     }
@@ -224,23 +271,85 @@ class BookingFlowController extends GetxController {
   }
 
   /// Loads the Choose-Room list from `GET /public/room-types`, mapped to the
-  /// booking option. The Choose-Room list repaints when it lands.
+  /// booking option, then checks each one against the selected dates. The
+  /// Choose-Room list repaints when the rooms land and again when availability
+  /// does, so the cards appear immediately rather than waiting on N checks.
   Future<void> loadRooms() async {
-    roomsLoading.value = true;
-    rooms.clear();
+    // New dates mean every earlier count is stale.
+    roomsAvailable.clear();
+    await loadItems(_cancelToken);
+  }
+
+  /// One page of room types, plus the availability of exactly those rooms. The
+  /// check runs per page so a room arriving on page 2 is checked when it lands,
+  /// rather than only the first page ever being checked.
+  @override
+  Future<({List<RoomOption> items, Pagination pagination})?> fetchPage(
+    int page,
+    CancelToken cancelToken,
+  ) async {
     final res = await ApiService.find.get<List<dynamic>>(
       path: '/public/room-types',
+      queryParameters: {'page': page},
       showErrorDialog: false,
+      cancelToken: cancelToken,
+    );
+    if (res.statusCode != 200 || res.data == null) return null;
+    final pageRooms = res.data!
+        .whereType<Map<String, dynamic>>()
+        .map(RoomType.fromJson)
+        .map(RoomOption.fromRoomType)
+        .toList();
+    // Not awaited: the cards render now and the Sold Out / scarcity labels
+    // fill in when the checks answer.
+    _loadAvailability(pageRooms);
+    return (items: pageRooms, pagination: res.meta ?? Pagination());
+  }
+
+  /// Fills [roomsAvailable] from `GET /public/availability`, one request per room
+  /// type — the endpoint takes a single `room_type_uuid` and there is no bulk
+  /// form, so they are fired together rather than in sequence.
+  ///
+  /// Silent and best-effort: this is a courtesy pre-check so the guest is not
+  /// offered a room that is gone. `POST /reservations` re-checks server-side and
+  /// returns `no_availability`, which is the authoritative answer and already
+  /// has an error branch, so a failure here degrades to "unknown" rather than
+  /// blocking the step.
+  Future<void> _loadAvailability(List<RoomOption> pageRooms) async {
+    if (!hasDates) return;
+    final checkIn = _fmtDate(rangeStart.value!);
+    final checkOut = _fmtDate(rangeEnd.value!);
+    final bookable = pageRooms.where((room) => room.uuid.isNotEmpty).toList();
+    if (bookable.isEmpty) return;
+
+    final responses = await Future.wait(
+      bookable.map(
+        (room) => ApiService.find.get<Map<String, dynamic>>(
+          path: '/public/availability',
+          queryParameters: {
+            'room_type_uuid': room.uuid,
+            'check_in': checkIn,
+            'check_out': checkOut,
+          },
+          showErrorDialog: false,
+        ),
+      ),
     );
     if (isClosed) return;
-    if (res.statusCode == 200 && res.data != null) {
-      rooms.value = res.data!
-          .whereType<Map<String, dynamic>>()
-          .map(RoomType.fromJson)
-          .map(RoomOption.fromRoomType)
-          .toList();
+    final counts = <String, int>{};
+    for (final (index, res) in responses.indexed) {
+      if (res.statusCode != 200 || res.data == null) continue;
+      final count = (res.data!['rooms_available'] as num?)?.toInt();
+      // `available` is the boolean form of the same answer; prefer the count so
+      // the card can say how many are left.
+      if (count != null) {
+        counts[bookable[index].uuid] = count;
+      } else if (res.data!['available'] == false) {
+        counts[bookable[index].uuid] = 0;
+      }
     }
-    roomsLoading.value = false;
+    // Merged, not replaced: each page adds its own rooms' counts.
+    roomsAvailable.addAll(counts);
   }
 
   // ── Step 2 — Choose Your Room + Room Details sheet ──────────────────────
@@ -282,7 +391,7 @@ class BookingFlowController extends GetxController {
         RoomOption.fromRoomType(RoomType.fromJson(res.data!)),
       );
     } else {
-      CustomSnackbars.showError(message: 'Could not load this room.');
+      CustomSnackbars.showError(message: AppTranslations.roomLoadFailed);
     }
   }
 
@@ -291,32 +400,180 @@ class BookingFlowController extends GetxController {
   /// Resets first (like every booking entry) so a prior attempt's guest/card/
   /// add-on data never carries over.
   void beginBookingWithRoom(RoomOption room) {
+    // "Plan Your Stay" is the Book tab in the Main shell (no standalone route),
+    // so pop back to the shell and switch to it (index 2). The switch itself
+    // resets the draft, so the room is set only after it — setting it first
+    // wiped it again and sent the guest to Choose-Room for a room already
+    // chosen.
+    Get.until((r) => r.isFirst);
     reset();
+    Get.find<MainController>().changeTab(2);
     selectedRoom.value = room;
     roomPreselected.value = true;
-    // "Plan Your Stay" is the Book tab in the Main shell (no standalone route),
-    // so pop back to the shell and switch to it (index 2).
-    Get.until((r) => r.isFirst);
-    Get.find<MainController>().changeTab(2);
   }
 
   void selectRoom(RoomOption room) {
+    // Refused here rather than at `POST /reservations` three steps later, where
+    // the guest would have entered their details and card first.
+    if (!isBookable(room)) {
+      CustomSnackbars.showInfo(message: AppTranslations.roomSoldOut);
+      return;
+    }
     selectedRoom.value = room;
     Get.toNamed(Routes.addOns);
   }
+
+  /// Loads the Add-Ons step's catalogue from the three public bookable lists.
+  ///
+  /// Each is a separate endpoint with its own resource shape, so they are mapped
+  /// into one [AddOn] list here rather than at three call sites. A list that
+  /// fails is simply absent — one unreachable endpoint must not blank the
+  /// other two, and the step is skippable by design.
+  Future<void> loadAddOns() async {
+    if (addOns.isNotEmpty || addOnsLoading.value) return;
+    addOnsLoading.value = true;
+    final results = await Future.wait([
+      ApiService.find.get<List<dynamic>>(
+        path: '/public/spa-services',
+        showErrorDialog: false,
+      ),
+      ApiService.find.get<List<dynamic>>(
+        path: '/public/pool-cabanas',
+        showErrorDialog: false,
+      ),
+      ApiService.find.get<List<dynamic>>(
+        path: '/public/transfers',
+        showErrorDialog: false,
+      ),
+    ]);
+    if (isClosed) return;
+    final next = <AddOn>[
+      ..._mapBookables(
+        results[0],
+        type: 'spa_service',
+        iconPath: 'assets/icons/jacuzzi.svg',
+        subtitle: (json) {
+          final minutes = (json['duration_minutes'] as num?)?.toInt();
+          return minutes == null ? '' : AppTranslations.etaMinutes(minutes);
+        },
+      ),
+      ..._mapBookables(
+        results[1],
+        type: 'pool_cabana',
+        iconPath: 'assets/icons/view.svg',
+        subtitle: (json) {
+          final capacity = (json['capacity'] as num?)?.toInt();
+          return capacity == null ? '' : '$capacity ${AppTranslations.guests}';
+        },
+      ),
+      ..._mapBookables(
+        results[2],
+        type: 'transfer',
+        iconPath: 'assets/icons/location.svg',
+        subtitle: (json) => '',
+      ),
+    ];
+    addOns.assignAll(next);
+    addOnsLoading.value = false;
+  }
+
+  /// Shared mapping for the three bookable lists, which differ only in their
+  /// secondary field (duration / capacity / nothing).
+  List<AddOn> _mapBookables(
+    ApiResponse<List<dynamic>> response, {
+    required String type,
+    required String iconPath,
+    required String Function(Map<String, dynamic> json) subtitle,
+  }) {
+    if (response.statusCode != 200 || response.data == null) return const [];
+    return response.data!
+        .whereType<Map<String, dynamic>>()
+        .where((json) => json['is_active'] as bool? ?? true)
+        .map(
+          (json) => AddOn(
+            id: json['uuid'] as String? ?? '',
+            bookableType: type,
+            iconPath: iconPath,
+            title: Localized.fromJson(json['name']).value,
+            subtitle: subtitle(json),
+            priceUsd: json['price_usd']?.toString() ?? '0',
+          ),
+        )
+        .where((addOn) => addOn.id.isNotEmpty)
+        .toList();
+  }
+
+  /// Books every selected extra against the reservation that was just created.
+  ///
+  /// Deliberately runs *after* `POST /reservations` rather than on the Add-Ons
+  /// step: `POST /service-bookings` sits behind the `has_booking` gate, so a
+  /// guest with no reservation yet would get a 403 for every selection. Each
+  /// booking is scheduled for the arrival date.
+  ///
+  /// Best-effort and silent: the room is already confirmed by this point, and
+  /// failing the whole booking over an unavailable cabana would be worse than
+  /// the guest re-requesting it from the Services tab. Returns the extras that
+  /// did not go through so the caller can say so.
+  Future<List<AddOn>> _bookSelectedAddOns() async {
+    final selected = addOns
+        .where((addOn) => selectedAddOnIds.contains(addOn.id))
+        .toList();
+    if (selected.isEmpty) return const [];
+    final arrival = rangeStart.value;
+    if (arrival == null) return selected;
+    // The endpoint requires `after:now`; a same-day booking made this afternoon
+    // would fail against midnight, so schedule for the hotel's check-in hour
+    // and push to the next slot if that moment has already passed.
+    var scheduled = DateTime(
+      arrival.year,
+      arrival.month,
+      arrival.day,
+      _addOnScheduleHour,
+    );
+    final now = DateTime.now();
+    if (!scheduled.isAfter(now)) scheduled = now.add(const Duration(hours: 1));
+
+    final failed = <AddOn>[];
+    for (final addOn in selected) {
+      final res = await ApiService.find.post<Map<String, dynamic>>(
+        path: '/service-bookings',
+        data: {
+          'bookable_type': addOn.bookableType,
+          'bookable_uuid': addOn.id,
+          'scheduled_at': scheduled.toIso8601String(),
+        },
+        showErrorDialog: false,
+      );
+      if (!res.ok) failed.add(addOn);
+      if (isClosed) return failed;
+    }
+    return failed;
+  }
+
+  /// The hotel's standard arrival hour, used as the default slot for extras
+  /// booked through the wizard (the guest can reschedule from Services).
+  static const int _addOnScheduleHour = 15;
 
   // ── Step 3 — Add-Ons ─────────────────────────────────────────────────────
   String get addOnsCtaLabel {
     final n = selectedAddOnIds.length;
     return n == 0
-        ? 'Skip — No Extras'
-        : 'Continue with $n extra${n == 1 ? '' : 's'}';
+        ? AppTranslations.skipNoExtras
+        : AppTranslations.continueWithExtras(n);
   }
 
   void toggleAddOn(String id) {
     // RxSet.remove/add notify on their own.
     if (!selectedAddOnIds.remove(id)) selectedAddOnIds.add(id);
   }
+
+  /// USD total of the selected extras, for the Add-Ons step's summary pill.
+  /// Not folded into the room quote: extras are booked separately through
+  /// `POST /service-bookings` and are billed to the folio, not to the
+  /// reservation total the backend quoted.
+  double get selectedAddOnsTotalUsd => addOns
+      .where((addOn) => selectedAddOnIds.contains(addOn.id))
+      .fold(0, (sum, addOn) => sum + addOn.price);
 
   void continueFromAddOns() => Get.toNamed(Routes.guestDetails);
 
@@ -358,13 +615,15 @@ class BookingFlowController extends GetxController {
   Future<void> applyPromo() async {
     final code = promoCtrl.text.trim();
     if (code.isEmpty) {
-      CustomSnackbars.showInfo(message: 'Enter a promo code first');
+      CustomSnackbars.showInfo(message: AppTranslations.promoCodeFirst);
       return;
     }
     await _fetchQuote(promo: code);
     if (promoError.value == null && hasDiscount) {
       promoApplied.value = true;
-      CustomSnackbars.showSuccess(message: 'Promo code "$code" applied');
+      CustomSnackbars.showSuccess(
+        message: AppTranslations.promoCodeApplied(code),
+      );
     }
   }
 
@@ -393,7 +652,7 @@ class BookingFlowController extends GetxController {
       promoError.value = null;
     } else if (res.error?.errorCode == ErrorCodes.invalidPromo) {
       // Keep the prior (un-promo) quote so the price doesn't vanish; just flag it.
-      promoError.value = 'That promo code is invalid or expired.';
+      promoError.value = AppTranslations.promoInvalid;
       promoApplied.value = false;
     }
   }
@@ -405,7 +664,9 @@ class BookingFlowController extends GetxController {
     }
     final digits = cardNumberCtrl.text.replaceAll(RegExp(r'\D'), '');
     final last4 = digits.length >= 4 ? digits.substring(digits.length - 4) : '';
-    return last4.isEmpty ? 'Credit Card' : 'Credit Card ••••$last4';
+    return last4.isEmpty
+        ? AppTranslations.creditCard
+        : AppTranslations.creditCardMasked(last4);
   }
 
   /// The backend `payment_method` value for the selected option, or null when
@@ -423,8 +684,8 @@ class BookingFlowController extends GetxController {
   /// Review CTA copy — "Confirm & Pay \$X" for priced methods, "Confirm Booking"
   /// when paying at the hotel.
   String get confirmCtaLabel => paymentMethod.value == PaymentMethod.payAtHotel
-      ? 'Confirm Booking'
-      : 'Confirm & Pay $totalDisplay';
+      ? AppTranslations.confirmBooking
+      : AppTranslations.confirmAndPay(totalDisplay);
 
   void reviewBooking() {
     if (!canReviewBooking) return;
@@ -435,29 +696,31 @@ class BookingFlowController extends GetxController {
   /// methods have no gateway yet, so they're blocked here with a clear message
   /// rather than submitting. On success the guest gains a booking and the real
   /// `booking_code` shows on the Confirmed screen.
+  /// True when the reservation just made still waits on the hotel
+  /// (`pending` / `pending_verification`) — the Confirmation screen then says
+  /// so instead of claiming the stay is confirmed.
+  bool get awaitingConfirmation {
+    final status = lastReservation.value?.status;
+    return status == 'pending' || status == 'pending_verification';
+  }
+
   Future<void> confirmBooking() async {
     if (isConfirming.value) return;
     // A one-step reservation needs a guest token (tier-2). A guest browsing
     // without an account gets sent to sign-in rather than a bare 401 failure.
     if (!MiddlewareService.find.isAuthenticated) {
-      CustomSnackbars.showInfo(
-        message: 'Please sign in to complete your booking.',
-      );
+      CustomSnackbars.showInfo(message: AppTranslations.signInToBook);
       Get.toNamed(Routes.signIn);
       return;
     }
     final apiMethod = paymentApiValue;
     if (apiMethod == null) {
-      CustomSnackbars.showInfo(
-        message:
-            "Card & wallet payments aren't available yet — choose Pay at Hotel "
-            'to confirm your booking.',
-      );
+      CustomSnackbars.showInfo(message: AppTranslations.cardWalletUnavailable);
       return;
     }
     final uuid = selectedRoom.value?.uuid ?? '';
     if (uuid.isEmpty || !hasDates) {
-      CustomSnackbars.showError(message: 'Select a room and your dates first.');
+      CustomSnackbars.showError(message: AppTranslations.selectRoomAndDates);
       return;
     }
 
@@ -481,21 +744,57 @@ class BookingFlowController extends GetxController {
       final reservation = Reservation.fromJson(res.data!);
       lastReservation.value = reservation;
       confirmationCode.value = reservation.bookingCode;
-      // The guest now has a booking — flip the app's active-booking entitlement
-      // so Home/Services reflect it without a refetch.
-      final guest = MiddlewareService.find.guest.value;
-      if (guest != null) {
-        MiddlewareService.find.updateGuest(guest.copyWith(hasBooking: true));
+      // A guest's own booking is created `pending`: the server counts it toward
+      // `has_booking` (which unlocks the booked Home and `POST
+      // /service-bookings`) only once the hotel confirms it. So the local
+      // entitlement flips only for a reservation that is already confirmed.
+      if (!awaitingConfirmation) {
+        final guest = MiddlewareService.find.guest.value;
+        if (guest != null) {
+          MiddlewareService.find.updateGuest(guest.copyWith(hasBooking: true));
+        }
+        // Extras are booked here, not on the Add-Ons step: `POST
+        // /service-bookings` is gated on `has_booking`.
+        final failed = await _bookSelectedAddOns();
+        if (isClosed) return;
+        if (failed.isNotEmpty) {
+          CustomSnackbars.showWarning(
+            message: AppTranslations.addOnsNotBooked(
+              failed.map((addOn) => addOn.title).join(', '),
+            ),
+          );
+        }
+      } else {
+        // Home switches to the pre-arrival layout straight away; it reloads
+        // the stay itself when the guest lands there.
+        MiddlewareService.find.hasPendingBooking.value = true;
+        // Posting now would only collect a 403 per extra; say when they can be
+        // booked instead.
+        final chosen = addOns
+            .where((addOn) => selectedAddOnIds.contains(addOn.id))
+            .map((addOn) => addOn.title)
+            .toList();
+        if (chosen.isNotEmpty) {
+          CustomSnackbars.showInfo(
+            message: AppTranslations.addOnsAfterConfirmation(chosen.join(', ')),
+          );
+        }
+      }
+      // The Stays list and Home were loaded before this booking existed.
+      if (Get.isRegistered<StaysController>()) {
+        Get.find<StaysController>().reloadUpcoming();
+      }
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().reloadBooking();
       }
       Get.toNamed(Routes.bookingConfirmed);
       return;
     }
 
     final message = switch (res.error?.errorCode) {
-      ErrorCodes.noAvailability =>
-        'Those dates just sold out — please try different dates.',
-      ErrorCodes.invalidPromo => 'That promo code is invalid or expired.',
-      _ => res.error?.message ?? 'We couldn\'t complete your booking.',
+      ErrorCodes.noAvailability => AppTranslations.datesSoldOut,
+      ErrorCodes.invalidPromo => AppTranslations.promoInvalid,
+      _ => res.error?.message ?? AppTranslations.bookingFailed,
     };
     CustomSnackbars.showError(message: message);
   }
@@ -505,7 +804,7 @@ class BookingFlowController extends GetxController {
     final code = confirmationCode.value;
     if (code == null) return;
     Clipboard.setData(ClipboardData(text: code));
-    CustomSnackbars.showSuccess(message: 'Code copied');
+    CustomSnackbars.showSuccess(message: AppTranslations.copied);
   }
 
   /// "View My Stays" from the confirmation screen — back to the shell on the
@@ -513,6 +812,11 @@ class BookingFlowController extends GetxController {
   void viewMyStays() {
     Get.until((r) => r.isFirst);
     Get.find<MainController>().changeTab(1);
+    // A new booking is never "active" (that is a checked-in stay) — open the
+    // Upcoming tab, where it is listed.
+    if (Get.isRegistered<StaysController>()) {
+      Get.find<StaysController>().tabController.animateTo(1);
+    }
   }
 
   /// Clears every field back to its starting value — call before entering the
@@ -551,7 +855,14 @@ class BookingFlowController extends GetxController {
   }
 
   @override
+  void onInit() {
+    super.onInit();
+    initPagination(_cancelToken);
+  }
+
+  @override
   void onClose() {
+    _cancelToken.cancel();
     for (final c in [
       firstNameCtrl,
       lastNameCtrl,

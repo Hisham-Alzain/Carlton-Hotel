@@ -1,4 +1,4 @@
-import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/constants/preference_options.dart';
 import 'package:carlton/constants/storage_keys.dart';
 import 'package:carlton/models/preference_option.dart';
 import 'package:carlton/services/get_storage_service.dart';
@@ -6,8 +6,9 @@ import 'package:carlton/services/settings_service.dart';
 import 'package:get/get.dart';
 
 /// Stay + app preferences. Bed / pillow / mattress and the room toggles are
-/// demo-only values persisted via [StorageService] (a real backend would sync
-/// them to the account). Language and currency are NOT stored here — they are
+/// device-local: they are persisted via [StorageService] and travel to the
+/// hotel with the check-in payload, so there is nothing to read back from the
+/// API. Language and currency are NOT stored here — they are
 /// owned by [SettingsService] (which drives the app locale), so this screen
 /// reads and writes them through that service.
 class PreferencesController extends GetxController {
@@ -28,24 +29,31 @@ class PreferencesController extends GetxController {
     super.onInit();
     bedId.value = StorageService.getString(StorageKeys.prefBed) ?? 'king';
     pillowId.value = StorageService.getString(StorageKeys.prefPillow) ?? 'firm';
-    mattressId.value = StorageService.getString(StorageKeys.prefMattress) ?? 'medium';
+    mattressId.value =
+        StorageService.getString(StorageKeys.prefMattress) ?? 'medium';
     smoking.value = StorageService.getBool(StorageKeys.prefSmoking) ?? false;
-    earlyCheckIn.value = StorageService.getBool(StorageKeys.prefEarlyCheckIn) ?? false;
-    lateCheckout.value = StorageService.getBool(StorageKeys.prefLateCheckout) ?? false;
+    earlyCheckIn.value =
+        StorageService.getBool(StorageKeys.prefEarlyCheckIn) ?? false;
+    lateCheckout.value =
+        StorageService.getBool(StorageKeys.prefLateCheckout) ?? false;
   }
 
   PreferenceOption _optionOf(List<PreferenceOption> options, String id) =>
       options.firstWhere((o) => o.id == id, orElse: () => options.first);
 
-  String get bedLabel => _optionOf(DemoData.bedOptions, bedId.value).label;
+  String get bedLabel =>
+      _optionOf(PreferenceOptions.bedOptions, bedId.value).label;
+  // No ' Pillow' suffix: the option labels already carry the noun ('Soft
+  // Pillow', 'Firm Pillow', …), so appending it rendered "Firm Pillow Pillow"
+  // in the field while the dropdown row below read "Firm Pillow".
   String get pillowLabel =>
-      '${_optionOf(DemoData.pillowOptions, pillowId.value).label} Pillow';
+      _optionOf(PreferenceOptions.pillowOptions, pillowId.value).label;
   String get mattressLabel =>
-      _optionOf(DemoData.mattressOptions, mattressId.value).label;
+      _optionOf(PreferenceOptions.mattressOptions, mattressId.value).label;
   String get languageLabel =>
-      _optionOf(DemoData.languageOptions, languageId).label;
+      _optionOf(PreferenceOptions.languageOptions, languageId).label;
   String get currencyLabel =>
-      _optionOf(DemoData.currencyOptions, currencyId).label;
+      _optionOf(PreferenceOptions.currencyOptions, currencyId).label;
 
   void _persistString(String key, String value) =>
       StorageService.setString(key, value);
@@ -77,9 +85,9 @@ class PreferencesController extends GetxController {
   }
 
   Future<void> chooseCurrency(PreferenceOption o) async {
-    final currency = _settings.currencies.firstWhere(
+    final currency = SettingsService.currencies.firstWhere(
       (c) => c.value == o.id,
-      orElse: () => _settings.currencies.first,
+      orElse: () => SettingsService.currencies.first,
     );
     await _settings.changeCurrency(currency);
   }

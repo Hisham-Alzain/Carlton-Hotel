@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/custom_initial_avatar.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -79,8 +80,8 @@ class CustomAgentHeader extends StatelessWidget {
             fontSize: 13,
             fontWeight: FontWeight.w700,
           ),
-          child: const RowTextComponent(
-            text: 'Call',
+          child: RowTextComponent(
+            text: AppTranslations.call,
             iconPath: 'assets/icons/call.svg',
             iconSize: 14,
             iconColor: AppColors.primary,

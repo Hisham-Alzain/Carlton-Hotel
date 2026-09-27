@@ -10,11 +10,10 @@ import 'package:carlton/models/room_type.dart';
 
 /// Which Home section a "Discover All" tap opened, carried as the route
 /// argument to the shared Discover listing screen.
-enum DiscoverSection { rooms, dining, experiences }
+enum DiscoverSection { rooms, dining, experiences, offers }
 
-/// UI projection of a room type — fed either by `DemoData` or, once wired, by a
-/// `RoomType` DTO mapped at the controller boundary. [uuid] is empty for demo
-/// rows and set for API-backed ones (used for navigation).
+/// UI projection of a room type, mapped from a `RoomType` DTO at the controller
+/// boundary. [uuid] carries the server uuid and is what navigation keys on.
 class RoomItem {
   final String uuid;
   final String name;
@@ -77,7 +76,7 @@ class RoomItem {
   );
 }
 
-/// UI projection of a dining venue — fed by `DemoData` or a mapped `DiningVenue`.
+/// UI projection of a dining venue, mapped from a `DiningVenue` DTO.
 class RestaurantItem {
   final String uuid;
   final String name;

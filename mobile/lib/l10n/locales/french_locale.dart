@@ -266,6 +266,14 @@ const Map<String, String> frKeys = {
   "dining.tableReservedFor": "Table réservée · @label",
   "dining.tableNeedsBooking":
       "Réservez d'abord un séjour pour réserver une table.",
+  "dining.tablePickTime": "Choisissez une heure pour votre table.",
+  "general.hotelName": "Carlton Hotel",
+  "chat.guestRelations": "Relations clients",
+  "chat.callUnavailable": "Aucun numéro de téléphone n'est encore publié.",
+  "chat.quickReplyHousekeeping": "Service d'étage, s'il vous plaît",
+  "chat.quickReplyLateCheckout": "Puis-je avoir un départ tardif ?",
+  "chat.quickReplyDiningAdvice": "Où dîner ce soir ?",
+  "chat.quickReplyAirportTransfer": "J'ai besoin d'un transfert aéroport",
   "dining.tableNoAvailability":
       "Rien de disponible pour cet horaire ou ce nombre de convives.",
   "dining.tableVenueUnavailable": "Ce restaurant n'est pas disponible.",
@@ -429,6 +437,7 @@ const Map<String, String> frKeys = {
       "Autres demandes ou remarques pour notre équipe…",
   "checkIn.yourRoomKey": "Votre clé de chambre",
   "checkIn.keyCardWaitingTitle": "Une carte-clé vous attendra",
+  "checkIn.keyCardRoomLabel": "CHAMBRE\n#@number",
   "checkIn.keyCardWaitingBody":
       "À la réception, ou apportée à votre suite. Vous n'avez rien à demander.",
   "checkIn.roomKeySubtitle":
@@ -828,4 +837,133 @@ const Map<String, String> frKeys = {
       "Vos points apparaîtront ici après votre premier séjour.",
   "loyalty.redeem": "Utiliser mes points",
   "loyalty.redeemSoon": "L'utilisation des points arrive bientôt",
+
+  // Added for full-coverage localization.
+  "book.bookingConfirmedBang": "Réservation confirmée !",
+  "book.enhanceYourStay": "Enrichissez votre séjour",
+  "book.guestAndPayment": "Client et paiement",
+  "book.payment": "Paiement",
+  "book.paymentMethod": "Moyen de paiement",
+  "book.phoneNumberRequired": "Numéro de téléphone*",
+  "book.promoInvalid": "Ce code promo est invalide ou expiré.",
+  "book.roomSoldOut": "Cette chambre est complète pour vos dates.",
+  "book.datesSoldOut":
+      "Ces dates viennent d'être complètes — veuillez en choisir d'autres.",
+  "book.bookingFailed": "Nous n'avons pas pu finaliser votre réservation.",
+  "book.dietaryNotesHint":
+      "Régime particulier, préférences de chambre ou occasion spéciale…",
+  "book.applePayUnavailable":
+      "Apple Pay n'est pas encore disponible — choisissez Payer à l'hôtel pour confirmer.",
+  "book.googlePayUnavailable":
+      "Google Pay n'est pas encore disponible — choisissez Payer à l'hôtel pour confirmer.",
+  "book.cardUnavailable":
+      "Le paiement par carte n'est pas encore disponible — choisissez Payer à l'hôtel pour confirmer votre réservation.",
+  "book.cardWalletUnavailable":
+      "Les paiements par carte et portefeuille ne sont pas encore disponibles — choisissez Payer à l'hôtel pour confirmer votre réservation.",
+  "book.confirmationSentTo":
+      "Une confirmation a été envoyée à @email. Nous serons ravis de vous accueillir.",
+  "book.addOnsNotBooked":
+      "Votre chambre est confirmée. Nous n'avons pas pu réserver @items — refaites la demande depuis l'onglet Services.",
+  "book.bookingReceivedBang": "Réservation reçue !",
+  "stays.awaitingConfirmation": "En attente de confirmation",
+  "book.awaitingHotelConfirmation":
+      "En attente de confirmation de l'hôtel. Votre réservation apparaîtra sur l'accueil une fois confirmée.",
+  "book.addOnsAfterConfirmation":
+      "Les extras (@items) pourront être réservés depuis l'onglet Services une fois votre séjour confirmé par l'hôtel.",
+  "cards.soldOut": "Complet",
+  "cards.lastRoom": "Dernière chambre",
+  "cards.roomsLeft": "@count chambres restantes",
+  "cards.yourName": "VOTRE NOM",
+  "dining.beFirstToReview": "Soyez le premier à partager votre expérience.",
+  "dining.reviewsLoadFailed": "Impossible de charger les avis",
+  "dining.detailsComingSoon": "Détails à venir.",
+  "dining.downloadFullMenu": "Télécharger le menu complet",
+  "dining.specialRequestsOptional": "Demandes spéciales (facultatif)",
+  "dining.vegan": "Vegan",
+  "discover.viewMenu": "Voir le menu",
+  "discover.viewOffer": "Voir l'offre",
+  "folio.myBill": "Ma note",
+  "folio.loadFailed": "Impossible de charger votre note",
+  "folio.empty": "Aucun frais pour le moment",
+  "folio.emptySubtitle":
+      "Les frais de service en chambre et de spa apparaîtront ici.",
+  "folio.subtotal": "Sous-total",
+  "folio.approvedForCheckout": "Vous avez approuvé cette note pour le départ.",
+  "folio.sourceRoomCharge": "Frais de chambre",
+  "folio.sourceService": "Service",
+  "folio.sourceInRoomRequest": "Demande en chambre",
+  "general.cardSecurityNote": "Chiffrement SSL 256 bits · conforme PCI DSS",
+  "general.acceptedPaymentMethods": "Moyens de paiement acceptés à l'hôtel",
+  "general.askMeAnything": "Posez-moi vos questions...",
+  "general.cvv": "CVV / CVC",
+  "general.nameOnCard": "Nom sur la carte",
+  "general.finalTotalForStay": "Total final de votre séjour",
+  "general.freeCancellation48h":
+      "Annulation gratuite jusqu'à 48 heures avant l'arrivée",
+  "general.includesTaxesAndFees": "Taxes et frais de service inclus",
+  "general.noPaymentRequiredNow": "Aucun paiement requis maintenant",
+  "general.paymentAtFrontDesk":
+      "Le paiement sera encaissé à la réception à votre arrivée.",
+  "general.reservationSecuredNoCharge":
+      "Votre réservation est garantie sans aucun frais aujourd'hui.",
+  "general.checkConnectionShort": "Vérifiez votre connexion et réessayez.",
+  "home.aiConciergeTitle": "Concierge IA",
+  "home.restaurantsLoadFailed": "Impossible de charger les restaurants",
+  "home.roomsLoadFailed": "Impossible de charger les chambres",
+  "home.dndNeedsActiveStay": "Ne pas déranger nécessite un séjour en cours.",
+  "home.noRoomsAvailable": "Aucune chambre disponible",
+  "home.roomsAppearWhenOpen":
+      "Les nouvelles chambres apparaîtront ici dès qu'elles se libèrent.",
+  "home.noRestaurantsYet": "Aucun restaurant pour le moment",
+  "home.venuesListedSoon": "Nos établissements seront bientôt listés ici.",
+  "home.dndOff": "Désactivé — le personnel peut vous contacter",
+  "home.dndOn": "Activé — le personnel ne vous dérangera pas",
+  "home.offersPackages": "Offres et forfaits",
+  "home.sendAMessage": "Envoyer un message",
+  "home.guestRelationsWillReply":
+      "Envoyez un message et les Relations clients vous répondront ici.",
+  "home.startConversation": "Démarrez une conversation avec notre équipe",
+  "home.nightsLeft": "nuits restantes",
+  "legal.loadFailed": "Impossible de charger ces documents",
+  "reviews.yourRating": "Votre note",
+  "reviews.yourReviewOptional": "Votre avis (facultatif)",
+  "sheets.cancelReservationTitle": "Annuler la réservation ?",
+  "sheets.cancelReservationBody": "Votre réservation pour @room sera annulée.",
+  "sheets.cancelReservationBodyDated":
+      "Votre réservation pour @room le @dates sera annulée.",
+  "sheets.freeCancellationNoCharges":
+      "L'annulation gratuite est actuellement possible pour cette réservation, aucun frais ne sera appliqué.",
+  "sheets.requestFor": "Cette demande concerne @target",
+  "sheets.teamWithinMinutes": ". Notre équipe sera avec vous sous @eta.",
+  "sheets.teamShortly": ". Notre équipe sera avec vous sous peu.",
+  "sheets.offerTerms": "Conditions",
+  "stays.receiptHotelName": "Carlton Hotel Damas",
+  "stays.checkoutConfirmShort":
+      "Partir maintenant ? Nous vous enverrons votre relevé final par e-mail.",
+  "stays.cancelFailed":
+      "Impossible d'annuler cette réservation. Veuillez réessayer.",
+  "stays.preOrderBeforeArrival":
+      "Commandez équipements et services avant votre arrivée.",
+  "stays.settledAtFrontDesk": "Réglé à la réception",
+  "stays.notCancellable": "Cette réservation ne peut plus être annulée.",
+  "support.loadFailed": "Impossible de charger les articles d'aide",
+  "support.general": "Général",
+  "support.messageUs": "Écrivez-nous",
+  "support.empty": "Aucun article d'aide pour le moment",
+  "support.emptySubtitle": "Notre équipe peut répondre à toutes vos questions.",
+  "support.stillNeedHelp": "Besoin d'aide ? Écrivez-nous",
+  "stays.nextCheckInInDays": "Votre prochaine arrivée est dans @days jours.",
+  "dining.reviewsCount": "@count avis",
+  "dining.reviewsCountOne": "1 avis",
+  "cards.checkedInRoom": "@room, arrivée enregistrée",
+  "stays.paymentProcessed": "Paiement effectué · @method",
+  "book.confirmAndPay": "Confirmer et payer @total",
+  "book.continueWithExtras": "Continuer avec @count suppléments",
+  "book.continueWithExtrasOne": "Continuer avec 1 supplément",
+  "general.validFrom": "À partir du @date",
+  "general.validUntil": "Jusqu'au @date",
+  "checkIn.passportNumber": "Passeport n° @number",
+  "book.totalForNights": "Total pour @count nuits",
+  "book.totalForNightsOne": "Total pour 1 nuit",
+  "book.promoLine": "Code promo @code",
 };

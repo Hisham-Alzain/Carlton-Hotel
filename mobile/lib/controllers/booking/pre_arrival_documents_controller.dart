@@ -13,7 +13,8 @@ import 'package:get/get.dart';
 /// `POST /pre-arrival/documents` as EXPLICIT indexed multipart.
 class PreArrivalDocumentsController extends GetxController {
   /// The selected files awaiting upload.
-  final RxList<PreArrivalDocumentUpload> docs = <PreArrivalDocumentUpload>[].obs;
+  final RxList<PreArrivalDocumentUpload> docs =
+      <PreArrivalDocumentUpload>[].obs;
   final RxBool submitting = false.obs;
 
   /// MIME types the backend accepts (max 10MB each, enforced server-side).

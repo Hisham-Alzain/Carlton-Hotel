@@ -1,8 +1,11 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/components/cards/custom_add_on_summary_tile.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
+import 'package:carlton/extensions/price_extension.dart';
 import 'package:carlton/components/custom_price_summary.dart';
 import 'package:carlton/components/custom_selectable_card.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -18,10 +21,16 @@ class AddOnsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<BookingFlowController>();
+    // Deferred to after this frame: loadAddOns() writes Rx state, which would
+    // otherwise mutate during build. It no-ops when the catalogue is already
+    // loaded or in flight, so re-entering the step costs nothing.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => controller.loadAddOns(),
+    );
 
     return CustomScaffold(
       appBar: AppBar(
-        title: Text('Add-Ons'),
+        title: Text(AppTranslations.addOns),
         iconTheme: IconThemeData(color: Colors.black),
         actions: [
           Container(
@@ -30,61 +39,73 @@ class AddOnsView extends StatelessWidget {
               color: AppColors.whisperGrey,
             ),
             child: IconButton(
-              onPressed: () {},
+              onPressed: Get.back<void>,
               icon: const Icon(Icons.close, color: AppColors.inkBlack),
             ),
           ),
         ],
       ),
-      body: Obx(
-        () {
-          final TextTheme textStyle = Get.textTheme;
-          final room = controller.selectedRoom.value;
-          return Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              spacing: 10,
-              children: [
-                AnimatedSmoothIndicator(
-                  activeIndex: 2,
-                  count: 6,
-                  effect: SlideEffect(
-                    dotHeight: 5,
-                    dotWidth: 50,
-                    spacing: 20,
-                    activeDotColor: AppColors.primary,
-                    dotColor: AppColors.iceBlue,
-                  ),
+      body: Obx(() {
+        final TextTheme textStyle = Get.textTheme;
+        final room = controller.selectedRoom.value;
+        return Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            spacing: 10,
+            children: [
+              AnimatedSmoothIndicator(
+                activeIndex: 2,
+                count: 6,
+                effect: SlideEffect(
+                  dotHeight: 5,
+                  dotWidth: 50,
+                  spacing: 20,
+                  activeDotColor: AppColors.primary,
+                  dotColor: AppColors.iceBlue,
                 ),
-                // CustomScrollView needs bounded height inside the Column, so
-                // it stays wrapped in Expanded.
-                Expanded(
-                  child: CustomScrollView(
-                    slivers: [
-                      SliverPadding(
-                        padding: const EdgeInsets.all(10),
-                        sliver: SliverToBoxAdapter(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 10,
-                            children: [
-                              if (room != null)
-                                CustomAddOnSummaryTile(
-                                  imagePath: room.images.first,
-                                  roomName: room.name,
-                                  subtitle: controller.roomDetailSummary,
-                                ),
-                              Text(
-                                'Enhance Your Stay',
-                                style: textStyle.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.inkBlack,
-                                ),
+              ),
+              // CustomScrollView needs bounded height inside the Column, so
+              // it stays wrapped in Expanded.
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.all(10),
+                      sliver: SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 10,
+                          children: [
+                            if (room != null)
+                              CustomAddOnSummaryTile(
+                                imagePath: room.images.first,
+                                roomName: room.name,
+                                subtitle: controller.roomDetailSummary,
                               ),
-                            ],
-                          ),
+                            Text(
+                              AppTranslations.enhanceYourStay,
+                              style: textStyle.labelLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.inkBlack,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
+                    if (controller.addOnsLoading.value)
+                      const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: CustomProgressIndicator(),
+                        ),
+                      )
+                    else if (controller.addOns.isEmpty)
+                      // A reachable-but-empty catalogue is a real state: the
+                      // hotel may simply have no extras published. The CTA
+                      // below already reads "Skip", so say nothing more.
+                      const SliverToBoxAdapter(child: SizedBox.shrink())
+                    else
                       SliverPadding(
                         padding: const EdgeInsets.all(10),
                         sliver: SliverList.builder(
@@ -96,7 +117,8 @@ class AddOnsView extends StatelessWidget {
                               child: CustomSelectableCard(
                                 title: addOn.title,
                                 subtitle: addOn.subtitle,
-                                trailingText: '+\$${addOn.price}',
+                                trailingText:
+                                    '+${MoneyFormat.usdString(addOn.priceUsd)}',
                                 selected: controller.selectedAddOnIds.contains(
                                   addOn.id,
                                 ),
@@ -107,44 +129,45 @@ class AddOnsView extends StatelessWidget {
                           },
                         ),
                       ),
-                    ],
+                  ],
+                ),
+              ),
+              // The extras total only exists once something is selected —
+              // an empty pill reading "+$0" is noise.
+              if (controller.selectedAddOnIds.isNotEmpty)
+                PillContainer(
+                  // The row no longer pads itself — fold what it used to add
+                  // into the pill.
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 10,
+                  ),
+                  backgroundColor: AppColors.cream,
+                  child: CustomPriceSummaryRow(
+                    title: AppTranslations.extrasTotal,
+                    value:
+                        '+${MoneyFormat.usd(controller.selectedAddOnsTotalUsd)}',
+                    titleStyle: textStyle.labelMedium?.copyWith(
+                      fontFamily: 'DM Sans',
+                      color: AppColors.inkBlack,
+                    ),
+                    valueStyle: textStyle.labelMedium?.copyWith(
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.walnutGold,
+                    ),
                   ),
                 ),
-                if (true) ...[
-                  PillContainer(
-                    // The row no longer pads itself — fold what it used to add
-                    // into the pill.
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 10,
-                    ),
-                    backgroundColor: AppColors.cream,
-                    child: CustomPriceSummaryRow(
-                      title: 'Extras total',
-                      value: '+\$${30}',
-                      titleStyle: textStyle.labelMedium?.copyWith(
-                        fontFamily: 'DM Sans',
-                        color: AppColors.inkBlack,
-                      ),
-                      valueStyle: textStyle.labelMedium?.copyWith(
-                        fontFamily: 'Plus Jakarta Sans',
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.walnutGold,
-                      ),
-                    ),
-                  ),
-                  CustomFilledButton(
-                    width: double.infinity,
-                    backgroundColor: AppColors.lagoonTeal,
-                    onPressed: controller.continueFromAddOns,
-                    child: Text(controller.addOnsCtaLabel),
-                  ),
-                ],
-              ],
-            ),
-          );
-        },
-      ),
+              CustomFilledButton(
+                width: double.infinity,
+                backgroundColor: AppColors.lagoonTeal,
+                onPressed: controller.continueFromAddOns,
+                child: Text(controller.addOnsCtaLabel),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }

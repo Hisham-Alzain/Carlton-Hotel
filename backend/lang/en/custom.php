@@ -62,6 +62,7 @@ return [
         'payment_failed'           => 'Payment could not be processed.',
         'inquiry_state'            => 'This status transition is not allowed.',
         'no_active_reservation'    => 'This action requires an active reservation.',
+        'check_in_not_available'   => "Check-in opens on your arrival day, once the hotel has confirmed your booking.",
         'no_table_available'       => 'No table is available for that time and party size.',
         'verified_contact_immutable' => 'This contact detail is already verified. Verify the new one with a code to change it.',
         'ancestor_trashed'         => 'This item cannot be restored while the record it belongs to is still in the recycle bin. Restore that one first.',

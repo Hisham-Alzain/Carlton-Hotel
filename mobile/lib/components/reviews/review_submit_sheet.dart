@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
@@ -49,7 +50,7 @@ class _ReviewSubmitSheetState extends State<ReviewSubmitSheet> {
     if (!mounted) return;
     if (ok) {
       Get.back(result: true);
-      CustomSnackbars.showSuccess(message: 'Thank you for your review');
+      CustomSnackbars.showSuccess(message: AppTranslations.reviewThankYou);
     } else {
       // The caller already surfaced the error.
       setState(() => _submitting = false);
@@ -65,7 +66,7 @@ class _ReviewSubmitSheetState extends State<ReviewSubmitSheet> {
       spacing: 10,
       children: [
         Text(
-          'Your Rating'.toUpperCase(),
+          AppTranslations.yourRating.toUpperCase(),
           style: textStyle.labelSmall?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.dimGrey,
@@ -86,7 +87,7 @@ class _ReviewSubmitSheetState extends State<ReviewSubmitSheet> {
           ),
         ),
         Text(
-          'Your Review (Optional)'.toUpperCase(),
+          AppTranslations.yourReviewOptional.toUpperCase(),
           style: textStyle.labelSmall?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.dimGrey,
@@ -96,7 +97,7 @@ class _ReviewSubmitSheetState extends State<ReviewSubmitSheet> {
           controller: _comment,
           textInputType: TextInputType.multiline,
           maxLines: 3,
-          hintText: 'Share your experience...',
+          hintText: AppTranslations.reviewShareHint,
           fillColor: AppColors.white,
           borderColor: AppColors.linenGrey,
         ),
@@ -105,7 +106,7 @@ class _ReviewSubmitSheetState extends State<ReviewSubmitSheet> {
           backgroundColor: AppColors.lagoonTeal,
           isLoading: _submitting,
           onPressed: (_submitting || _rating < 1) ? null : _submit,
-          child: const Text('Submit Review'),
+          child: Text(AppTranslations.submitReview),
         ),
       ],
     );

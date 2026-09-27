@@ -265,6 +265,15 @@ class AppTranslations {
   static String tableReservedFor(String label) =>
       'dining.tableReservedFor'.trParams({'label': label});
   static String get tableNeedsBooking => 'dining.tableNeedsBooking'.tr;
+  static String get tablePickTime => 'dining.tablePickTime'.tr;
+  static String get hotelName => 'general.hotelName'.tr;
+  static String get guestRelations => 'chat.guestRelations'.tr;
+  static String get callUnavailable => 'chat.callUnavailable'.tr;
+  static String get quickReplyHousekeeping => 'chat.quickReplyHousekeeping'.tr;
+  static String get quickReplyLateCheckout => 'chat.quickReplyLateCheckout'.tr;
+  static String get quickReplyDiningAdvice => 'chat.quickReplyDiningAdvice'.tr;
+  static String get quickReplyAirportTransfer =>
+      'chat.quickReplyAirportTransfer'.tr;
   static String get tableNoAvailability => 'dining.tableNoAvailability'.tr;
   static String get tableVenueUnavailable => 'dining.tableVenueUnavailable'.tr;
   static String get tableFailed => 'dining.tableFailed'.tr;
@@ -436,6 +445,8 @@ class AppTranslations {
   static String get yourRoomKey => 'checkIn.yourRoomKey'.tr;
   static String get roomKeySubtitle => 'checkIn.roomKeySubtitle'.tr;
   static String get keyCardWaitingTitle => 'checkIn.keyCardWaitingTitle'.tr;
+  static String keyCardRoomLabel(String number) =>
+      'checkIn.keyCardRoomLabel'.trParams({'number': number});
   static String get keyCardWaitingBody => 'checkIn.keyCardWaitingBody'.tr;
   static String get addDigitalKey => 'checkIn.addDigitalKey'.tr;
   static String get activatingDigitalKey => 'checkIn.activatingDigitalKey'.tr;
@@ -920,4 +931,152 @@ class AppTranslations {
   /// `@count Total` — the entry count on the ledger header.
   static String loyaltyEntryCount(int count) =>
       'loyalty.entryCount'.trParams({'count': '$count'});
+
+  // ── Full-coverage localization ────────────────────────────────────────
+  static String get bookingConfirmedBang => 'book.bookingConfirmedBang'.tr;
+  static String get enhanceYourStay => 'book.enhanceYourStay'.tr;
+  static String get guestAndPayment => 'book.guestAndPayment'.tr;
+  static String get payment => 'book.payment'.tr;
+  static String get paymentMethod => 'book.paymentMethod'.tr;
+  static String get phoneNumberRequired => 'book.phoneNumberRequired'.tr;
+  static String get promoInvalid => 'book.promoInvalid'.tr;
+  static String get roomSoldOut => 'book.roomSoldOut'.tr;
+  static String get datesSoldOut => 'book.datesSoldOut'.tr;
+  static String get bookingFailed => 'book.bookingFailed'.tr;
+  static String get dietaryNotesHint => 'book.dietaryNotesHint'.tr;
+  static String get applePayUnavailable => 'book.applePayUnavailable'.tr;
+  static String get googlePayUnavailable => 'book.googlePayUnavailable'.tr;
+  static String get cardUnavailable => 'book.cardUnavailable'.tr;
+  static String get cardWalletUnavailable => 'book.cardWalletUnavailable'.tr;
+  static String confirmationSentTo(String email) =>
+      'book.confirmationSentTo'.trParams({'email': email});
+  static String addOnsNotBooked(String items) =>
+      'book.addOnsNotBooked'.trParams({'items': items});
+  static String get bookingReceivedBang => 'book.bookingReceivedBang'.tr;
+  static String get awaitingConfirmation => 'stays.awaitingConfirmation'.tr;
+  static String get awaitingHotelConfirmation =>
+      'book.awaitingHotelConfirmation'.tr;
+  static String addOnsAfterConfirmation(String items) =>
+      'book.addOnsAfterConfirmation'.trParams({'items': items});
+  static String get soldOut => 'cards.soldOut'.tr;
+  static String get lastRoom => 'cards.lastRoom'.tr;
+  static String roomsLeft(String count) =>
+      'cards.roomsLeft'.trParams({'count': count});
+  static String get yourNameCaps => 'cards.yourName'.tr;
+  static String get beFirstToReview => 'dining.beFirstToReview'.tr;
+  static String get diningReviewsLoadFailed => 'dining.reviewsLoadFailed'.tr;
+  static String get detailsComingSoon => 'dining.detailsComingSoon'.tr;
+  static String get downloadFullMenu => 'dining.downloadFullMenu'.tr;
+  static String get specialRequestsOptional =>
+      'dining.specialRequestsOptional'.tr;
+  static String get vegan => 'dining.vegan'.tr;
+  static String get viewMenu => 'discover.viewMenu'.tr;
+  static String get viewOffer => 'discover.viewOffer'.tr;
+  static String get myBillTitle => 'folio.myBill'.tr;
+  static String get folioLoadFailed => 'folio.loadFailed'.tr;
+  static String get folioEmpty => 'folio.empty'.tr;
+  static String get folioEmptySubtitle => 'folio.emptySubtitle'.tr;
+  static String get subtotal => 'folio.subtotal'.tr;
+  static String get folioApproved => 'folio.approvedForCheckout'.tr;
+  static String get folioSourceRoom => 'folio.sourceRoomCharge'.tr;
+  static String get folioSourceService => 'folio.sourceService'.tr;
+  static String get folioSourceInRoom => 'folio.sourceInRoomRequest'.tr;
+  static String get cardSecurityNote => 'general.cardSecurityNote'.tr;
+  static String get acceptedPaymentMethods =>
+      'general.acceptedPaymentMethods'.tr;
+  static String get askMeAnything => 'general.askMeAnything'.tr;
+  static String get cvv => 'general.cvv'.tr;
+  static String get nameOnCard => 'general.nameOnCard'.tr;
+  static String get finalTotalForStay => 'general.finalTotalForStay'.tr;
+  static String get freeCancellation48h => 'general.freeCancellation48h'.tr;
+  static String get includesTaxesAndFees => 'general.includesTaxesAndFees'.tr;
+  static String get noPaymentRequiredNow => 'general.noPaymentRequiredNow'.tr;
+  static String get paymentAtFrontDesk => 'general.paymentAtFrontDesk'.tr;
+  static String get reservationSecuredNoCharge =>
+      'general.reservationSecuredNoCharge'.tr;
+  static String get checkConnectionShort => 'general.checkConnectionShort'.tr;
+  static String get aiConciergeTitle => 'home.aiConciergeTitle'.tr;
+  static String get restaurantsLoadFailed => 'home.restaurantsLoadFailed'.tr;
+  static String get roomsLoadFailed => 'home.roomsLoadFailed'.tr;
+  static String get dndNeedsActiveStay => 'home.dndNeedsActiveStay'.tr;
+  static String get noRoomsAvailable => 'home.noRoomsAvailable'.tr;
+  static String get roomsAppearWhenOpen => 'home.roomsAppearWhenOpen'.tr;
+  static String get noRestaurantsYet => 'home.noRestaurantsYet'.tr;
+  static String get venuesListedSoon => 'home.venuesListedSoon'.tr;
+  static String get dndOff => 'home.dndOff'.tr;
+  static String get dndOn => 'home.dndOn'.tr;
+  static String get offersPackages => 'home.offersPackages'.tr;
+  static String get sendAMessage => 'home.sendAMessage'.tr;
+  static String get guestRelationsWillReply =>
+      'home.guestRelationsWillReply'.tr;
+  static String get startConversation => 'home.startConversation'.tr;
+  static String get nightsLeft => 'home.nightsLeft'.tr;
+  static String get legalLoadFailed => 'legal.loadFailed'.tr;
+  static String get yourRating => 'reviews.yourRating'.tr;
+  static String get yourReviewOptional => 'reviews.yourReviewOptional'.tr;
+  static String get cancelReservationTitle =>
+      'sheets.cancelReservationTitle'.tr;
+  static String cancelReservationBody(String room) =>
+      'sheets.cancelReservationBody'.trParams({'room': room});
+  static String cancelReservationBodyDated(String room, String dates) =>
+      'sheets.cancelReservationBodyDated'.trParams({
+        'room': room,
+        'dates': dates,
+      });
+  static String get freeCancellationNoCharges =>
+      'sheets.freeCancellationNoCharges'.tr;
+  static String requestFor(String target) =>
+      'sheets.requestFor'.trParams({'target': target});
+  static String teamWithinMinutes(String eta) =>
+      'sheets.teamWithinMinutes'.trParams({'eta': eta});
+  static String get teamShortly => 'sheets.teamShortly'.tr;
+  static String get offerTerms => 'sheets.offerTerms'.tr;
+  static String get receiptHotelName => 'stays.receiptHotelName'.tr;
+  static String get checkoutConfirmShort => 'stays.checkoutConfirmShort'.tr;
+  static String get cancelFailed => 'stays.cancelFailed'.tr;
+  static String get preOrderBeforeArrival => 'stays.preOrderBeforeArrival'.tr;
+  static String get settledAtFrontDesk => 'stays.settledAtFrontDesk'.tr;
+  static String get notCancellable => 'stays.notCancellable'.tr;
+  static String get supportLoadFailed => 'support.loadFailed'.tr;
+  static String get supportGeneral => 'support.general'.tr;
+  static String get messageUs => 'support.messageUs'.tr;
+  static String get supportEmpty => 'support.empty'.tr;
+  static String get supportEmptySubtitle => 'support.emptySubtitle'.tr;
+  static String get stillNeedHelp => 'support.stillNeedHelp'.tr;
+  static String nextCheckInInDays(String days) =>
+      'stays.nextCheckInInDays'.trParams({'days': days});
+
+  /// `1 review` / `@count reviews` — same two-form reasoning as [adultsCount].
+  static String reviewsCount(int count) => count == 1
+      ? 'dining.reviewsCountOne'.tr
+      : 'dining.reviewsCount'.trParams({'count': '$count'});
+
+  static String checkedInRoom(String room) =>
+      'cards.checkedInRoom'.trParams({'room': room});
+
+  static String paymentProcessed(String method) =>
+      'stays.paymentProcessed'.trParams({'method': method});
+
+  static String confirmAndPay(String total) =>
+      'book.confirmAndPay'.trParams({'total': total});
+
+  static String continueWithExtras(int count) => count == 1
+      ? 'book.continueWithExtrasOne'.tr
+      : 'book.continueWithExtras'.trParams({'count': '$count'});
+
+  static String validFrom(String date) =>
+      'general.validFrom'.trParams({'date': date});
+
+  static String validUntil(String date) =>
+      'general.validUntil'.trParams({'date': date});
+
+  static String passportNumber(String number) =>
+      'checkIn.passportNumber'.trParams({'number': number});
+
+  static String totalForNights(int count) => count == 1
+      ? 'book.totalForNightsOne'.tr
+      : 'book.totalForNights'.trParams({'count': '$count'});
+
+  static String promoLine(String code) =>
+      'book.promoLine'.trParams({'code': code});
 }

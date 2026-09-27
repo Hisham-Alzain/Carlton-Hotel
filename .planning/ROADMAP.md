@@ -22,12 +22,12 @@ This milestone replaces the mock data behind the Carlton staff dashboard and gue
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Access & Settings** - Guest sign-out, staff own profile and password change; sets the per-phase docs/permission conventions
-- [ ] **Phase 2: Rooms — Status Lifecycle & Grids** - Live room board, audited housekeeping status transitions, 14-day availability and rate grids
-- [ ] **Phase 3: Reservations Front-Desk Verbs** - Reservation notes, available-room pick list, one-call check-in and check-out
-- [ ] **Phase 4: Guests & Stay** - Guest directory, profile with notes/preferences/pre-arrival checklist, online check-in with digital key
-- [ ] **Phase 5: Folio Extensions** - Staff folio read, line-item posting, payments, guest and staff line-item disputes
-- [ ] **Phase 6: Housekeeping & Guest Services** - Housekeeping task board tied to room status, service-request board, departure services
+- [x] **Phase 1: Access & Settings** - Guest sign-out, staff own profile and password change; sets the per-phase docs/permission conventions
+- [x] **Phase 2: Rooms — Status Lifecycle & Grids** - Live room board, audited housekeeping status transitions, 14-day availability and rate grids
+- [x] **Phase 3: Reservations Front-Desk Verbs** - Reservation notes, available-room pick list, one-call check-in and check-out
+- [x] **Phase 4: Guests & Stay** - Guest directory, profile with notes/preferences/pre-arrival checklist, online check-in with digital key
+- [x] **Phase 5: Folio Extensions** - Staff folio read, line-item posting, payments, guest and staff line-item disputes
+- [x] **Phase 6: Housekeeping & Guest Services** - Housekeeping task board tied to room status, service-request board, departure services
 - [ ] **Phase 7: Support Tickets & Queue** - Full support-ticket lifecycle, queue claim, assignable staff list
 - [ ] **Phase 8: Events & Dining** - Event inquiry checklist/deposit/notes, table reservation list, venue menu download
 - [ ] **Phase 9: Night Audit & Reports** - Per-business-date night audit with checks and blockers, reports dashboard

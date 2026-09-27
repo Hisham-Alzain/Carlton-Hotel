@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 5
-current_phase_name: Folio Extensions
+current_phase: 6
+current_phase_name: Housekeeping & Guest Services
 status: complete
-stopped_at: Phase 5 closed; ready to execute Phase 6
+stopped_at: Phase 6 closed; Phase 7 context captured, ready to research/plan Phase 7
 last_updated: "2026-09-27T00:00:00.000Z"
 last_activity: 2026-09-27
-last_activity_desc: "Phase 5 closed: folio read, charges/credits, idempotent payments, disputes; folios.post/folios.dispute permissions (21->23, 10 groups); settle payment-free close path (BREAKING folio_settle error code); docs/Postman/tree closure. QA added tests/Unit/Folio/FolioWriterActionsTest.php (9 tests); closer applied max:99999.99 on settle amounts and localized the settle validation attribute. Full suite 1522/1522 green."
+last_activity_desc: "Phase 6 closed (d8ac795): housekeeping tasks, queue registry, SR board, departure services; housekeeping.* permissions (23->26, 11 groups); reception gains service_requests.update; 405 envelope fix (613a980). Full suite 1709 green."
 progress:
   total_phases: 9
-  completed_phases: 1
+  completed_phases: 6
   total_plans: 43
-  completed_plans: 14
+  completed_plans: 33
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-25)
 
 **Core value:** Every screen the dashboard and guest app already show works against a real, tested, convention-compliant `/api/v1` endpoint instead of mock data.
-**Current focus:** Phase 5: Folio Extensions
+**Current focus:** Phase 7: Support Tickets & Queue
 
 ## Current Position
 
-Phase: 5 of 9 (Folio Extensions) — complete
-Plan: 10 of 10 in current phase (05-01 .. 05-10 all done)
-Status: Phase 5 closed; ready to plan/execute Phase 6 (Housekeeping & Guest Services)
-Last activity: 2026-09-27 — Phase 5 closed: folio read, charges/credits, idempotent payments, disputes; folios.post/folios.dispute permissions (21->23, 10 groups); payment-free settle close path (BREAKING folio_settle error code); docs/Postman/tree closure. QA added tests/Unit/Folio/FolioWriterActionsTest.php (9 tests); closer applied max:99999.99 on settle amounts and localized the settle validation attribute. Full suite 1522/1522 green.
+Phase: 6 of 9 (Housekeeping & Guest Services) — complete
+Plan: 9 of 9 in current phase (06-01 .. 06-09 all done)
+Status: Phase 6 closed; Phase 7 context committed (ad70f91), ready to research/plan Phase 7
+Last activity: 2026-09-27 — Phase 6 closed (d8ac795) + 405 fix (613a980); full suite 1709 green.
 
-Progress: [█████░░░░] 56%
+Progress: [██████░░░] 67%
 
 ## Performance Metrics
 

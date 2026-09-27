@@ -153,8 +153,8 @@ class ServicesController extends GetxController
         : (s.checkIn != null ? _dateFormat.format(s.checkIn!) : '');
   }
 
-  static final DateFormat _timeFormat = DateFormat('h:mm a');
-  static final DateFormat _dateFormat = DateFormat('MMM d');
+  static DateFormat get _timeFormat => DateFormat('h:mm a');
+  static DateFormat get _dateFormat => DateFormat('MMM d');
 
   void switchTab(int index) => tabController.animateTo(index);
 

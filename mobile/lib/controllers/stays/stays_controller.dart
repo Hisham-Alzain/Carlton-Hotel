@@ -48,9 +48,9 @@ class StaysController extends GetxController
   // ── Past uses the mixin's Rx items / loading / hasError + scrollController ──
 
   // Reused label formatters (money via [usd]).
-  static final DateFormat _fullDate = DateFormat('MMM d, yyyy');
-  static final DateFormat _shortDate = DateFormat('MMM d');
-  static final DateFormat _time = DateFormat('h:mm a');
+  static DateFormat get _fullDate => DateFormat('MMM d, yyyy');
+  static DateFormat get _shortDate => DateFormat('MMM d');
+  static DateFormat get _time => DateFormat('h:mm a');
 
   @override
   void onInit() {
@@ -194,7 +194,8 @@ class StaysController extends GetxController
   Stay _pastToStay(PastStay s) {
     final range = (s.checkIn != null && s.checkOut != null)
         ? '${_shortDate.format(s.checkIn!)} – '
-              '${_shortDate.format(s.checkOut!)} · ${s.totalNights} nights'
+              '${_shortDate.format(s.checkOut!)} · '
+              '${AppTranslations.nightsCount(s.totalNights)}'
         : AppTranslations.nightsCount(s.totalNights);
     return Stay(
       id: s.uuid,

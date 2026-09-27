@@ -505,6 +505,8 @@ const Map<String, String> frKeys = {
   "general.date": "Date",
   "general.time": "Heure",
   "general.guests": "Convives",
+  "general.guestsCount": "@count personnes",
+  "general.guestsCountOne": "1 personne",
   "general.about": "À propos",
   "general.hours": "Horaires",
   "general.gallery": "Galerie",

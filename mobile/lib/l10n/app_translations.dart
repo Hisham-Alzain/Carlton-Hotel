@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 
-//TODD: check if there any hardcoded strings in the app and replace them with the relevant translations
 class AppTranslations {
   // Dialogs
   static String get loading => 'dialogs.loading'.tr;
@@ -310,7 +309,6 @@ class AppTranslations {
   static String get howMayIAssist => 'concierge.howMayIAssist'.tr;
   static String get helpDescription => 'concierge.helpDescription'.tr;
   static String get conciergeComingSoon => 'concierge.comingSoon'.tr;
-  static String get attachmentTooLarge => 'concierge.attachmentTooLarge'.tr;
 
   // Stays
   static String get staysTitle => 'stays.title'.tr;
@@ -737,6 +735,11 @@ class AppTranslations {
   static String nightsCount(int count) => count == 1
       ? 'book.nightsCountOne'.tr
       : 'book.nightsCount'.trParams({'count': '$count'});
+
+  /// `1 guest` / `@count guests` — same two-form reasoning as [adultsCount].
+  static String guestsCount(int count) => count == 1
+      ? 'general.guestsCountOne'.tr
+      : 'general.guestsCount'.trParams({'count': '$count'});
 
   static String walletUnavailable(String method) =>
       'payment.walletUnavailable'.trParams({'method': method});

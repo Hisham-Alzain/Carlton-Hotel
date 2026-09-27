@@ -176,7 +176,6 @@ class AiConciergeController extends GetxController {
   Future<void> refreshThread() => _loadThread();
 
   /// Pick a single image (≤5MB) to attach to the next message.
-  /// TODO: ask claude to fix
   Future<void> pickAttachment() async {
     final result = await FilePicker.pickFiles(type: FileType.image);
     if (result == null || result.files.isEmpty) return;

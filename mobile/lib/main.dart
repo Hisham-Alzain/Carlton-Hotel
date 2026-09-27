@@ -12,11 +12,14 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:get/get.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'services/get_storage_service.dart';
 
 Future<void> main() async {
-  //TODO: drop all the unused assets icons or images and replace all icons that are svg with relevent ones from flutter iccons
   WidgetsFlutterBinding.ensureInitialized();
+  // Month and day names for every shipped language; DateFormat follows
+  // Intl.defaultLocale, which SettingsService keeps in step with the UI.
+  await initializeDateFormatting();
 
   // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // register the background handler as early as possible

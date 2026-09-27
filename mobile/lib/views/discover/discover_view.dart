@@ -166,7 +166,7 @@ class DiscoverView extends GetView<DiscoverController> {
         : AppTranslations.validUntil(_shortDate.format(until));
   }
 
-  static final DateFormat _shortDate = DateFormat('MMM d');
+  static DateFormat get _shortDate => DateFormat('MMM d');
 }
 
 /// Experience category chips. Tapping the selected chip clears it (see

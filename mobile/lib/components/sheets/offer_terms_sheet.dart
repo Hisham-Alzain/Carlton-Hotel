@@ -113,5 +113,5 @@ class OfferTermsSheet extends StatelessWidget {
     return '';
   }
 
-  static final DateFormat _date = DateFormat('MMM d, yyyy');
+  static DateFormat get _date => DateFormat('MMM d, yyyy');
 }

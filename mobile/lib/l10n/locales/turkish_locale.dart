@@ -496,6 +496,8 @@ const Map<String, String> trKeys = {
   "general.date": "Tarih",
   "general.time": "Saat",
   "general.guests": "Kişi",
+  "general.guestsCount": "@count misafir",
+  "general.guestsCountOne": "1 misafir",
   "general.about": "Hakkında",
   "general.hours": "Çalışma saatleri",
   "general.gallery": "Galeri",

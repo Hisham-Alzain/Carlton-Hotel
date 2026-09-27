@@ -24,14 +24,15 @@ class PreArrivalDocumentsController extends GetxController {
   static const List<String> documentTypes = ['passport', 'id_card', 'visa'];
 
   Future<void> pickDocuments() async {
-    // v12 `pickFiles` implies multiple selection (`allowMultiple` is deprecated)
-    // and returns the picked list directly — empty on cancel, never null.
+    // v12 `pickFiles` implies multiple selection (`allowMultiple` is
+    // deprecated). It still returns null when the guest cancels.
     final picked = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: allowedExtensions,
     );
+    if (picked == null) return;
 
-    for (final file in picked) {
+    for (final file in picked.files) {
       final path = file.path;
       if (path == null) continue;
       docs.add(

@@ -4,11 +4,13 @@ import 'package:carlton/l10n/local.dart';
 import 'package:carlton/models/currency.dart';
 import 'package:carlton/models/language.dart';
 import 'package:carlton/services/get_storage_service.dart';
+import 'package:carlton/services/api/api_service.dart';
+import 'package:carlton/services/middleware_service.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class SettingsService extends GetxService {
   /// Reactive state
-  /// TODO: add the mising locals and currencies and check if it is compatible with the backend
   final Rx<Locale> locale = const Locale('en').obs;
   final Rx<Language> language = Language(name: 'English', local: 'en').obs;
   final Rx<Currency> currency = currencies.first.obs;
@@ -67,6 +69,7 @@ class SettingsService extends GetxService {
     )!;
 
     locale.value = Locale(code);
+    Intl.defaultLocale = code;
 
     language.value = langs.firstWhere(
       (l) => l.local == code,
@@ -77,15 +80,42 @@ class SettingsService extends GetxService {
   Future<void> changeLanguage(Language lang) async {
     language.value = lang;
     locale.value = Locale(lang.local);
+    Intl.defaultLocale = lang.local;
 
     await StorageService.setString(StorageKeys.language, lang.local);
 
     Get.updateLocale(locale.value);
+    _saveToProfile(lang.local);
+  }
+
+  /// Languages `PUT /auth/guest/profile` accepts as `preferred_locale`. The
+  /// app ships five; the server stores only these two, so a French, Turkish or
+  /// Spanish choice stays on this device only.
+  static const Set<String> _serverLocales = {'en', 'ar'};
+
+  /// Remembers a signed-in guest's language on their profile, so it follows
+  /// them to another device. Silent and best-effort: the language already
+  /// switched locally, and nothing here may block that.
+  void _saveToProfile(String code) {
+    if (!_serverLocales.contains(code)) return;
+    if (!Get.isRegistered<MiddlewareService>() ||
+        !MiddlewareService.find.isAuthenticated) {
+      return;
+    }
+    if (MiddlewareService.find.guest.value?.preferredLocale == code) return;
+    ApiService.find.put<Map<String, dynamic>>(
+      path: '/auth/guest/profile',
+      data: {'preferred_locale': code},
+      showErrorDialog: false,
+    );
   }
 
   /// Mirror a server-provided locale code (`en`/`ar`) into the app — called
-  /// once when a guest signs in (their `preferred_locale`). No-op if already set.
+  /// when a guest signs in (their `preferred_locale`). A language the guest
+  /// picked on this device wins: the profile defaults to `en`, so adopting it
+  /// unconditionally flipped an Arabic UI to English at every sign-in.
   Future<void> setLocaleFromCode(String code) async {
+    if (StorageService.getString(StorageKeys.language) != null) return;
     if (code == locale.value.languageCode) return;
     final match = langs.where((l) => l.local == code);
     if (match.isEmpty) return;

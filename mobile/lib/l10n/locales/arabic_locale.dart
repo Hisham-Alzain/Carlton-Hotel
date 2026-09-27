@@ -472,6 +472,8 @@ const Map<String, String> arKeys = {
   "general.date": "التاريخ",
   "general.time": "الوقت",
   "general.guests": "الضيوف",
+  "general.guestsCount": "@count ضيوف",
+  "general.guestsCountOne": "ضيف واحد",
   "general.about": "نبذة",
   "general.hours": "ساعات العمل",
   "general.gallery": "معرض الصور",

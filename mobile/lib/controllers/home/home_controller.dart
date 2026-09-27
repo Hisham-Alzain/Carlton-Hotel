@@ -382,7 +382,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     );
   }
 
-  static final DateFormat _fullDate = DateFormat('MMM d, yyyy');
+  static DateFormat get _fullDate => DateFormat('MMM d, yyyy');
 
   /// Folio amounts arrive as USD decimal strings. Routed through [MoneyFormat]
   /// so the bill follows the guest's currency choice — a bare `\$` prefix here

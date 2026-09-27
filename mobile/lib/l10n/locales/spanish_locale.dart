@@ -495,6 +495,8 @@ const Map<String, String> esKeys = {
   "general.date": "Fecha",
   "general.time": "Hora",
   "general.guests": "Comensales",
+  "general.guestsCount": "@count huéspedes",
+  "general.guestsCountOne": "1 huésped",
   "general.about": "Acerca de",
   "general.hours": "Horario",
   "general.gallery": "Galería",

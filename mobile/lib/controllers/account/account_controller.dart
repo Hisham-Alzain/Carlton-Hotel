@@ -33,7 +33,9 @@ class AccountController extends GetxController {
     message: AppTranslations.sectionComingSoon(label),
   );
 
-  //TODO: no sign out api is called it is static
+  /// Sign-out calls `POST /auth/guest/logout` (MiddlewareService.signOut) to
+  /// revoke the token, then clears the local session whatever the answer — a
+  /// guest must always be able to sign out, even offline.
   void confirmSignOut() {
     showSignOutSheet(
       onConfirm: () async {
@@ -46,5 +48,4 @@ class AccountController extends GetxController {
     );
   }
 
-  //TODO: no delete account api
 }

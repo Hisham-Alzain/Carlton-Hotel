@@ -463,7 +463,7 @@ class BookingFlowController extends GetxController
         iconPath: 'assets/icons/view.svg',
         subtitle: (json) {
           final capacity = (json['capacity'] as num?)?.toInt();
-          return capacity == null ? '' : '$capacity ${AppTranslations.guests}';
+          return capacity == null ? '' : AppTranslations.guestsCount(capacity);
         },
       ),
       ..._mapBookables(

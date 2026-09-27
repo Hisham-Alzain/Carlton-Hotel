@@ -160,7 +160,7 @@ class ServiceRequest {
   /// the priority.
   String get detail {
     final mins = serviceItem?.expectedMinutes;
-    if (mins != null) return '~$mins min';
+    if (mins != null) return AppTranslations.etaMinutes(mins);
     final dept = department;
     if (dept != null && dept.isNotEmpty) return _humanize(dept);
     return _humanize(priority);

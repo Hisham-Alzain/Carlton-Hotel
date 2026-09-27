@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 /// Renders the Loyalty screen end to end.
 ///
@@ -22,6 +23,8 @@ void main() {
 
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
+    // As main() does: dates format in the app language, which needs its data.
+    await initializeDateFormatting();
     tempDir = await Directory.systemTemp.createTemp('carlton_loyalty_test');
 
     // `SettingsService.onInit` reads the stored locale through GetStorage,

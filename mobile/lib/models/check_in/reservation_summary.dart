@@ -92,6 +92,6 @@ class ReservationSummary {
     guest?.lastName,
   ].whereType<String>().where((p) => p.trim().isNotEmpty).join(' ').trim();
 
-  static final DateFormat _date = DateFormat('MMM d, yyyy');
-  static final DateFormat _short = DateFormat('MMM d');
+  static DateFormat get _date => DateFormat('MMM d, yyyy');
+  static DateFormat get _short => DateFormat('MMM d');
 }

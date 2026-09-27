@@ -479,6 +479,8 @@ const Map<String, String> enKeys = {
   "general.date": "Date",
   "general.time": "Time",
   "general.guests": "Guests",
+  "general.guestsCount": "@count guests",
+  "general.guestsCountOne": "1 guest",
   "general.about": "About",
   "general.hours": "Hours",
   "general.gallery": "Gallery",

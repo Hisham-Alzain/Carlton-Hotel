@@ -234,7 +234,43 @@ Plans:
   5. Contract gate: all new routes pass happy / 401 / 403 / 422 tests with the suite green, AR/EN keys exist, and the housekeeping, service-request board and departure-services nodes are `api:true`. The guides and Postman are updated, and housekeeping permissions are seeded and listed in the summary.
 
 **Reuses**: `AssignRequestAction` / `UpdateRequestStatusAction` (polymorphic union, adding a third arm), `OperationsQueueService`, `ServiceRequest`, `ServiceBooking`, `Transfer`, `ServiceItem` / `ServiceCategory`, the Phase 3 check-out event, `service_requests.view` / `.assign` / `.update`
-**Plans**: TBD
+**Plans**: 9 plans
+Plans:
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — Task foundation: `housekeeping_tasks` + history tables, enums, model-derived dedupe key, `ensureOpen()`, `HousekeepingTaskChanged`, `housekeeping:reconcile` (HK-04)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 06-02-PLAN.md — Automatic tasks: turnover on check-out (SLA config, arrival priority), request task for housekeeping-department requests, `reservations.check_out_mode` (HK-04)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 06-03-PLAN.md — Single writers: status (transition table, turnover room hook, request link) and assign, room-board closer, service-request close cancels its task, housekeeping lang keys (HK-03, HK-04)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 06-04-PLAN.md — Task board API: `GET/POST /housekeeping/tasks`, show, assign, status; filter; `housekeeping.view|assign|update` seeded with presets and re-pinned tests (HK-01, HK-02, HK-03, HK-04)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 06-05-PLAN.md — Operations queue third type via `OperationsQueueType` registry, `room_number` / `allowed_statuses`, widened polymorphic actions, queued Firestore task mirror (HK-05)
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 06-06-PLAN.md — Service-request board: `GET /cms/service-requests` (+ show), filters, ≤ 7 queries, writes via the queue (SVC-01)
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
+- [ ] 06-07-PLAN.md — Departure list: seeded `late_checkout` / `luggage` direct categories, `GET /departure-services` projection with `stage`, `allowed_statuses`, `meta.truncated` (SVC-02, SVC-04)
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
+- [ ] 06-08-PLAN.md — Departure status: `PATCH /departure-services/{uuid}/status`, `UpdateServiceBookingStatusAction`, read-only express rows (SVC-03)
+
+**Wave 9** *(blocked on Wave 8 completion)*
+
+- [ ] 06-09-PLAN.md — Guides, changelog, Postman, tree, quick-request chip mapping, phase gate and SUMMARY (SVC-04, DOCS-01, XCUT-01)
 
 ### Phase 7: Support Tickets & Queue
 

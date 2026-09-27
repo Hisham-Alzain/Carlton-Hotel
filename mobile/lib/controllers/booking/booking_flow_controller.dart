@@ -781,7 +781,13 @@ class BookingFlowController extends GetxController
         }
       }
       // The Stays list and Home were loaded before this booking existed.
-      if (Get.isRegistered<StaysController>()) {
+      // Only a Stays controller that already exists: Stays is `lazyPut`, so
+      // `Get.find` here would create it tied to this booking route, and popping
+      // the route back to Main would delete it — TabController included —
+      // while the Stays tab still holds it. One that doesn't exist yet loads
+      // fresh when its tab first builds.
+      if (Get.isRegistered<StaysController>() &&
+          !Get.isPrepared<StaysController>()) {
         Get.find<StaysController>().reloadUpcoming();
       }
       if (Get.isRegistered<HomeController>()) {
@@ -814,7 +820,8 @@ class BookingFlowController extends GetxController
     Get.find<MainController>().changeTab(1);
     // A new booking is never "active" (that is a checked-in stay) — open the
     // Upcoming tab, where it is listed.
-    if (Get.isRegistered<StaysController>()) {
+    if (Get.isRegistered<StaysController>() &&
+        !Get.isPrepared<StaysController>()) {
       Get.find<StaysController>().tabController.animateTo(1);
     }
   }

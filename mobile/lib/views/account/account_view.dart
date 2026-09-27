@@ -1,7 +1,7 @@
 import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/components/account/account_profile_card.dart';
 import 'package:carlton/components/account/custom_list_row.dart';
 import 'package:carlton/components/account/custom_settings_section.dart';
-import 'package:carlton/components/custom_initial_avatar.dart';
 import 'package:carlton/controllers/account/account_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
@@ -21,36 +21,14 @@ class AccountView extends GetView<AccountController> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Row(
-            spacing: 14,
-            children: [
-              CustomInitialAvatar(
-                initial: controller.name,
-                backgroundColor: AppColors.primary,
-              ),
-              Expanded(
-                child: Column(
-                  spacing: 4,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      controller.name,
-                      style: textStyle.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    Text(
-                      controller.email,
-                      style: textStyle.labelMedium?.copyWith(
-                        fontFamily: 'DM Sans',
-                        color: AppColors.primary50,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          // Identity and the Loyalty entry point as one card, not a plain
+          // avatar row sitting above a differently-styled one — the membership
+          // belongs to this guest, so both live on the single teal-and-gold
+          // surface (see AccountProfileCard).
+          AccountProfileCard(
+            name: controller.name,
+            email: controller.email,
+            onTapLoyalty: controller.openLoyalty,
           ),
           const SizedBox(height: 24),
           CustomSettingsSection(

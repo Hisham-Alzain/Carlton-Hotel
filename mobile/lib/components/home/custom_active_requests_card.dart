@@ -122,23 +122,15 @@ class _RequestRow extends StatelessWidget {
             child: Row(
               spacing: 10,
               children: [
+                // Sized for the tile illustration to read at a glance — the
+                // same artwork as the Services hub, framed on its tile colour.
                 PillContainer(
-                  width: 30,
-                  height: 30,
-                  radius: 8,
+                  width: 52,
+                  height: 52,
+                  radius: 12,
                   backgroundColor: AppColors.primary06,
-                  child: Opacity(
-                    opacity: 0.7,
-                    child: SvgPicture.asset(
-                      request.iconAsset,
-                      width: 16,
-                      height: 16,
-                      colorFilter: const ColorFilter.mode(
-                        AppColors.primary,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                  ),
+                  padding: const EdgeInsets.all(6),
+                  child: _RequestArtwork(imagePath: request.tileImage),
                 ),
                 Expanded(
                   child: Column(
@@ -179,6 +171,43 @@ class _RequestRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The request's Services-hub illustration, or the generic request glyph for a
+/// type with no tile. The tile PNGs are ~1024 px Figma exports, so they are
+/// decoded at the rendered size rather than full resolution.
+class _RequestArtwork extends StatelessWidget {
+  const _RequestArtwork({required this.imagePath});
+
+  final String? imagePath;
+
+  static const double _size = 40;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = imagePath;
+    if (path == null) {
+      return Opacity(
+        opacity: 0.7,
+        child: SvgPicture.asset(
+          'assets/icons/act_request.svg',
+          width: 24,
+          height: 24,
+          colorFilter: const ColorFilter.mode(
+            AppColors.primary,
+            BlendMode.srcIn,
+          ),
+        ),
+      );
+    }
+    return Image.asset(
+      path,
+      width: _size,
+      height: _size,
+      fit: BoxFit.contain,
+      cacheWidth: (_size * MediaQuery.devicePixelRatioOf(context)).round(),
     );
   }
 }

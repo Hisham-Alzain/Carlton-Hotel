@@ -1,5 +1,6 @@
 import 'package:carlton/controllers/auth/find_booking_controller.dart';
 import 'package:carlton/components/custom_auth_background.dart';
+import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
 import 'package:carlton/customWidgets/custom_validation.dart';
@@ -31,13 +32,29 @@ class FindBookingView extends GetView<FindBookingController> {
                 validator: (enteredReservationCode) => CustomValidation()
                     .validateRequiredField(enteredReservationCode),
               ),
-              CustomTextField(
-                controller: controller.lastNameController,
-                textInputType: TextInputType.name,
-                hintText: AppTranslations.lastNameHint,
-                captionLabel: AppTranslations.lastNameLabel,
-                validator: (enteredLastName) =>
-                    CustomValidation().validateRequiredField(enteredLastName),
+              // The phone on the reservation — the code is texted to it.
+              Row(
+                spacing: 10,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  CustomCountryCodePicker(phoneField: controller.phone),
+                  Flexible(
+                    child: CustomTextField(
+                      controller: controller.phone.controller,
+                      inputFormatters: [controller.phone.formatter],
+                      textInputType: TextInputType.phone,
+                      textDirection: TextDirection.ltr,
+                      captionLabel: AppTranslations.phoneNumber,
+                      hintText: AppTranslations.phoneNumberHint,
+                      validator: (enteredPhoneNumber) =>
+                          CustomValidation().validatePhoneNumber(
+                            enteredPhoneNumber,
+                            dialCode: controller.phone.dialCode,
+                          ),
+                    ),
+                  ),
+                ],
               ),
               Obx(
                 () => CustomFilledButton(

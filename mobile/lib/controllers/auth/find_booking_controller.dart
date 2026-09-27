@@ -1,3 +1,4 @@
+import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/models/otp_verify_args.dart';
 import 'package:carlton/models/pending_booking_link.dart';
 import 'package:carlton/routes/routes.dart';
@@ -7,13 +8,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// "I already have a reservation" — links a hotel booking to the app via
-/// `POST /auth/guest/link-booking-code {booking_code, last_name}`, which sends
-/// an OTP to the reservation contact, then routes to OTP with
-/// `purpose: booking_link`.
+/// `POST /auth/guest/link-booking-code {booking_code, phone}`, then routes to
+/// OTP with `purpose: booking_link`.
+///
+/// The second factor is the **phone**, not the last name: the server texts the
+/// code to the reservation's phone and returns only a masked copy of it, while
+/// `verify-otp` must be told which phone the code belongs to. Asking the guest
+/// for it means the app holds the real number to verify against — and the
+/// server only matches a booking whose phone is that number.
 class FindBookingController extends GetxController {
   final formKey = GlobalKey<FormState>();
   final codeController = TextEditingController();
-  final lastNameController = TextEditingController();
+  final phone = PhoneFieldState();
 
   final RxBool isSubmitting = false.obs;
 
@@ -21,12 +27,12 @@ class FindBookingController extends GetxController {
     if (!formKey.currentState!.validate()) return;
 
     final bookingCode = codeController.text.trim();
-    final lastName = lastNameController.text.trim();
+    final phoneNumber = phone.controller.text.trim();
 
     isSubmitting.value = true;
     final response = await ApiService.find.post<Map<String, dynamic>>(
       path: '/auth/guest/link-booking-code',
-      data: {'booking_code': bookingCode, 'last_name': lastName},
+      data: {'booking_code': bookingCode, 'phone': phoneNumber},
     );
     if (isClosed) return;
     isSubmitting.value = false;
@@ -35,19 +41,18 @@ class FindBookingController extends GetxController {
 
     // Stash so the OTP screen can re-trigger link-booking-code on resend.
     await SessionService.setPendingBookingLink(
-      PendingBookingLink(bookingCode: bookingCode, lastName: lastName),
+      PendingBookingLink(bookingCode: bookingCode, phone: phoneNumber),
     );
 
-    final masked = response.data!['identifier_masked'] as String? ?? '';
+    // The server masks the number it texted; show that, but verify against
+    // the number the guest typed — the same one, since the lookup matched it.
+    final masked = response.data!['identifier_masked'] as String? ?? phoneNumber;
     Get.toNamed(
       Routes.otpVerify,
-      // NOTE: for booking_link the verify-otp identifier is keyed by the
-      // reservation contact server-side; the app only has the masked value to
-      // display. Confirm the exact verify-otp payload for this path on-device.
       arguments: OtpVerifyArgs(
         channel: 'sms',
         purpose: 'booking_link',
-        identifier: masked,
+        identifier: phoneNumber,
         display: masked,
       ),
     );
@@ -56,7 +61,7 @@ class FindBookingController extends GetxController {
   @override
   void onClose() {
     codeController.dispose();
-    lastNameController.dispose();
+    phone.dispose();
     super.onClose();
   }
 }

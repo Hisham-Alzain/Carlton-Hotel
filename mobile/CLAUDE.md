@@ -43,7 +43,7 @@ Routes are centralized in two files:
 ### Networking (`services/api/`)
 
 `ApiService` (GetxService) wraps a `Dio` client built by `ApiClient.build()`. Interceptor order matters and is documented inline in `api_client.dart`:
-1. `ConnectivityInterceptor` — rejects early if offline
+1. `ConnectivityInterceptor` — after a request fails to connect, relabels it "no internet" if the device is offline (never blocks a request up front)
 2. `HeadersInterceptor` — stamps Accept-Language, X-Request-Id
 3. `AuthInterceptor` — injects Bearer token
 4. `CustomPrettyDioLogger` — debug builds only

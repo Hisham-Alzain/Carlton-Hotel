@@ -99,12 +99,13 @@ class OtpVerifyController extends GetxController {
       data: {
         'code': code,
         'purpose': args.purpose,
-        // For booking_link the app never has the real contact (only a masked
-        // hint), so it sends the booking_code — the server resolves the OTP
-        // identity from the reservation. Login/register send phone or email.
-        if (args.isBookingLink)
-          'booking_code': SessionService.pendingBookingLink?.bookingCode ?? ''
-        else if (args.isEmail)
+        // booking_link: the phone the guest typed on Find Booking (the code
+        // was texted to it) plus the booking code, which links the stay to
+        // the account. Login/register send phone or email.
+        if (args.isBookingLink) ...{
+          'phone': args.identifier,
+          'booking_code': SessionService.pendingBookingLink?.bookingCode ?? '',
+        } else if (args.isEmail)
           'email': args.identifier
         else
           'phone': args.identifier,

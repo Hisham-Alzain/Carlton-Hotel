@@ -1,3 +1,4 @@
+import 'package:carlton/constants/service_tiles.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/service_catalog_item.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -86,7 +87,7 @@ enum ServiceRequestStatus {
 
 /// An in-room service request (`POST`/`GET /service-requests`). Holds the real
 /// DTO fields, but keeps the display surface the cards read
-/// ([status]/[title]/[detail]/[iconAsset]) as getters so
+/// ([status]/[title]/[detail]/[tileImage]) as getters so
 /// `CustomActiveRequestsCard` needs no changes.
 class ServiceRequest {
   final String uuid;
@@ -104,23 +105,16 @@ class ServiceRequest {
   /// null for legacy free-string requests.
   final ServiceCatalogOption? serviceItem;
 
-  /// Leading icon for the request row, from the request's service type
-  /// (`category_code`, else `type`). The API carries no artwork, so every
-  /// type maps to a bundled SVG; an unknown type gets the generic request icon
-  /// rather than an empty tile.
-  String get iconAsset {
-    const icons = {
-      'room_service': 'room_service_bell',
-      'restaurant': 'cuisine',
-      'housekeeping': 'bed_outline',
-      'laundry': 'softpillow',
-      'concierge': 'act_concierge',
-      'transport': 'location',
-      'maintenance': 'warning',
-      'do_not_disturb': 'door',
-    };
-    final name = icons[categoryCode] ?? icons[type] ?? 'act_request';
-    return 'assets/icons/$name.svg';
+  /// Leading artwork for the request row: the same illustration as the
+  /// request's tile on the Services hub ([ServiceTiles]), matched by
+  /// `category_code`, else `type`. Null for a type with no tile — the row then
+  /// shows the generic request icon.
+  String? get tileImage {
+    final code = categoryCode ?? type;
+    for (final tile in ServiceTiles.services) {
+      if (tile.code == code) return tile.imagePath;
+    }
+    return null;
   }
 
   const ServiceRequest({

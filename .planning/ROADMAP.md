@@ -287,7 +287,19 @@ Plans:
   5. Contract gate: all new routes pass happy / 401 / 403 / 422 tests with the suite green, AR/EN keys exist, and the support-ticket, queue-claim and staff-list nodes are `api:true`. The guides and Postman are updated. No new permission strings; the `reception` and `concierge` presets gain ticket permissions (listed in the summary).
 
 **Reuses**: `Ticket` model, `TicketStatus` / `TicketSource` / `TicketCategory` enums, `tickets.view` / `.assign` / `.respond`, `OperationsQueueService` as generalized in Phase 6, `OperationsQueueType` registry, `AssignRequestAction` (reused as the delegating arm, not the ticket writer), `AssignHousekeepingTaskAction` (claim), the Phase 5 credit path via `POST /cms/folios/{folio}/line-items`, `RecordsRowLocks`, `OperationsQueueMirror`
-**Plans**: TBD
+**Plans**: 11 plans (sequential waves 1-11)
+
+- [ ] 07-01-PLAN.md — Ticket foundation: 3 additive migrations, TicketStatus transitions, action/recovery enums + models, factories, escalation cap config (TICKET-02..07)
+- [ ] 07-02-PLAN.md — AssigneeEligibility, SR assign lock + `service_request_closed`, HK eligibility, ~12 test re-pins (TICKET-04, OPS-01)
+- [ ] 07-03-PLAN.md — Create + show: CreateTicketAction, TicketChanged mirror, TicketService show ≤ 6 queries, resources (TICKET-01, TICKET-02)
+- [ ] 07-04-PLAN.md — Ticket list: TicketFilter, index ≤ 6 queries (TICKET-01)
+- [ ] 07-05-PLAN.md — Status + assign single writers and routes (TICKET-03, TICKET-04)
+- [ ] 07-06-PLAN.md — Internal reply + escalation with guards and cap (TICKET-05, TICKET-07)
+- [ ] 07-07-PLAN.md — Record-only service recovery linking Phase 5 credits (TICKET-06)
+- [ ] 07-08-PLAN.md — Queue ticket arms delegate, A2 actor guard, `queue_type`, ticket room_number (OPS-03)
+- [ ] 07-09-PLAN.md — Claim across three types, ClaimGuard, 409, deactivated-token regression (OPS-01)
+- [ ] 07-10-PLAN.md — `GET /operations/staff`, reception/concierge presets + blast radius, assignability matrix, demo timelines (OPS-02)
+- [ ] 07-11-PLAN.md — Dashboard guide, Postman, tree flips, phase gate, SUMMARY, decision coverage (DOCS-01, XCUT-01)
 
 ### Phase 8: Events & Dining
 

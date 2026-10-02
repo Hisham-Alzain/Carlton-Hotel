@@ -3,8 +3,10 @@
 namespace App\Actions\Operations;
 
 use App\Actions\Housekeeping\UpdateHousekeepingTaskStatusAction;
+use App\Actions\Tickets\UpdateTicketStatusAction;
 use App\Enums\HousekeepingTaskStatus;
 use App\Enums\ServiceRequestStatus;
+use App\Enums\TicketStatus;
 use App\Models\HousekeepingTask;
 use App\Models\Room;
 use App\Models\ServiceRequest;
@@ -13,6 +15,7 @@ use App\Models\User;
 use App\Support\OperationsQueueMirror;
 use App\Traits\MirrorsToFirestore;
 use Illuminate\Support\Facades\DB;
+use LogicException;
 
 class UpdateRequestStatusAction
 {
@@ -20,13 +23,17 @@ class UpdateRequestStatusAction
 
     public const TASK_CANCEL_REASON = 'service_request_closed';
 
-    public function __construct(private readonly UpdateHousekeepingTaskStatusAction $updateTaskStatus) {}
+    public function __construct(
+        private readonly UpdateHousekeepingTaskStatusAction $updateTaskStatus,
+        private readonly UpdateTicketStatusAction $updateTicketStatus,
+    ) {}
 
     /**
-     * `$actor` and `$reason` were added in Phase 6 (D-13) and are optional, so
-     * existing callers keep their contract. `$reason` is carried for the
-     * housekeeping task arm; service requests and tickets keep no status
-     * history of their own.
+     * `$actor` and `$reason` were added in Phase 6 (D-13). Tasks and (Phase 7,
+     * D-07) tickets go through their single writers, which carry the reason
+     * into their history/timeline. A null actor stays valid for the
+     * service-request and housekeeping arms only; the ticket arm throws a
+     * LogicException without one (council A2 — every HTTP caller has one).
      */
     public function handle(ServiceRequest|Ticket|HousekeepingTask $item, string $status, ?User $actor = null, ?string $reason = null): array
     {
@@ -36,12 +43,15 @@ class UpdateRequestStatusAction
             return $this->updateTaskStatus->handle($item, HousekeepingTaskStatus::from($status), $reason, $actor);
         }
 
+        // D-07: a ticket changes status only through its single writer, so the
+        // queue and /support-tickets/{ticket}/status share one transition table
+        // and one timeline; TicketChanged mirrors it after commit (D-21).
         if ($item instanceof Ticket) {
-            $item->update(['status' => $status]);
-            $item->refresh();
-            $this->mirror($item);
+            if ($actor === null) {
+                throw new LogicException('The ticket arm of UpdateRequestStatusAction requires an authenticated actor (Phase 7, council A2).');
+            }
 
-            return ['data' => $item, 'code' => 200];
+            return $this->updateTicketStatus->handle($item, TicketStatus::from($status), $reason, $actor);
         }
 
         return $this->updateServiceRequest($item, $status, $actor);
@@ -100,7 +110,7 @@ class UpdateRequestStatusAction
         }, 3);
     }
 
-    private function mirror(ServiceRequest|Ticket $item): void
+    private function mirror(ServiceRequest $item): void
     {
         $this->mirrorToFirestore('ops_queue', OperationsQueueMirror::documentId($item), OperationsQueueMirror::payload($item));
     }

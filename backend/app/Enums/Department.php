@@ -43,4 +43,14 @@ enum Department: string
             default        => self::CONCIERGE,
         };
     }
+
+    /**
+     * The single ticket category → department fallback (Phase 7, D-11),
+     * shared by RouteRequestAction and CreateTicketAction. An explicit body
+     * `department` wins over it at create time.
+     */
+    public static function forTicketCategory(?TicketCategory $category): self
+    {
+        return $category?->department() ?? self::CONCIERGE;
+    }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DepartureServiceController;
 use App\Http\Controllers\Admin\GuestController as AdminGuestController;
 use App\Http\Controllers\Admin\HomeSliderController as AdminHomeSliderController;
 use App\Http\Controllers\Admin\HousekeepingTaskController;
+use App\Http\Controllers\Admin\SupportTicketController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\ServiceRequestBoardController;
 use App\Http\Controllers\Api\HomeSliderController as ApiHomeSliderController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Api\ConversationController as ApiConversationController
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
 use App\Http\Controllers\Admin\OperationsQueueController;
+use App\Http\Controllers\Admin\OperationsStaffController;
 use App\Http\Controllers\Admin\FrontDeskController;
 use App\Http\Controllers\Admin\EventInquiryController as AdminEventInquiryController;
 use App\Http\Controllers\Admin\MenuCategoryController;
@@ -754,6 +756,9 @@ Route::middleware('auth:users')->prefix('cms/conversations')->group(function () 
 // permission is checked in-service per {type} (service-requests|tickets|
 // housekeeping-tasks; tasks need housekeeping.assign / housekeeping.update)
 // since it differs per operation — see App\Support\OperationsQueueType.
+// Claim (Phase 7, D-22) is gated in-service by the type's work permission
+// (service_requests.update|tickets.respond|housekeeping.update); no `{id}`
+// alias routes exist (D-24).
 // ──────────────────────────────────────────────────────────────────────
 Route::middleware(['auth:users', 'permission:service_requests.view|tickets.view|housekeeping.view'])
     ->get('/operations/queue', [OperationsQueueController::class, 'index']);
@@ -761,9 +766,15 @@ Route::middleware(['auth:users', 'permission:service_requests.view|tickets.view|
 Route::middleware('auth:users')->prefix('operations/queue/{type}/{uuid}')->group(function () {
     Route::patch('/assign', [OperationsQueueController::class, 'assign']);
     Route::patch('/status', [OperationsQueueController::class, 'updateStatus']);
+    Route::patch('/claim', [OperationsQueueController::class, 'claim']);
 });
 
 Route::middleware('auth:users')->get('/dashboard/summary', [OperationsQueueController::class, 'summary']);
+
+// Phase 7 (OPS-02, D-23): the assignee picker. Same gate as the queue index;
+// no /operations/queue/staff alias.
+Route::middleware(['auth:users', 'permission:service_requests.view|tickets.view|housekeeping.view'])
+    ->get('/operations/staff', [OperationsStaffController::class, 'index']);
 
 // ──────────────────────────────────────────────────────────────────────
 // Phase 2 — Front desk: room board and the availability / rates grids.
@@ -817,3 +828,28 @@ Route::middleware(['auth:users', 'permission:service_requests.view'])
 // model binding. No POST and no GET by uuid (known gaps, D-22).
 Route::middleware(['auth:users', 'permission:service_requests.update'])
     ->patch('/departure-services/{uuid}/status', [DepartureServiceController::class, 'updateStatus']);
+
+// ──────────────────────────────────────────────────────────────────────
+// Phase 7 — Support tickets (D-10, D-13). view = list/show, respond =
+// create/status/reply/recovery/escalate, assign = assign. {ticket} binds by
+// uuid. No DELETE route (A7).
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware('auth:users')->prefix('support-tickets')->group(function () {
+    Route::middleware('permission:tickets.view')->group(function () {
+        Route::get('/',         [SupportTicketController::class, 'index']);
+        Route::get('/{ticket}', [SupportTicketController::class, 'show']);
+    });
+
+    Route::middleware('permission:tickets.respond')->group(function () {
+        Route::post('/',                 [SupportTicketController::class, 'store']);
+        Route::patch('/{ticket}/status', [SupportTicketController::class, 'updateStatus']);
+        Route::post('/{ticket}/reply',    [SupportTicketController::class, 'reply']);
+        Route::post('/{ticket}/escalate', [SupportTicketController::class, 'escalate']);
+        // No DELETE anywhere under support-tickets: recoveries are permanent audit (A7).
+        Route::post('/{ticket}/recovery-actions', [SupportTicketController::class, 'recordRecovery']);
+    });
+
+    Route::middleware('permission:tickets.assign')->group(function () {
+        Route::patch('/{ticket}/assign', [SupportTicketController::class, 'assign']);
+    });
+});

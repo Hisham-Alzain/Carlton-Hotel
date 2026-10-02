@@ -47,7 +47,7 @@ class FirestoreMirrorResilienceTest extends TestCase
     {
         $this->throwingFirebase();
         $request = ServiceRequest::factory()->create();
-        $assignee = User::factory()->create();
+        $assignee = User::factory()->withPermissions('service_requests.update')->create();
         $staff = User::factory()->create();
         $staff->givePermissionTo('service_requests.assign');
 

@@ -158,6 +158,9 @@ class GuestActivitySeeder extends Seeder
                 'subject' => $t['subject'], 'category' => $t['category'], 'status' => $t['status'],
                 'priority' => $t['priority'], 'department' => $t['department'], 'source' => TicketSource::CHATBOT,
                 'assigned_user_id' => $t['assigned']?->id,
+                // Phase 7 (D-06): terminal stamps match the status.
+                'resolved_at' => in_array($t['status'], [TicketStatus::RESOLVED, TicketStatus::CLOSED], true) ? now() : null,
+                'closed_at' => $t['status'] === TicketStatus::CLOSED ? now() : null,
             ]);
         }
     }

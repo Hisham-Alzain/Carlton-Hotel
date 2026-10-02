@@ -321,7 +321,7 @@ class ServiceRequestBoardTest extends TestCase
     {
         ServiceRequest::factory()->create();
         $uuid     = $this->board()->json('data.items.0.uuid');
-        $assignee = User::factory()->create();
+        $assignee = User::factory()->withPermissions('service_requests.update')->create();
 
         $this->withToken($this->staffToken('service_requests.assign'))
             ->patchJson("/api/operations/queue/service-requests/{$uuid}/assign", ['user_uuid' => $assignee->uuid])

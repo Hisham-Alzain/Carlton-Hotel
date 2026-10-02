@@ -8961,6 +8961,562 @@
                 }
             ],
             "description": "Phase 6: the housekeeping task board, the read-only service-request board, and the departure-services projection (transfers, late_checkout/luggage requests, express checkouts). Housekeeping task assign/status can also be reached through the operations queue (folder 16, {type} = housekeeping-tasks) — both surfaces are kept deliberately (D-13)."
+        },
+        {
+            "name": "21 - Support Tickets & Queue (Admin)",
+            "item": [
+                {
+                    "name": "List support tickets (open + assigned, mine)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/support-tickets?status[in]=open,assigned&assignee=me&escalated=true",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "support-tickets"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status[in]",
+                                    "value": "open,assigned"
+                                },
+                                {
+                                    "key": "assignee",
+                                    "value": "me"
+                                },
+                                {
+                                    "key": "escalated",
+                                    "value": "true"
+                                }
+                            ]
+                        },
+                        "description": "Requires tickets.view. Filters: status/department/source/category/priority (eq, in), created_at (gte, lte), assignee (staff uuid | unassigned | me), guest, reservation, escalated (bool). Priority labels: low|normal|high."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Show a support ticket (timeline)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/support-tickets/{{ticket_uuid}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "support-tickets",
+                                "{{ticket_uuid}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create a support ticket",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/support-tickets",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "support-tickets"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"subject\": \"Noisy room next door\",\n    \"description\": \"Guest reports loud music after midnight.\",\n    \"category\": \"complaint\",\n    \"priority\": \"high\",\n    \"reservation_uuid\": \"{{reservation_uuid}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires tickets.respond. Source is forced to staff; the guest is derived from the reservation."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Move a ticket to in_progress",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/support-tickets/{{ticket_uuid}}/status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "support-tickets",
+                                "{{ticket_uuid}}",
+                                "status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"in_progress\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Close a ticket (with reason)",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/support-tickets/{{ticket_uuid}}/status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "support-tickets",
+                                "{{ticket_uuid}}",
+                                "status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"closed\",\n    \"reason\": \"Guest confirmed the issue is resolved.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Assign a ticket",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/support-tickets/{{ticket_uuid}}/assign",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "support-tickets",
+                                "{{ticket_uuid}}",
+                                "assign"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_uuid\": \"{{staff_target_uuid}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires tickets.assign."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Reply to a ticket",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/support-tickets/{{ticket_uuid}}/reply",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "support-tickets",
+                                "{{ticket_uuid}}",
+                                "reply"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"body\": \"We have moved you to a quieter room.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires tickets.respond."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Record a recovery action (folio credit)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/support-tickets/{{ticket_uuid}}/recovery-actions",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "support-tickets",
+                                "{{ticket_uuid}}",
+                                "recovery-actions"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"type\": \"folio_credit\",\n    \"folio_item_uuid\": \"{{folio_item_uuid}}\",\n    \"description\": \"Credit for the noisy-room complaint.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Two-step: first post the credit with POST /cms/folios/{folio}/line-items (Idempotency-Key header, folios.post), then link the resulting item here via folio_item_uuid. Amounts are USD."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Record a recovery action (room upgrade)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/support-tickets/{{ticket_uuid}}/recovery-actions",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "support-tickets",
+                                "{{ticket_uuid}}",
+                                "recovery-actions"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"type\": \"room_upgrade\",\n    \"amount_usd\": 45.00,\n    \"description\": \"Complimentary upgrade to a quieter suite.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "amount_usd is the USD value of the gesture (optional, max 2 decimals). folio_item_uuid is prohibited for non-folio_credit types."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Escalate a ticket",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/support-tickets/{{ticket_uuid}}/escalate",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "support-tickets",
+                                "{{ticket_uuid}}",
+                                "escalate"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_uuid\": \"{{staff_target_uuid}}\",\n    \"reason\": \"Guest requests a manager callback.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Escalation level is capped by hotel.ticket_max_escalation_level (default 3)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Claim a ticket from the queue",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/operations/queue/tickets/{{ticket_uuid}}/claim",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "operations",
+                                "queue",
+                                "tickets",
+                                "{{ticket_uuid}}",
+                                "claim"
+                            ]
+                        },
+                        "description": "No body. Assigns the item to the caller. Build queue paths from each queue row's queue_type."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Claim a housekeeping task from the queue",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/operations/queue/housekeeping-tasks/{{housekeeping_task_uuid}}/claim",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "operations",
+                                "queue",
+                                "housekeeping-tasks",
+                                "{{housekeeping_task_uuid}}",
+                                "claim"
+                            ]
+                        },
+                        "description": "No body."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Claim a service request from the queue",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/operations/queue/service-requests/{{service_request_uuid}}/claim",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "operations",
+                                "queue",
+                                "service-requests",
+                                "{{service_request_uuid}}",
+                                "claim"
+                            ]
+                        },
+                        "description": "No body."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Assignable staff for tickets",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/operations/staff?type=tickets",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "operations",
+                                "staff"
+                            ],
+                            "query": [
+                                {
+                                    "key": "type",
+                                    "value": "tickets"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Phase 7: support tickets (timeline, status, assign, reply, recovery actions, escalation) and the operations-queue claim and staff-list routes. Folio credit recovery is two steps: post the credit with POST /cms/folios/{folio}/line-items (Idempotency-Key header, folios.post), then link it via recovery-actions folio_item_uuid; amounts are USD. Queue paths are built from each row's queue_type (tickets, housekeeping-tasks, service-requests)."
         }
     ]
 }

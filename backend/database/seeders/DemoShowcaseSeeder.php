@@ -24,6 +24,8 @@ use App\Enums\ServiceRequestStatus;
 use App\Enums\TicketCategory;
 use App\Enums\TicketSource;
 use App\Enums\TicketStatus;
+use App\Enums\TicketActionType;
+use App\Enums\TicketRecoveryType;
 use App\Models\CheckInApproval;
 use App\Models\Conversation;
 use App\Models\DeviceToken;
@@ -61,6 +63,8 @@ use App\Models\ServiceRequest;
 use App\Models\SpaService;
 use App\Models\Testimonial;
 use App\Models\Ticket;
+use App\Models\TicketAction;
+use App\Models\TicketRecovery;
 use App\Models\Transfer;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -1199,7 +1203,10 @@ class DemoShowcaseSeeder extends Seeder
                         ? CarbonImmutable::now()->subMinutes($this->int(15, 60 * 48))
                         : CarbonImmutable::now()->subDays($this->int(1, 200))->setTime($this->int(8, 23), $this->int(0, 59));
 
-                    $this->persist(new Ticket([
+                    $updatedAt = $status === TicketStatus::OPEN ? $at : $this->clamp($at->addHours($this->int(1, 72)));
+
+                    // Phase 7 (D-06): resolved/closed stamps match the status.
+                    $ticket = $this->persist(new Ticket([
                         'guest_id' => $conversation?->guest_id ?? ($this->chance(60) ? $this->pick($guests)->id : null),
                         'chatbot_session_id' => $this->chance(70) ? 'demo-chat-' . bin2hex($this->rng->getBytes(6)) : null,
                         'conversation_id' => $conversation?->id,
@@ -1210,10 +1217,144 @@ class DemoShowcaseSeeder extends Seeder
                         'department' => $department,
                         'source' => TicketSource::CHATBOT,
                         'assigned_user_id' => $status === TicketStatus::OPEN ? null : $this->staffFor($department)->id,
-                    ]), $at, $status === TicketStatus::OPEN ? $at : $this->clamp($at->addHours($this->int(1, 72))));
+                        'resolved_at' => in_array($status, [TicketStatus::RESOLVED, TicketStatus::CLOSED], true) ? $updatedAt : null,
+                        'closed_at' => $status === TicketStatus::CLOSED ? $updatedAt : null,
+                    ]), $at, $updatedAt);
+
+                    $this->ticketTimeline($ticket, null, $at, $updatedAt);
                 }
             }
         }
+
+        $this->staffTickets();
+    }
+
+    /**
+     * Demo timeline (Phase 7, D-06, FA-7.10-3): a `created` row, then a valid
+     * path to the ticket's status — open → assigned (assignment), → in_progress,
+     * → waiting_guest | resolved, resolved → closed (no reason needed from
+     * resolved). Written directly with backdated timestamps; demo data only.
+     */
+    private function ticketTimeline(Ticket $ticket, ?User $creator, CarbonImmutable $from, CarbonImmutable $to): void
+    {
+        $path = match ($ticket->status) {
+            TicketStatus::OPEN          => [],
+            TicketStatus::ASSIGNED      => [],
+            TicketStatus::IN_PROGRESS   => [TicketStatus::IN_PROGRESS],
+            TicketStatus::WAITING_GUEST => [TicketStatus::IN_PROGRESS, TicketStatus::WAITING_GUEST],
+            TicketStatus::RESOLVED      => [TicketStatus::IN_PROGRESS, TicketStatus::RESOLVED],
+            TicketStatus::CLOSED        => [TicketStatus::IN_PROGRESS, TicketStatus::RESOLVED, TicketStatus::CLOSED],
+        };
+
+        $this->ticketAction($ticket, TicketActionType::CREATED, $creator, $from);
+
+        if ($ticket->assigned_user_id === null) {
+            return;
+        }
+
+        $steps = count($path) + 1;
+        $span  = max(1, $to->getTimestamp() - $from->getTimestamp());
+        $at    = fn (int $i) => $from->addSeconds(intdiv($span * $i, $steps));
+
+        $this->ticketAction($ticket, TicketActionType::ASSIGNMENT, $ticket->assignedUser, $at(1), [
+            'from_status' => TicketStatus::OPEN->value,
+            'to_status' => TicketStatus::ASSIGNED->value,
+            'target_user_id' => $ticket->assigned_user_id,
+        ]);
+
+        $previous = TicketStatus::ASSIGNED;
+        foreach ($path as $i => $next) {
+            $this->ticketAction($ticket, TicketActionType::STATUS_CHANGE, $ticket->assignedUser, $i === count($path) - 1 ? $to : $at($i + 2), [
+                'from_status' => $previous->value,
+                'to_status' => $next->value,
+            ]);
+            $previous = $next;
+        }
+    }
+
+    private function ticketAction(Ticket $ticket, TicketActionType $type, ?User $actor, CarbonImmutable $at, array $attributes = []): TicketAction
+    {
+        $action = new TicketAction(['ticket_id' => $ticket->id, 'user_id' => $actor?->id, 'type' => $type] + $attributes);
+        $action->created_at = $at;
+        $action->save();
+
+        return $action;
+    }
+
+    /**
+     * Three staff-sourced tickets (Phase 7 discretion item): created by front
+     * desk / concierge, linked to a demo reservation and its room, with one
+     * reply, one escalation and one apology recovery between them.
+     */
+    private function staffTickets(): void
+    {
+        $lines = ReservationRoom::whereNotNull('room_id')->with('reservation')->orderBy('id')->limit(3)->get();
+        $plans = [
+            ['Noise from the neighbouring room', TicketCategory::COMPLAINT, 'reception', 'concierge', 'reply'],
+            ['Air conditioning not cooling', TicketCategory::MAINTENANCE, 'reception', 'housekeeping', 'escalation'],
+            ['Late room readiness on arrival', TicketCategory::COMPLAINT, 'concierge', 'concierge', 'recovery'],
+        ];
+
+        foreach ($lines as $i => $line) {
+            [$subject, $category, $creatorKey, $assigneeKey, $extra] = $plans[$i];
+            $creator  = $this->staff[$creatorKey];
+            $assignee = $this->staff[$assigneeKey];
+            $at       = CarbonImmutable::now()->subHours($this->int(6, 72));
+
+            $ticket = $this->persist(new Ticket([
+                'guest_id' => $line->reservation->guest_id,
+                'reservation_id' => $line->reservation_id,
+                'room_id' => $line->room_id,
+                'subject' => $subject,
+                'description' => 'Raised at the front desk by the guest in person.',
+                'category' => $category,
+                'status' => TicketStatus::IN_PROGRESS,
+                'priority' => 2,
+                'department' => $category === TicketCategory::MAINTENANCE ? Department::MAINTENANCE : Department::CONCIERGE,
+                'source' => TicketSource::STAFF,
+                'created_by' => $creator->id,
+                // The escalated ticket starts with its creator and is moved to
+                // the assignee by the escalation row below.
+                'assigned_user_id' => $extra === 'escalation' ? $creator->id : $assignee->id,
+                'escalation_level' => 0,
+            ]), $at, $this->clamp($at->addHours(3)));
+
+            $this->ticketTimeline($ticket, $creator, $at, $this->clamp($at->addHours(2)));
+            $later = $this->clamp($at->addHours(3));
+
+            if ($extra === 'escalation') {
+                $ticket->forceFill(['assigned_user_id' => $assignee->id, 'escalation_level' => 1])->saveQuietly();
+            }
+
+            match ($extra) {
+                'reply' => $this->ticketAction($ticket, TicketActionType::REPLY, $assignee, $later, [
+                    'body' => 'Spoke with the neighbouring room; quiet hours reminder delivered.',
+                ]),
+                'escalation' => $this->ticketAction($ticket, TicketActionType::ESCALATION, $creator, $later, [
+                    'body' => 'Needs the duty engineer tonight.',
+                    'target_user_id' => $assignee->id,
+                    'meta' => ['level' => 1, 'previous_assignee_uuid' => $creator->uuid],
+                ]),
+                'recovery' => $this->recordApology($ticket, $assignee, $later),
+            };
+        }
+    }
+
+    private function recordApology(Ticket $ticket, User $actor, CarbonImmutable $at): TicketAction
+    {
+        $action = $this->ticketAction($ticket, TicketActionType::RECOVERY, $actor, $at, [
+            'body' => 'Apologised in person and offered a welcome drink.',
+        ]);
+
+        $recovery = new TicketRecovery([
+            'ticket_action_id' => $action->id,
+            'type' => TicketRecoveryType::APOLOGY,
+            'description' => 'Apologised in person and offered a welcome drink.',
+        ]);
+        $recovery->created_at = $at;
+        $recovery->save();
+
+        return $action;
     }
 
     // ---------------------------------------------------------------------

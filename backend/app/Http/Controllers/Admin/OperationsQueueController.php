@@ -32,6 +32,18 @@ class OperationsQueueController extends BaseController
         return $this->respondFromService($result, request: $request);
     }
 
+    public function claim(string $type, string $uuid, Request $request): JsonResponse
+    {
+        $result = $this->service->claim($type, $uuid, $request->user('users'));
+
+        return $this->success(
+            new OperationsQueueItemResource($result['data']),
+            $result['claimed'] ? 'custom.messages.queue_item_claimed' : 'custom.messages.queue_item_already_yours',
+            200,
+            $request,
+        );
+    }
+
     public function updateStatus(string $type, string $uuid, UpdateRequestStatusRequest $request): JsonResponse
     {
         $result = $this->service->updateStatus(

@@ -47,7 +47,7 @@ class AssignTest extends TestCase
     public function test_pending_task_becomes_assigned(): void
     {
         $task     = HousekeepingTask::factory()->create();
-        $assignee = User::factory()->create();
+        $assignee = User::factory()->withPermissions('housekeeping.update')->create();
         $caller   = $this->staff('housekeeping.assign');
 
         $this->assign($task, ['user_uuid' => $assignee->uuid], $caller->createToken('t')->plainTextToken)
@@ -67,7 +67,7 @@ class AssignTest extends TestCase
     {
         $assigned   = HousekeepingTask::factory()->assigned()->create();
         $inProgress = HousekeepingTask::factory()->inProgress()->assigned()->create(['status' => 'in_progress']);
-        $newcomer   = User::factory()->create();
+        $newcomer   = User::factory()->withPermissions('housekeeping.update')->create();
 
         $this->assign($assigned, ['user_uuid' => $newcomer->uuid])
             ->assertOk()

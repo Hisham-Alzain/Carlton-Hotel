@@ -13,6 +13,10 @@ use Illuminate\Http\Request;
  * One row of the merged operations queue: a service request, a ticket or a
  * housekeeping task (Phase 6, D-14). `room_number` and `allowed_statuses` are
  * on every row; relations must be loaded by OperationsQueueType::baseQuery().
+ *
+ * `queue_type` (Phase 7, OPS-03, D-24) is the URL segment
+ * (service-requests | tickets | housekeeping-tasks): the dashboard builds
+ * `/operations/queue/{queue_type}/{uuid}/…` from it. No `{id}` alias routes.
  */
 class OperationsQueueItemResource extends BaseResource
 {
@@ -23,6 +27,7 @@ class OperationsQueueItemResource extends BaseResource
 
         return [
             'type'               => $type->itemType,
+            'queue_type'         => $type->segment,
             'uuid'               => $item->uuid,
             'subject'            => match (true) {
                 $item instanceof ServiceRequest   => $item->type,

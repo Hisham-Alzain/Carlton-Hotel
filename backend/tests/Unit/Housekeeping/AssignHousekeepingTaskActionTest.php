@@ -27,7 +27,7 @@ class AssignHousekeepingTaskActionTest extends TestCase
     public function test_pending_task_becomes_assigned_with_history(): void
     {
         $task     = HousekeepingTask::factory()->create();
-        $assignee = User::factory()->create();
+        $assignee = User::factory()->withPermissions('housekeeping.update')->create();
         $actor    = User::factory()->create();
 
         $result = $this->assign($task, $assignee, $actor);
@@ -45,7 +45,7 @@ class AssignHousekeepingTaskActionTest extends TestCase
     public function test_assigned_task_swaps_the_assignee_without_history(): void
     {
         $task = HousekeepingTask::factory()->assigned()->create();
-        $next = User::factory()->create();
+        $next = User::factory()->withPermissions('housekeeping.update')->create();
 
         $fresh = $this->assign($task, $next)['data'];
 
@@ -57,7 +57,7 @@ class AssignHousekeepingTaskActionTest extends TestCase
     public function test_in_progress_task_swaps_and_stays_in_progress(): void
     {
         $task = HousekeepingTask::factory()->inProgress()->create();
-        $next = User::factory()->create();
+        $next = User::factory()->withPermissions('housekeeping.update')->create();
 
         $fresh = $this->assign($task, $next)['data'];
 
@@ -72,7 +72,7 @@ class AssignHousekeepingTaskActionTest extends TestCase
             $task = HousekeepingTask::factory()->create(['status' => $status]);
 
             try {
-                $this->assign($task, User::factory()->create());
+                $this->assign($task, User::factory()->withPermissions('housekeeping.update')->create());
                 $this->fail("{$status} must be refused");
             } catch (HousekeepingTaskClosedException $e) {
                 $this->assertSame('housekeeping_task_closed', $e->errorCode());
@@ -87,7 +87,7 @@ class AssignHousekeepingTaskActionTest extends TestCase
     public function test_room_is_locked_before_the_task(): void
     {
         $task = HousekeepingTask::factory()->create();
-        $user = User::factory()->create();
+        $user = User::factory()->withPermissions('housekeeping.update')->create();
 
         $locked = $this->lockedSelects(fn () => $this->assign($task, $user));
 
@@ -100,7 +100,7 @@ class AssignHousekeepingTaskActionTest extends TestCase
         Event::fake([HousekeepingTaskChanged::class]);
         $task = HousekeepingTask::factory()->create();
 
-        $this->assign($task, User::factory()->create());
+        $this->assign($task, User::factory()->withPermissions('housekeeping.update')->create());
         Event::assertDispatchedTimes(HousekeepingTaskChanged::class, 1);
 
         $closed = HousekeepingTask::factory()->done()->create();

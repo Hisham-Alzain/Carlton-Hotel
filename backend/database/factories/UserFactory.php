@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Permission;
 
 /**
  * @extends Factory<User>
@@ -47,4 +48,17 @@ class UserFactory extends Factory
 
     public function superAdmin(): static { return $this->state(['type' => 'super_admin']); }
     public function staff(): static      { return $this->state(['type' => 'staff']); }
+
+    /**
+     * An eligible assignee (Phase 7, PR-7): grants each permission on guard
+     * `users`, creating the permission row when a test did not seed it.
+     */
+    public function withPermissions(string ...$permissions): static
+    {
+        return $this->afterCreating(function (User $user) use ($permissions): void {
+            foreach ($permissions as $name) {
+                $user->givePermissionTo(Permission::findOrCreate($name, 'users'));
+            }
+        });
+    }
 }

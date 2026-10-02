@@ -20,6 +20,11 @@
 |              the turnover housekeeping task it creates, read from
 |              `HOTEL_TURNOVER_SLA_MINUTES` (default 120) (Phase 6, D-09).
 |
+| `ticket_max_escalation_level` — the highest `escalation_level` a support
+|              ticket can reach, read from `HOTEL_TICKET_MAX_ESCALATION_LEVEL`
+|              (default 3) (Phase 7, D-19). The cap is the escalation loop's
+|              termination guarantee: A → B → A is allowed below it.
+|
 | Consumers read it through `App\Support\HotelClock`, never directly: the
 | check-in stay window (Phase 3, D-02), the front-desk room board and the
 | availability / rates grids (Phase 2) all ask `HotelClock::today()`, so they
@@ -31,4 +36,5 @@ return [
     'timezone'       => env('HOTEL_TIMEZONE', 'Asia/Damascus'),
     'check_out_time' => env('HOTEL_CHECK_OUT_TIME', '12:00'),
     'turnover_sla_minutes' => (int) env('HOTEL_TURNOVER_SLA_MINUTES', 120),
+    'ticket_max_escalation_level' => (int) env('HOTEL_TICKET_MAX_ESCALATION_LEVEL', 3),
 ];

@@ -164,7 +164,7 @@ class OperationsQueueHousekeepingTest extends TestCase
         $this->assertSame('204', $items[$request->uuid]['room_number']);
         $this->assertSame(['in_progress', 'completed', 'cancelled'], $items[$request->uuid]['allowed_statuses']);
         $this->assertNull($items[$ticket->uuid]['room_number']);
-        $this->assertSame(['assigned', 'resolved', 'closed'], $items[$ticket->uuid]['allowed_statuses']);
+        $this->assertSame(['in_progress', 'resolved', 'closed'], $items[$ticket->uuid]['allowed_statuses']);
     }
 
     public function test_request_task_and_its_request_are_two_rows(): void
@@ -234,7 +234,7 @@ class OperationsQueueHousekeepingTest extends TestCase
     {
         $this->fakeFirebase();
         $task     = HousekeepingTask::factory()->create();
-        $assignee = User::factory()->create();
+        $assignee = User::factory()->withPermissions('housekeeping.update')->create();
         $url      = "/api/operations/queue/housekeeping-tasks/{$task->uuid}/assign";
 
         $this->withToken($this->staffToken('service_requests.assign'))
@@ -331,7 +331,7 @@ class OperationsQueueHousekeepingTest extends TestCase
             array_keys($mirrors[0]['data']),
         );
 
-        $assignee = User::factory()->create();
+        $assignee = User::factory()->withPermissions('housekeeping.update')->create();
         $this->withToken($this->staffToken('housekeeping.assign'))
             ->patchJson("/api/operations/queue/housekeeping-tasks/{$uuid}/assign", ['user_uuid' => $assignee->uuid])
             ->assertOk();

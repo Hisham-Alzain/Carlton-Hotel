@@ -59,7 +59,8 @@ class SeederTest extends TestCase
         // D-06: the other operational presets are unchanged.
         $perms = fn (string $name) => $roles->firstWhere('name', $name)->permissions->pluck('name')->sort()->values()->all();
         $this->assertSame(['service_requests.update', 'service_requests.view'], $perms('kitchen'));
-        $this->assertSame(['guests.edit', 'guests.view', 'service_requests.assign', 'service_requests.update', 'service_requests.view'], $perms('concierge'));
+        // Phase 7 (D-10) re-pin: concierge gained tickets.view/.assign/.respond.
+        $this->assertSame(['guests.edit', 'guests.view', 'service_requests.assign', 'service_requests.update', 'service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view'], $perms('concierge'));
         $this->assertSame(['service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view'], $perms('events'));
     }
 
@@ -146,6 +147,38 @@ class SeederTest extends TestCase
 
             $this->assertSame(['concierge', 'reception'], $holders, $permission);
         }
+    }
+
+    private function ticketHolders(string $permission): array
+    {
+        return Role::where('guard_name', 'users')->with('permissions')->get()
+            ->filter(fn (Role $role) => $role->permissions->pluck('name')->contains($permission))
+            ->pluck('name')->sort()->values()->all();
+    }
+
+    /** Phase 7 D-10: reception and concierge run tickets with no new permission strings. */
+    public function test_reception_and_concierge_presets_grant_ticket_permissions(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $this->assertSame(['concierge', 'events', 'reception'], $this->ticketHolders('tickets.view'));
+        $this->assertSame(['concierge', 'events', 'reception'], $this->ticketHolders('tickets.respond'));
+        $this->assertSame(['concierge', 'events'], $this->ticketHolders('tickets.assign'));
+    }
+
+    public function test_kitchen_housekeeping_and_events_ticket_permissions_unchanged(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        foreach (['kitchen', 'housekeeping'] as $role) {
+            $names = Role::findByName($role, 'users')->permissions->pluck('name');
+            $this->assertFalse($names->contains(fn (string $p) => str_starts_with($p, 'tickets.')), $role);
+        }
+
+        $this->assertSame(
+            ['service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view'],
+            Role::findByName('events', 'users')->permissions->pluck('name')->sort()->values()->all(),
+        );
     }
 
     public function test_folio_posting_follows_the_folios_settle_holders(): void

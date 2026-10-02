@@ -24,4 +24,17 @@ enum ServiceRequestPriority: string
             default        => self::NORMAL,
         };
     }
+
+    /**
+     * Inverse of fromTicketScale() (Phase 7, D-12): ticket bodies and filters
+     * take the label, the `tickets.priority` column stores 1-3.
+     */
+    public function toTicketScale(): int
+    {
+        return match ($this) {
+            self::LOW    => 1,
+            self::NORMAL => 2,
+            self::HIGH   => 3,
+        };
+    }
 }

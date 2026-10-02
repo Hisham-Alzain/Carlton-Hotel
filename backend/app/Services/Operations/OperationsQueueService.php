@@ -93,6 +93,21 @@ class OperationsQueueService
         return ['data' => $this->reload($type, $result['data']), 'code' => $result['code']];
     }
 
+    /**
+     * Claim queue work for oneself (Phase 7, OPS-01, D-22). Gated by the type's
+     * work permission, not assign; the type's assign writer decides no-op / 409
+     * / closed / assign inside its own lock. `claimed` is false for the no-op.
+     */
+    public function claim(string $type, string $uuid, User $actor): array
+    {
+        $this->assertCan($actor, $this->requiredPermission($type, 'status'));
+        $item = $this->resolve($type, $uuid);
+
+        $result = $this->assignAction->handle($item, $actor, $actor, claim: true);
+
+        return ['data' => $this->reload($type, $result['data']), 'code' => 200, 'claimed' => $result['claimed']];
+    }
+
     public function updateStatus(string $type, string $uuid, string $status, User $actor, ?string $reason = null): array
     {
         $this->assertCan($actor, $this->requiredPermission($type, 'status'));

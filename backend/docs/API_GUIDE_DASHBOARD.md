@@ -174,7 +174,8 @@ The split is structural, so it also holds for content types added after this rev
 Most are route middleware, which is the norm. Two families are not, and are enforced just as strictly:
 
 - **`staff.manage`** — checked by `StaffPolicy` (registered on the `User` model), not by middleware. It gates all six `/staff` routes plus `GET /api/permissions` and `GET /api/roles`. A `403` from those endpoints means `staff.manage` is missing, even though the route carries no `permission:` middleware.
-- **`service_requests.assign` / `service_requests.update` / `tickets.assign` / `tickets.respond` / `housekeeping.assign` / `housekeeping.update`** — checked inside `OperationsQueueService`, which derives the required permission from the `{type}` segment of the URL (`service-requests`, `tickets`, `housekeeping-tasks`) because it differs per type. See *Module: Operations Queue & Dashboard*. The dedicated `/housekeeping/tasks` routes, by contrast, carry ordinary `permission:` route middleware (`housekeeping.view|assign|update`) — see *Module: Housekeeping*.
+- **`service_requests.assign` / `service_requests.update` / `tickets.assign` / `tickets.respond` / `housekeeping.assign` / `housekeeping.update`** — checked inside `OperationsQueueService`, which derives the required permission from the `{type}` segment of the URL (`service-requests`, `tickets`, `housekeeping-tasks`) because it differs per type. See *Module: Operations Queue & Dashboard*. The same service also checks the type's **work** permission on `PATCH /operations/queue/{type}/{uuid}/claim` (`service_requests.update` / `tickets.respond` / `housekeeping.update`; the assign permission alone is a `403`). The dedicated `/housekeeping/tasks` routes, by contrast, carry ordinary `permission:` route middleware (`housekeeping.view|assign|update`) — see *Module: Housekeeping*.
+- **`tickets.view` / `tickets.respond` / `tickets.assign`** on the `/support-tickets` routes are ordinary route middleware: `tickets.view` reads (list, show), `tickets.respond` writes (create, status, reply, recovery-actions, escalate), `tickets.assign` assigns. See *Module: Support Tickets*. The same three permissions also gate the chat inbox and event inquiries (see *Module: Chat* and *Module: Event Inquiries*).
 
 ### Genuinely inert — do not build UI against these
 
@@ -183,6 +184,8 @@ Most are route middleware, which is the norm. Two families are not, and are enfo
 ### Role presets
 
 Seven presets: `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `content_editor`, `content_manager` — see Module: Reference Data below for exactly which permissions each preset grants. The last two are the only presets that grant `cms.*`; without one of them no seeded account except the super admin can reach `/api/cms/*`. `content_manager` is `content_editor` plus `cms.purge`, and is the only preset that may empty the recycle bin. `housekeeping` and `reception` also hold `rooms.status`. `reception` also holds `folios.post` and `folios.dispute`. Since Phase 6, `housekeeping` holds all three `housekeeping.*` permissions (it runs the task board); `reception` holds `housekeeping.view` and `housekeeping.assign` (it can see and hand off tasks, but not move them through their statuses).
+
+Since Phase 7 (no new permission strings — still 11 modules / 26 permissions) `reception` also holds `tickets.view` and `tickets.respond`, and `concierge` also holds `tickets.view`, `tickets.assign` and `tickets.respond`; `events` already held all three. `kitchen` and `housekeeping` hold no `tickets.*`. **These permissions are shared with other surfaces, so the grant has a wider blast radius than the support-ticket routes:** `tickets.view` opens `GET /cms/conversations` and its messages (the guest chat inbox) and the `GET /cms/event-inquiries` reads; `tickets.respond` allows `POST /cms/conversations/{uuid}/messages` (replying to a guest in chat); and `tickets.assign` (concierge, events) allows `PATCH /cms/event-inquiries/{uuid}/status` and `/assign`. Reception does not get `tickets.assign`, so it cannot re-status or assign event inquiries.
 
 ---
 
@@ -536,10 +539,10 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 **Response `data`:** Array of presets:
 ```json
 [
-  { "name": "reception", "permissions": ["reservations.view", "reservations.create", "reservations.cancel", "folios.view", "folios.settle", "folios.post", "folios.dispute", "service_requests.view", "service_requests.update", "rooms.status", "guests.view", "guests.edit", "housekeeping.view", "housekeeping.assign"] },
+  { "name": "reception", "permissions": ["reservations.view", "reservations.create", "reservations.cancel", "folios.view", "folios.settle", "folios.post", "folios.dispute", "service_requests.view", "service_requests.update", "rooms.status", "guests.view", "guests.edit", "housekeeping.view", "housekeeping.assign", "tickets.view", "tickets.respond"] },
   { "name": "kitchen", "permissions": ["service_requests.view", "service_requests.update"] },
   { "name": "housekeeping", "permissions": ["service_requests.view", "service_requests.update", "rooms.status", "housekeeping.view", "housekeeping.assign", "housekeeping.update"] },
-  { "name": "concierge", "permissions": ["service_requests.view", "service_requests.assign", "service_requests.update", "guests.view", "guests.edit"] },
+  { "name": "concierge", "permissions": ["service_requests.view", "service_requests.assign", "service_requests.update", "guests.view", "guests.edit", "tickets.view", "tickets.assign", "tickets.respond"] },
   { "name": "events", "permissions": ["service_requests.view", "tickets.view", "tickets.assign", "tickets.respond"] },
   { "name": "content_editor", "permissions": ["cms.view", "cms.edit", "cms.restore"] },
   { "name": "content_manager", "permissions": ["cms.view", "cms.edit", "cms.restore", "cms.purge"] }
@@ -1075,6 +1078,8 @@ The reservation carries a staff-only `check_out_mode` (`none`, `staff_force`, `g
 
 ## Module: Event Inquiries (RFP triage)
 
+Seeded roles that reach these routes: `tickets.view` (reads) is held by `events`, `reception` and `concierge`; `tickets.assign` (status and assign) by `events` and `concierge`.
+
 ### GET /cms/event-inquiries — `tickets.view`
 
 Paginated, newest first.
@@ -1323,7 +1328,7 @@ Generate one UUID per user action (per click on "Post" / "Take payment") and reu
 
 ## Module: Chat (P9)
 
-Guest↔staff messaging. `tickets.view` reads, `tickets.respond` replies (both seeded since P0).
+Guest↔staff messaging. `tickets.view` reads, `tickets.respond` replies (both seeded since P0). Since Phase 7 the `events`, `reception` and `concierge` presets all hold both, so reception and concierge staff can read and answer guest chat; kitchen and housekeeping cannot. A support ticket's `conversation_uuid` is the conversation to reply into.
 
 - `GET /api/cms/conversations` — all conversations, most recent first (`tickets.view`).
 - `GET /api/cms/conversations/{uuid}/messages` — paginated history, oldest first (`tickets.view`).
@@ -1337,16 +1342,60 @@ No push notification is sent to staff (the dashboard is web; it live-subscribes 
 
 ## Module: Operations Queue & Dashboard (P10)
 
-The unified read+assign layer over `service_requests`, `tickets` (chatbot-created — empty until P11 ships) and, since Phase 6, `housekeeping_tasks` — a single registry (`OperationsQueueType`) drives every type-dependent rule below. Every mutation mirrors live to the same Firestore `ops_queue` collection service-request creation already writes to (see `API_GUIDE_MOBILE.md`). The queue only ever shows **active** work — completed/cancelled service requests, resolved/closed tickets and closed housekeeping tasks (`done`/`cancelled`) are excluded, not just paginated away.
+The unified read+assign layer over `service_requests`, `tickets` (staff-created since Phase 7 — see *Module: Support Tickets*; chatbot-sourced rows arrive with P11) and, since Phase 6, `housekeeping_tasks` — a single registry (`OperationsQueueType`) drives every type-dependent rule below. Every mutation mirrors live to the same Firestore `ops_queue` collection service-request creation already writes to (see `API_GUIDE_MOBILE.md`). The queue only ever shows **active** work — completed/cancelled service requests, resolved/closed tickets and closed housekeeping tasks (`done`/`cancelled`) are excluded, not just paginated away.
 
-- `GET /api/operations/queue` — merged, newest-first, paginated. Requires `service_requests.view` **or** `tickets.view` **or** `housekeeping.view`; each of the three tables is included only if the caller holds its own `.view` permission (holding just one or two silently omits the rest, not a 403). Each item: `{ type: "service_request"|"ticket"|"housekeeping_task", uuid, subject, department, status, priority, assigned_user_uuid, created_at, room_number, allowed_statuses }`. `subject` is the service request's `type`, the ticket's `subject`, or the housekeeping task's `type`; `department` is always `housekeeping` for a task row. `priority` is always a string (`low`/`normal`/`high`) — ticket priority is stored as a 1–3 int internally but normalized here so the field never changes type between rows. `room_number` (string or `null`) and `allowed_statuses` (the D-05-style transition targets from the row's current status) are on **every** row regardless of type — a service request's `room_number` comes from its reservation's first assigned room, a ticket's is always `null`. Each of the three types is fetched with its own 500-row cap before the merge (3 × 500 at most); a type with more than 500 open rows is silently truncated (a SQL `UNION` is deferred).
-- `PATCH /api/operations/queue/{type}/{uuid}/assign` — `{ "user_uuid": "..." }`. `{type}` is `service-requests`, `tickets` or `housekeeping-tasks`. Permission differs by type: `service_requests.assign` / `tickets.assign` / `housekeeping.assign`. Assigning a `pending` housekeeping task moves it to `assigned` (same rule as the dedicated `/housekeeping/tasks/{task}/assign` verb); assigning an already-assigned or in-progress task only swaps the assignee; a `done`/`cancelled` task answers `422 housekeeping_task_closed`.
-- `PATCH /api/operations/queue/{type}/{uuid}/status` — `{ "status": "...", "reason"?: "..." }`, validated against that item's own status enum. Permission: `service_requests.update` / `tickets.respond` / `housekeeping.update` (ticket status changes reuse the chat-reply permission — resolving a ticket is a form of responding to it). A housekeeping task enforces the D-05 transition table and answers `422 housekeeping_task_transition_invalid` (`context: { from, to, allowed }`) on an invalid move — requests and tickets have no server-side transition table.
-- `GET /api/dashboard/summary` — `{ service_requests?: {status: count}, tickets?: {status: count}, event_inquiries?: {status: count}, housekeeping_tasks?: {status: count} }`. Each block appears only if you hold the matching `.view` permission (`tickets.view` unlocks both `tickets` and `event_inquiries` — event inquiries reuse the same permission P6 already gated their own admin routes with; `housekeeping.view` unlocks `housekeeping_tasks`). No permissions → `{}`, not a 403.
+- `GET /api/operations/queue` — merged, newest-first, paginated. Requires `service_requests.view` **or** `tickets.view` **or** `housekeeping.view`; each of the three tables is included only if the caller holds its own `.view` permission (holding just one or two silently omits the rest, not a 403). Each item: `{ type: "service_request"|"ticket"|"housekeeping_task", queue_type: "service-requests"|"tickets"|"housekeeping-tasks", uuid, subject, department, status, priority, assigned_user_uuid, created_at, room_number, allowed_statuses }`. `subject` is the service request's `type`, the ticket's `subject`, or the housekeeping task's `type`; `department` is always `housekeeping` for a task row. `priority` is always a string (`low`/`normal`/`high`) — ticket priority is stored as a 1–3 int internally but normalized here so the field never changes type between rows. `room_number` (string or `null`) and `allowed_statuses` (the D-05-style transition targets from the row's current status) are on **every** row regardless of type — a service request's `room_number` comes from its reservation's first assigned room, and a ticket's is the room linked to the ticket (`null` when none; a soft-deleted room still shows its number). **Build every queue path from `queue_type`** — `/operations/queue/{queue_type}/{uuid}/assign|status|claim` — there are no `{id}` aliases. Ticket rows now include the `in_progress` and `waiting_guest` statuses (active statuses are `open`, `assigned`, `in_progress`, `waiting_guest`) and advertise the enforced `allowed_statuses` (never `assigned`). Each of the three types is fetched with its own 500-row cap before the merge (3 × 500 at most); a type with more than 500 open rows is silently truncated (a SQL `UNION` is deferred).
+- `PATCH /api/operations/queue/{type}/{uuid}/assign` — `{ "user_uuid": "..." }`. `{type}` is `service-requests`, `tickets` or `housekeeping-tasks`. Permission differs by type: `service_requests.assign` / `tickets.assign` / `housekeeping.assign`. Assigning a `pending` housekeeping task moves it to `assigned` (same rule as the dedicated `/housekeeping/tasks/{task}/assign` verb); assigning an already-assigned or in-progress task only swaps the assignee; a `done`/`cancelled` task answers `422 housekeeping_task_closed`. Since Phase 7 every assign verb also checks **assignee eligibility** (see below) and a ticket assign runs the ticket assign writer (open → `assigned`, timeline row, `ticket_closed` on a resolved/closed ticket); a service request assign answers `422 service_request_closed` on a terminal request.
+- `PATCH /api/operations/queue/{type}/{uuid}/status` — `{ "status": "...", "reason"?: "..." }`, validated against that item's own status enum. Permission: `service_requests.update` / `tickets.respond` / `housekeeping.update` (ticket status changes reuse the chat-reply permission — resolving a ticket is a form of responding to it). A housekeeping task enforces the D-05 transition table and answers `422 housekeeping_task_transition_invalid` (`context: { from, to, allowed }`) on an invalid move — service requests have no server-side transition table. **Tickets now do** (additive 422s on this existing route): the ticket arm runs the same lifecycle writer as `PATCH /support-tickets/{ticket}/status` — an invalid move or `status: "assigned"` is `422 ticket_transition_invalid` (`context: { from, to, allowed }`), closing a ticket that is not `resolved` or reopening a `resolved` ticket needs a non-blank `reason` (`422 validation_failed` on `reason`), the move writes the ticket timeline, and a move to `in_progress` on an unassigned ticket self-assigns the caller. On this route `reason` stays capped at 255 characters (1000 on `/support-tickets/{ticket}/status`).
+- `GET /api/dashboard/summary` — `{ service_requests?: {status: count}, tickets?: {status: count}, event_inquiries?: {status: count}, housekeeping_tasks?: {status: count} }`. Each block appears only if you hold the matching `.view` permission (`tickets.view` unlocks both `tickets` and `event_inquiries` — event inquiries reuse the same permission P6 already gated their own admin routes with; `housekeeping.view` unlocks `housekeeping_tasks`). No permissions → `{}`, not a 403. The `tickets` block now counts `in_progress` and `waiting_guest` alongside the other active statuses.
 
-**Tickets are chatbot-only for now.** Nothing creates a `Ticket` until P11's `CreateTicketAction` — the table and queue support them from P10 onward so nothing needs to change when P11 lands.
+**Staff create tickets since Phase 7** (`POST /support-tickets`); the chatbot will add `source: "chatbot"` rows in P11 without any change to the queue.
 
-**Firestore mirror (D-11b):** `ops_queue` now carries a third status vocabulary. A housekeeping-task change mirrors to document id `housekeeping_task_{uuid}` (versus `service_request_{uuid}` and `ticket_{uuid}`) with payload `{ uuid, department, status, priority, guest_uuid, assigned_user_uuid, created_at, task_type, room_uuid, room_number }` — no guest name or phone (task rows carry room and stay identifiers only). Subscribers must branch on the document id prefix to know which status vocabulary a row's `status` belongs to.
+### Assignee eligibility (Phase 7)
+
+Every assign verb — `PATCH /operations/queue/{queue_type}/{uuid}/assign` for all three types, `PATCH /support-tickets/{ticket}/assign`, the ticket escalation target and `PATCH /housekeeping/tasks/{task}/assign` — refuses an assignee who could not then work the item: the user must be active, of type `staff` or `super_admin`, and hold the queue type's **work** permission (`service_requests.update` for service requests, `tickets.respond` for tickets, `housekeeping.update` for housekeeping tasks; a super admin always qualifies). Otherwise `422 assignee_not_eligible` with `context: { user_uuid, required_permission }`. Claiming skips this check (you claim for yourself, and the work-permission gate on the claim route already applies).
+
+Which seeded presets can be assigned each queue type:
+
+| Queue type | Assignable | Not assignable |
+|---|---|---|
+| `service-requests` | `reception`, `kitchen`, `housekeeping`, `concierge` | `events`, `content_editor`, `content_manager` |
+| `tickets` | `events`, `reception`, `concierge` | `kitchen`, `housekeeping`, `content_editor`, `content_manager` |
+| `housekeeping-tasks` | `housekeeping` | every other preset, including `reception` |
+
+Before Phase 7 any staff user could be assigned. Newly refused: `reception` for housekeeping tasks (it holds `housekeeping.assign` — it may hand tasks off — but not `housekeeping.update`, so it can be the assigner but no longer the assignee); `events` for service requests (no `service_requests.update`); and `kitchen`/`housekeeping` for tickets (no `tickets.*`). Reception stays assignable to service requests. Use `GET /operations/staff` below to populate the assignee picker instead of hard-coding presets.
+
+### Claim — `PATCH /api/operations/queue/{queue_type}/{uuid}/claim`
+
+No body; `auth:users`. "Take this item for myself." The caller must hold the type's **work** permission (`service_requests.update` / `tickets.respond` / `housekeeping.update`) — the assign permission alone is `403`. The permission is checked before the item is resolved, so a missing permission is `403` even for an unknown uuid; an unknown `{queue_type}` or uuid is `404 not_found`. Response `200`: the refreshed queue row (same shape as the list items).
+
+Inside the item's row lock the order is: **closed check → who owns it → assign**.
+
+| Item state | Result |
+|---|---|
+| Terminal (closed) | `422` with the type's own code, `context: { status }`, even when the caller already owns it — `ticket_closed` (tickets), `housekeeping_task_closed` (housekeeping tasks), `service_request_closed` (service requests). There is **no shared closed code**; branch per `queue_type`. |
+| Unassigned | Assigned to the caller, message "Queue item claimed." A ticket `open` → `assigned` (any other active status keeps its status) with an `assignment` timeline row whose `meta` is `{ "claim": true }`; a housekeeping task `pending` → `assigned` with history reason `claimed`; a service request keeps its status. |
+| Already yours | `200` no-op, message "This item is already assigned to you." Nothing is written and nothing is mirrored. |
+| Someone else's | `409 queue_item_already_claimed`, `context: { assigned_user_uuid }`. A claim never overrides another assignee — supervisors re-assign with `PATCH …/assign`. |
+
+Claiming no longer moves the item to `in_progress`. A deactivated user's tokens are revoked at deactivation, so an old token gets `401`, not a claim.
+
+**Race caveat (MySQL only):** the claim runs under a `SELECT … FOR UPDATE` row lock. SQLite ignores `lockForUpdate`, so the test suite proves only that the `for update` clause is issued; two simultaneous claims are serialised on MySQL (production) only.
+
+### GET /api/operations/staff — assignable-staff directory
+
+Gate: `auth:users` + `permission:service_requests.view|tickets.view|housekeeping.view` (the same as the queue list). There is no `/operations/queue/staff` alias (`404`).
+
+| Query | Notes |
+|---|---|
+| `type` | `service-requests`, `tickets` or `housekeeping-tasks` — holders of that type's work permission. |
+| `permission` | **Only** `service_requests.update`, `tickets.respond` or `housekeeping.update`; any other value is `422 validation_failed`. When `type` and `permission` are both sent, both apply. |
+| `department` | A department value: `kitchen`, `housekeeping`, `concierge`, `reception`, `events`, `sales`, `maintenance` — users holding the role of that name. `sales` and `maintenance` have no role, so they return an empty list. |
+| `search` | Case-insensitive name substring (wildcards escaped), max 100 characters. |
+
+Rows are active users of type `staff` or `super_admin`, ordered by name. Super admins match the `type`/`permission` filters but are excluded by `department` unless they hold that role. **Response `data`:** `{ "items": [ { "uuid", "name", "type", "departments": ["housekeeping"] } ], "meta": { "count", "truncated" } }` — unpaginated, capped at 200; `meta.count` is the number of rows returned and `meta.truncated` is `true` when more matched. A row carries exactly those four keys — no email, no roles, no permissions. `departments` is always an array and is derived from the user's **role names** that equal a department value, so renaming a role silently changes both the `department` filter and each row's `departments`.
+
+**Firestore mirror (D-11b):** `ops_queue` now carries a third status vocabulary. A housekeeping-task change mirrors to document id `housekeeping_task_{uuid}` (versus `service_request_{uuid}` and `ticket_{uuid}`) with payload `{ uuid, department, status, priority, guest_uuid, assigned_user_uuid, created_at, task_type, room_uuid, room_number }` — no guest name or phone (task rows carry room and stay identifiers only). Subscribers must branch on the document id prefix to know which status vocabulary a row's `status` belongs to. Ticket changes write `ticket_{uuid}` (payload unchanged) from a **queued listener** (`MirrorTicketToFirestore`) after the transaction commits, so a queue worker must be running for ticket mirrors to appear.
 
 ---
 
@@ -1717,6 +1766,138 @@ An invalid move is `422 service_booking_transition_invalid` with `context: { fro
 
 ---
 
+## Module: Support Tickets (tickets.view · tickets.assign · tickets.respond)
+
+Staff-run support tickets with a timeline, service-recovery records and escalation (Phase 7). All routes are `auth:users` and live under `/api/support-tickets`; `{ticket}` is the ticket's uuid. Tickets also appear on the operations queue (`queue_type: "tickets"`) — both surfaces share the same writers, so the lifecycle rules below apply to both. There is **no DELETE route** (a `DELETE` is `405 method_not_allowed`): tickets and recoveries are permanent audit.
+
+| Route | Gate | Success |
+|---|---|---|
+| `GET /support-tickets` | `tickets.view` | 200, paginated |
+| `GET /support-tickets/{ticket}` | `tickets.view` | 200 |
+| `POST /support-tickets` | `tickets.respond` | 201 |
+| `PATCH /support-tickets/{ticket}/status` | `tickets.respond` | 200 |
+| `POST /support-tickets/{ticket}/reply` | `tickets.respond` | 201 |
+| `POST /support-tickets/{ticket}/recovery-actions` | `tickets.respond` | 201 |
+| `POST /support-tickets/{ticket}/escalate` | `tickets.respond` | 200 |
+| `PATCH /support-tickets/{ticket}/assign` | `tickets.assign` | 200 |
+
+Every write returns the full ticket detail shape below. Missing token `401`, missing permission `403`, unknown uuid `404`, bad input `422 validation_failed`.
+
+### Lifecycle
+
+Statuses: `open`, `assigned`, `in_progress`, `waiting_guest`, `resolved`, `closed`. The enforced transition table (the ticket's `allowed_statuses` lists the targets you may PATCH to):
+
+| From | Allowed to |
+|---|---|
+| `open` | `in_progress`, `resolved`, `closed` |
+| `assigned` | `in_progress`, `waiting_guest`, `resolved`, `closed` |
+| `in_progress` | `waiting_guest`, `resolved`, `closed` |
+| `waiting_guest` | `in_progress`, `resolved`, `closed` |
+| `resolved` | `closed`, `in_progress` (reopen) |
+| `closed` | none (terminal) |
+
+`assigned` is system-managed: it is reached only by **assign**, **claim** or **escalate**, never by a status PATCH — a PATCH to `assigned` is `422 ticket_transition_invalid`, as is any other move outside the table (`context: { from, to, allowed }`, `allowed` never contains `assigned`).
+
+**`PATCH /support-tickets/{ticket}/status`** — body `{ "status", "reason"? }` (`reason` max 1000). A non-blank `reason` is **required** when closing a ticket that is not `resolved`, and when reopening (`resolved` → `in_progress`); otherwise `422 validation_failed` on `reason`. Side effects: `resolved_at` is stamped on `resolved` and cleared on reopen; `closed_at` is stamped on `closed`; moving an **unassigned** ticket to `in_progress` assigns it to the caller (self-assign, recorded as the `target_user` of the one `status_change` row). The reason is stored as the timeline row's `body`.
+
+### POST /support-tickets
+
+Body: `subject` (required, 3–150), `category` (required: `inquiry`, `complaint`, `booking_help`, `maintenance`, `other`), `description?` (max 5000), `priority?` (`low` | `normal` | `high`), `department?` (`kitchen`, `housekeeping`, `concierge`, `reception`, `events`, `sales`, `maintenance`), `guest_uuid?`, `reservation_uuid?`, `room_uuid?` (a soft-deleted room is rejected).
+
+- The server forces `source: "staff"`, `status: "open"` and `created_by` (the caller); those fields are ignored if sent. A `created` row is written to the timeline.
+- `department` falls back by category: `complaint` → `concierge`, `maintenance` → `housekeeping`, `booking_help` → `reception`, everything else → `concierge`. An explicit `department` wins.
+- When `reservation_uuid` is sent, the guest is derived from the reservation; sending a `guest_uuid` that is not that reservation's guest is `422 validation_failed` on `guest_uuid`. With no reservation, `guest_uuid` alone is accepted. `room_uuid` is independent — it is **not** derived from the reservation.
+- Returns `201` with the detail shape (no `conversation_uuid` unless a chat conversation is linked to the guest).
+
+### GET /support-tickets — list
+
+Paginated (`per_page`), rows use the ticket shape below **without** `actions`, `actions_truncated` or `latest_escalation`.
+
+| Query | Notes |
+|---|---|
+| `status`, `department`, `source`, `category`, `priority` | `eq` or `in` (`?status[in]=open,assigned`). Unknown values match nothing. `priority` takes the labels `low`/`normal`/`high`. |
+| `created_at[gte]`, `created_at[lte]` | Parsed as instants (UTC); an unparseable value is `422`. |
+| `assignee` | A staff uuid, `unassigned`, or `me` (the caller). Any other value is `422 validation_failed`. |
+| `guest`, `reservation` | A uuid; a malformed uuid is `422`. |
+| `escalated` | Boolean — `true` = `escalation_level` > 0, `false` = 0. A non-boolean is `422`. |
+| `sort` / `sort_dir` | `sort` one of `created_at`, `updated_at`, `priority`, `status` (`sort_dir` `asc` default / `desc`); `id` descending is the tie-break. Default order: `created_at` descending. |
+
+### Ticket shape
+
+```json
+{
+  "uuid": "...", "subject": "...", "description": null,
+  "category": "complaint", "status": "in_progress", "priority": "high",
+  "department": "concierge", "source": "staff", "escalation_level": 0,
+  "allowed_statuses": ["waiting_guest", "resolved", "closed"],
+  "guest": { "uuid": "...", "name": "..." },
+  "reservation": { "uuid": "...", "booking_code": "CARL-..." },
+  "room": { "uuid": "...", "number": "812" },
+  "conversation_uuid": null,
+  "assigned_user": { "uuid": "...", "name": "..." },
+  "created_by": { "uuid": "...", "name": "..." },
+  "folio_credit_total_usd": "25.00", "recorded_value_usd": "65.00",
+  "resolved_at": null, "closed_at": null, "created_at": "...", "updated_at": "..."
+}
+```
+
+`guest`, `reservation`, `room`, `assigned_user` and `created_by` are `null` when absent. `priority` is the label (`low`/`normal`/`high`). `conversation_uuid` is the guest's chat conversation, when there is one. **Two totals, USD strings:** `folio_credit_total_usd` sums only **ledger-backed folio credits** (recoveries of type `folio_credit`, absolute values); `recorded_value_usd` sums **every** recovery's recorded value, any type — so it is at least the first, and non-credit amounts are informational, not money moved.
+
+The detail (`GET /support-tickets/{ticket}` and every write) adds:
+
+- `actions` — the timeline, **newest 200 rows in ascending order**; `actions_truncated` is `true` when older rows were left out.
+- `latest_escalation` — `{ level, target_user: {uuid, name}, reason, created_at }` for the newest escalation **within the loaded actions**, else `null` (so `null` can also mean "the escalation is older than the newest 200 rows"; read `escalation_level` for the count).
+
+**Action shape:**
+
+```json
+{ "uuid": "...", "type": "status_change", "body": "reason or text", "from_status": "open", "to_status": "in_progress",
+  "actor": { "uuid": "...", "name": "..." }, "target_user": null, "recovery": null, "meta": null, "created_at": "..." }
+```
+
+`type` is `created`, `status_change`, `assignment`, `escalation`, `reply` or `recovery`. `recovery` is set only on `recovery` rows: `{ uuid, type, amount_usd, description, folio_item_uuid }`. `meta` keys per type: `assignment` → `{ "claim": true }` when the assignment came from a queue claim; `escalation` → `{ "level", "previous_assignee_uuid" }`; no other type carries meta.
+
+### PATCH /support-tickets/{ticket}/assign
+
+Body `{ "user_uuid" }` (required, must exist) — `tickets.assign`. The assignee must be eligible (active staff holding `tickets.respond`, or a super admin) else `422 assignee_not_eligible`; this check runs before the no-op. Only active tickets (`open`, `assigned`, `in_progress`, `waiting_guest`) can be assigned: a `resolved` or `closed` ticket is `422 ticket_closed` (`context: { status }`). Assigning the current assignee is a `200` no-op (nothing written). Otherwise an `open` ticket becomes `assigned`; in any other active status the status is kept and only the assignee swaps; one `assignment` timeline row is written.
+
+### POST /support-tickets/{ticket}/reply
+
+Body `{ "body" }` (1–5000). **Replies are internal notes only**: this writes one `reply` timeline row, does not change the status, does not message the guest and does not touch the chat. To answer the guest, post to `POST /cms/conversations/{conversation}/messages` using the ticket's `conversation_uuid` (`tickets.respond`). A `closed` ticket is `422 ticket_closed`.
+
+### POST /support-tickets/{ticket}/escalate
+
+Body `{ "user_uuid", "reason" }` (`reason` 3–1000). The level is server-derived — a `level` in the body is ignored. Guards run in this order, each a `422`:
+
+1. `ticket_closed` — the ticket is `resolved` or `closed`;
+2. `ticket_escalation_invalid` `{ reason: "self" }` — the target is the caller;
+3. `ticket_escalation_invalid` `{ reason: "same_assignee" }` — the target already holds the ticket;
+4. `ticket_escalation_limit` `{ level, max }` — `escalation_level` has reached the cap, `HOTEL_TICKET_MAX_ESCALATION_LEVEL` (default `3`);
+5. `assignee_not_eligible` — the target lacks `tickets.respond`.
+
+Effects: the target becomes the assignee, `escalation_level` goes up by one, an `open` ticket becomes `assigned`, and one `escalation` row is written (`body` = reason, `meta` = `{ level, previous_assignee_uuid }`). The cap counts escalations, not people: A → B → A is allowed within it. **No notification is sent** to anyone (no push, no email, nothing scheduled) — the dashboard learns of an escalation by watching the queue row's `assigned_user_uuid` and by filtering `GET /support-tickets?assignee=me`.
+
+### POST /support-tickets/{ticket}/recovery-actions
+
+Records a service-recovery gesture on the ticket. It is **record-only**: it never posts to or changes a folio. Body: `type` (required: `folio_credit`, `rate_discount`, `courtesy_amenity`, `room_upgrade`, `late_checkout`, `apology`, `other`), `description` (required, 3–1000), `amount_usd?` (0–99999.99, at most 2 decimals; informational for every type except `folio_credit`), `folio_item_uuid` (**required** for `folio_credit`, **prohibited** for every other type). A `closed` ticket is `422 ticket_closed`. Writes one `recovery` timeline row (with its `recovery` object) and returns `201`.
+
+**Two-step folio credit.** First post the credit on the guest's folio yourself: `POST /cms/folios/{folio}/line-items` (see *Module: Folios & Express Checkout* for the credit body) with an `Idempotency-Key` header and `folios.post`. Then link that line here with `type: "folio_credit"` and its `folio_item_uuid`. The recorded `amount_usd` is the absolute value of the credit line; sending a different `amount_usd` is `422 validation_failed` on `amount_usd`. Amounts are USD. Each credit line can be linked once. Link failures are `422 ticket_recovery_folio_invalid` with `context: { folio_item_uuid, reason }`, `reason` one of, checked in this order: `no_stay` (the ticket has neither a reservation nor a guest, so there is no stay to match), `not_credit` (the line is not a credit), `other_stay` (the line belongs to a different reservation than the ticket's — or, for a guest-only ticket, a different guest's), `already_linked`. An unknown `folio_item_uuid` is `422 validation_failed`.
+
+### Failure `error_code`s (this module)
+
+`ticket_transition_invalid`, `ticket_closed`, `ticket_escalation_invalid`, `ticket_escalation_limit`, `ticket_recovery_folio_invalid`, `assignee_not_eligible` (all 422), plus `validation_failed` (422), `unauthorized` (401), `forbidden` (403), `not_found` (404). See the quick reference below.
+
+### Dashboard handoff (Phase 7)
+
+- Renames: `owner` → **`user_uuid`** (assign body); escalate `{ target_owner, level }` → **`{ user_uuid, reason }`** (`level` is server-derived); recovery `action_type` / `detail` / `amount` / `currency` → **`type` / `description` / `amount_usd`** (USD only; the old `transport_hold` type is now `other`); priority `critical` → **`high`** (labels are `low`/`normal`/`high`); staff list `/operations/queue/staff` → **`/operations/staff`**.
+- Claim path is `/operations/queue/{queue_type}/{uuid}/claim`, and claim **no longer moves the item to `in_progress`** (a ticket `open` becomes `assigned`; other statuses are kept). Build every queue path from the row's `queue_type`.
+- The assignee picker should call `GET /operations/staff?type=…` rather than listing every staff user — assigning someone without the type's work permission is `422 assignee_not_eligible`.
+- Show "Reply" as an internal note; to answer the guest, post to the conversation named by `conversation_uuid`.
+- `status` PATCH targets come from the ticket's `allowed_statuses`; never offer `assigned`.
+- **Deploy note [BLOCKING]:** `HOTEL_TICKET_MAX_ESCALATION_LEVEL` (default `3`) must be set in the production environment if the default is not wanted, and ticket Firestore mirrors need a running queue worker.
+
+---
+
 ## Error codes quick reference
 
 | Code | HTTP | Meaning |
@@ -1754,10 +1935,19 @@ An invalid move is `422 service_booking_transition_invalid` with `context: { fro
 | `housekeeping_task_closed` | 422 | Assign attempted on a `done`/`cancelled` housekeeping task |
 | `service_booking_transition_invalid` | 422 | Service-booking (transfer) status change not allowed from the current state; `context: { from, to, allowed }` |
 | `departure_service_readonly` | 422 | Status change attempted on an `express_checkout` departure row, which is derived from the stay |
+| `ticket_transition_invalid` | 422 | Ticket status change not allowed from the current state (including any PATCH to `assigned`); `context: { from, to, allowed }` |
+| `ticket_closed` | 422 | Assign, escalate or claim on a `resolved`/`closed` ticket, or reply/recovery on a `closed` ticket; `context: { status }` |
+| `ticket_escalation_invalid` | 422 | Escalation target is the caller (`context.reason: self`) or already the assignee (`same_assignee`) |
+| `ticket_escalation_limit` | 422 | The ticket reached the escalation cap; `context: { level, max }` |
+| `ticket_recovery_folio_invalid` | 422 | A `folio_credit` recovery's line cannot be linked; `context: { folio_item_uuid, reason }` with `reason` one of `no_stay`, `not_credit`, `other_stay`, `already_linked` |
+| `assignee_not_eligible` | 422 | The would-be assignee is inactive, not staff, or lacks the queue type's work permission; `context: { user_uuid, required_permission }` |
+| `service_request_closed` | 422 | Assign or claim on a terminal service request; `context: { status }` |
+| `queue_item_already_claimed` | 409 | Claim on an item someone else holds; `context: { assigned_user_uuid }` |
 
 ---
 
 ## Coming in later phases
 
-- **P11** — AI chatbot creates the first `Ticket` rows (source=chatbot); nothing new for the dashboard to integrate beyond what P10 already built
+- **P11** — AI chatbot will add `source: "chatbot"` tickets; staff-created tickets already exist since Phase 7, and nothing new is needed on the dashboard beyond what Phases 7 and 10 built
+- **TICKET-08 (deferred)** — guest-visible ticket replies: today a ticket reply is an internal note and the guest is answered through the chat conversation; there is no route that shows a ticket reply to the guest
 - **P12** — Reports (occupancy, revenue, reservations-by-source, request volume, ticket resolution — `reports.view`), hardening pass

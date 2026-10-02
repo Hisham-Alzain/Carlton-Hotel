@@ -107,6 +107,8 @@ final class OperationsQueueType
         return match ($this->modelClass) {
             ServiceRequest::class   => ServiceRequest::query()->withRoomNumber()->with('assignedUser'),
             HousekeepingTask::class => HousekeepingTask::query()->with(['assignedUser', 'room']),
+            // Ticket::room() includes trashed rooms, so a deleted room keeps its number (D-05).
+            Ticket::class           => Ticket::query()->with(['assignedUser', 'room']),
             default                 => $this->modelClass::query()->with('assignedUser'),
         };
     }
@@ -117,8 +119,10 @@ final class OperationsQueueType
     }
 
     /**
-     * Enforced targets for tasks; advisory "every other value" for requests
-     * and tickets, which have no server-side transition table (FA-6.05-1).
+     * Enforced targets for tasks and (Phase 7, D-06/D-24) tickets —
+     * `TicketStatus::allowedTargets()`, `assigned` excluded because only
+     * assign/claim/escalate reach it. Service requests remain advisory
+     * "every other value" (FA-6.05-1).
      *
      * @return list<string>
      */
@@ -127,11 +131,12 @@ final class OperationsQueueType
         return array_map(static fn (\BackedEnum $s) => $s->value, $item->status->allowedTargets());
     }
 
-    /** Never lazy-loads: tasks need `room` loaded, requests the `room_number` subselect. */
+    /** Never lazy-loads: tasks and tickets need `room` loaded, requests the `room_number` subselect. */
     public function roomNumber(Model $item): ?string
     {
         return match (true) {
             $item instanceof HousekeepingTask => $item->relationLoaded('room') ? $item->room?->number : null,
+            $item instanceof Ticket           => $item->relationLoaded('room') ? $item->room?->number : null,
             $item instanceof ServiceRequest   => $item->getAttribute('room_number') !== null ? (string) $item->getAttribute('room_number') : null,
             default                           => null,
         };

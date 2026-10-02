@@ -339,11 +339,10 @@ var TREE = {
   {"name":"Operations","kind":"section","api":"partial","dash":"mock","mob":"na","children":[
    {"name":"overview summary","api":true,"dash":"mock","mob":"na","meta":"no permission check on route",
     "ep":["GET /dashboard/summary"]},
-   {"name":"live queue","api":"partial","dash":"mock","mob":"na","meta":"{id} vs {type}/{uuid} · no websocket",
-    "note":"Dashboard assign/status use /operations/queue/{id}/…; backend expects {type}/{uuid}. Claim and staff-list routes don't exist. Live updates are a mock setInterval.",
-    "ep":["GET /operations/queue","PATCH /operations/queue/{type}/{uuid}/assign","PATCH /operations/queue/{type}/{uuid}/status"]},
-   {"name":"support tickets","api":false,"dash":"mock","mob":"na","meta":"6 endpoints, none exist",
-    "ep":["GET /support-tickets (mock)","PATCH …/status · …/assign (mock)","POST …/recovery-actions · escalate · reply (mock)"]},
+   {"name":"live queue","api":true,"dash":"mock","mob":"na","meta":"Firestore mirror; websocket deferred (RT-01)",
+    "ep":["GET /operations/queue","PATCH /operations/queue/{type}/{uuid}/assign","PATCH /operations/queue/{type}/{uuid}/status","PATCH /operations/queue/{type}/{uuid}/claim","GET /operations/staff"]},
+   {"name":"support tickets","api":true,"dash":"mock","mob":"na","meta":"timeline · recovery links · escalation cap",
+    "ep":["GET /support-tickets","POST /support-tickets","GET /support-tickets/{ticket}","PATCH /support-tickets/{ticket}/status","PATCH /support-tickets/{ticket}/assign","POST /support-tickets/{ticket}/reply","POST /support-tickets/{ticket}/recovery-actions","POST /support-tickets/{ticket}/escalate"]},
    {"name":"reports","api":false,"dash":"mock","mob":"na","ep":["GET /reports/dashboard (mock)"]}
   ]},
   {"name":"Guests & messaging","kind":"section","api":true,"dash":"mock","mob":true,"children":[

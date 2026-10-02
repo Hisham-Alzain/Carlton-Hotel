@@ -45,11 +45,19 @@ class OperationsQueueTest extends TestCase
         ServiceRequest::factory()->create();
         Ticket::factory()->create();
 
-        $this->withToken($this->staffToken('service_requests.view', 'tickets.view'))
+        $items = $this->withToken($this->staffToken('service_requests.view', 'tickets.view'))
             ->getJson('/api/operations/queue')
             ->assertOk()
             ->assertJsonCount(2, 'data.items')
-            ->assertJsonStructure(['data' => ['items' => ['*' => ['room_number', 'allowed_statuses']]]]);
+            ->assertJsonStructure(['data' => ['items' => ['*' => ['queue_type', 'room_number', 'allowed_statuses']]]])
+            ->json('data.items');
+
+        // OPS-03 (D-24): queue_type is the URL segment matching the row's type.
+        $segments = ['service_request' => 'service-requests', 'ticket' => 'tickets'];
+
+        foreach ($items as $item) {
+            $this->assertSame($segments[$item['type']], $item['queue_type']);
+        }
     }
 
     public function test_queue_excludes_a_table_the_caller_cannot_view(): void
@@ -111,7 +119,7 @@ class OperationsQueueTest extends TestCase
     {
         $fake = $this->fakeFirebase();
         $request = ServiceRequest::factory()->create();
-        $assignee = User::factory()->create();
+        $assignee = User::factory()->withPermissions('service_requests.update')->create();
 
         $this->withToken($this->staffToken('service_requests.assign'))
             ->patchJson("/api/operations/queue/service-requests/{$request->uuid}/assign", ['user_uuid' => $assignee->uuid])
@@ -143,7 +151,7 @@ class OperationsQueueTest extends TestCase
     {
         $this->fakeFirebase();
         $ticket = Ticket::factory()->create();
-        $assignee = User::factory()->create();
+        $assignee = User::factory()->withPermissions('tickets.respond')->create();
 
         $this->withToken($this->staffToken('tickets.assign'))
             ->patchJson("/api/operations/queue/tickets/{$ticket->uuid}/assign", ['user_uuid' => $assignee->uuid])

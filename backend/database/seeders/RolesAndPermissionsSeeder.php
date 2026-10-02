@@ -43,11 +43,19 @@ class RolesAndPermissionsSeeder extends Seeder
             Permission::firstOrCreate(['name' => $name, 'guard_name' => 'users']);
         }
 
+        // Phase 7 (D-10): no new permission strings. Reception gains
+        // tickets.view + tickets.respond and concierge gains tickets.view +
+        // tickets.assign + tickets.respond. tickets.* is the guest-relations
+        // set, so these roles also gain guest chat read and reply
+        // (/cms/conversations) and event-inquiry read — concierge also its
+        // status/assign (council A4 / PR-6; PROJECT.md debt entry, split into
+        // support_tickets.* on objection). Kitchen and housekeeping deliberately
+        // stay without tickets.*.
         $presets = [
-            'reception'      => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'folios.post', 'folios.dispute', 'service_requests.view', 'service_requests.update', 'rooms.status', 'guests.view', 'guests.edit', 'housekeeping.view', 'housekeeping.assign'],
+            'reception'      => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'folios.post', 'folios.dispute', 'service_requests.view', 'service_requests.update', 'rooms.status', 'guests.view', 'guests.edit', 'housekeeping.view', 'housekeeping.assign', 'tickets.view', 'tickets.respond'],
             'kitchen'        => ['service_requests.view', 'service_requests.update'],
             'housekeeping'   => ['service_requests.view', 'service_requests.update', 'rooms.status', 'housekeeping.view', 'housekeeping.assign', 'housekeeping.update'],
-            'concierge'      => ['service_requests.view', 'service_requests.assign', 'service_requests.update', 'guests.view', 'guests.edit'],
+            'concierge'      => ['service_requests.view', 'service_requests.assign', 'service_requests.update', 'guests.view', 'guests.edit', 'tickets.view', 'tickets.assign', 'tickets.respond'],
             'events'         => ['service_requests.view', 'tickets.view', 'tickets.assign', 'tickets.respond'],
             // Without this preset no seeded account except the super admin (who
             // passes via Gate::before, not via permission rows) can reach

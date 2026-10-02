@@ -7,16 +7,15 @@ use App\Models\ServiceRequest;
 use App\Models\Ticket;
 
 // Shared department resolver for service_requests and tickets (PLAN.md P10).
-// No HTTP route in P10 — nothing creates a Ticket until P11's CreateTicketAction,
-// which will call this at creation time, same as ServiceRequestPlaced already
-// resolves its department inline. Unit-tested directly until then.
+// Tickets resolve through Department::forTicketCategory(), the same helper
+// CreateTicketAction (Phase 7, D-11) uses at creation time.
 class RouteRequestAction
 {
     public function handle(ServiceRequest|Ticket $item): array
     {
         $department = $item instanceof ServiceRequest
             ? Department::forServiceType($item->type)
-            : ($item->category?->department() ?? Department::CONCIERGE);
+            : Department::forTicketCategory($item->category);
 
         $item->update(['department' => $department]);
 

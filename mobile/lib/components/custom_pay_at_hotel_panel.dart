@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
@@ -47,14 +48,14 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Pay at Hotel',
+                  AppTranslations.payAtHotel,
                   style: textStyle.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
                   ),
                 ),
                 Text(
-                  'No payment required now',
+                  AppTranslations.noPaymentRequiredNow,
                   style: textStyle.labelMedium?.copyWith(
                     fontFamily: 'DM Sans',
                     color: AppColors.graphite,
@@ -69,10 +70,13 @@ class CustomPayAtHotelPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 10,
               children: [
-                Text('How it works', style: _headingStyle(textStyle)),
                 Text(
-                  'Your reservation is secured without any charge today. '
-                  'Payment will be collected at the front desk upon check-in.',
+                  AppTranslations.howItWorks,
+                  style: _headingStyle(textStyle),
+                ),
+                Text(
+                  '${AppTranslations.reservationSecuredNoCharge} '
+                  '${AppTranslations.paymentAtFrontDesk}',
                   style: textStyle.labelMedium?.copyWith(
                     fontFamily: 'DM Sans',
                     color: AppColors.inkBlack,
@@ -80,20 +84,20 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                 ),
                 // 14, not 4: the old spacer sat between two 10px gaps.
                 Text(
-                  'Accepted Payment Methods at Hotel',
+                  AppTranslations.acceptedPaymentMethods,
                   style: _headingStyle(textStyle),
                 ),
-                const _MethodRow(
-                  iconPath: 'assets/icons/card_line.svg',
-                  label: 'Visa, Mastercard',
+                _MethodRow(
+                  iconPath: 'assets/icons/pay_card.svg',
+                  label: AppTranslations.acceptedCards,
                 ),
-                const _MethodRow(
+                _MethodRow(
                   iconPath: 'assets/icons/bank.svg',
-                  label: 'Bank wire transfer',
+                  label: AppTranslations.bankWire,
                 ),
-                const _MethodRow(
+                _MethodRow(
                   iconPath: 'assets/icons/cash.svg',
-                  label: 'Cash (SYP or USD)',
+                  label: AppTranslations.acceptedCash,
                 ),
                 PillContainer(
                   width: double.infinity,
@@ -113,7 +117,7 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          'Free cancellation up to 48 hours before arrival',
+                          AppTranslations.freeCancellation48h,
                           style: textStyle.labelMedium?.copyWith(
                             fontFamily: 'DM Sans',
                             color: AppColors.inkBlack,

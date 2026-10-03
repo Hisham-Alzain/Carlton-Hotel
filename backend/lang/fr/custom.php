@@ -107,6 +107,7 @@ return [
         'payment_failed'           => "Le paiement n'a pas pu être traité.",
         'inquiry_state'            => "Ce changement de statut n'est pas autorisé.",
         'no_active_reservation'    => 'Cette action nécessite une réservation active.',
+        'check_in_not_available'   => "L'enregistrement ouvre le jour de votre arrivée, une fois votre réservation confirmée par l'hôtel.",
         'no_table_available'       => "Aucune table n'est disponible pour cet horaire et ce nombre de personnes.",
         'verified_contact_immutable' => 'Ce moyen de contact est déjà vérifié. Vérifiez le nouveau avec un code pour le modifier.',
         'ancestor_trashed'         => "Cet élément ne peut pas être restauré tant que la fiche à laquelle il appartient est encore dans la corbeille. Restaurez d'abord celle-ci.",

@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/dining/custom_menu_item_tile.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/models/menu.dart';
@@ -17,6 +18,12 @@ class RestaurantMenuTab extends StatelessWidget {
   final List<MenuItem> items;
   final int selectedCategory;
   final bool loading;
+
+  /// Next page in flight — shows a spinner under the last dish.
+  final bool loadingMore;
+
+  /// Owned by the controller's pagination mixin; drives next-page loading.
+  final ScrollController? scrollController;
   final ValueChanged<int> onSelectCategory;
   final VoidCallback onDownloadMenu;
 
@@ -25,6 +32,8 @@ class RestaurantMenuTab extends StatelessWidget {
     required this.items,
     required this.selectedCategory,
     required this.loading,
+    this.loadingMore = false,
+    this.scrollController,
     required this.onSelectCategory,
     required this.onDownloadMenu,
     super.key,
@@ -68,13 +77,14 @@ class RestaurantMenuTab extends StatelessWidget {
           child: items.isEmpty
               ? Center(
                   child: Text(
-                    'Menu coming soon',
+                    AppTranslations.menuComingSoon,
                     style: Get.textTheme.bodyMedium?.copyWith(
                       color: AppColors.dimGrey,
                     ),
                   ),
                 )
               : ListView.builder(
+                  controller: scrollController,
                   padding: const EdgeInsets.all(10),
                   itemCount: items.length,
                   itemBuilder: (context, i) => Padding(
@@ -92,7 +102,7 @@ class RestaurantMenuTab extends StatelessWidget {
             foregroundColor: AppColors.inkBlack,
             onPressed: onDownloadMenu,
             child: RowTextComponent(
-              text: 'Download Full Menu',
+              text: AppTranslations.downloadFullMenu,
               icon: Icons.download,
               spacing: 10,
               mainAxisAlignment: MainAxisAlignment.center,

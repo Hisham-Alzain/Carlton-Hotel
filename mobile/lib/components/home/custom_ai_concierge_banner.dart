@@ -6,7 +6,7 @@ import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// AI Concierge entry banner on the reservation-state Home (Figma 2197:3322):
+/// AI Concierge entry banner on the reservation-state Home (Figma 2237:3914):
 /// a labelled prompt beside a stacked-photo cluster, over an "Ask the
 /// Concierge" button that opens the concierge screen.
 class CustomAiConciergeBanner extends StatelessWidget {
@@ -64,7 +64,7 @@ class CustomAiConciergeBanner extends StatelessWidget {
                             // where a white border would read as a halo.
                             const CustomLogoAvatar(size: 25, borderWidth: 0),
                             Text(
-                              'AI Concierge',
+                              AppTranslations.aiConciergeTitle,
                               style: textStyle.labelSmall?.copyWith(
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.inkBlack,
@@ -130,7 +130,7 @@ class CustomAiConciergeBanner extends StatelessWidget {
               textStyle: textStyle.labelLarge?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
-              child: const Text('Ask the Concierge'),
+              child: Text(AppTranslations.askTheConcierge),
             ),
           ],
         ),

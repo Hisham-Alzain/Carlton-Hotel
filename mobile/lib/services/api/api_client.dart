@@ -10,7 +10,6 @@ import 'interceptors/retry_interceptor.dart';
 
 /// Builds a fully-configured [Dio] instance with the project's interceptor
 /// stack. Order matters — see comments inline.
-/// //TODO: worth checking if it could be merged and why path is not passed here
 class ApiClient {
   static const String defaultBaseUrl = '';
   static const Duration defaultTimeout = Duration(seconds: 30);
@@ -38,7 +37,9 @@ class ApiClient {
     );
 
     // Interceptor order:
-    // 1. Connectivity — reject early if offline.
+    // 1. Connectivity — on a failed connection, relabels the error "no internet"
+    //    if the device is offline. Never blocks a request up front: the API can
+    //    be reachable with no internet (adb reverse, hotel LAN).
     // 2. Headers — stamp Accept-Language and X-Request-Id.
     // 3. Auth — inject Bearer token.
     // 4. Logger (debug only) — log the fully-decorated request.

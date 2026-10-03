@@ -1,8 +1,14 @@
+import 'package:carlton/controllers/services/airport_transfer_controller.dart';
 import 'package:carlton/controllers/account/account_controller.dart';
+import 'package:carlton/controllers/account/loyalty_controller.dart';
+import 'package:carlton/controllers/account/legal_controller.dart';
 import 'package:carlton/controllers/account/preferences_controller.dart';
+import 'package:carlton/controllers/account/support_controller.dart';
+import 'package:carlton/controllers/discover/experience_controller.dart';
 import 'package:carlton/controllers/dining/restaurant_controller.dart';
 import 'package:carlton/controllers/reviews/review_controller.dart';
 import 'package:carlton/controllers/auth/create_profile_controller.dart';
+import 'package:carlton/controllers/stays/folio_controller.dart';
 import 'package:carlton/controllers/stays/stays_controller.dart';
 import 'package:carlton/controllers/auth/find_booking_controller.dart';
 import 'package:carlton/controllers/booking/pre_arrival_documents_controller.dart';
@@ -34,13 +40,30 @@ class SplashBinding implements Bindings {
 class MainBinding implements Bindings {
   @override
   void dependencies() {
-    Get.lazyPut(() => MainController(), fenix: true);
+    // Permanent, not fenix: see MainController's doc for why a route-scoped
+    // shell controller breaks when sign-in re-pushes /main over itself.
+    final startTab = Get.arguments is int ? Get.arguments as int : 0;
+    if (Get.isRegistered<MainController>()) {
+      Get.find<MainController>().resetTo(startTab);
+    } else {
+      Get.put(MainController(), permanent: true);
+    }
     // The Home + Services tabs live inside the shell, so their controllers are
     // owned here.
     Get.lazyPut(() => HomeController(), fenix: true);
+    // Opened from the pre-arrival Home card; fenix so it survives the tab
+    // controller being recreated mid-flow.
+    Get.lazyPut(() => AirportTransferController(), fenix: true);
     Get.lazyPut(() => ServicesController(), fenix: true);
     Get.lazyPut(() => StaysController(), fenix: true);
     Get.lazyPut(() => AccountController(), fenix: true);
+  }
+}
+
+class LoyaltyBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => LoyaltyController());
   }
 }
 
@@ -146,6 +169,34 @@ class DiscoverBinding implements Bindings {
   @override
   void dependencies() {
     Get.lazyPut(() => DiscoverController());
+  }
+}
+
+class FolioBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => FolioController());
+  }
+}
+
+class SupportBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => SupportController());
+  }
+}
+
+class LegalBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => LegalController());
+  }
+}
+
+class ExperienceBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => ExperienceController());
   }
 }
 

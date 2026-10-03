@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Plain HTTP is refused everywhere except the development backends listed below.
+
+  The app talks to a Laravel server over http:// while it runs on a LAN or an
+  emulator, so release builds pointed at that server need cleartext. Allowing it
+  app-wide (android:usesCleartextTraffic="true") would also let a production
+  build silently downgrade to HTTP; scoping it here means the real API host,
+  which is served over HTTPS, can never be reached in cleartext.
+
+  Keep this list in step with the API_HOST values passed to `flutter build`.
+  Network Security Config matches exact hosts and has no CIDR syntax, so a new
+  LAN address has to be added here explicitly.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Physical device over `adb reverse tcp:8000 tcp:8000`. -->
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <!-- Android emulator's alias for the host machine. -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <!-- Development PC on the office Wi-Fi. -->
+        <domain includeSubdomains="false">10.184.146.120</domain>
+    </domain-config>
+</network-security-config>

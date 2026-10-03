@@ -30,8 +30,10 @@ abstract class AppColors {
   static const Color steelTeal70 = Color(0xB334727F); // @ 70%
   static const Color surfTeal50 = Color(0x80347F87); // @ 50%
   static const Color lagoonTeal = Color(0xFF2F7D8E);
+  static const Color shallowTeal = Color(0xFF5997A5);
   static const Color dustyTeal = Color(0xFF498693);
   static const Color mistTeal = Color(0xFF93C2CD);
+  static const Color frostTeal = Color(0xFFB4CCD1);
 
   // ── Gold / brown / sand ──
   static const Color bronzeGold = Color(0xFF8C6B30);
@@ -40,6 +42,7 @@ abstract class AppColors {
   static const Color walnutGold = Color(0xFF735E39);
   static const Color antiqueGold = Color(0xFFB8975A);
   static const Color antiqueGold56 = Color(0x8FB8975A); // @ 56%
+  static const Color antiqueGold20 = Color(0x33B8975A); // @ 20%
   static const Color antiqueGold09 = Color(0x17B8975A); // @ 9%
   static const Color antiqueGold08 = Color(0x14B8975A); // @ 8%
   static const Color harvestGold46 = Color(0x75AE9567); // @ 46%
@@ -51,6 +54,7 @@ abstract class AppColors {
   static const Color linenTaupe30 = Color(0x4DB9AE99); // @ 30%
   static const Color sandBeige = Color(0xFFE0D8C9);
   static const Color cream = Color(0xFFF0EBE2);
+  static const Color linenCream = Color(0xFFF6F1E7);
   static const Color cream60 = Color(0x99F0EBE2); // @ 60%
   static const Color cream20 = Color(0x33F0EBE2); // @ 20%
   static const Color cream08 = Color(0x14F0EBE2); // @ 8%
@@ -61,9 +65,11 @@ abstract class AppColors {
 
   // ── Ink / grey ──
   static const Color nearBlack = Color(0xFF0D0D0D);
+  static const Color obsidianBlack = Color(0xFF10181A);
   static const Color inkBlack = Color(0xFF141414);
   static const Color inkBlack88 = Color(0xE0141414); // @ 88%
   static const Color inkBlack50 = Color(0x80141414); // @ 50%
+  static const Color onyxBlack = Color(0xFF181818);
   static const Color espressoInk = Color(0xFF1C1714);
   static const Color espressoInk50 = Color(0x801C1714); // @ 50%
   static const Color espressoInk08 = Color(0x141A1814); // @ 8%
@@ -131,11 +137,16 @@ abstract class AppColors {
   static const Color white39 = Color(0x63FFFFFF); // @ 39%
   static const Color white25 = Color(0x40FFFFFF); // @ 25%
   static const Color white10 = Color(0x1AFFFFFF); // @ 10%
+  static const Color white00 = Color(0x00FFFFFF); // @ 0%
 
   // ── Green ──
   static const Color forestGreen = Color(0xFF19541C);
   static const Color oliveDark = Color(0xFF2E3A2C);
+  static const Color sageGreen = Color(0xFFD0E8D1);
+  static const Color mistGreen = Color(0xFFE3F0E3);
+  static const Color scanGreen = Color(0xFF7BC95E);
   static const Color successGreen = Color(0xFF4CAF50);
+  static const Color successGreen18 = Color(0x2E4CAF50); // @ 18%
   static const Color successGreen09 = Color(0x174CAF50); // @ 9%
   static const Color successGreen08 = Color(0x144CAF50); // @ 8%
   static const Color successGreen07 = Color(0x124CAF50); // @ 7%

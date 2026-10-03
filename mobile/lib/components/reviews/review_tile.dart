@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/extensions/date_extension.dart';
 import 'package:carlton/models/review.dart';
@@ -22,7 +23,9 @@ class ReviewTile extends StatelessWidget {
     if (createdAt == null) return const SizedBox.shrink();
     final created = createdAt.formatDatePicker();
 
-    final name = review.authorName.isNotEmpty ? review.authorName : 'Guest';
+    final name = review.authorName.isNotEmpty
+        ? review.authorName
+        : AppTranslations.guestLabel;
     final comment = review.comment?.trim() ?? '';
 
     return Card(
@@ -72,7 +75,7 @@ class ReviewTile extends StatelessWidget {
                   PillContainer(
                     backgroundColor: AppColors.cream,
                     child: Text(
-                      'Verified stay',
+                      AppTranslations.verifiedStay,
                       style: textStyle.labelSmall?.copyWith(
                         fontFamily: 'DM Sans',
                         fontWeight: FontWeight.w600,
@@ -96,5 +99,4 @@ class ReviewTile extends StatelessWidget {
       ),
     );
   }
-
 }

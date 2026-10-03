@@ -119,7 +119,9 @@ class PreArrivalStaySection extends StatelessWidget {
                       Expanded(
                         child: _ReservationDetailTile(
                           label: AppTranslations.roomLabel,
-                          value: 'Suite ${reservation.roomNumber}',
+                          value: AppTranslations.suiteNumber(
+                            reservation.roomNumber,
+                          ),
                           hint: reservation.suiteName,
                         ),
                       ),

@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/cards/custom_rating_label.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
@@ -87,7 +88,7 @@ class CustomRestaurantHero extends StatelessWidget {
 
                       child: RowTextComponent(
                         spacing: 10,
-                        text: 'Reserve',
+                        text: AppTranslations.reserve,
                         iconPath: 'assets/icons/reserve.svg',
                         iconColor: AppColors.primary,
                       ),

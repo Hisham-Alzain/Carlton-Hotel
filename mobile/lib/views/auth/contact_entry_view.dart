@@ -28,8 +28,8 @@ class ContactEntryView extends GetView<ContactEntryController> {
               CustomTextField(
                 controller: controller.emailController,
                 textInputType: TextInputType.emailAddress,
-                captionLabel: 'Email Address',
-                hintText: 'your@email.com',
+                captionLabel: AppTranslations.emailAddressLabel,
+                hintText: AppTranslations.emailAddressHint,
                 validator: (enteredEmail) =>
                     CustomValidation().validateRequiredField(enteredEmail) ??
                     CustomValidation().validateEmail(enteredEmail),
@@ -45,8 +45,8 @@ class ContactEntryView extends GetView<ContactEntryController> {
                       inputFormatters: [controller.phone.formatter],
                       textInputType: TextInputType.phone,
                       textDirection: TextDirection.ltr,
-                      captionLabel: 'Phone Number',
-                      hintText: 'Phone number',
+                      captionLabel: AppTranslations.phoneNumber,
+                      hintText: AppTranslations.phoneNumberHint,
                       validator: (enteredPhoneNumber) =>
                           CustomValidation().validatePhoneNumber(
                             enteredPhoneNumber,

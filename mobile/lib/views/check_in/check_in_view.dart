@@ -9,7 +9,7 @@ import 'package:carlton/views/check_in/tabs/room_key_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Three-tab check-in wizard (Figma 75:463, 75:808, 75:928).
+/// Three-tab check-in wizard (Figma 2237:4567, 2237:4912, 2237:5032).
 ///
 /// The PageView is deliberately non-swipeable: progression is owned by the
 /// Continue buttons so a guest can't skip verification by swiping.
@@ -19,14 +19,14 @@ class CheckInView extends GetView<CheckInController> {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      backgroundColor: AppColors.pearlCream,
+      backgroundColor: AppColors.ghostWhite,
       appBar: AppBar(
-        backgroundColor: AppColors.pearlCream,
+        backgroundColor: AppColors.ghostWhite,
         elevation: 0,
-        leading: const BackButton(color: AppColors.primary),
+        leading: const BackButton(color: AppColors.inkBlack),
         title: Text(
           AppTranslations.checkInTitle,
-          style: Get.textTheme.titleLarge?.copyWith(color: AppColors.primary),
+          style: Get.textTheme.titleLarge?.copyWith(color: AppColors.inkBlack),
         ),
       ),
       body: Column(

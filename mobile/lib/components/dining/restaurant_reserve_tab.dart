@@ -1,6 +1,6 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/custom_counter_field.dart';
 import 'package:carlton/components/dining/custom_time_slot_selector.dart';
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
@@ -13,6 +13,10 @@ import 'package:get/get.dart';
 /// special requests, and the Confirm CTA.
 class RestaurantReserveTab extends StatelessWidget {
   final DateTime date;
+
+  /// The venue's bookable slots, derived from its opening hours by
+  /// `RestaurantController.timeSlots`. Empty hides the picker.
+  final List<String> timeSlots;
   final String timeSlot;
   final int guests;
 
@@ -27,6 +31,7 @@ class RestaurantReserveTab extends StatelessWidget {
 
   const RestaurantReserveTab({
     required this.date,
+    required this.timeSlots,
     required this.timeSlot,
     required this.guests,
     required this.specialRequests,
@@ -57,34 +62,38 @@ class RestaurantReserveTab extends StatelessWidget {
         // and break every label/field pairing.
         children: [
           Text(
-            'Reserve a Table',
+            AppTranslations.reserveATable,
             style: textStyle.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.inkBlack,
             ),
           ),
-          const _Label('Date'),
+          _Label(AppTranslations.date),
           _DateField(value: date.formatDatePicker(), onTap: onPickDate),
-          const _Label('Time'),
-          CustomTimeSlotSelector(
-            slots: DemoData.reserveTimeSlots,
-            selected: timeSlot,
-            onSelected: onSelectTimeSlot,
-          ),
-          const _Label('Guests'),
+          // No slots means the venue published no parseable opening hours, so
+          // there is nothing truthful to offer — the label goes with them.
+          if (timeSlots.isNotEmpty) ...[
+            _Label(AppTranslations.time),
+            CustomTimeSlotSelector(
+              slots: timeSlots,
+              selected: timeSlot,
+              onSelected: onSelectTimeSlot,
+            ),
+          ],
+          _Label(AppTranslations.guests),
           CustomCounterField(
-            title: 'Guests',
+            title: AppTranslations.guests,
             value: guests,
             onChanged: onGuestsChanged,
             minCount: 1,
             maxCount: 20,
           ),
-          const _Label('Special Requests (optional)'),
+          _Label(AppTranslations.specialRequestsOptional),
           CustomTextField(
             controller: specialRequests,
             textInputType: TextInputType.multiline,
             maxLines: 3,
-            hintText: 'Allergies, dietary requirements, occasion...',
+            hintText: AppTranslations.diningNotesHint,
             fillColor: AppColors.white,
             borderColor: AppColors.linenGrey,
           ),
@@ -93,7 +102,7 @@ class RestaurantReserveTab extends StatelessWidget {
             height: 50,
             backgroundColor: AppColors.primary,
             onPressed: onConfirm,
-            child: const Text('Confirm Reservation'),
+            child: Text(AppTranslations.confirmReservation),
           ),
         ],
       ),

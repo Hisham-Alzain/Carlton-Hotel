@@ -1,12 +1,17 @@
-import 'package:carlton/models/bilingual.dart';
+import 'package:carlton/models/localized.dart';
 
 /// A microservice option inside a `catalog` service category.
 class ServiceCatalogOption {
   final String uuid;
-  final Bilingual name;
-  final Bilingual description;
+  final Localized name;
+  final Localized description;
   final int? expectedMinutes;
   final String? priceUsd;
+
+  /// Icon key, same vocabulary as [ServiceCatalogItem.icon]. The catalog
+  /// endpoint does not send this per option yet, so it is usually empty and
+  /// the screen falls back to the parent category's icon.
+  final String icon;
 
   const ServiceCatalogOption({
     required this.uuid,
@@ -14,15 +19,17 @@ class ServiceCatalogOption {
     required this.description,
     this.expectedMinutes,
     this.priceUsd,
+    this.icon = '',
   });
 
   factory ServiceCatalogOption.fromJson(Map<String, dynamic> json) =>
       ServiceCatalogOption(
         uuid: json['uuid'] as String? ?? '',
-        name: Bilingual.fromJson(json['name']),
-        description: Bilingual.fromJson(json['description']),
+        name: Localized.fromJson(json['name']),
+        description: Localized.fromJson(json['description']),
         expectedMinutes: (json['expected_minutes'] as num?)?.toInt(),
         priceUsd: json['price_usd']?.toString(),
+        icon: json['icon'] as String? ?? '',
       );
 }
 
@@ -34,8 +41,8 @@ class ServiceCatalogItem {
   final String uuid;
   final String code;
   final String kind;
-  final Bilingual name;
-  final Bilingual description;
+  final Localized name;
+  final Localized description;
   final String icon;
   final String? linkTarget;
   final String? defaultItemUuid;
@@ -64,8 +71,8 @@ class ServiceCatalogItem {
         uuid: json['uuid'] as String? ?? '',
         code: json['code'] as String? ?? '',
         kind: json['kind'] as String? ?? '',
-        name: Bilingual.fromJson(json['name']),
-        description: Bilingual.fromJson(json['description']),
+        name: Localized.fromJson(json['name']),
+        description: Localized.fromJson(json['description']),
         icon: json['icon'] as String? ?? '',
         linkTarget: json['link_target'] as String?,
         defaultItemUuid: json['default_item_uuid'] as String?,

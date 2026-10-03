@@ -1,3 +1,5 @@
+import 'package:carlton/controllers/home/home_controller.dart';
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/sheets/cancel_reservation_sheet.dart';
 import 'package:carlton/components/sheets/receipt_sheet.dart';
 import 'package:carlton/constants/error_codes.dart';
@@ -46,9 +48,9 @@ class StaysController extends GetxController
   // ── Past uses the mixin's Rx items / loading / hasError + scrollController ──
 
   // Reused label formatters (money via [usd]).
-  static final DateFormat _fullDate = DateFormat('MMM d, yyyy');
-  static final DateFormat _shortDate = DateFormat('MMM d');
-  static final DateFormat _time = DateFormat('h:mm a');
+  static DateFormat get _fullDate => DateFormat('MMM d, yyyy');
+  static DateFormat get _shortDate => DateFormat('MMM d');
+  static DateFormat get _time => DateFormat('h:mm a');
 
   @override
   void onInit() {
@@ -170,9 +172,15 @@ class StaysController extends GetxController
       roomName: s.roomName.value,
       status: StayStatus.upcoming,
       // The card force-unwraps subtitle/pricePerNight — never leave them null.
-      subtitle: (s.roomNumber != null && s.roomNumber!.isNotEmpty)
-          ? 'Carlton Hotel Damascus · Room ${s.roomNumber}'
-          : 'Carlton Hotel Damascus',
+      subtitle: [
+        // A guest-made booking stays `pending` until the hotel confirms it.
+        if (s.status == 'pending' || s.status == 'pending_verification')
+          AppTranslations.awaitingConfirmation,
+        (s.roomNumber != null && s.roomNumber!.isNotEmpty)
+            ? '${AppTranslations.receiptHotelName} · '
+                  '${AppTranslations.stayRoomNumber('${s.roomNumber}')}'
+            : AppTranslations.receiptHotelName,
+      ].join(' · '),
       imagePath: 'assets/images/stay_room.png',
       checkInLabel: s.checkIn != null ? _fullDate.format(s.checkIn!) : '',
       checkOutLabel: s.checkOut != null ? _fullDate.format(s.checkOut!) : '',
@@ -186,8 +194,9 @@ class StaysController extends GetxController
   Stay _pastToStay(PastStay s) {
     final range = (s.checkIn != null && s.checkOut != null)
         ? '${_shortDate.format(s.checkIn!)} – '
-              '${_shortDate.format(s.checkOut!)} · ${s.totalNights} nights'
-        : '${s.totalNights} nights';
+              '${_shortDate.format(s.checkOut!)} · '
+              '${AppTranslations.nightsCount(s.totalNights)}'
+        : AppTranslations.nightsCount(s.totalNights);
     return Stay(
       id: s.uuid,
       uuid: s.uuid,
@@ -208,10 +217,10 @@ class StaysController extends GetxController
         : (stay.dateRangeLabel ?? '');
     final balance = double.tryParse(r.balanceDueUsd) ?? 0;
     final paymentInfo = balance > 0
-        ? 'Balance due · ${usd(r.balanceDueUsd)}'
+        ? AppTranslations.balanceDue(usd(r.balanceDueUsd))
         : (r.payments.isNotEmpty
-              ? 'Payment processed · ${r.payments.first.method}'
-              : 'Settled at the front desk');
+              ? AppTranslations.paymentProcessed(r.payments.first.method)
+              : AppTranslations.settledAtFrontDesk);
     return ReceiptData(
       roomName: stay.roomName,
       dateLabel: dateLabel,
@@ -239,9 +248,8 @@ class StaysController extends GetxController
   /// Copy for a failed cancel — a `reservation_state` (already checked in / past
   /// the cancellable window) gets specific wording; everything else is generic.
   static String cancelErrorMessage(String? code) => switch (code) {
-    ErrorCodes.reservationState =>
-      'This reservation can no longer be cancelled.',
-    _ => 'Could not cancel this reservation. Please try again.',
+    ErrorCodes.reservationState => AppTranslations.notCancellable,
+    _ => AppTranslations.cancelFailed,
   };
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -258,12 +266,12 @@ class StaysController extends GetxController
     );
     if (isClosed || res.isCancelled) return;
     if (res.statusCode != 200 || res.data == null) {
-      CustomSnackbars.showError(message: 'Could not load the receipt.');
+      CustomSnackbars.showError(message: AppTranslations.receiptLoadFailed);
       return;
     }
     final data = _receiptToData(stay, Receipt.fromJson(res.data!));
     CustomBottomSheet.show<void>(
-      title: 'Receipt',
+      title: AppTranslations.receipt,
       subtitle: '${stay.roomName} · ${data.dateLabel}',
       child: ReceiptSheet(receipt: data),
       actions: CustomFilledButton(
@@ -273,7 +281,7 @@ class StaysController extends GetxController
           Get.back();
           downloadReceiptPdf(stay);
         },
-        child: const Text('Download PDF Receipt'),
+        child: Text(AppTranslations.downloadPdfReceipt),
       ),
     );
   }
@@ -293,10 +301,12 @@ class StaysController extends GetxController
         cancelToken: _cancel,
       );
       if (isClosed) return;
-      CustomSnackbars.showSuccess(message: 'Receipt saved to $savePath');
+      CustomSnackbars.showSuccess(
+        message: AppTranslations.receiptSaved(savePath),
+      );
     } on DioException catch (_) {
       if (isClosed) return;
-      CustomSnackbars.showError(message: 'Could not download the receipt.');
+      CustomSnackbars.showError(message: AppTranslations.receiptDownloadFailed);
     }
   }
 
@@ -318,7 +328,7 @@ class StaysController extends GetxController
               backgroundColor: AppColors.pearlCream,
               foregroundColor: AppColors.inkBlack,
               onPressed: () => Get.back(),
-              child: const Text('No, Keep'),
+              child: Text(AppTranslations.noKeep),
             ),
           ),
           Expanded(
@@ -329,7 +339,7 @@ class StaysController extends GetxController
                 Get.back();
                 _cancelReservation(stay);
               },
-              child: const Text('Yes, Cancel'),
+              child: Text(AppTranslations.yesCancel),
             ),
           ),
         ],
@@ -351,7 +361,13 @@ class StaysController extends GetxController
       // the authoritative /me rather than guessing a flag flip.
       await MiddlewareService.find.checkToken();
       if (isClosed) return;
-      CustomSnackbars.showSuccess(message: 'Reservation cancelled');
+      // Home may be showing this booking (pending card / pre-arrival hero).
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().reloadBooking();
+      }
+      CustomSnackbars.showSuccess(
+        message: AppTranslations.reservationCancelled,
+      );
     } else {
       final code = res.error?.errorCode;
       if (code == ErrorCodes.reservationState) {
@@ -372,8 +388,8 @@ class StaysController extends GetxController
   /// Express checkout: confirm, then `POST /folio/approve` (approves the bill
   /// and flips the stay to `checked_out`).
   void expressCheckout() => CustomDialogs.showConfirmationDialog(
-    title: 'Express Checkout',
-    message: "Check out now? We'll email your final statement.",
+    title: AppTranslations.expressCheckoutCaps,
+    message: AppTranslations.checkoutConfirmShort,
     icon: 'assets/icons/act_checkout.svg',
     accentColor: AppColors.primary,
     onPressed: _confirmExpressCheckout,
@@ -390,15 +406,15 @@ class StaysController extends GetxController
       if (res.data != null) {
         Folio.fromJson(res.data!); // parse the approved bill
       }
-      CustomSnackbars.showSuccess(message: 'Checkout complete');
+      CustomSnackbars.showSuccess(message: AppTranslations.checkoutComplete);
       // Stay is now checked_out — resync entitlements, then reload (→ null).
       await MiddlewareService.find.checkToken();
       if (isClosed) return;
       _loadActive();
     } else if (res.error?.errorCode == ErrorCodes.noActiveReservation) {
-      CustomSnackbars.showInfo(message: 'No active stay to check out of.');
+      CustomSnackbars.showInfo(message: AppTranslations.noActiveStayToCheckOut);
     } else {
-      CustomSnackbars.showError(message: 'Could not complete checkout.');
+      CustomSnackbars.showError(message: AppTranslations.checkoutFailed);
     }
   }
 

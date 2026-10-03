@@ -47,6 +47,21 @@ class StayController extends BaseController
     }
 
     /**
+     * Self check-in (the pre-arrival wizard's "Complete Check-In"). Plain
+     * `auth:guests`: the caller is by definition not checked in yet, and the
+     * service decides whether their booking may be — returning the new active
+     * stay, or a `reservation_state` 422 when it is not yet confirmed or not
+     * yet the arrival day.
+     */
+    public function checkIn(Request $request): JsonResponse
+    {
+        $result         = $this->stays->checkIn($request->user('guests'));
+        $result['data'] = new ActiveStayResource($result['data']);
+
+        return $this->respondFromService($result, request: $request);
+    }
+
+    /**
      * Sits behind plain `auth:guests`, not `is_checked_in`: having no active
      * stay is an empty state, not an error, and 403-ing here would force the
      * app to treat "not staying right now" as a failure.

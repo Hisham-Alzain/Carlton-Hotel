@@ -69,8 +69,8 @@ class SignInView extends GetView<SignInController> {
                               inputFormatters: [controller.phone.formatter],
                               textInputType: TextInputType.phone,
                               textDirection: TextDirection.ltr,
-                              captionLabel: 'Phone Number',
-                              hintText: 'Phone number',
+                              captionLabel: AppTranslations.phoneNumber,
+                              hintText: AppTranslations.phoneNumberHint,
                               validator: (enteredPhoneNumber) =>
                                   CustomValidation().validatePhoneNumber(
                                     enteredPhoneNumber,

@@ -1,3 +1,5 @@
+import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/extensions/price_extension.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/models/menu.dart';
@@ -62,7 +64,7 @@ class CustomMenuItemTile extends StatelessWidget {
                   children: [
                     if (item.priceUsd != null)
                       Text(
-                        '\$${item.priceUsd}',
+                        MoneyFormat.usdString(item.priceUsd),
                         style: textStyle.labelLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
@@ -77,7 +79,7 @@ class CustomMenuItemTile extends StatelessWidget {
                           vertical: 3,
                         ),
                         child: Text(
-                          'Vegan',
+                          AppTranslations.vegan,
                           style: textStyle.labelSmall?.copyWith(
                             fontFamily: 'DM Sans',
                             fontWeight: FontWeight.w600,

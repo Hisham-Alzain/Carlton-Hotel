@@ -2,8 +2,10 @@
 
 namespace App\Services\Booking;
 
+use App\Actions\Booking\AssignRoomAction;
 use App\Actions\Booking\SubmitOnlineCheckInAction;
 use App\Enums\ReservationStatus;
+use App\Exceptions\ReservationStateException;
 use App\Models\Guest;
 use App\Models\Reservation;
 use App\Support\GuestEntitlement;
@@ -27,6 +29,40 @@ class StayService
      */
     protected array $payloadWith = ['checkInApproval', 'documents'];
     protected int $perPage = 15;
+
+    public function __construct(private readonly AssignRoomAction $assignRoom) {}
+
+    /**
+     * Self check-in from the app's pre-arrival wizard.
+     *
+     * Checks the guest into their confirmed booking through AssignRoomAction —
+     * the same transition reception performs — into the room reserved at
+     * booking time. Only from the arrival day onwards, and only once the hotel
+     * has confirmed the booking: a `pending` guest-made booking is refused, as
+     * is an early arrival. Idempotent: a guest already in-house gets their
+     * active stay back rather than an error.
+     */
+    public function checkIn(Guest $guest): array
+    {
+        $alreadyIn = $this->active($guest)['data'];
+        if ($alreadyIn) {
+            return ['data' => $alreadyIn, 'code' => 200];
+        }
+
+        $today       = now()->startOfDay();
+        $reservation = Reservation::query()
+            ->where('guest_id', $guest->id)
+            ->where('status', ReservationStatus::CONFIRMED)
+            ->whereDate('check_in', '<=', $today)
+            ->whereDate('check_out', '>', $today)
+            ->orderBy('check_in')
+            ->first()
+            ?? throw new ReservationStateException(__('custom.errors.check_in_not_available'));
+
+        $this->assignRoom->handle($reservation);
+
+        return ['data' => $this->active($guest)['data'], 'code' => 200];
+    }
 
     public function __construct(
         private readonly SubmitOnlineCheckInAction $submitOnlineCheckIn,

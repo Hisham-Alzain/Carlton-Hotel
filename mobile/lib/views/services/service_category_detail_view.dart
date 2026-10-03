@@ -1,3 +1,4 @@
+import 'package:carlton/extensions/price_extension.dart';
 import 'package:carlton/components/cards/custom_service_option_tile.dart';
 import 'package:carlton/controllers/home/services_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
@@ -127,7 +128,9 @@ class ServiceCategoryDetailView extends StatelessWidget {
       parts.add(AppTranslations.etaMinutes(option.expectedMinutes!));
     }
     final price = option.priceUsd;
-    if (price != null && price.isNotEmpty) parts.add('\$$price');
+    if (price != null && price.isNotEmpty) {
+      parts.add(MoneyFormat.usdString(price));
+    }
     return parts.join(' · ');
   }
 }

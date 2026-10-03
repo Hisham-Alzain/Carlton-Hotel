@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -60,9 +61,12 @@ class CustomStayCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _InfoLine(prefix: 'Checked in since ', value: checkedInTime),
                   _InfoLine(
-                    prefix: 'Nights remaining  ',
+                    prefix: AppTranslations.checkedInSincePrefix,
+                    value: checkedInTime,
+                  ),
+                  _InfoLine(
+                    prefix: AppTranslations.nightsRemainingPrefix,
                     value: '$nightsRemaining',
                   ),
                 ],
@@ -73,8 +77,8 @@ class CustomStayCard extends StatelessWidget {
             width: 144,
             foregroundDecoration: const BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
                 colors: [AppColors.iceBlue50, AppColors.surfTeal50],
               ),
             ),

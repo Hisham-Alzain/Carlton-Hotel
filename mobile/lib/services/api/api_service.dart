@@ -25,7 +25,7 @@ import 'ui/api_dialog_handler.dart';
 ///
 /// ```dart
 /// final response = await ApiService.find.post<Map<String, dynamic>>(
-///   path: '/user/auth/login',
+///   path: '/auth/guest/verify-otp',
 ///   data: {'phone': phone},
 ///   showLoading: true,
 /// );
@@ -57,9 +57,11 @@ class ApiService extends GetxService {
   /// dev setup here) as long as `adb reverse tcp:8000 tcp:8000` is active — so a
   /// plain `flutter run` needs no flag. Re-run adb reverse after replugging USB.
   /// (`10.0.2.2` is emulator-only and is unreachable from a real phone.)
+  /// Production: build with `--dart-define=API_HOST=https://<api-domain>` —
+  /// no code change. The default only serves development.
   static const String host = String.fromEnvironment(
     'API_HOST',
-    defaultValue: 'http://10.208.207.51:8000 ',
+    defaultValue: 'http://localhost:8000',
   );
 
   static const String baseUrl = '$host/api';
@@ -96,7 +98,9 @@ class ApiService extends GetxService {
     // Clear token + guest identity. MiddlewareService owns both; fall back to a
     // raw token wipe if it isn't registered yet (very early startup).
     if (Get.isRegistered<MiddlewareService>()) {
-      MiddlewareService.find.signOut();
+      // No remote revoke: the token that just 401'd is already invalid, and
+      // calling logout with it would 401 again and recurse through here.
+      MiddlewareService.find.signOut(revokeRemotely: false);
     } else {
       StorageService.remove(StorageKeys.token);
       StorageService.remove(StorageKeys.guest);

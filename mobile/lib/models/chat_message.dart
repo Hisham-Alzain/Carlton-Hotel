@@ -30,7 +30,7 @@ class ChatMessage {
     required this.createdAt,
   });
 
-  static final DateFormat _clock = DateFormat('h:mm a');
+  static DateFormat get _clock => DateFormat('h:mm a');
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     final created =

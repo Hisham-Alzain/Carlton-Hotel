@@ -1,12 +1,14 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/models/service_request.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-/// "Active Requests" card on the reservation-state Home (Figma 2197:3262): a
+/// "Active Requests" card on the reservation-state Home (Figma 2237:3914): a
 /// heading, one thumbnail row per in-house request with a right-aligned status
 /// pill, and a New Request button.
 class CustomActiveRequestsCard extends StatelessWidget {
@@ -47,7 +49,7 @@ class CustomActiveRequestsCard extends StatelessWidget {
           children: [
             if (showHeading)
               Text(
-                'Active Requests',
+                AppTranslations.activeRequests,
                 style: textStyle.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkBlack,
@@ -74,7 +76,10 @@ class CustomActiveRequestsCard extends StatelessWidget {
                 side: const BorderSide(color: AppColors.black10),
               ),
               // The Icon takes its colour from the button's foregroundColor.
-              child: RowTextComponent(text: 'New Request', icon: Icons.add),
+              child: RowTextComponent(
+                text: AppTranslations.newRequest,
+                icon: Icons.add,
+              ),
             ),
           ],
         ),
@@ -117,22 +122,15 @@ class _RequestRow extends StatelessWidget {
             child: Row(
               spacing: 10,
               children: [
+                // Sized for the tile illustration to read at a glance — the
+                // same artwork as the Services hub, framed on its tile colour.
                 PillContainer(
-                  width: 30,
-                  height: 30,
-                  radius: 8,
+                  width: 52,
+                  height: 52,
+                  radius: 12,
                   backgroundColor: AppColors.primary06,
-                  // PillContainer.child is non-nullable, so a request with no icon
-                  // gets an empty box rather than null.
-                  child: request.iconAsset != null
-                      ? Opacity(
-                          opacity: 0.7,
-                          child: Image.asset(
-                            request.iconAsset!,
-                            fit: BoxFit.contain,
-                          ),
-                        )
-                      : const SizedBox.shrink(),
+                  padding: const EdgeInsets.all(6),
+                  child: _RequestArtwork(imagePath: request.tileImage),
                 ),
                 Expanded(
                   child: Column(
@@ -173,6 +171,43 @@ class _RequestRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The request's Services-hub illustration, or the generic request glyph for a
+/// type with no tile. The tile PNGs are ~1024 px Figma exports, so they are
+/// decoded at the rendered size rather than full resolution.
+class _RequestArtwork extends StatelessWidget {
+  const _RequestArtwork({required this.imagePath});
+
+  final String? imagePath;
+
+  static const double _size = 40;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = imagePath;
+    if (path == null) {
+      return Opacity(
+        opacity: 0.7,
+        child: SvgPicture.asset(
+          'assets/icons/act_request.svg',
+          width: 24,
+          height: 24,
+          colorFilter: const ColorFilter.mode(
+            AppColors.primary,
+            BlendMode.srcIn,
+          ),
+        ),
+      );
+    }
+    return Image.asset(
+      path,
+      width: _size,
+      height: _size,
+      fit: BoxFit.contain,
+      cacheWidth: (_size * MediaQuery.devicePixelRatioOf(context)).round(),
     );
   }
 }

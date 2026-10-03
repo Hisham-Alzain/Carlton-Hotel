@@ -1,3 +1,5 @@
+import 'package:carlton/constants/service_tiles.dart';
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/service_catalog_item.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -7,35 +9,30 @@ import 'package:flutter/material.dart';
 /// so the cards stay untouched.
 enum ServiceRequestStatus {
   requested(
-    label: 'Requested',
-    iconPath: 'assets/icons/orangeclock.svg',
+    iconPath: 'assets/icons/clock.svg',
     textColor: AppColors.antiqueGold,
     bgColor: AppColors.antiqueGold09,
     iconBgColor: AppColors.antiqueGold08,
   ),
   inProgress(
-    label: 'In Progress',
-    iconPath: 'assets/icons/orangeclock.svg',
+    iconPath: 'assets/icons/clock.svg',
     textColor: AppColors.antiqueGold,
     bgColor: AppColors.antiqueGold09,
     iconBgColor: AppColors.antiqueGold08,
   ),
   confirmed(
-    label: 'Confirmed',
-    iconPath: 'assets/icons/greenclock.svg',
+    iconPath: 'assets/icons/clock.svg',
     textColor: AppColors.successGreen,
     bgColor: AppColors.successGreen09,
     iconBgColor: AppColors.successGreen08,
   ),
   completed(
-    label: 'Completed',
     iconPath: 'assets/icons/check.svg',
     textColor: AppColors.successGreen,
     bgColor: AppColors.successGreen09,
     iconBgColor: AppColors.successGreen08,
   ),
   cancelled(
-    label: 'Cancelled',
     iconPath: 'assets/icons/warning.svg',
     textColor: AppColors.dimGrey,
     bgColor: AppColors.whisperGrey,
@@ -43,14 +40,27 @@ enum ServiceRequestStatus {
   );
 
   const ServiceRequestStatus({
-    required this.label,
     required this.iconPath,
     required this.textColor,
     required this.bgColor,
     required this.iconBgColor,
   });
 
-  final String label;
+  /// Resolved per read, not stored as a `const` enum field — `.tr` is a
+  /// runtime lookup and a const field would pin the launch locale.
+  String get label => switch (this) {
+    ServiceRequestStatus.requested => AppTranslations.statusRequested,
+    ServiceRequestStatus.inProgress => AppTranslations.statusInProgress,
+    ServiceRequestStatus.confirmed => AppTranslations.statusConfirmed,
+    ServiceRequestStatus.completed => AppTranslations.statusCompleted,
+    ServiceRequestStatus.cancelled => AppTranslations.statusCancelled,
+  };
+
+  /// Ships untinted, so whoever renders it must apply [textColor] via
+  /// `colorFilter`. All three clock states share one `clock.svg`; the previous
+  /// `orangeclock.svg` / `greenclock.svg` pair was the same glyph twice, baked
+  /// gold and green — the colour those files encoded is [textColor], which was
+  /// already right here.
   final String iconPath;
   final Color textColor;
   final Color bgColor;
@@ -77,7 +87,7 @@ enum ServiceRequestStatus {
 
 /// An in-room service request (`POST`/`GET /service-requests`). Holds the real
 /// DTO fields, but keeps the display surface the cards read
-/// ([status]/[title]/[detail]/[iconAsset]) as getters so
+/// ([status]/[title]/[detail]/[tileImage]) as getters so
 /// `CustomActiveRequestsCard` needs no changes.
 class ServiceRequest {
   final String uuid;
@@ -95,9 +105,17 @@ class ServiceRequest {
   /// null for legacy free-string requests.
   final ServiceCatalogOption? serviceItem;
 
-  /// Optional leading thumbnail — carried by demo/home rows; null for API rows
-  /// (they render the status glyph instead).
-  final String? iconAsset;
+  /// Leading artwork for the request row: the same illustration as the
+  /// request's tile on the Services hub ([ServiceTiles]), matched by
+  /// `category_code`, else `type`. Null for a type with no tile — the row then
+  /// shows the generic request icon.
+  String? get tileImage {
+    final code = categoryCode ?? type;
+    for (final tile in ServiceTiles.services) {
+      if (tile.code == code) return tile.imagePath;
+    }
+    return null;
+  }
 
   const ServiceRequest({
     required this.uuid,
@@ -109,7 +127,6 @@ class ServiceRequest {
     this.createdAt,
     this.categoryCode,
     this.serviceItem,
-    this.iconAsset,
   });
 
   factory ServiceRequest.fromJson(Map<String, dynamic> json) => ServiceRequest(
@@ -143,7 +160,7 @@ class ServiceRequest {
   /// the priority.
   String get detail {
     final mins = serviceItem?.expectedMinutes;
-    if (mins != null) return '~$mins min';
+    if (mins != null) return AppTranslations.etaMinutes(mins);
     final dept = department;
     if (dept != null && dept.isNotEmpty) return _humanize(dept);
     return _humanize(priority);
@@ -152,7 +169,7 @@ class ServiceRequest {
   /// Turns a snake/space delimited code (`room_service`) into a title-cased
   /// label (`Room Service`).
   static String _humanize(String? raw) {
-    if (raw == null || raw.isEmpty) return 'Request';
+    if (raw == null || raw.isEmpty) return AppTranslations.request;
     return raw
         .split(RegExp(r'[_\s]+'))
         .where((w) => w.isNotEmpty)

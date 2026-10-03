@@ -107,6 +107,7 @@ return [
         'payment_failed'           => 'Ödeme işlenemedi.',
         'inquiry_state'            => 'Bu durum geçişine izin verilmiyor.',
         'no_active_reservation'    => 'Bu işlem için aktif bir rezervasyon gerekir.',
+        'check_in_not_available'   => "Giriş işlemi, otel rezervasyonunuzu onayladıktan sonra varış gününüzde açılır.",
         'no_table_available'       => 'Bu saat ve kişi sayısı için uygun masa yok.',
         'verified_contact_immutable' => 'Bu iletişim bilgisi zaten doğrulanmış. Değiştirmek için yenisini bir kodla doğrulayın.',
         'ancestor_trashed'         => 'Bu kayıt, bağlı olduğu kayıt geri dönüşüm kutusundayken geri yüklenemez. Önce onu geri yükleyin.',

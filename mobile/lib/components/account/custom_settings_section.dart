@@ -2,9 +2,9 @@ import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// A titled group of settings rows (Figma Account "Account" / "Support"): a
-/// black bold header above a column of individually-carded [CustomListRow]s
-/// separated by gaps.
+/// A titled group of settings rows (Figma Account "Account" / "Support" and
+/// Check-In "Room Type"): a black bold header above a column of
+/// individually-carded [CustomListRow]s separated by gaps.
 class CustomSettingsSection extends StatelessWidget {
   final String title;
   final List<Widget> children;
@@ -27,7 +27,7 @@ class CustomSettingsSection extends StatelessWidget {
           title,
           style: textStyle.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
-            color: AppColors.primary,
+            color: AppColors.nearBlack,
           ),
         ),
         ...children,

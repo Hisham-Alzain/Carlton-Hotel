@@ -99,10 +99,14 @@ class CustomWalletPanel extends StatelessWidget {
                           shape: BoxShape.circle,
                           border: Border.all(color: AppColors.successGreen),
                         ),
-                        child: const Icon(
-                          Icons.check,
-                          size: 10,
-                          color: AppColors.successGreen,
+                        child: SvgPicture.asset(
+                          'assets/icons/check.svg',
+                          width: 10,
+                          height: 10,
+                          colorFilter: const ColorFilter.mode(
+                            AppColors.successGreen,
+                            BlendMode.srcIn,
+                          ),
                         ),
                       ),
                       Flexible(

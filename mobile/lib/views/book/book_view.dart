@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/components/custom_counter_field.dart';
@@ -32,7 +33,7 @@ class BookView extends StatelessWidget {
           spacing: 10,
           children: [
             Text(
-              'Select Dates & Guests',
+              AppTranslations.selectDatesAndGuests,
               style: Get.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.inkBlack,
@@ -69,18 +70,20 @@ class BookView extends StatelessWidget {
           children: [
             Expanded(
               child: CustomDateBox(
-                label: 'Check-in',
-                value: controller.rangeStart.value?.formatDatePicker() ??
-                    'Select',
+                label: AppTranslations.checkInTitle,
+                value:
+                    controller.rangeStart.value?.formatDatePicker() ??
+                    AppTranslations.select,
                 selected: true,
               ),
             ),
 
             Expanded(
               child: CustomDateBox(
-                label: 'Check-out',
+                label: AppTranslations.checkOutLabel,
                 value:
-                    controller.rangeEnd.value?.formatDatePicker() ?? 'Select',
+                    controller.rangeEnd.value?.formatDatePicker() ??
+                    AppTranslations.select,
               ),
             ),
           ],
@@ -106,8 +109,8 @@ class BookView extends StatelessWidget {
       spacing: 10,
       children: [
         CustomCounterField(
-          title: 'Adults',
-          subtitle: 'Ages 18+',
+          title: AppTranslations.adults,
+          subtitle: AppTranslations.ages18Plus,
           value: controller.adults.value,
           minCount: 1,
           maxCount: 10,
@@ -115,8 +118,8 @@ class BookView extends StatelessWidget {
         ),
 
         CustomCounterField(
-          title: 'Children',
-          subtitle: 'Ages 0–17',
+          title: AppTranslations.children,
+          subtitle: AppTranslations.ages0To17,
           value: controller.children.value,
           maxCount: 10,
           onChanged: controller.setChildren,
@@ -153,7 +156,9 @@ class BookView extends StatelessWidget {
           backgroundColor: AppColors.lagoonTeal,
           onPressed: controller.searchRooms,
           child: Text(
-            controller.roomPreselected.value ? 'Continue' : 'Search Rooms',
+            controller.roomPreselected.value
+                ? AppTranslations.continueButtonLabel
+                : AppTranslations.searchRooms,
           ),
         ),
       ],

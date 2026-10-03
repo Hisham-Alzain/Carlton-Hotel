@@ -1,6 +1,7 @@
+import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/components/account/account_profile_card.dart';
 import 'package:carlton/components/account/custom_list_row.dart';
 import 'package:carlton/components/account/custom_settings_section.dart';
-import 'package:carlton/components/custom_initial_avatar.dart';
 import 'package:carlton/controllers/account/account_controller.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
@@ -20,81 +21,61 @@ class AccountView extends GetView<AccountController> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Row(
-            spacing: 14,
-            children: [
-              CustomInitialAvatar(
-                initial: controller.name,
-                backgroundColor: AppColors.primary,
-              ),
-              Expanded(
-                child: Column(
-                  spacing: 4,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      controller.name,
-                      style: textStyle.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    Text(
-                      controller.email,
-                      style: textStyle.labelMedium?.copyWith(
-                        fontFamily: 'DM Sans',
-                        color: AppColors.primary50,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          // Identity and the Loyalty entry point as one card, not a plain
+          // avatar row sitting above a differently-styled one — the membership
+          // belongs to this guest, so both live on the single teal-and-gold
+          // surface (see AccountProfileCard).
+          AccountProfileCard(
+            name: controller.name,
+            email: controller.email,
+            onTapLoyalty: controller.openLoyalty,
           ),
           const SizedBox(height: 24),
           CustomSettingsSection(
-            title: 'Account',
+            title: AppTranslations.navAccount,
             children: [
               CustomListRow(
                 iconAsset: 'assets/icons/acc_profile.svg',
-                title: 'My Profile',
-                onTap: () => controller.comingSoon('My Profile'),
+                title: AppTranslations.myProfile,
+                onTap: controller.editProfile,
               ),
               CustomListRow(
                 iconAsset: 'assets/icons/acc_preferences.svg',
-                title: 'Preferences',
+                title: AppTranslations.checkInTabPreferences,
                 onTap: controller.openPreferences,
               ),
               CustomListRow(
                 iconAsset: 'assets/icons/acc_notifications.svg',
-                title: 'Notifications',
-                onTap: () => controller.comingSoon('Notifications'),
+                title: AppTranslations.notifications,
+                onTap: () =>
+                    controller.comingSoon(AppTranslations.notifications),
               ),
               CustomListRow(
                 iconAsset: 'assets/icons/acc_payments.svg',
-                title: 'Saved Payments',
-                onTap: () => controller.comingSoon('Saved Payments'),
+                title: AppTranslations.savedPayments,
+                onTap: () =>
+                    controller.comingSoon(AppTranslations.savedPayments),
               ),
               CustomListRow(
                 iconAsset: 'assets/icons/acc_security.svg',
-                title: 'Security',
-                onTap: () => controller.comingSoon('Security'),
+                title: AppTranslations.security,
+                onTap: () => controller.comingSoon(AppTranslations.security),
               ),
             ],
           ),
           const SizedBox(height: 24),
           CustomSettingsSection(
-            title: 'Support',
+            title: AppTranslations.support,
             children: [
               CustomListRow(
                 iconAsset: 'assets/icons/acc_help.svg',
-                title: 'Help & Support',
-                onTap: () => controller.comingSoon('Help & Support'),
+                title: AppTranslations.helpAndSupport,
+                onTap: controller.openSupport,
               ),
               CustomListRow(
                 iconAsset: 'assets/icons/acc_legal.svg',
-                title: 'Legal',
-                onTap: () => controller.comingSoon('Legal'),
+                title: AppTranslations.legal,
+                onTap: controller.openLegal,
               ),
             ],
           ),
@@ -112,8 +93,8 @@ class AccountView extends GetView<AccountController> {
             textStyle: textStyle.labelLarge?.copyWith(
               fontWeight: FontWeight.w600,
             ),
-            child: const RowTextComponent(
-              text: 'Sign Out',
+            child: RowTextComponent(
+              text: AppTranslations.signOut,
               icon: Icons.logout,
               iconSize: 18,
               spacing: 6,

@@ -10,11 +10,16 @@ import 'package:carlton/theme/theme.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:get/get.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'services/get_storage_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Month and day names for every shipped language; DateFormat follows
+  // Intl.defaultLocale, which SettingsService keeps in step with the UI.
+  await initializeDateFormatting();
 
   // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // register the background handler as early as possible
@@ -23,7 +28,8 @@ Future<void> main() async {
   await StorageService.init();
   Get.put(SettingsService(), permanent: true);
   Get.put(ApiService(), permanent: true);
-  // await Get.put(NotificationService(), permanent: trugage).setup();
+  // await Get.put(NotificationService(), permanent: trugage).setu
+  // p();
   Get.put(MiddlewareService(), permanent: true);
   Get.put(PermissionService(), permanent: true);
   Get.put(BookingFlowController(), permanent: true);
@@ -41,14 +47,21 @@ class MainApp extends StatelessWidget {
     final settings = Get.find<SettingsService>();
 
     return GetMaterialApp(
+      // Home's hero video only plays while Main is the top route; see
+      // HomeController.setRouteVisible.
+      routingCallback: (routing) {
+        if (routing == null || !Get.isRegistered<HomeController>()) return;
+        Get.find<HomeController>().setRouteVisible(
+          routing.current == Routes.main,
+        );
+      },
       debugShowCheckedModeBanner: false,
-      // DEV PREVIEW: opens straight on the check-in wizard so the new screens
-      // can be walked without signing in. Restore Routes.splashScreen before
-      // shipping.
-      initialRoute: Routes.checkIn,
+      initialRoute: Routes.splashScreen,
       getPages: Pages.getPages,
       theme: Themes.theme,
-      supportedLocales: const [Locale('en'), Locale('ar')],
+      // Derived from `Local.supportedCodes` so this can't drift from the key
+      // maps — a locale listed here without a key map renders raw keys.
+      supportedLocales: Local.supportedCodes.map(Locale.new),
       locale: settings.locale.value,
       onReady: () async {
         WidgetsBinding.instance.addPostFrameCallback((_) async {

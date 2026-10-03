@@ -66,16 +66,19 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
                 child: Text.rich(
                   TextSpan(
                     children: [
-                      const TextSpan(text: 'This request is for '),
                       TextSpan(
-                        text: stayLabel.isEmpty ? 'your room' : stayLabel,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        text: AppTranslations.requestFor(
+                          stayLabel.isEmpty
+                              ? AppTranslations.requestTargetRoom
+                              : stayLabel,
+                        ),
                       ),
                       TextSpan(
                         text: mins != null
-                            ? '. Our team will be with you within '
-                                  '${AppTranslations.etaMinutes(mins)}.'
-                            : '. Our team will be with you shortly.',
+                            ? AppTranslations.teamWithinMinutes(
+                                AppTranslations.etaMinutes(mins),
+                              )
+                            : AppTranslations.teamShortly,
                       ),
                     ],
                   ),
@@ -88,7 +91,7 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
           ),
         ),
         Text(
-          'Special Instructions (Optional)'.toUpperCase(),
+          AppTranslations.transferInstructions.toUpperCase(),
           style: textStyle.labelSmall?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.dimGrey,
@@ -98,7 +101,7 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
           controller: _notesController,
           textInputType: TextInputType.multiline,
           maxLines: 3,
-          hintText: 'Any specific requests or notes...',
+          hintText: AppTranslations.requestNotesHint,
           fillColor: AppColors.white,
           borderColor: AppColors.linenGrey,
         ),
@@ -106,7 +109,7 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
           width: double.infinity,
           backgroundColor: AppColors.lagoonTeal,
           onPressed: () => widget.onSubmit(_notesController.text),
-          child: const Text('Send Request'),
+          child: Text(AppTranslations.sendRequest),
         ),
       ],
     );

@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/cards/custom_active_stay_card.dart';
 import 'package:carlton/components/cards/custom_past_stay_card.dart';
 import 'package:carlton/components/cards/custom_upcoming_stay_card.dart';
@@ -24,10 +25,10 @@ class StaysView extends StatelessWidget {
       children: [
         TabBar(
           controller: controller.tabController,
-          tabs: const [
-            Tab(text: 'Active'),
-            Tab(text: 'Upcoming'),
-            Tab(text: 'Past'),
+          tabs: [
+            Tab(text: AppTranslations.active),
+            Tab(text: AppTranslations.upcoming),
+            Tab(text: AppTranslations.past),
           ],
         ),
         Expanded(
@@ -52,16 +53,16 @@ class _ActiveTab extends StatelessWidget {
       if (controller.activeLoading.value) return const _Loading();
       if (controller.activeError.value) {
         return _Retry(
-          title: "Couldn't load your stay",
-          subtitle: 'Please check your connection and try again.',
+          title: AppTranslations.loadStayFailed,
+          subtitle: AppTranslations.checkConnectionRetry,
           onRetry: controller.reloadActive,
         );
       }
       final activeStay = controller.active.value;
       if (activeStay == null) {
-        return const _Empty(
-          title: 'No active stay',
-          subtitle: 'Your current stay will appear here during check-in.',
+        return _Empty(
+          title: AppTranslations.noActiveStay,
+          subtitle: AppTranslations.noActiveStaySubtitle,
         );
       }
       return ListView(
@@ -89,16 +90,16 @@ class _UpcomingTab extends StatelessWidget {
       if (controller.upcomingLoading.value) return const _Loading();
       if (controller.upcomingError.value) {
         return _Retry(
-          title: "Couldn't load your reservations",
-          subtitle: 'Please check your connection and try again.',
+          title: AppTranslations.loadReservationsFailed,
+          subtitle: AppTranslations.checkConnectionRetry,
           onRetry: controller.reloadUpcoming,
         );
       }
       if (controller.upcoming.isEmpty) {
         return _Empty(
-          title: 'No upcoming stays',
-          subtitle: 'Book your next stay and it will show up here.',
-          primaryLabel: 'Book a Stay',
+          title: AppTranslations.noUpcomingStays,
+          subtitle: AppTranslations.noUpcomingStaysSubtitle,
+          primaryLabel: AppTranslations.bookAStay,
           onPrimary: controller.startBooking,
         );
       }
@@ -117,9 +118,11 @@ class _UpcomingTab extends StatelessWidget {
               if (stay.nextCheckInDays != null)
                 CustomInfoBanner(
                   iconPath: 'assets/icons/calendar.svg',
+                  // The day count is a parameter, not a glued prefix: it sits
+                  // mid-sentence in English and elsewhere in other locales.
                   message:
-                      'Your next check-in is in ${stay.nextCheckInDays} days. '
-                      'Pre-order amenities and services before arrival.',
+                      '${AppTranslations.nextCheckInInDays('${stay.nextCheckInDays}')} '
+                      '${AppTranslations.preOrderBeforeArrival}',
                 ),
             ],
           );
@@ -143,15 +146,15 @@ class _PastTab extends StatelessWidget {
       if (controller.loading.value) return const _Loading();
       if (controller.hasError.value) {
         return _Retry(
-          title: "Couldn't load past stays",
-          subtitle: 'Please check your connection and try again.',
+          title: AppTranslations.loadPastFailed,
+          subtitle: AppTranslations.checkConnectionRetry,
           onRetry: controller.reloadPast,
         );
       }
       if (controller.items.isEmpty) {
-        return const _Empty(
-          title: 'No past stays',
-          subtitle: 'Completed stays and receipts will appear here.',
+        return _Empty(
+          title: AppTranslations.noPastStays,
+          subtitle: AppTranslations.noPastStaysSubtitle,
         );
       }
       final showLoadingMore = controller.loadingMore.value;
@@ -207,7 +210,7 @@ class _Retry extends StatelessWidget {
       ),
       title: title,
       subtitle: subtitle,
-      primaryLabel: 'Retry',
+      primaryLabel: AppTranslations.retry,
       onPrimary: onRetry,
     );
   }

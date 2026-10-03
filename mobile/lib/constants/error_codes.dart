@@ -37,6 +37,9 @@ class ErrorCodes {
   static const String invalidPromo = 'invalid_promo';
   static const String reservationState = 'reservation_state';
 
+  /// Self check-in attempted before the arrival window opens (24h out).
+  static const String checkInNotOpen = 'check_in_not_open';
+
   // ── Rate limiting ─────────────────────────────────────────────────────
   static const String tooManyRequests = 'too_many_requests';
 

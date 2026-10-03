@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/models/card_meta.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -96,7 +97,7 @@ class CustomHomeCard extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                         children: [
-                          const TextSpan(text: 'From '),
+                          TextSpan(text: AppTranslations.priceFromPrefix),
                           TextSpan(
                             text: priceAmount,
                             style: textStyle.titleLarge?.copyWith(
@@ -104,7 +105,7 @@ class CustomHomeCard extends StatelessWidget {
                               fontWeight: FontWeight.w400,
                             ),
                           ),
-                          const TextSpan(text: ' /night'),
+                          TextSpan(text: AppTranslations.priceNightSuffix),
                         ],
                       ),
                     ),

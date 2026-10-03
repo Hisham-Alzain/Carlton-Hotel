@@ -71,10 +71,10 @@ All routes are under `/api/v1`. Staff routes use `auth:users` + permission middl
 ### Events & Dining
 
 - [ ] **EVENT-01**: Staff can toggle checklist items on an event inquiry (`PATCH /cms/event-inquiries/{inquiry}/checklist/{item}`)
-- [ ] **EVENT-02**: Staff can record a deposit against an event inquiry using the existing payment action (`PATCH /cms/event-inquiries/{inquiry}/deposit`)
-- [ ] **EVENT-03**: Staff can update event inquiry notes (`PATCH /cms/event-inquiries/{inquiry}/notes`)
+- [ ] **EVENT-02**: Staff can record a deposit against an event inquiry using the existing payment action, idempotent via `Idempotency-Key` (`PATCH /cms/event-inquiries/{inquiry}/deposit`)
+- [ ] **EVENT-03**: Staff can update internal event inquiry notes (`staff_notes`) (`PATCH /cms/event-inquiries/{inquiry}/notes`)
 - [ ] **DINING-01**: Staff can list restaurant table reservations with venue/date filters (`GET /cms/table-reservations`)
-- [ ] **DINING-02**: Guest can download a venue menu (media URL or 204 when none) (`GET /public/dining-venues/{venue}/menu/download`)
+- [ ] **DINING-02**: Guest can download a venue menu (media URL, 204 when none, 404 for unknown/inactive venue; staff manage the file via `/cms/dining-venues/{venue}/menu-file`) (`GET /public/dining-venues/{venue}/menu/download`)
 
 ### Night Audit & Reports
 

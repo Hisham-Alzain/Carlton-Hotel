@@ -1,6 +1,8 @@
 import 'dart:developer';
 
-import 'package:carlton/constants/demo_data.dart';
+import 'package:carlton/extensions/price_extension.dart';
+import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/constants/app_assets.dart';
 import 'package:carlton/constants/error_codes.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/controllers/main/main_controller.dart';
@@ -8,14 +10,18 @@ import 'package:carlton/customWidgets/custom_dialogs.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:carlton/models/booking_models.dart';
+import 'package:carlton/enums/enums.dart';
 import 'package:carlton/models/dining_venue.dart';
+import 'package:carlton/models/experience.dart';
 import 'package:carlton/models/folio.dart';
 import 'package:carlton/models/home_models.dart';
+import 'package:carlton/models/home_slider.dart';
 import 'package:carlton/models/room_type.dart';
 import 'package:carlton/models/service_request.dart';
 import 'package:carlton/models/stay.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/api/api_service.dart';
+import 'package:carlton/services/check_in_service.dart';
 import 'package:carlton/services/middleware_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
@@ -23,15 +29,29 @@ import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
 
 /// Backs the homepage (Figma "homepage" 2089:861): the looping hero video plus
-/// the demo room/restaurant listings. Demo-only — the CTAs just show snackbars.
+/// the room / restaurant / experience listings and the hero-slider copy, all
+/// from the public content API.
 class HomeController extends GetxController with WidgetsBindingObserver {
-  // Rooms + dining come from the public content API (mapped to the UI models at
-  // this boundary so the cards stay unchanged); experiences stay demo-only.
+  // Rooms, dining, experiences and the hero-slider copy all come from the
+  // public content API, mapped to the UI models at this boundary so the cards
+  // stay unchanged.
   final RxList<RoomItem> rooms = <RoomItem>[].obs;
   final RxList<RestaurantItem> restaurants = <RestaurantItem>[].obs;
-  // Demo-only and never mutated, so it stays a plain list.
-  final List<ExperienceItem> experiences = DemoData.experiences;
+  final RxList<ExperienceItem> experiences = <ExperienceItem>[].obs;
+
+  /// The three explore-state hero cards (`GET /public/home-sliders`), in the
+  /// order the CMS sorts them: video hero, experiences hero, dining hero.
+  final RxList<HomeSlider> heroSliders = <HomeSlider>[].obs;
   final RxBool contentLoading = true.obs;
+
+  /// Null when the slider list has not loaded (or came back short) — each hero
+  /// then falls back to the bundled still plus its translated copy.
+  HomeSlider? _sliderAt(int index) =>
+      index < heroSliders.length ? heroSliders[index] : null;
+
+  HomeSlider? get videoHeroSlider => _sliderAt(0);
+  HomeSlider? get experiencesHeroSlider => _sliderAt(1);
+  HomeSlider? get diningHeroSlider => _sliderAt(2);
 
   /// True when the last content fetch failed. Distinct from "loaded but
   /// empty": both leave [rooms]/[restaurants] empty, but only this one should
@@ -47,7 +67,35 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   /// When true, Home renders the active-booking dashboard instead of the
   /// default explore sections. Backed by the authenticated guest's `has_booking`
   /// entitlement (MiddlewareService); read live so a rebuild reflects it.
-  bool get hasReservation => MiddlewareService.find.hasBooking;
+  bool get hasReservation => currentState != HomeViewState.defaultHome;
+
+  /// Which body Home renders. A read-through to [MiddlewareService.homeState]
+  /// — the single place that decision is made — so it is never stored here
+  /// and cannot drift from what the server's gates enforce.
+  HomeViewState get currentState => MiddlewareService.find.homeState;
+
+  /// The one way into Home: replaces the stack so no entry point can leave an
+  /// auth screen behind it. There is nothing to resolve first — Home derives
+  /// its state from the session, which the caller has already refreshed.
+  static Future<void> goHome() async {
+    await Get.offAllNamed(Routes.main);
+  }
+
+  /// Token-restore entry point: refresh the entitlements from `/me`, then go
+  /// Home. Shared by sign-in, booking-code lookup and first profile completion
+  /// so all three land on the state the server actually reports.
+  static Future<void> restoreAndGoHome() async {
+    await MiddlewareService.find.checkToken();
+    await goHome();
+  }
+
+  /// Opens the check-in flow. Available for the whole of
+  /// [HomeViewState.preCheckIn] — there is no arrival-time window: a guest with
+  /// a booking that is not yet checked in can always start check-in.
+  void startCheckIn() {
+    if (currentState != HomeViewState.preCheckIn) return;
+    Get.toNamed(Routes.checkIn);
+  }
 
   /// The guest's active (checked-in) stay, or null when they have a booking but
   /// aren't checked in yet. Fetched from `GET /stays/active`.
@@ -62,9 +110,12 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   final RxList<ServiceRequest> activeRequests = <ServiceRequest>[].obs;
 
   /// Running bill (`GET /folio`, tier-3b) — line items + total.
-  static const _emptyBillTotal = r'$0';
   final RxList<(String, String)> billLines = <(String, String)>[].obs;
-  final RxString billTotal = _emptyBillTotal.obs;
+  final RxString billTotal = _emptyBillTotal().obs;
+
+  /// Zero in the guest's currency. A function, not a `const r'\$0'`, because the
+  /// symbol depends on the currency picker.
+  static String _emptyBillTotal() => MoneyFormat.usd(0);
 
   /// Do Not Disturb — optimistic toggle backed by `PATCH /stays/active/dnd`
   /// (tier-3b). Stored server-side as an expiry, not a flag, and never creates a
@@ -82,14 +133,11 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     if (!res.ok) {
       doNotDisturb.value = previous;
       final message = res.error?.errorCode == ErrorCodes.noActiveReservation
-          ? 'Do Not Disturb needs an active stay.'
-          : 'Could not update Do Not Disturb.';
+          ? AppTranslations.dndNeedsActiveStay
+          : AppTranslations.dndFailed;
       CustomSnackbars.showError(message: message);
     }
   }
-
-  void _soon(String label) =>
-      CustomSnackbars.showInfo(message: '$label — coming soon');
 
   /// Jump to the Services tab (index 3) in the shell — where room-service
   /// requests are actually made.
@@ -103,13 +151,12 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       Get.toNamed(Routes.discover, arguments: DiscoverSection.experiences);
 
   /// Express checkout: confirm, then `POST /folio/approve` (approves the bill
-  /// and flips the stay to `checked_out`). Needs no display data, so it is safe
-  /// to wire even while the hero/bill above stay demo-backed.
+  /// and flips the stay to `checked_out`).
   void checkout() => CustomDialogs.showConfirmationDialog(
-    title: 'Express Checkout',
+    title: AppTranslations.expressCheckoutCaps,
     message:
-        "Check out of ${activeStay.value?.subtitle ?? 'your stay'} now? "
-        "We'll email your final statement.",
+        '${AppTranslations.checkoutConfirmBody(activeStay.value?.subtitle ?? AppTranslations.yourStay)} '
+        '${AppTranslations.checkoutStatementNote}',
     icon: 'assets/icons/act_checkout.svg',
     accentColor: AppColors.primary,
     onPressed: _confirmCheckout,
@@ -122,19 +169,21 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     );
     if (isClosed) return;
     if (res.ok) {
-      CustomSnackbars.showSuccess(message: 'Checkout requested');
+      CustomSnackbars.showSuccess(message: AppTranslations.checkoutRequested);
       // Stay is now checked_out — resync entitlements from /me.
       await MiddlewareService.find.checkToken();
     } else if (res.error?.errorCode == ErrorCodes.noActiveReservation) {
-      CustomSnackbars.showInfo(message: 'No active stay to check out of.');
+      CustomSnackbars.showInfo(message: AppTranslations.noActiveStayToCheckOut);
     } else {
-      CustomSnackbars.showError(message: 'Could not complete checkout.');
+      CustomSnackbars.showError(message: AppTranslations.checkoutFailed);
     }
   }
 
-  // No dedicated screens yet — kept as placeholders.
-  void openBill() => _soon('My Bill');
-  void fullStatement() => _soon('Full Statement');
+  /// Both bill entry points open the same statement screen, which refetches
+  /// `GET /folio` itself — the dashboard card keeps only the flattened
+  /// line/total pairs it renders, not the folio.
+  void openBill() => Get.toNamed(Routes.folio);
+  void fullStatement() => openBill();
 
   /// Loads the active-stay dashboard: `GET /stays/active` (the stay card) plus,
   /// once checked in, `GET /folio` (bill) and `GET /service-requests`. A booked-
@@ -153,10 +202,42 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   /// NOT named `refresh`: that is `GetxController.refresh()`, which GetX calls
   /// internally to notify listeners. Overriding it to run network work would
   /// fire these fetches from framework internals.
-  Future<void> refreshHome() async {
+  ///
+  /// Concurrent callers are coalesced onto one run. Check-in triggers this twice
+  /// — once via the entitlement worker when `/me` refreshes, once from the
+  /// wizard — and two overlapping runs assign `currentReservation`,
+  /// `activeStay` and the folio independently, so a slow first run could land
+  /// its stale values on top of a fresh second one.
+  Future<void> refreshHome() {
+    final inFlight = _refreshInFlight;
+    if (inFlight != null) return inFlight;
+    final run = _runRefreshHome().whenComplete(() => _refreshInFlight = null);
+    _refreshInFlight = run;
+    return run;
+  }
+
+  Future<void>? _refreshInFlight;
+
+  Future<void> _runRefreshHome() async {
     contentError.value = false;
+    // Entitlements first: the state Home renders is derived from them, and the
+    // stay dashboard below reads them to decide what to fetch.
+    if (MiddlewareService.find.isAuthenticated) {
+      await MiddlewareService.find.checkToken();
+      if (isClosed) return;
+    }
     await Future.wait([_loadContent(), _loadActiveBooking()]);
   }
+
+  /// Reservation statuses that still wait on the hotel to confirm.
+  static const _awaitingHotel = {'pending', 'pending_verification'};
+
+  /// True while [upcomingStay] is a booking the hotel has not confirmed yet.
+  final RxBool upcomingPending = false.obs;
+
+  /// Re-reads the guest's stay after something changed it outside Home (a
+  /// booking just made, one cancelled from the Stays tab).
+  Future<void> reloadBooking() => _loadActiveBooking();
 
   Future<void> _loadActiveBooking() async {
     // Nothing to load while signed out — and hitting /stays/active without a
@@ -179,10 +260,12 @@ class HomeController extends GetxController with WidgetsBindingObserver {
           ? _toStay(ActiveStay.fromJson(activeRes.data!))
           : null;
     }
-    // Booked but not yet checked in: surface the upcoming reservation card in
-    // place of the (absent) in-stay dashboard. Only the guest's booking state
-    // reaches here, so a no-booking guest never pays for this call.
-    if (activeStay.value == null && MiddlewareService.find.hasBooking) {
+    // Not checked in: surface the upcoming reservation. A confirmed one drives
+    // the pre-arrival dashboard; a `pending` one (every guest-made booking
+    // until the hotel confirms it — the server does not count it toward
+    // has_booking) is still shown on the explore Home, so a guest who just
+    // booked sees their stay instead of an unchanged page.
+    if (activeStay.value == null) {
       final upRes = await ApiService.find.get<List<dynamic>>(
         path: '/stays/upcoming',
         showErrorDialog: false,
@@ -193,9 +276,19 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         upcomingStay.value = list.isNotEmpty
             ? _upcomingToStay(list.first)
             : null;
+        upcomingPending.value =
+            list.isNotEmpty && _awaitingHotel.contains(list.first.status);
+        MiddlewareService.find.hasPendingBooking.value = upcomingPending.value;
+        // The pre-arrival hero reads the booking from CheckInService, which
+        // otherwise loads it only when the check-in wizard opens.
+        if (list.isNotEmpty && Get.isRegistered<CheckInService>()) {
+          CheckInService.find.loadReservation();
+        }
       }
     } else {
       upcomingStay.value = null;
+      upcomingPending.value = false;
+      MiddlewareService.find.hasPendingBooking.value = false;
     }
     if (MiddlewareService.find.isCheckedIn) {
       final folioF = ApiService.find.get<Map<String, dynamic>>(
@@ -223,7 +316,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       // Checked out (or never checked in): the bill and in-stay requests are
       // no longer this guest's, so drop them rather than leaving them stale.
       billLines.clear();
-      billTotal.value = _emptyBillTotal;
+      billTotal.value = _emptyBillTotal();
       activeRequests.clear();
     }
     bookingLoading.value = false;
@@ -236,7 +329,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     upcomingStay.value = null;
     activeRequests.clear();
     billLines.clear();
-    billTotal.value = _emptyBillTotal;
+    billTotal.value = _emptyBillTotal();
     doNotDisturb.value = false;
   }
 
@@ -255,7 +348,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     roomName: s.roomName.value,
     status: StayStatus.active,
     subtitle: (s.roomNumber != null && s.roomNumber!.isNotEmpty)
-        ? 'Room ${s.roomNumber}'
+        ? AppTranslations.stayRoomNumber('${s.roomNumber}')
         : null,
     imagePath: 'assets/images/stay_room.png',
     checkInLabel: s.checkIn != null ? _fullDate.format(s.checkIn!) : '',
@@ -266,27 +359,35 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   /// Maps an `/stays/upcoming` entry to the [Stay] the (pre-arrival) active-stay
   /// card renders: a short "Room N" badge, the room name, the date range, and
   /// the total nights shown in place of "nights left".
-  Stay _upcomingToStay(UpcomingStay s) => Stay(
-    id: s.uuid,
-    uuid: s.uuid,
-    roomName: s.roomName.value,
-    status: StayStatus.upcoming,
-    subtitle: (s.roomNumber != null && s.roomNumber!.isNotEmpty)
-        ? 'Room ${s.roomNumber}'
-        : null,
-    imagePath: 'assets/images/stay_room.png',
-    checkInLabel: s.checkIn != null ? _fullDate.format(s.checkIn!) : '',
-    checkOutLabel: s.checkOut != null ? _fullDate.format(s.checkOut!) : '',
-    nightsRemaining: s.nights,
-  );
-
-  static final DateFormat _fullDate = DateFormat('MMM d, yyyy');
-
-  static String _usd(String? amount) {
-    final v = double.tryParse(amount ?? '') ?? 0;
-    final whole = v == v.roundToDouble();
-    return '\$${whole ? v.toStringAsFixed(0) : v.toStringAsFixed(2)}';
+  Stay _upcomingToStay(UpcomingStay s) {
+    final total = double.tryParse(s.priceUsd) ?? 0;
+    final perNight = s.nights > 0 ? total / s.nights : total;
+    return Stay(
+      id: s.uuid,
+      uuid: s.uuid,
+      roomName: s.roomName.value,
+      status: StayStatus.upcoming,
+      // CustomUpcomingStayCard (the pending-booking card) force-unwraps
+      // subtitle and pricePerNight, so neither may be left null.
+      subtitle: (s.roomNumber != null && s.roomNumber!.isNotEmpty)
+          ? AppTranslations.stayRoomNumber('${s.roomNumber}')
+          : AppTranslations.receiptHotelName,
+      imagePath: 'assets/images/stay_room.png',
+      checkInLabel: s.checkIn != null ? _fullDate.format(s.checkIn!) : '',
+      checkOutLabel: s.checkOut != null ? _fullDate.format(s.checkOut!) : '',
+      nightsRemaining: s.nights,
+      resCode: s.bookingCode,
+      pricePerNight: '${_usd(perNight.toString())}/night',
+      isCancellable: s.isCancellable,
+    );
   }
+
+  static DateFormat get _fullDate => DateFormat('MMM d, yyyy');
+
+  /// Folio amounts arrive as USD decimal strings. Routed through [MoneyFormat]
+  /// so the bill follows the guest's currency choice — a bare `\$` prefix here
+  /// used to show dollars on Home while every other price had converted.
+  static String _usd(String? amount) => MoneyFormat.usdString(amount);
 
   /// Plain, not Rx: it is reassigned on asset-load failure *before*
   /// [isVideoReady] flips, so the rebuild that flag triggers always reads the
@@ -302,13 +403,13 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
   /// Watches the guest for entitlement changes; disposed in [onClose].
   Worker? _entitlementWorker;
+  Worker? _pendingWorker;
 
   @override
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
-    _loadContent();
-    _loadActiveBooking();
+    refreshHome();
 
     // This controller outlives sign-in. The auth flow is launched from the
     // Services tab of this same Main shell, and _KeepAlive + `fenix: true` hold
@@ -325,12 +426,20 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       final next = _entitlementKey();
       if (next == entitlements) return;
       entitlements = next;
+      // Entitlements changing means the stay changed (linked, checked in,
+      // checked out), so the dashboard underneath has to follow. The state
+      // itself needs no work: it is a read-through to the session.
       _loadActiveBooking();
+    });
+    // A booking made just now is `pending`, which leaves the entitlements
+    // above unchanged; the flag flipping true is what signals the new stay.
+    _pendingWorker = ever(MiddlewareService.find.hasPendingBooking, (pending) {
+      if (pending && upcomingStay.value == null) _loadActiveBooking();
     });
     // Prefer the bundled hotel promo clip; if it isn't in the bundle yet,
     // fall back to the demo network clip; failing both, the hero keeps its
     // poster image.
-    videoController = VideoPlayerController.asset(DemoData.heroVideoAssetPath);
+    videoController = VideoPlayerController.asset(AppAssets.heroVideoAssetPath);
     _start(videoController).catchError((Object e) {
       log('Hero video: bundled asset unavailable ($e); trying network clip');
       // If the controller was closed during the failed attempt, onClose has
@@ -339,7 +448,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       if (isClosed) return;
       videoController.dispose();
       videoController = VideoPlayerController.networkUrl(
-        Uri.parse(DemoData.heroVideoUrl),
+        Uri.parse(AppAssets.heroVideoUrl),
       );
       _start(videoController).catchError((Object e) {
         log('Hero video: network clip failed ($e); keeping poster image');
@@ -361,7 +470,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   /// rather than decided once at startup.
   void _syncPlayback() {
     if (!isVideoReady.value) return;
-    if (_tabVisible && _appForeground) {
+    if (_tabVisible && _routeVisible && _appForeground) {
       videoController.play();
     } else {
       videoController.pause();
@@ -374,15 +483,32 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     _syncPlayback();
   }
 
+  /// Called from the app's routing callback. A screen pushed over the Main shell
+  /// (room details, a restaurant, check-in) covers Home without changing the tab
+  /// or the app lifecycle, so without this the hero kept decoding video — and
+  /// its audio track — behind it: a steady decoder load that, on an older
+  /// device, starved the UI thread into an ANR.
+  void setRouteVisible(bool visible) {
+    _routeVisible = visible;
+    _syncPlayback();
+  }
+
+  bool _routeVisible = true;
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _appForeground = state == AppLifecycleState.resumed;
     _syncPlayback();
   }
 
-  void bookNow() => CustomSnackbars.showInfo(message: 'Booking coming soon');
+  /// Hero CTA: open the booking flow. "Plan Your Stay" is the Book tab of this
+  /// same shell rather than a standalone route, so this switches tab instead of
+  /// pushing — the same move `beginBookingWithRoom` makes.
+  void bookNow() => Get.find<MainController>().changeTab(2);
 
-  void explore() => CustomSnackbars.showInfo(message: 'Explore coming soon');
+  /// Secondary hero CTA: the rooms listing, which is what there is to explore.
+  void explore() =>
+      Get.toNamed(Routes.discover, arguments: DiscoverSection.rooms);
 
   void openRestaurant(RestaurantItem restaurant) =>
       Get.toNamed(Routes.restaurantDetail, arguments: restaurant);
@@ -392,17 +518,19 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   void openRoomDetails(RoomItem item) =>
       Get.find<BookingFlowController>().openRoomListing(item.uuid);
 
-  /// "Discover All" opens the shared listing screen for sections that have a
-  /// list behind them (Rooms/Dining/Experiences); Offers has no listing yet.
-  void discoverAll(String section) {
-    final target = switch (section) {
-      'Rooms' => DiscoverSection.rooms,
-      'Dining' => DiscoverSection.dining,
-      'Experiences' => DiscoverSection.experiences,
-      _ => null,
-    };
+  /// "Discover All" opens the shared listing screen for a rail.
+  ///
+  /// Takes the section itself, not its on-screen title. It used to switch on the
+  /// English label, which silently stopped matching the moment those titles were
+  /// localized — and cannot be a `switch` pattern at all now that they are
+  /// `.tr` lookups rather than constants. A null [target] means "no listing
+  /// behind this rail yet", and only then is [sectionLabel] used, for the
+  /// coming-soon message.
+  void discoverAll(DiscoverSection? target, {String sectionLabel = ''}) {
     if (target == null) {
-      CustomSnackbars.showInfo(message: '$section — coming soon');
+      CustomSnackbars.showInfo(
+        message: AppTranslations.sectionComingSoon(sectionLabel),
+      );
       return;
     }
     Get.toNamed(Routes.discover, arguments: target);
@@ -420,10 +548,20 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         path: '/public/dining-venues',
         showErrorDialog: false,
       ),
+      ApiService.find.get<List<dynamic>>(
+        path: '/public/experiences',
+        showErrorDialog: false,
+      ),
+      ApiService.find.get<List<dynamic>>(
+        path: '/public/home-sliders',
+        showErrorDialog: false,
+      ),
     ]);
     if (isClosed) return;
     final roomsRes = results[0];
     final diningRes = results[1];
+    final experiencesRes = results[2];
+    final slidersRes = results[3];
     // Both calls pass showErrorDialog:false, so without this flag a failed
     // request would be indistinguishable from an empty result.
     contentError.value = !roomsRes.ok || !diningRes.ok;
@@ -443,12 +581,23 @@ class HomeController extends GetxController with WidgetsBindingObserver {
             .map(RestaurantItem.fromDiningVenue),
       );
     }
+    if (experiencesRes.statusCode == 200 && experiencesRes.data != null) {
+      experiences.assignAll(
+        Experience.listFromJson(
+          experiencesRes.data,
+        ).map(ExperienceItem.fromExperience),
+      );
+    }
+    if (slidersRes.statusCode == 200 && slidersRes.data != null) {
+      heroSliders.assignAll(HomeSlider.listFromJson(slidersRes.data));
+    }
     contentLoading.value = false;
   }
 
   @override
   void onClose() {
     _entitlementWorker?.dispose();
+    _pendingWorker?.dispose();
     WidgetsBinding.instance.removeObserver(this);
     videoController.dispose();
     super.onClose();

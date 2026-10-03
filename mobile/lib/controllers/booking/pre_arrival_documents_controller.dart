@@ -13,7 +13,8 @@ import 'package:get/get.dart';
 /// `POST /pre-arrival/documents` as EXPLICIT indexed multipart.
 class PreArrivalDocumentsController extends GetxController {
   /// The selected files awaiting upload.
-  final RxList<PreArrivalDocumentUpload> docs = <PreArrivalDocumentUpload>[].obs;
+  final RxList<PreArrivalDocumentUpload> docs =
+      <PreArrivalDocumentUpload>[].obs;
   final RxBool submitting = false.obs;
 
   /// MIME types the backend accepts (max 10MB each, enforced server-side).
@@ -23,13 +24,15 @@ class PreArrivalDocumentsController extends GetxController {
   static const List<String> documentTypes = ['passport', 'id_card', 'visa'];
 
   Future<void> pickDocuments() async {
-    // v12 `pickFiles` implies multiple selection; `allowMultiple` is deprecated.
-    final result = await FilePicker.pickFiles(
+    // v12 `pickFiles` implies multiple selection (`allowMultiple` is
+    // deprecated). It still returns null when the guest cancels.
+    final picked = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: allowedExtensions,
     );
-    if (result == null) return;
-    for (final file in result.files) {
+    if (picked == null) return;
+
+    for (final file in picked.files) {
       final path = file.path;
       if (path == null) continue;
       docs.add(

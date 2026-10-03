@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/cards/custom_rating_label.dart';
 import 'package:carlton/components/reviews/review_tile.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
@@ -69,7 +70,7 @@ class RestaurantReviewsTab extends StatelessWidget {
                   width: double.infinity,
                   backgroundColor: AppColors.primary,
                   onPressed: onWriteReview,
-                  child: const Text('Write a Review'),
+                  child: Text(AppTranslations.writeAReview),
                 ),
               ],
             ),
@@ -90,21 +91,21 @@ class RestaurantReviewsTab extends StatelessWidget {
           size: 50,
           color: AppColors.primary,
         ),
-        title: "Couldn't load reviews",
-        subtitle: 'Please check your connection and try again.',
-        primaryLabel: 'Retry',
+        title: AppTranslations.diningReviewsLoadFailed,
+        subtitle: AppTranslations.checkConnectionRetry,
+        primaryLabel: AppTranslations.retry,
         onPrimary: onRetry,
       );
     }
     if (reviews.isEmpty) {
-      return const CustomEmptyPlaceholder(
+      return CustomEmptyPlaceholder(
         iconWidget: Icon(
           Icons.rate_review_outlined,
           size: 50,
           color: AppColors.primary,
         ),
-        title: 'No reviews yet',
-        subtitle: 'Be the first to share your experience.',
+        title: AppTranslations.noReviewsYet,
+        subtitle: AppTranslations.beFirstToReview,
       );
     }
     return ListView.builder(

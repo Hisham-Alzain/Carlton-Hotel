@@ -104,7 +104,7 @@ class CustomDropdownField extends StatelessWidget {
                             value,
                             style: textStyle.labelLarge?.copyWith(
                               fontWeight: FontWeight.w500,
-                              color: AppColors.primary,
+                              color: AppColors.inkBlack,
                             ),
                           ),
                         ),
@@ -114,7 +114,7 @@ class CustomDropdownField extends StatelessWidget {
                           child: const Icon(
                             Icons.keyboard_arrow_down,
                             size: 22,
-                            color: AppColors.primary,
+                            color: AppColors.taupeBrown,
                           ),
                         ),
                       ],
@@ -135,10 +135,13 @@ class CustomDropdownField extends StatelessWidget {
         option.iconAsset!,
         width: 20,
         height: 20,
-        colorFilter: const ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
+        colorFilter: const ColorFilter.mode(
+          AppColors.inkBlack,
+          BlendMode.srcIn,
+        ),
       );
     }
-    return Icon(option.icon, size: 20, color: AppColors.primary);
+    return Icon(option.icon, size: 20, color: AppColors.inkBlack);
   }
 }
 
@@ -192,7 +195,15 @@ class _MenuRow extends StatelessWidget {
                 ),
               ),
               if (selected)
-                const Icon(Icons.check, size: 18, color: AppColors.primary),
+                SvgPicture.asset(
+                  'assets/icons/check.svg',
+                  width: 18,
+                  height: 18,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.primary,
+                    BlendMode.srcIn,
+                  ),
+                ),
             ],
           ),
         ),

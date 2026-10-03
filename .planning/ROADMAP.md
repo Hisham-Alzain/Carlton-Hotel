@@ -28,7 +28,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Guests & Stay** - Guest directory, profile with notes/preferences/pre-arrival checklist, online check-in with digital key
 - [x] **Phase 5: Folio Extensions** - Staff folio read, line-item posting, payments, guest and staff line-item disputes
 - [x] **Phase 6: Housekeeping & Guest Services** - Housekeeping task board tied to room status, service-request board, departure services
-- [ ] **Phase 7: Support Tickets & Queue** - Full support-ticket lifecycle, queue claim, assignable staff list
+- [x] **Phase 7: Support Tickets & Queue** - Full support-ticket lifecycle, queue claim, assignable staff list
 - [ ] **Phase 8: Events & Dining** - Event inquiry checklist/deposit/notes, table reservation list, venue menu download
 - [ ] **Phase 9: Night Audit & Reports** - Per-business-date night audit with checks and blockers, reports dashboard
 
@@ -289,34 +289,45 @@ Plans:
 **Reuses**: `Ticket` model, `TicketStatus` / `TicketSource` / `TicketCategory` enums, `tickets.view` / `.assign` / `.respond`, `OperationsQueueService` as generalized in Phase 6, `OperationsQueueType` registry, `AssignRequestAction` (reused as the delegating arm, not the ticket writer), `AssignHousekeepingTaskAction` (claim), the Phase 5 credit path via `POST /cms/folios/{folio}/line-items`, `RecordsRowLocks`, `OperationsQueueMirror`
 **Plans**: 11 plans (sequential waves 1-11)
 
-- [ ] 07-01-PLAN.md — Ticket foundation: 3 additive migrations, TicketStatus transitions, action/recovery enums + models, factories, escalation cap config (TICKET-02..07)
-- [ ] 07-02-PLAN.md — AssigneeEligibility, SR assign lock + `service_request_closed`, HK eligibility, ~12 test re-pins (TICKET-04, OPS-01)
-- [ ] 07-03-PLAN.md — Create + show: CreateTicketAction, TicketChanged mirror, TicketService show ≤ 6 queries, resources (TICKET-01, TICKET-02)
-- [ ] 07-04-PLAN.md — Ticket list: TicketFilter, index ≤ 6 queries (TICKET-01)
-- [ ] 07-05-PLAN.md — Status + assign single writers and routes (TICKET-03, TICKET-04)
-- [ ] 07-06-PLAN.md — Internal reply + escalation with guards and cap (TICKET-05, TICKET-07)
-- [ ] 07-07-PLAN.md — Record-only service recovery linking Phase 5 credits (TICKET-06)
-- [ ] 07-08-PLAN.md — Queue ticket arms delegate, A2 actor guard, `queue_type`, ticket room_number (OPS-03)
-- [ ] 07-09-PLAN.md — Claim across three types, ClaimGuard, 409, deactivated-token regression (OPS-01)
-- [ ] 07-10-PLAN.md — `GET /operations/staff`, reception/concierge presets + blast radius, assignability matrix, demo timelines (OPS-02)
-- [ ] 07-11-PLAN.md — Dashboard guide, Postman, tree flips, phase gate, SUMMARY, decision coverage (DOCS-01, XCUT-01)
+- [x] 07-01-PLAN.md — Ticket foundation: 3 additive migrations, TicketStatus transitions, action/recovery enums + models, factories, escalation cap config (TICKET-02..07)
+- [x] 07-02-PLAN.md — AssigneeEligibility, SR assign lock + `service_request_closed`, HK eligibility, ~12 test re-pins (TICKET-04, OPS-01)
+- [x] 07-03-PLAN.md — Create + show: CreateTicketAction, TicketChanged mirror, TicketService show ≤ 6 queries, resources (TICKET-01, TICKET-02)
+- [x] 07-04-PLAN.md — Ticket list: TicketFilter, index ≤ 6 queries (TICKET-01)
+- [x] 07-05-PLAN.md — Status + assign single writers and routes (TICKET-03, TICKET-04)
+- [x] 07-06-PLAN.md — Internal reply + escalation with guards and cap (TICKET-05, TICKET-07)
+- [x] 07-07-PLAN.md — Record-only service recovery linking Phase 5 credits (TICKET-06)
+- [x] 07-08-PLAN.md — Queue ticket arms delegate, A2 actor guard, `queue_type`, ticket room_number (OPS-03)
+- [x] 07-09-PLAN.md — Claim across three types, ClaimGuard, 409, deactivated-token regression (OPS-01)
+- [x] 07-10-PLAN.md — `GET /operations/staff`, reception/concierge presets + blast radius, assignability matrix, demo timelines (OPS-02)
+- [x] 07-11-PLAN.md — Dashboard guide, Postman, tree flips, phase gate, SUMMARY, decision coverage (DOCS-01, XCUT-01)
 
 ### Phase 8: Events & Dining
 
 **Goal**: Event staff track an inquiry's checklist, deposit and notes. Restaurant staff see table reservations, and guests can download venue menus.
 **Mode:** mvp
-**Depends on**: Phase 5 (payment action pattern)
+**Depends on**: Phase 5 (payment action + Idempotency-Key pattern) and Phase 7 (event-inquiry gates and role presets re-pinned)
 **Requirements**: EVENT-01, EVENT-02, EVENT-03, DINING-01, DINING-02
 **Success Criteria** (what must be TRUE):
 
-  1. Staff toggle checklist items via `PATCH /cms/event-inquiries/{inquiry}/checklist/{item}` and update notes via `PATCH /cms/event-inquiries/{inquiry}/notes`. The inquiry detail reflects both.
-  2. Staff record a deposit via `PATCH /cms/event-inquiries/{inquiry}/deposit`, using the same payment action pattern as folio payments. A retried request does not record twice, and an invalid amount returns 422.
-  3. Staff list restaurant table reservations filtered by venue and date via `GET /cms/table-reservations`.
-  4. `GET /public/dining-venues/{venue}/menu/download` returns the menu media URL when one exists, 204 when none exists, and 404 for an unknown venue.
-  5. Contract gate: all new routes pass happy / 401 / 403 / 422 tests where they apply (the public menu route has no 401/403) with the suite green, AR/EN keys exist, and the event checklist/deposit/notes, table-reservation and menu-download nodes are `api:true`. The guides and Postman are updated, and new permissions are listed in the summary.
+  1. Staff toggle checklist items via `PATCH /cms/event-inquiries/{inquiry}/checklist/{item}` (body `{done}`; items `contract|deposit|guarantee|beo|av`, where `deposit` is derived from the deposit and read-only) and update internal notes (`staff_notes`, the guest's `notes` unchanged) via `PATCH …/notes`. The inquiry detail reflects both.
+  2. Staff with `events.deposit` record a deposit on a quoted or confirmed inquiry via `PATCH …/deposit`. It is written as a `payments` row through `RecordCashPaymentAction` with a required `Idempotency-Key`. A retried request returns 200 without a second payment, the same key with a different payload returns 409 `idempotency_conflict`, a second deposit returns 422 `event_deposit_already_recorded`, and an invalid amount returns 422.
+  3. Staff with `service_requests.view` list restaurant table reservations via `GET /cms/table-reservations`, filtered by venue, status and hotel-local date or date range (default: today). Stored seating times are true UTC of the hotel-local slot.
+  4. `GET /public/dining-venues/{venue}/menu/download` returns 200 with the menu file URL when one exists, 204 when none exists, and 404 for an unknown or inactive venue. Staff upload/replace/remove the file via `POST|DELETE /cms/dining-venues/{venue}/menu-file`.
+  5. Contract gate: all new routes pass happy / 401 / 403 / 422 tests where they apply (the public menu route has no 401/403) with the suite green, keys exist in all five locales, and the event checklist/deposit/notes, table-reservation and menu-download nodes are `api:true`. The guides and Postman are updated. `events.view|manage|deposit` are seeded (29 permissions / 12 groups), event-inquiry routes move from `tickets.*` to `events.*` (reception/concierge lose event access), and the preset diffs are listed in the summary.
 
-**Reuses**: `EventInquiry` / `EventRequirement`, `EventInquiryService`, `RecordCashPaymentAction` as extended in Phase 5, `ReserveTableAction` / `RestaurantTable` / `RestaurantTableService`, `DiningVenue` / `DiningVenueService` + `Media`
-**Plans**: TBD
+**Reuses**: `EventInquiry` / `EventRequirement`, `EventInquiryService`, `RecordCashPaymentAction`, `IdempotentWrite` and `FolioLedger::normalize` (Phase 5), `HotelClock::dayWindow`, `PurgesMedia` / `MediaService`, `RecordsRowLocks`, `ReserveTableAction` (tz fix) / `RestaurantTable`, `DiningVenue` / `DiningVenueService` + `Media`
+**Plans**: 10 plans (sequential waves 1-10)
+
+- [ ] 08-01-PLAN.md — Foundation: 4 additive migrations (`staff_notes`/deposit columns, checklist table, `media.collection`, `service_bookings` index), `EventChecklistItem` / `EventDepositStatus` enums, checklist model, relations, factories, five-locale labels (EVENT-01..03, DINING-01, DINING-02)
+- [ ] 08-02-PLAN.md — `events.view|manage|deposit` (29/12), event-inquiry routes and dashboard-summary key re-gated off `tickets.*`, preset/seeder/guide re-pins (EVENT-01..03, XCUT-01)
+- [ ] 08-03-PLAN.md — Inquiry list/detail resources (checklist, deposit, staff_notes, assigned_user), list ≤ 6 / show ≤ 9 queries, additive `inquiry_state` context (EVENT-01..03)
+- [ ] 08-04-PLAN.md — Checklist toggle (explicit `done`, derived deposit 422, lazy rows) and staff notes writer (EVENT-01, EVENT-03)
+- [ ] 08-05-PLAN.md — Ledger-backed deposit: `RecordEventDepositAction`, Idempotency-Key replay/409, single deposit, status guards, folio isolation (EVENT-02)
+- [ ] 08-06-PLAN.md — `ReserveTableAction` timezone fix: hotel-local slot stored as true UTC, hotel-local "today" (DINING-01)
+- [ ] 08-07-PLAN.md — `GET /cms/table-reservations`: filter (venue/table/status/date/range, default today), resource, ≤ 6 queries (DINING-01)
+- [ ] 08-08-PLAN.md — Venue menu file: `POST|DELETE /cms/dining-venues/{venue}/menu-file`, replace action, images paths blind to menu rows (DINING-02)
+- [ ] 08-09-PLAN.md — Public `GET /public/dining-venues/{venue}/menu/download` (200 / 204 / 404, ≤ 2 queries) (DINING-02)
+- [ ] 08-10-PLAN.md — Guides, changelog, Postman, tree flips, demo data, PROJECT.md, phase gate, SUMMARY, decision coverage (DOCS-01, XCUT-01)
 
 ### Phase 9: Night Audit & Reports
 
@@ -348,6 +359,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4. Guests & Stay | 0/TBD | Not started | - |
 | 5. Folio Extensions | 0/TBD | Not started | - |
 | 6. Housekeeping & Guest Services | 0/TBD | Not started | - |
-| 7. Support Tickets & Queue | 0/TBD | Not started | - |
-| 8. Events & Dining | 0/TBD | Not started | - |
+| 7. Support Tickets & Queue | 11/11 | Complete | 2026-10-02 (0961153) |
+| 8. Events & Dining | 0/10 | Planned | - |
 | 9. Night Audit & Reports | 0/TBD | Not started | - |

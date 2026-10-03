@@ -1,14 +1,14 @@
 import 'package:carlton/components/cards/custom_service_card.dart';
 import 'package:carlton/components/cards/custom_stay_card.dart';
 import 'package:carlton/components/home/custom_active_requests_card.dart';
-import 'package:carlton/constants/demo_data.dart';
 import 'package:carlton/controllers/home/services_controller.dart';
+import 'package:carlton/controllers/main/main_controller.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
-import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/enums/enums.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/theme/app_colors.dart';
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -48,6 +48,9 @@ class _ActiveStayServices extends StatelessWidget {
     final controller = Get.find<ServicesController>();
 
     return SingleChildScrollView(
+      // The pagination mixin's controller: nearing the bottom of the Active
+      // Requests tab loads the next page of requests.
+      controller: controller.scrollController,
       padding: const EdgeInsets.all(10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,7 +69,10 @@ class _ActiveStayServices extends StatelessWidget {
             ),
           ),
           TabBar(
-            tabs: const [Text('All Services'), Text('Active Requests')],
+            tabs: [
+              Text(AppTranslations.allServicesTab),
+              Text(AppTranslations.activeRequests),
+            ],
             controller: controller.tabController,
           ),
           Obx(() => _tabBody(controller)),
@@ -106,10 +112,9 @@ class _ActiveStayServices extends StatelessWidget {
               if (controller.activeRequests.isEmpty)
                 CustomEmptyPlaceholder(
                   iconPath: 'assets/icons/glass-empty.svg',
-                  title: 'No active requests',
-                  subtitle:
-                      'Your current requests will appear here once they are submitted',
-                  primaryLabel: 'Browse services',
+                  title: AppTranslations.noActiveRequestsTitle,
+                  subtitle: AppTranslations.noActiveRequestsSubtitle,
+                  primaryLabel: AppTranslations.browseServicesButtonLabel,
                   onPrimary: () => controller.switchTab(0),
                 ),
               if (controller.activeRequests.isNotEmpty)
@@ -124,6 +129,11 @@ class _ActiveStayServices extends StatelessWidget {
                     onOpen: controller.editRequest,
                     onNewRequest: () => controller.switchTab(0),
                   ),
+                ),
+              if (controller.loadingMore.value)
+                const Padding(
+                  padding: EdgeInsets.all(10),
+                  child: CircularProgressIndicator(),
                 ),
             ],
           ),
@@ -140,23 +150,36 @@ class _QuickRequests extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
-    return Column(
-      spacing: 10,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Quick Requests',
-          style: textStyle.titleSmall?.copyWith(color: AppColors.primary),
-        ),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: DemoData.quickRequests
-              .map((label) => Chip(label: Text(label)))
-              .toList(),
-        ),
-      ],
-    );
+    // Scoped to this section: the chips come from the catalog fetch, which
+    // lands after the first frame, and nothing else on the screen depends on it.
+    return Obx(() {
+      final chips = controller.quickRequests;
+      // Nothing submittable in one tap — show no heading rather than an
+      // empty-looking section.
+      if (chips.isEmpty) return const SizedBox.shrink();
+      return Column(
+        spacing: 10,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            AppTranslations.quickRequests,
+            style: textStyle.titleSmall?.copyWith(color: AppColors.primary),
+          ),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: chips
+                .map(
+                  (item) => ActionChip(
+                    label: Text(item.name.value),
+                    onPressed: () => controller.quickRequest(item),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      );
+    });
   }
 }
 
@@ -171,10 +194,10 @@ class _GuestBrowse extends StatelessWidget {
       iconPath: 'assets/images/ring.png',
       iconWidth: 90,
       iconHeight: 65,
-      title: 'Sign in to access room services',
-      primaryLabel: 'Sign in',
+      title: AppTranslations.signInPromptTitle,
+      primaryLabel: AppTranslations.signInButtonLabel,
       onPrimary: () => Get.toNamed(Routes.signIn),
-      secondaryLabel: 'Create Account',
+      secondaryLabel: AppTranslations.createAccountLink,
       onSecondary: () => Get.toNamed(Routes.createProfile),
     );
   }
@@ -190,10 +213,11 @@ class _ExploreAndBook extends StatelessWidget {
       iconPath: 'assets/images/ring.png',
       iconWidth: 90,
       iconHeight: 65,
-      title: 'Ready for your next stay?',
-      subtitle: 'Book your stay to unlock in-room services.',
-      primaryLabel: 'Explore & Book',
-      onPrimary: () => CustomSnackbars.showInfo(message: 'Booking coming soon'),
+      title: AppTranslations.readyForNextStayTitle,
+      subtitle: AppTranslations.unlockInRoom,
+      primaryLabel: AppTranslations.exploreAndBookButtonLabel,
+      // The Book tab of this same shell, not a route (see HomeController.bookNow).
+      onPrimary: () => Get.find<MainController>().changeTab(2),
     );
   }
 }

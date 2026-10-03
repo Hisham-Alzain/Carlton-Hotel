@@ -1,14 +1,17 @@
 <?php
 
+use App\Enums\EventChecklistItem;
 use App\Http\Controllers\Admin\AmenityController as AdminAmenityController;
 use App\Http\Controllers\Admin\CheckInApprovalController;
 use App\Http\Controllers\Admin\DepartureServiceController;
+use App\Http\Controllers\Admin\DiningVenueMenuFileController;
 use App\Http\Controllers\Admin\GuestController as AdminGuestController;
 use App\Http\Controllers\Admin\HomeSliderController as AdminHomeSliderController;
 use App\Http\Controllers\Admin\HousekeepingTaskController;
 use App\Http\Controllers\Admin\SupportTicketController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\ServiceRequestBoardController;
+use App\Http\Controllers\Admin\TableReservationController as AdminTableReservationController;
 use App\Http\Controllers\Api\HomeSliderController as ApiHomeSliderController;
 use App\Http\Controllers\Admin\ServiceCategoryController as AdminServiceCategoryController;
 use App\Http\Controllers\Admin\ServiceItemController as AdminServiceItemController;
@@ -131,7 +134,6 @@ Route::prefix('auth')->group(function () {
             Route::put('/profile', [GuestAuthController::class, 'updateProfile']);
             // Phase 4 (D-09): no guest identifier — the token's own guest only.
             Route::patch('/preferences', [GuestAuthController::class, 'updatePreferences']);
-            Route::post('/logout', [GuestAuthController::class, 'logout']);
         });
     });
 });
@@ -152,6 +154,8 @@ Route::prefix('public')->group(function () {
     // Restaurant menu: filter chips + items, optionally narrowed by ?type=<slug>
     Route::get('/dining-venues/{diningVenue}/menu-categories', [ApiMenuController::class, 'categories']);
     Route::get('/dining-venues/{diningVenue}/menu',            [ApiMenuController::class, 'index']);
+    // DINING-02: 200 {url…} / 204 none / 404 unknown|inactive (Phase 8, D-11).
+    Route::get('/dining-venues/{diningVenue}/menu/download',   [ApiDiningVenueController::class, 'menuDownload']);
     Route::get('/event-spaces',               [ApiEventSpaceController::class,  'index']);
     Route::get('/event-spaces/{eventSpace}',  [ApiEventSpaceController::class,  'show']);
     Route::get('/amenities',              [ApiAmenityController::class,    'index']);
@@ -417,6 +421,9 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::post  ('/dining-venues/{diningVenue}/images',          [MediaController::class, 'storeDiningVenue']);
         Route::delete('/dining-venues/{diningVenue}/images/{media}',  [MediaController::class, 'destroyDiningVenue']);
         Route::post  ('/dining-venues/{diningVenue}/images/attach',    [MediaController::class, 'attachDiningVenue']);
+        // Phase 8 (D-11): the venue's single downloadable menu file (replaced on upload).
+        Route::post  ('/dining-venues/{diningVenue}/menu-file',        [DiningVenueMenuFileController::class, 'store']);
+        Route::delete('/dining-venues/{diningVenue}/menu-file',        [DiningVenueMenuFileController::class, 'destroy']);
 
         // Event spaces
         Route::post  ('/event-spaces',                                [AdminEventSpaceController::class, 'store']);
@@ -519,15 +526,24 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
 // ──────────────────────────────────────────────────────────────────────
 Route::post('/event-inquiries', [ApiEventInquiryController::class, 'submit']);
 
-// P6 — Events / RFP: Admin triage
+// P6 — Events / RFP: Admin triage — gated events.* since Phase 8 (D-12);
+// tickets.* no longer opens event inquiries.
 Route::middleware('auth:users')->prefix('cms/event-inquiries')->group(function () {
-    Route::middleware('permission:tickets.view')->group(function () {
+    Route::middleware('permission:events.view')->group(function () {
         Route::get('/',          [AdminEventInquiryController::class, 'index']);
         Route::get('/{inquiry}', [AdminEventInquiryController::class, 'show']);
     });
-    Route::middleware('permission:tickets.assign')->group(function () {
+    Route::middleware('permission:events.manage')->group(function () {
         Route::patch('/{inquiry}/status', [AdminEventInquiryController::class, 'updateStatus']);
         Route::patch('/{inquiry}/assign', [AdminEventInquiryController::class, 'assign']);
+        // Phase 8 (D-09): explicit {done}; unknown item → 404 via the constraint.
+        Route::patch('/{inquiry}/checklist/{item}', [AdminEventInquiryController::class, 'updateChecklistItem'])
+            ->whereIn('item', EventChecklistItem::values());
+        Route::patch('/{inquiry}/notes', [AdminEventInquiryController::class, 'updateNotes']);
+    });
+    // Phase 8 (D-12, D-15): money write, its own permission (folios.settle precedent).
+    Route::middleware('permission:events.deposit')->group(function () {
+        Route::patch('/{inquiry}/deposit', [AdminEventInquiryController::class, 'recordDeposit']);
     });
 });
 
@@ -819,6 +835,13 @@ Route::middleware(['auth:users', 'permission:service_requests.view'])->prefix('c
     Route::get('/',                 [ServiceRequestBoardController::class, 'index']);
     Route::get('/{serviceRequest}', [ServiceRequestBoardController::class, 'show']);
 });
+
+// ──────────────────────────────────────────────────────────────────────
+// Phase 8 — Staff table reservations (read-only, D-10; hotel-local dates,
+// default today; gated service_requests.view, D-13).
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware(['auth:users', 'permission:service_requests.view'])
+    ->get('/cms/table-reservations', [AdminTableReservationController::class, 'index']);
 
 // ──────────────────────────────────────────────────────────────────────
 // Phase 6 — Departure services (projection over transfer bookings,

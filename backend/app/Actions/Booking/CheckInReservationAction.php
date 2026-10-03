@@ -41,7 +41,7 @@ class CheckInReservationAction
     public function handle(
         Reservation $reservation,
         ?Room $room,
-        User $actor,
+        ?User $actor, // null = the guest's own self check-in (StayService::checkIn)
         bool $earlyCheckIn = false,
         ?string $reason = null,
     ): array {

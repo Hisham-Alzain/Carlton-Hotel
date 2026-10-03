@@ -60,6 +60,11 @@ return [
         'folio_dispute_raised'    => 'İtiraz kaydedildi.',
         'folio_dispute_resolved'  => 'İtiraz çözüldü.',
         'folio_dispute_rejected'  => 'İtiraz reddedildi.',
+        'event_checklist_updated' => 'Kontrol listesi güncellendi.',
+        'event_notes_updated'     => 'Notlar güncellendi.',
+        'event_deposit_recorded'  => 'Kapora kaydedildi.',
+        'menu_file_uploaded'      => 'Menü dosyası yüklendi.',
+        'menu_file_removed'       => 'Menü dosyası kaldırıldı.',
     ],
     'errors'     => [
         'server_error'           => 'Bir hata oluştu.',
@@ -120,6 +125,8 @@ return [
         'idempotency_key_required'     => 'Bu istek için Idempotency-Key başlığı zorunludur.',
         'folio_item_dispute_open'      => 'Bu kalem için zaten açık bir itiraz var.',
         'folio_dispute_state'          => 'Bu kalemde kapatılacak açık bir itiraz yok.',
+        'event_checklist_item_derived' => 'Bu madde kaporaya bağlıdır ve doğrudan değiştirilemez.',
+        'event_deposit_already_recorded' => 'Bu talep için zaten bir kapora kaydedilmiş.',
     ],
     'auth'       => [
         'otp_sent'       => 'Doğrulama kodu gönderildi.',
@@ -196,6 +203,15 @@ return [
         'decimal'              => ':attribute alanı :decimal ondalık basamak içermelidir.',
         'uuid'                 => ':attribute geçerli bir UUID olmalıdır.',
         'prohibited_unless'    => ':other, :values içinde olmadıkça :attribute alanı yasaktır.',
+        'date_range_max'       => 'Tarih aralığı en fazla :days gün olabilir.',
+        'prohibits'            => ':attribute alanı :other ile birlikte kullanılamaz.',
+    ],
+    'event_checklist' => [
+        'contract'  => 'Sözleşme imzalandı',
+        'deposit'   => 'Kapora alındı',
+        'guarantee' => 'Nihai garanti',
+        'beo'       => 'Etkinlik sipariş formu (BEO)',
+        'av'        => 'Görsel-işitsel gereksinimler',
     ],
     'attributes' => [
         'amount_usd' => 'tutar (USD)',

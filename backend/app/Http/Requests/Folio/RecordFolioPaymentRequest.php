@@ -4,6 +4,7 @@ namespace App\Http\Requests\Folio;
 
 use App\Base\BaseRequest;
 use App\Enums\PaymentMethod;
+use App\Http\Requests\Concerns\ReadsIdempotencyKey;
 use Illuminate\Validation\Rule;
 
 /**
@@ -11,16 +12,12 @@ use Illuminate\Validation\Rule;
  * REQUIRED here: it is merged in as `idempotency_key` (null when absent, blank
  * or whitespace, always overwriting a body field) and a missing key fails
  * validation with `errors.idempotency_key` = custom.errors.idempotency_key_required
- * (D-08, consultant ruling plan-q3).
+ * (D-08, consultant ruling plan-q3). The merge lives in ReadsIdempotencyKey
+ * (shared with the Phase 8 event deposit).
  */
 class RecordFolioPaymentRequest extends BaseRequest
 {
-    public function prepareForValidation(): void
-    {
-        $key = trim((string) $this->header('Idempotency-Key', ''));
-
-        $this->merge(['idempotency_key' => $key === '' ? null : $key]);
-    }
+    use ReadsIdempotencyKey;
 
     public function rules(): array
     {
@@ -34,8 +31,6 @@ class RecordFolioPaymentRequest extends BaseRequest
 
     public function messages(): array
     {
-        return array_merge(parent::messages(), [
-            'idempotency_key.required' => __('custom.errors.idempotency_key_required'),
-        ]);
+        return array_merge(parent::messages(), $this->idempotencyKeyMessages());
     }
 }

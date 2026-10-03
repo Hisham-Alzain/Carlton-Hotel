@@ -149,6 +149,25 @@ class StayTest extends TestCase
             ->assertJsonPath('data.is_checked_in', true);
     }
 
+    public function test_self_check_in_uses_the_hotel_arrival_day_before_utc_midnight(): void
+    {
+        config(['hotel.timezone' => 'Asia/Damascus']);
+        // 01:30 on the arrival day locally, still the previous day in UTC.
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2027-03-09 22:30:00', 'UTC'));
+
+        $guest = Guest::factory()->create();
+        $reservation = $this->stayFor($guest, 'confirmed', assignRoom: true, attributes: [
+            'check_in' => '2027-03-10',
+            'check_out' => '2027-03-12',
+        ]);
+
+        $this->actingAs($guest, 'guests')->postJson('/api/stays/check-in')
+            ->assertOk()
+            ->assertJsonPath('data.room_number', '812');
+
+        $this->assertSame(ReservationStatus::CHECKED_IN, $reservation->fresh()->status);
+    }
+
     public function test_self_check_in_is_refused_while_the_booking_awaits_the_hotel(): void
     {
         $guest       = Guest::factory()->create();

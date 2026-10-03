@@ -137,7 +137,7 @@ After login, the `permissions` array in the user object is the source of truth f
 
 A `super_admin` account bypasses all permission checks on the server.
 
-**Full permission catalog** (11 modules, 26 permissions): `reservations.view|create|cancel`, `folios.view|settle|post|dispute`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `pricing.edit`, `reports.view`, `staff.manage`, `guests.view|edit`, `housekeeping.view|assign|update`.
+**Full permission catalog** (12 modules, 29 permissions): `reservations.view|create|cancel`, `folios.view|settle|post|dispute`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `events.view|manage|deposit`, `pricing.edit`, `reports.view`, `staff.manage`, `guests.view|edit`, `housekeeping.view|assign|update`.
 
 ### `cms.view` is enforced — gate read-only navigation on it
 
@@ -175,7 +175,7 @@ Most are route middleware, which is the norm. Two families are not, and are enfo
 
 - **`staff.manage`** — checked by `StaffPolicy` (registered on the `User` model), not by middleware. It gates all six `/staff` routes plus `GET /api/permissions` and `GET /api/roles`. A `403` from those endpoints means `staff.manage` is missing, even though the route carries no `permission:` middleware.
 - **`service_requests.assign` / `service_requests.update` / `tickets.assign` / `tickets.respond` / `housekeeping.assign` / `housekeeping.update`** — checked inside `OperationsQueueService`, which derives the required permission from the `{type}` segment of the URL (`service-requests`, `tickets`, `housekeeping-tasks`) because it differs per type. See *Module: Operations Queue & Dashboard*. The same service also checks the type's **work** permission on `PATCH /operations/queue/{type}/{uuid}/claim` (`service_requests.update` / `tickets.respond` / `housekeeping.update`; the assign permission alone is a `403`). The dedicated `/housekeeping/tasks` routes, by contrast, carry ordinary `permission:` route middleware (`housekeeping.view|assign|update`) — see *Module: Housekeeping*.
-- **`tickets.view` / `tickets.respond` / `tickets.assign`** on the `/support-tickets` routes are ordinary route middleware: `tickets.view` reads (list, show), `tickets.respond` writes (create, status, reply, recovery-actions, escalate), `tickets.assign` assigns. See *Module: Support Tickets*. The same three permissions also gate the chat inbox and event inquiries (see *Module: Chat* and *Module: Event Inquiries*).
+- **`tickets.view` / `tickets.respond` / `tickets.assign`** on the `/support-tickets` routes are ordinary route middleware: `tickets.view` reads (list, show), `tickets.respond` writes (create, status, reply, recovery-actions, escalate), `tickets.assign` assigns. See *Module: Support Tickets*. The same three permissions also gate the chat inbox (see *Module: Chat*). Event inquiries are gated by their own `events.*` group since Phase 8 (see *Module: Event Inquiries*).
 
 ### Genuinely inert — do not build UI against these
 
@@ -185,7 +185,9 @@ Most are route middleware, which is the norm. Two families are not, and are enfo
 
 Seven presets: `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `content_editor`, `content_manager` — see Module: Reference Data below for exactly which permissions each preset grants. The last two are the only presets that grant `cms.*`; without one of them no seeded account except the super admin can reach `/api/cms/*`. `content_manager` is `content_editor` plus `cms.purge`, and is the only preset that may empty the recycle bin. `housekeeping` and `reception` also hold `rooms.status`. `reception` also holds `folios.post` and `folios.dispute`. Since Phase 6, `housekeeping` holds all three `housekeeping.*` permissions (it runs the task board); `reception` holds `housekeeping.view` and `housekeeping.assign` (it can see and hand off tasks, but not move them through their statuses).
 
-Since Phase 7 (no new permission strings — still 11 modules / 26 permissions) `reception` also holds `tickets.view` and `tickets.respond`, and `concierge` also holds `tickets.view`, `tickets.assign` and `tickets.respond`; `events` already held all three. `kitchen` and `housekeeping` hold no `tickets.*`. **These permissions are shared with other surfaces, so the grant has a wider blast radius than the support-ticket routes:** `tickets.view` opens `GET /cms/conversations` and its messages (the guest chat inbox) and the `GET /cms/event-inquiries` reads; `tickets.respond` allows `POST /cms/conversations/{uuid}/messages` (replying to a guest in chat); and `tickets.assign` (concierge, events) allows `PATCH /cms/event-inquiries/{uuid}/status` and `/assign`. Reception does not get `tickets.assign`, so it cannot re-status or assign event inquiries.
+Since Phase 7 `reception` also holds `tickets.view` and `tickets.respond`, and `concierge` also holds `tickets.view`, `tickets.assign` and `tickets.respond`; `events` already held all three. `kitchen` and `housekeeping` hold no `tickets.*`. **These permissions are shared with other surfaces, so the grant has a wider blast radius than the support-ticket routes:** `tickets.view` opens `GET /cms/conversations` and its messages (the guest chat inbox), and `tickets.respond` allows `POST /cms/conversations/{uuid}/messages` (replying to a guest in chat).
+
+Since Phase 8 the catalogue is 12 modules / 29 permissions: the new `events` group adds `events.view`, `events.manage` and `events.deposit`. **Contract tightening versus Phase 7:** event inquiries are gated by `events.*` only — `tickets.*` no longer opens any event-inquiry route. Only the `events` preset holds `events.*`, so `reception` and `concierge` lost all event-inquiry access (index, show, status and assign now answer `403`); `tickets.*` still opens `/cms/conversations` for them. The `event_inquiries` key of `GET /dashboard/summary` now follows `events.view` (it used to follow `tickets.view`), so reception and concierge no longer receive it. Gate the Events navigation item on `events.view`.
 
 ---
 
@@ -526,7 +528,7 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 ]
 ```
 
-11 modules: `reservations`, `folios`, `cms`, `rooms`, `service_requests`, `tickets`, `pricing`, `reports`, `guests`, `staff`, `housekeeping`.
+12 modules: `reservations`, `folios`, `cms`, `rooms`, `service_requests`, `tickets`, `events`, `pricing`, `reports`, `guests`, `staff`, `housekeeping`.
 
 ---
 
@@ -543,7 +545,7 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
   { "name": "kitchen", "permissions": ["service_requests.view", "service_requests.update"] },
   { "name": "housekeeping", "permissions": ["service_requests.view", "service_requests.update", "rooms.status", "housekeeping.view", "housekeeping.assign", "housekeeping.update"] },
   { "name": "concierge", "permissions": ["service_requests.view", "service_requests.assign", "service_requests.update", "guests.view", "guests.edit", "tickets.view", "tickets.assign", "tickets.respond"] },
-  { "name": "events", "permissions": ["service_requests.view", "tickets.view", "tickets.assign", "tickets.respond"] },
+  { "name": "events", "permissions": ["service_requests.view", "tickets.view", "tickets.assign", "tickets.respond", "events.view", "events.manage", "events.deposit"] },
   { "name": "content_editor", "permissions": ["cms.view", "cms.edit", "cms.restore"] },
   { "name": "content_manager", "permissions": ["cms.view", "cms.edit", "cms.restore", "cms.purge"] }
 ]
@@ -758,6 +760,21 @@ Every media object, everywhere in the API, is `MediaResource`:
 **The `{uuid}` parent segment scopes the delete.** `MediaService` verifies that the media's owner matches the parent in the URL; deleting a valid media uuid through the wrong parent returns **`404 not_found`** (with `context: { media, parent }`) and deletes nothing. A flat client-side map of media uuids is not enough — you must call with the parent the image actually belongs to.
 
 URLs are **absolute**, built as `APP_URL + /storage/ + path`, so media is served by the API origin and **`php artisan storage:link` must have been run** or every URL is a well-formed 404. Storage layout is `cms/{ModelClassBasename}/{parent-uuid}/{hash}.{ext}` for a parent upload and `cms/library/{hash}.{ext}` for a library upload. An attached copy keeps the path it was uploaded to — do **not** infer the parent from the URL.
+
+### Dining venue menu file (Phase 8)
+
+A venue can carry one downloadable menu file (PDF or image), separate from its `images` gallery. Both routes are `auth:users` and need `cms.edit`.
+
+| Verb | Path | Result |
+|---|---|---|
+| `POST` | `/cms/dining-venues/{uuid}/menu-file` | `201`, `data` = `MediaResource` (`uuid`, `url`, `file_name`, `alt_text`, `title`, `mime_type`, `size`, `sort_order`, `mediable_type`), message "Menu file uploaded." |
+| `DELETE` | `/cms/dining-venues/{uuid}/menu-file` | `200`, `data: null`, message "Menu file removed." |
+
+- `POST` is multipart: `file` (required; `pdf`, `jpg`, `jpeg`, `png`, `webp`; max 10 MB) and an optional `title`. A missing file, a wrong type or a file over 10 MB is a `422`.
+- **Replace semantics:** uploading again replaces any existing menu file; the old file is purged.
+- `DELETE` with no menu file on the venue answers `404 not_found`.
+- **Menu files are hidden from the image surfaces.** They are stored as media rows with `collection = menu` and never appear in the venue's `images`, in the `GET /cms/media` library, and cannot be attached via `…/images/attach` or deleted via `…/images/{media}` (that answers `404`). The library's `PATCH` / `DELETE /cms/media/{uuid}` stay unscoped, so deleting a menu row there removes the menu file.
+- Public download (no auth): `GET /public/dining-venues/{uuid}/menu/download` returns `200 { url, file_name, mime_type, size, updated_at }` in the envelope. It returns a URL, not a stream. It is the one **`204` with an empty body (no envelope)** exception: that is what a venue with no menu file answers. Unknown, inactive or deleted venues answer `404 not_found`. The app opens the URL externally.
 
 ### The media library
 
@@ -1078,34 +1095,130 @@ The reservation carries a staff-only `check_out_mode` (`none`, `staff_force`, `g
 
 ## Module: Event Inquiries (RFP triage)
 
-Seeded roles that reach these routes: `tickets.view` (reads) is held by `events`, `reception` and `concierge`; `tickets.assign` (status and assign) by `events` and `concierge`.
+All routes are `auth:users`. Since Phase 8 they are gated by the `events.*` group only; the seeded `events` preset is the only role that holds it (plus `super_admin`). `reception` and `concierge` no longer reach any of these routes. There are no `/events/...` alias routes.
 
-### GET /cms/event-inquiries — `tickets.view`
+| Verb + path | Permission | Body | Response |
+|---|---|---|---|
+| `GET /cms/event-inquiries` | `events.view` | — | paginated list (20/page) |
+| `GET /cms/event-inquiries/{uuid}` | `events.view` | — | detail |
+| `PATCH /cms/event-inquiries/{uuid}/status` | `events.manage` | `{ status }` | detail |
+| `PATCH /cms/event-inquiries/{uuid}/assign` | `events.manage` | `{ user_uuid }` | detail |
+| `PATCH /cms/event-inquiries/{uuid}/checklist/{item}` | `events.manage` | `{ done: boolean }` (required) | detail, message "Checklist updated." |
+| `PATCH /cms/event-inquiries/{uuid}/notes` | `events.manage` | `{ staff_notes: string\|null }` | detail, message "Notes updated." |
+| `PATCH /cms/event-inquiries/{uuid}/deposit` | `events.deposit` | `{ amount_usd, method?, note? }` + `Idempotency-Key` header | detail, message "Deposit recorded." |
 
-Paginated, newest first.
+### GET /cms/event-inquiries — `events.view`
 
-### GET /cms/event-inquiries/{uuid} — `tickets.view`
-
-**Response `data`:**
+Paginated, 20 per page. Each row:
 ```json
 {
   "uuid": "...", "name": "...", "email": "...", "phone": "...", "company": "...",
   "event_type": "corporate", "event_date": "2026-08-01", "expected_guests": 120, "budget_usd": "5000.00",
-  "notes": "...", "status": "new", "department": "sales", "assigned_to": null,
+  "notes": "...", "status": "quoted", "department": "sales", "assigned_to": null,
   "requirements": [ { "uuid": "...", "type": "av_equipment", "notes": "..." } ],
-  "created_at": "..."
+  "created_at": "...",
+  "staff_notes": null, "deposit_status": "unpaid", "deposit_paid_at": null,
+  "checklist_done_count": 1, "checklist_total": 5
 }
 ```
 
-### PATCH /cms/event-inquiries/{uuid}/status — `tickets.assign`
+The Phase 8 keys are additive: `staff_notes`, `deposit_status` (`unpaid` | `paid`), `deposit_paid_at` (ISO or `null`), `checklist_done_count` (ticked items, plus 1 when the deposit is paid) and `checklist_total` (always `5`). Existing keys are unchanged.
+
+### GET /cms/event-inquiries/{uuid} — `events.view`
+
+The detail is the list row plus the keys below. **Every `PATCH` on this resource returns the same detail shape.**
+
+```json
+{
+  "...": "all list-row keys",
+  "checklist": [
+    { "item": "contract", "label": "...", "owner_department": "sales", "derived": false, "done": true,
+      "completed_at": "2026-07-01T10:00:00Z", "completed_by": { "uuid": "...", "name": "..." } },
+    { "item": "deposit", "label": "...", "owner_department": "events", "derived": true, "done": false,
+      "completed_at": null, "completed_by": null }
+  ],
+  "deposit": { "status": "paid", "amount_usd": "500.00", "method": "cash", "paid_at": "...",
+               "received_by": { "uuid": "...", "name": "..." }, "payment_uuid": "..." },
+  "assigned_user": { "uuid": "...", "name": "..." },
+  "guest": { "uuid": "...", "name": "..." },
+  "event_space": { "uuid": "...", "name": "..." }
+}
+```
+
+- `checklist[]` always has five entries, in the order listed under *Checklist*.
+- `deposit`: when unpaid, every key except `status` is `null`.
+- `assigned_user`, `guest` and `event_space` are `null` when absent.
+
+### Checklist — `PATCH /cms/event-inquiries/{uuid}/checklist/{item}` — `events.manage`
+
+| Order | `item` | Owner department | Notes |
+|---|---|---|---|
+| 1 | `contract` | sales | |
+| 2 | `deposit` | events | **Derived** from the deposit state — not toggleable |
+| 3 | `guarantee` | sales | |
+| 4 | `beo` | events | |
+| 5 | `av` | maintenance | |
+
+- Body `{ "done": true|false }` — `done` is **required** and explicit; there is no blind toggle.
+- Re-sending the current state is a `200` no-op (nothing is written). `done: false` on an item never ticked is also a `200` no-op.
+- Unknown item (e.g. `/checklist/foo`) → `404 not_found`.
+- `PATCH …/checklist/deposit` → `422 event_checklist_item_derived`, `context: { item: "deposit" }`.
+- A cancelled inquiry → `422 inquiry_state`, `context: { status: "cancelled", allowed: ["new","in_review","quoted","confirmed"] }`. The checklist is editable in `new`, `in_review`, `quoted` and `confirmed`.
+- Rows are created lazily on first tick; history lives in the activity log.
+
+### Notes — `PATCH /cms/event-inquiries/{uuid}/notes` — `events.manage`
+
+Body `{ "staff_notes": string|null }` — the key is required, max 5000 characters, `null` clears. Editable in every status, including `cancelled`. Last write wins (no concurrency token).
+
+**`notes` and `staff_notes` are different fields.** `notes` is the guest's own RFP brief and is read-only for staff; `staff_notes` is the internal note staff edit.
+
+### Deposit — `PATCH /cms/event-inquiries/{uuid}/deposit` — `events.deposit`
+
+Body `{ "amount_usd": 500.00, "method"?: "cash", "note"?: "..." }` plus the **required** `Idempotency-Key` header.
+
+- A deposit is a real payment row (payable = the inquiry) recorded through the cash payment action, with `deposit_status` set to `paid` and `deposit_paid_at` stamped. It never touches a folio.
+- One deposit per inquiry: no partial deposits, no refunds, and **no auto-confirm** — the inquiry status stays `quoted` / `confirmed`.
+- `amount_usd`: required, decimal with at most 2 places, between `0.01` and `99999.99`. It is not checked against `budget_usd`. `method`: optional, only `cash`. `note`: optional, max 1000.
+- Allowed only while the inquiry is `quoted` or `confirmed`; otherwise `422 inquiry_state`, `context: { status, allowed: ["quoted","confirmed"] }`.
+- **Replay:** the same `Idempotency-Key` with the same payload (same amount, method, note and the same staff user) → `200` with the same result and no second payment.
+- Same key with a different payload or a different user → `409 idempotency_conflict`, `context: { idempotency_key }`.
+- Missing or blank key → `422 validation_failed` with `errors.idempotency_key`.
+- A second deposit under a new key → `422 event_deposit_already_recorded`, `context: { payment_uuid, paid_at }`.
+
+> Revenue reporting (Phase 9) must segment payments by `payable_type`: event deposits are payments that are not folio payments.
+
+### Error codes (this module)
+
+| Code | HTTP | Context |
+|---|---|---|
+| `event_checklist_item_derived` | 422 | `{ item }` |
+| `event_deposit_already_recorded` | 422 | `{ payment_uuid, paid_at }` |
+| `inquiry_state` | 422 | `{ status, allowed }` — additive context, also on the status route |
+| `idempotency_conflict` | 409 | `{ idempotency_key }` |
+| `validation_failed` | 422 | `errors` keyed by field |
+| `not_found` | 404 | unknown inquiry or unknown checklist item |
+
+`payment_failed` (422) is reused if the cash payment is rejected.
+
+### Dashboard handoff (Phase 8)
+
+- Move from `/events/{id}` to `/cms/event-inquiries/{uuid}`. There are no alias routes.
+- Notes: send `{ staff_notes }`. `notes` is the client's brief and is read-only.
+- Checklist: body `{ done }` is required. An unknown item answers `not_found`, not the mock's `checklist_item_not_found`. `deposit` is not toggleable.
+- Deposit: body `{ amount_usd, method?: 'cash', note? }` plus the `Idempotency-Key` header.
+- `deposit{}` replaces the mock's `deposit_paid`, `deposit_amount` and `deposit_received_by`. Unpaid deposits have no amount (the agreed/required deposit is deferred).
+- Gate the Events navigation on `events.view` (it was `tickets.view`).
+- The public `POST /event-inquiries` receipt is unchanged and carries no staff keys.
+
+### PATCH /cms/event-inquiries/{uuid}/status — `events.manage`
 
 **Request body:** `{ "status": "in_review" | "quoted" | "confirmed" | "cancelled" }` (note: you cannot transition back to `new`).
 
 **Allowed transitions:** `new`→`in_review`/`cancelled`; `in_review`→`quoted`/`cancelled`; `quoted`→`confirmed`/`cancelled`; `confirmed`→`cancelled`. `cancelled` is terminal.
 
-**Failure:** `inquiry_state` (422) on an invalid transition — a distinct code from `reservation_state`, don't conflate them.
+**Failure:** `inquiry_state` (422) on an invalid transition — a distinct code from `reservation_state`, don't conflate them. Since Phase 8 it carries additive context `{ status, allowed }`.
 
-### PATCH /cms/event-inquiries/{uuid}/assign — `tickets.assign`
+### PATCH /cms/event-inquiries/{uuid}/assign — `events.manage`
 
 **Request body:** `{ "user_uuid": "..." }` (required, must exist).
 
@@ -1114,6 +1227,48 @@ Paginated, newest first.
 ### Department routing (informational — set at submit time, not editable)
 
 `corporate`, `conference`, `product_launch` → `sales`; everything else → `events`.
+
+---
+
+## Module: Dining → Table reservations (`service_requests.view`)
+
+### GET /cms/table-reservations — `service_requests.view`
+
+Read-only list of restaurant table bookings (service bookings whose bookable is a restaurant table). `auth:users` + `service_requests.view`; held by the `kitchen`, `reception`, `concierge`, `housekeeping` and `events` presets. There are no staff write verbs yet, so rows carry no `allowed_statuses`.
+
+| Param | Notes |
+|---|---|
+| `venue` | Dining venue uuid. Unknown uuid → empty page |
+| `table` | Restaurant table uuid. Unknown uuid → empty page |
+| `status` | `eq`, or `status[in]=pending,confirmed`; values `pending`, `confirmed`, `cancelled`, `completed` |
+| `date` | `Y-m-d`, a **hotel-local** day |
+| `from` + `to` | `Y-m-d`, hotel-local, inclusive; `to` ≥ `from` and the span is at most **31 days** |
+| `sort` / `sort_dir` | `scheduled_at` (default) or `guest_count`; `asc` (default) / `desc` |
+| `per_page` | Default 50, max 100 |
+
+- With neither `date` nor `from`/`to`, the list defaults to the hotel-local **today**.
+- `422` cases: `date` together with `from`/`to` (keyed `date`); only one of `from`/`to` (keyed on the missing one); a malformed date; `to` before `from`; a span over 31 days.
+- Default order is `scheduled_at` ascending, then id.
+
+**Row:**
+```json
+{
+  "uuid": "...", "status": "confirmed",
+  "scheduled_at": "2026-08-01T16:00:00Z", "local_date": "2026-08-01", "local_time": "19:00",
+  "guest_count": 4, "special_request": null,
+  "venue": { "uuid": "...", "name": "..." },
+  "table": { "uuid": "...", "table_number": "T4", "capacity": 4 },
+  "guest": { "uuid": "...", "name": "..." },
+  "reservation": { "uuid": "...", "booking_code": "..." },
+  "created_at": "..."
+}
+```
+
+`scheduled_at` is the ISO UTC instant; `local_date` / `local_time` are the hotel-timezone rendering to display. `venue.name` is in the request locale. `venue`, `table`, `guest` and `reservation` can each be `null`. A trashed venue still renders; a hard-deleted table gives `table: null, venue: null`.
+
+> **Known gap (PR-9):** the generic guest `POST /service-bookings` can still create a `restaurant_table` booking with a client-supplied `scheduled_at` that bypasses the table picker. Such rows appear in this list.
+
+> **Guest-app timezone fix:** `POST /dining-venues/{venue}/table-reservations` takes a hotel-local `date` + `time`; the stored and returned `scheduled_at` is now the true UTC instant of that slot (19:00 local is 16:00Z, previously stored as 19:00Z). "Today" is the hotel-local day. Existing rows are not backfilled.
 
 ---
 
@@ -1917,7 +2072,9 @@ Records a service-recovery gesture on the ticket. It is **record-only**: it neve
 | `reservation_state` | 422 | Action not valid for the reservation's current state |
 | `hold_expired` | 422 | Soft-hold window passed before OTP verification |
 | `payment_failed` | 422 | Payment gateway rejected the charge |
-| `inquiry_state` | 422 | Invalid event-inquiry status transition |
+| `inquiry_state` | 422 | Invalid event-inquiry status transition, or a checklist/deposit write in a status that does not allow it; `context: { status, allowed }` |
+| `event_checklist_item_derived` | 422 | Checklist write on the derived `deposit` item; `context: { item }` |
+| `event_deposit_already_recorded` | 422 | The inquiry already has a deposit; `context: { payment_uuid, paid_at }` |
 | `no_active_reservation` | 403 | Guest-side entitlement gate — not relevant to dashboard requests, but appears in any guest-facing payload you might inspect while debugging |
 | `room_status_transition_invalid` | 422 | Room status change not allowed from the current state; `context.allowed` lists the valid targets |
 | `reservation_outside_stay_window` | 422 | Check-in outside the hotel-local stay window |

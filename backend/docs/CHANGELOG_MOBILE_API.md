@@ -20,6 +20,20 @@ nine commits (`2fd294f` → `5d254a7`).
 
 ---
 
+## 2026-10-03 — Phase 8 — Events & Dining
+
+**Added**
+
+- `GET /api/public/dining-venues/{uuid}/menu/download` (no auth). 200 envelope with `data: {url, file_name, mime_type, size, updated_at}`; 204 with an empty body and no envelope when the venue has no menu file; 404 `not_found` for an unknown, inactive, or deleted venue. Returns a URL to open externally.
+
+**Fixed (behaviour change)**
+
+- `POST /api/dining-venues/{uuid}/table-reservations`: `scheduled_at` is now the true UTC instant of the hotel-local slot. Previously the local wall-clock time was stored as UTC, so it was 3 h late for Asia/Damascus (19:00 local stored as 19:00Z, now 16:00Z). Existing bookings are not migrated.
+- `date` validation ("today or later") now uses the hotel-local day.
+- The response shape is unchanged.
+
+---
+
 ## ⚠️ Breaking changes
 
 Five, all affecting the **dashboard**, none affecting existing mobile builds.

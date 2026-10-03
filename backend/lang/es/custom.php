@@ -60,6 +60,11 @@ return [
         'folio_dispute_raised'    => 'Reclamación registrada.',
         'folio_dispute_resolved'  => 'Reclamación resuelta.',
         'folio_dispute_rejected'  => 'Reclamación rechazada.',
+        'event_checklist_updated' => 'Lista de verificación actualizada.',
+        'event_notes_updated'     => 'Notas actualizadas.',
+        'event_deposit_recorded'  => 'Depósito registrado.',
+        'menu_file_uploaded'      => 'Archivo del menú subido.',
+        'menu_file_removed'       => 'Archivo del menú eliminado.',
     ],
     'errors'     => [
         'server_error'           => 'Se ha producido un error.',
@@ -120,6 +125,8 @@ return [
         'idempotency_key_required'     => 'Esta solicitud requiere la cabecera Idempotency-Key.',
         'folio_item_dispute_open'      => 'Esta partida ya tiene una reclamación abierta.',
         'folio_dispute_state'          => 'Esta partida no tiene ninguna reclamación abierta que cerrar.',
+        'event_checklist_item_derived' => 'Este elemento depende del depósito y no se puede modificar directamente.',
+        'event_deposit_already_recorded' => 'Ya se registró un depósito para esta consulta.',
     ],
     'auth'       => [
         'otp_sent'       => 'Se ha enviado un código de verificación.',
@@ -196,6 +203,15 @@ return [
         'decimal'              => 'El campo :attribute debe tener :decimal decimales.',
         'uuid'                 => 'El campo :attribute debe ser un UUID válido.',
         'prohibited_unless'    => 'El campo :attribute está prohibido a menos que :other esté en :values.',
+        'date_range_max'       => 'El rango de fechas no puede abarcar más de :days días.',
+        'prohibits'            => 'El campo :attribute no se puede usar junto con :other.',
+    ],
+    'event_checklist' => [
+        'contract'  => 'Contrato firmado',
+        'deposit'   => 'Depósito recibido',
+        'guarantee' => 'Garantía final',
+        'beo'       => 'Orden de evento de banquete (BEO)',
+        'av'        => 'Requisitos audiovisuales',
     ],
     'attributes' => [
         'amount_usd' => 'importe (USD)',

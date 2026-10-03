@@ -11,7 +11,7 @@ class SeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_all_26_permissions_seeded(): void
+    public function test_all_29_permissions_seeded(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $expected = [
@@ -34,11 +34,13 @@ class SeederTest extends TestCase
             'guests.view', 'guests.edit',
             // Phase 6 (D-06): the housekeeping task board
             'housekeeping.view', 'housekeeping.assign', 'housekeeping.update',
+            // Phase 8 (D-12): the event-inquiry slice, split off tickets.*
+            'events.view', 'events.manage', 'events.deposit',
         ];
         foreach ($expected as $p) {
             $this->assertDatabaseHas('permissions', ['name' => $p, 'guard_name' => 'users']);
         }
-        $this->assertCount(26, Permission::where('guard_name', 'users')->get());
+        $this->assertCount(29, Permission::where('guard_name', 'users')->get());
     }
 
     public function test_housekeeping_permissions_are_granted_to_housekeeping_and_reception(): void
@@ -61,7 +63,8 @@ class SeederTest extends TestCase
         $this->assertSame(['service_requests.update', 'service_requests.view'], $perms('kitchen'));
         // Phase 7 (D-10) re-pin: concierge gained tickets.view/.assign/.respond.
         $this->assertSame(['guests.edit', 'guests.view', 'service_requests.assign', 'service_requests.update', 'service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view'], $perms('concierge'));
-        $this->assertSame(['service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view'], $perms('events'));
+        // Phase 8 (D-12) re-pin: events gained events.view/.manage/.deposit.
+        $this->assertSame(['events.deposit', 'events.manage', 'events.view', 'service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view'], $perms('events'));
     }
 
     public function test_all_7_role_presets_seeded(): void
@@ -176,9 +179,19 @@ class SeederTest extends TestCase
         }
 
         $this->assertSame(
-            ['service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view'],
+            ['events.deposit', 'events.manage', 'events.view', 'service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view'],
             Role::findByName('events', 'users')->permissions->pluck('name')->sort()->values()->all(),
         );
+    }
+
+    /** Phase 8 (D-12): only the events preset holds events.*; reception/concierge lost event access. */
+    public function test_only_the_events_preset_holds_events_permissions(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        foreach (['events.view', 'events.manage', 'events.deposit'] as $permission) {
+            $this->assertSame(['events'], $this->ticketHolders($permission), $permission);
+        }
     }
 
     public function test_folio_posting_follows_the_folios_settle_holders(): void
@@ -215,7 +228,7 @@ class SeederTest extends TestCase
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-        $this->assertCount(26, Permission::where('guard_name', 'users')->get());
+        $this->assertCount(29, Permission::where('guard_name', 'users')->get());
         $this->assertCount(7, Role::where('guard_name', 'users')->get());
 
         // Idempotent down to the pivot: re-running must not double up grants.

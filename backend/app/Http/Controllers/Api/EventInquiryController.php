@@ -16,7 +16,8 @@ class EventInquiryController extends BaseController
     {
         $guestId = auth('guests')->id();
         $result          = $this->service->submit($request->validated(), $guestId);
-        $result['data']  = new EventInquiryResource($result['data']);
+        // The guest's receipt: no staff-internal keys (Phase 8).
+        $result['data']  = EventInquiryResource::forGuest($result['data']);
         return $this->respondFromService($result, 'custom.messages.inquiry_submitted', $request);
     }
 }

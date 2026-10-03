@@ -26,7 +26,12 @@ class PermissionsGroupedTest extends TestCase
                     ->assertStatus(200)->assertJson(['success' => true]);
 
         $groups = $res->json('data');
-        $this->assertCount(11, $groups);
+        $this->assertCount(12, $groups);
+
+        // Phase 8 (D-12): the `events` group is the event-inquiry slice.
+        $eventsGroup = collect($groups)->firstWhere('module', 'events');
+        $this->assertNotNull($eventsGroup, 'events group exists');
+        $this->assertSame(['events.deposit', 'events.manage', 'events.view'], collect($eventsGroup['permissions'])->sort()->values()->all());
 
         // Phase 6 (D-06): the `housekeeping` group holds the task board verbs.
         $hkGroup = collect($groups)->firstWhere('module', 'housekeeping');

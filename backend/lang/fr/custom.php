@@ -60,6 +60,11 @@ return [
         'folio_dispute_raised'    => 'Contestation enregistrée.',
         'folio_dispute_resolved'  => 'Contestation résolue.',
         'folio_dispute_rejected'  => 'Contestation rejetée.',
+        'event_checklist_updated' => 'Liste de contrôle mise à jour.',
+        'event_notes_updated'     => 'Notes mises à jour.',
+        'event_deposit_recorded'  => 'Acompte enregistré.',
+        'menu_file_uploaded'      => 'Fichier du menu téléversé.',
+        'menu_file_removed'       => 'Fichier du menu supprimé.',
     ],
     'errors'     => [
         'server_error'           => 'Une erreur est survenue.',
@@ -120,6 +125,8 @@ return [
         'idempotency_key_required'     => "L'en-tête Idempotency-Key est obligatoire pour cette requête.",
         'folio_item_dispute_open'      => "Cette ligne fait déjà l'objet d'une contestation ouverte.",
         'folio_dispute_state'          => "Cette ligne n'a aucune contestation ouverte à clôturer.",
+        'event_checklist_item_derived' => "Cet élément suit l'acompte et ne peut pas être modifié directement.",
+        'event_deposit_already_recorded' => 'Un acompte a déjà été enregistré pour cette demande.',
     ],
     'auth'       => [
         'otp_sent'       => 'Un code de vérification a été envoyé.',
@@ -196,6 +203,15 @@ return [
         'decimal'              => 'Le champ :attribute doit comporter :decimal décimales.',
         'uuid'                 => 'Le champ :attribute doit être un UUID valide.',
         'prohibited_unless'    => 'Le champ :attribute est interdit sauf si :other est dans :values.',
+        'date_range_max'       => 'La plage de dates ne peut pas dépasser :days jours.',
+        'prohibits'            => 'Le champ :attribute ne peut pas être utilisé avec :other.',
+    ],
+    'event_checklist' => [
+        'contract'  => 'Contrat signé',
+        'deposit'   => 'Acompte reçu',
+        'guarantee' => 'Garantie finale',
+        'beo'       => 'Ordre de banquet (BEO)',
+        'av'        => 'Besoins audiovisuels',
     ],
     'attributes' => [
         'amount_usd' => 'montant (USD)',

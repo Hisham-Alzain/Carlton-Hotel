@@ -35,7 +35,8 @@ class EventInquiryTest extends TestCase
     private function makeTriager(): User
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('tickets.view', 'tickets.assign');
+        // Phase 8 (D-12): the event-inquiry slice moved from tickets.* to events.*.
+        $user->givePermissionTo('events.view', 'events.manage');
         return $user;
     }
 
@@ -123,6 +124,14 @@ class EventInquiryTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user, 'users')
+             ->getJson('/api/cms/event-inquiries')
+             ->assertForbidden();
+
+        // Phase 8 (D-12): tickets.view no longer opens event inquiries.
+        $ticketsOnly = User::factory()->create();
+        $ticketsOnly->givePermissionTo('tickets.view');
+
+        $this->actingAs($ticketsOnly, 'users')
              ->getJson('/api/cms/event-inquiries')
              ->assertForbidden();
     }

@@ -60,6 +60,11 @@ return [
         'folio_dispute_raised'    => 'تم تقديم الاعتراض.',
         'folio_dispute_resolved'  => 'تم حل الاعتراض.',
         'folio_dispute_rejected'  => 'تم رفض الاعتراض.',
+        'event_checklist_updated' => 'تم تحديث قائمة المراجعة.',
+        'event_notes_updated'     => 'تم تحديث الملاحظات.',
+        'event_deposit_recorded'  => 'تم تسجيل العربون.',
+        'menu_file_uploaded'      => 'تم رفع ملف القائمة.',
+        'menu_file_removed'       => 'تم حذف ملف القائمة.',
     ],
     'errors'     => [
         'server_error'           => 'حدث خطأ ما.',
@@ -120,6 +125,8 @@ return [
         'idempotency_key_required'     => 'يلزم إرسال ترويسة Idempotency-Key مع هذا الطلب.',
         'folio_item_dispute_open'      => 'يوجد اعتراض مفتوح على هذا البند بالفعل.',
         'folio_dispute_state'          => 'لا يوجد اعتراض مفتوح على هذا البند لإغلاقه.',
+        'event_checklist_item_derived' => 'يتبع هذا البند العربون ولا يمكن تغييره مباشرة.',
+        'event_deposit_already_recorded' => 'تم تسجيل عربون لهذا الطلب مسبقًا.',
     ],
     'auth'       => [
         'otp_sent'       => 'تم إرسال رمز التحقق.',
@@ -196,6 +203,15 @@ return [
         'decimal'              => 'يجب أن يحتوي :attribute على :decimal منازل عشرية.',
         'uuid'                 => 'يجب أن يكون :attribute معرّف UUID صالحاً.',
         'prohibited_unless'    => 'الحقل :attribute غير مسموح به إلا إذا كان :other ضمن :values.',
+        'date_range_max'       => 'يجب ألا تتجاوز مدة النطاق الزمني :days يومًا.',
+        'prohibits'            => 'لا يمكن استخدام الحقل :attribute مع :other.',
+    ],
+    'event_checklist' => [
+        'contract'  => 'تم توقيع العقد',
+        'deposit'   => 'تم استلام العربون',
+        'guarantee' => 'الضمان النهائي',
+        'beo'       => 'أمر تنفيذ المناسبة (BEO)',
+        'av'        => 'متطلبات الصوت والصورة',
     ],
     'attributes' => [
         'amount_usd' => 'المبلغ (بالدولار الأمريكي)',

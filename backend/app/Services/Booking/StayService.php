@@ -2,13 +2,14 @@
 
 namespace App\Services\Booking;
 
-use App\Actions\Booking\AssignRoomAction;
+use App\Actions\Booking\CheckInReservationAction;
 use App\Actions\Booking\SubmitOnlineCheckInAction;
 use App\Enums\ReservationStatus;
 use App\Exceptions\ReservationStateException;
 use App\Models\Guest;
 use App\Models\Reservation;
 use App\Support\GuestEntitlement;
+use App\Support\HotelClock;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -30,12 +31,15 @@ class StayService
     protected array $payloadWith = ['checkInApproval', 'documents'];
     protected int $perPage = 15;
 
-    public function __construct(private readonly AssignRoomAction $assignRoom) {}
+    public function __construct(
+        private readonly SubmitOnlineCheckInAction $submitOnlineCheckIn,
+        private readonly CheckInReservationAction $checkInReservation,
+    ) {}
 
     /**
      * Self check-in from the app's pre-arrival wizard.
      *
-     * Checks the guest into their confirmed booking through AssignRoomAction —
+     * Checks the guest into their confirmed booking through CheckInReservationAction —
      * the same transition reception performs — into the room reserved at
      * booking time. Only from the arrival day onwards, and only once the hotel
      * has confirmed the booking: a `pending` guest-made booking is refused, as
@@ -49,7 +53,7 @@ class StayService
             return ['data' => $alreadyIn, 'code' => 200];
         }
 
-        $today       = now()->startOfDay();
+        $today       = HotelClock::today();
         $reservation = Reservation::query()
             ->where('guest_id', $guest->id)
             ->where('status', ReservationStatus::CONFIRMED)
@@ -59,14 +63,13 @@ class StayService
             ->first()
             ?? throw new ReservationStateException(__('custom.errors.check_in_not_available'));
 
-        $this->assignRoom->handle($reservation);
+        // CheckInReservationAction is the only confirmed → checked_in writer
+        // (Phase 3 D-01); AssignRoomAction never checks in (D-03). No staff
+        // actor: the guest checks themselves in.
+        $this->checkInReservation->handle($reservation, null, null);
 
         return ['data' => $this->active($guest)['data'], 'code' => 200];
     }
-
-    public function __construct(
-        private readonly SubmitOnlineCheckInAction $submitOnlineCheckIn,
-    ) {}
 
     /**
      * "Is the bearer of this token in the hotel right now?"

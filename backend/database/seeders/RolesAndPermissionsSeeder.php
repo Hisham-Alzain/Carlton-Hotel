@@ -37,6 +37,9 @@ class RolesAndPermissionsSeeder extends Seeder
             // Phase 6 (D-06): the housekeeping task board. view = list/show,
             // assign = create and assign, update = move a task through its statuses.
             'housekeeping.view', 'housekeeping.assign', 'housekeeping.update',
+            // Phase 8 (D-12): the event-inquiry slice, split off tickets.*;
+            // deposit is a money write and gets its own string (folios.settle precedent).
+            'events.view', 'events.manage', 'events.deposit',
         ];
 
         foreach ($permissions as $name) {
@@ -47,16 +50,17 @@ class RolesAndPermissionsSeeder extends Seeder
         // tickets.view + tickets.respond and concierge gains tickets.view +
         // tickets.assign + tickets.respond. tickets.* is the guest-relations
         // set, so these roles also gain guest chat read and reply
-        // (/cms/conversations) and event-inquiry read — concierge also its
-        // status/assign (council A4 / PR-6; PROJECT.md debt entry, split into
-        // support_tickets.* on objection). Kitchen and housekeeping deliberately
-        // stay without tickets.*.
+        // (/cms/conversations) — the remaining half of the council A4 / PR-6
+        // debt (PROJECT.md). Event inquiries moved to events.* in Phase 8
+        // (D-12): only the events preset holds them, so reception and concierge
+        // no longer reach event RFP leads. Kitchen and housekeeping
+        // deliberately stay without tickets.*.
         $presets = [
             'reception'      => ['reservations.view', 'reservations.create', 'reservations.cancel', 'folios.view', 'folios.settle', 'folios.post', 'folios.dispute', 'service_requests.view', 'service_requests.update', 'rooms.status', 'guests.view', 'guests.edit', 'housekeeping.view', 'housekeeping.assign', 'tickets.view', 'tickets.respond'],
             'kitchen'        => ['service_requests.view', 'service_requests.update'],
             'housekeeping'   => ['service_requests.view', 'service_requests.update', 'rooms.status', 'housekeeping.view', 'housekeeping.assign', 'housekeeping.update'],
             'concierge'      => ['service_requests.view', 'service_requests.assign', 'service_requests.update', 'guests.view', 'guests.edit', 'tickets.view', 'tickets.assign', 'tickets.respond'],
-            'events'         => ['service_requests.view', 'tickets.view', 'tickets.assign', 'tickets.respond'],
+            'events'         => ['service_requests.view', 'tickets.view', 'tickets.assign', 'tickets.respond', 'events.view', 'events.manage', 'events.deposit'],
             // Without this preset no seeded account except the super admin (who
             // passes via Gate::before, not via permission rows) can reach
             // /api/cms/* — the CMS shipped ungrantable.

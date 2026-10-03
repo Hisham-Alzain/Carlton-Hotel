@@ -168,6 +168,7 @@ class DemoShowcaseSeeder extends Seeder
         $conversations = $this->conversations($guests);
         $this->tickets($guests, $conversations);
         $inquiries = $this->eventInquiries($guests);
+        $this->eventsAndDining($inquiries, $reservations);
         $this->reviews($reservations, $recalculate);
         $this->notifications($reservations, $inquiries);
         $this->deviceTokens($guests);
@@ -1372,6 +1373,65 @@ class DemoShowcaseSeeder extends Seeder
     ];
 
     /** @return Collection<int, EventInquiry> */
+    /**
+     * Phase 8 showcase, through the real writers: ticked checklists and internal
+     * notes, one paid deposit (a real payments row), tonight's table bookings
+     * (hotel-local slots) and a sample menu PDF on one venue.
+     */
+    private function eventsAndDining(Collection $inquiries, Collection $reservations): void
+    {
+        $toggle  = app(\App\Actions\Events\ToggleEventChecklistItemAction::class);
+        $deposit = app(\App\Actions\Events\RecordEventDepositAction::class);
+        $planner = $this->staff['events'];
+
+        $open = $inquiries->filter(fn (EventInquiry $i) => in_array($i->status, [EventInquiryStatus::QUOTED, EventInquiryStatus::CONFIRMED], true))->values();
+
+        foreach ($open->take(3) as $n => $inquiry) {
+            $toggle->handle($inquiry, \App\Enums\EventChecklistItem::CONTRACT, true, $planner);
+            if ($n !== 1) {
+                $toggle->handle($inquiry, \App\Enums\EventChecklistItem::BEO, true, $planner);
+            }
+            $inquiry->update(['staff_notes' => $this->pick([
+                'Client prefers WhatsApp. Site visit pencilled for next week.',
+                'Awaiting signed contract from their procurement team.',
+            ])]);
+        }
+
+        if ($paid = $open->first(fn (EventInquiry $i) => $i->status === EventInquiryStatus::CONFIRMED) ?? $open->first()) {
+            $deposit->handle($paid, $planner, ['amount_usd' => '1500.00', 'method' => 'cash', 'note' => 'Deposit, receipt #D-1001'], 'demo-deposit-' . $paid->uuid);
+        }
+
+        // Tonight's tables, booked the way the guest app books them (hotel-local date + time).
+        $reserve = app(\App\Actions\Service\ReserveTableAction::class);
+        $venue   = DiningVenue::whereHas('menuCategories')->where('is_active', true)->orderBy('id')->first()
+            ?? DiningVenue::where('is_active', true)->orderBy('id')->first();
+        $tonight = \App\Support\HotelClock::today()->toDateString();
+        $staying = $reservations->filter(fn (Reservation $r) => $r->status === ReservationStatus::CHECKED_IN)->values();
+
+        if ($venue && RestaurantTable::where('dining_venue_id', $venue->id)->where('is_active', true)->exists()) {
+            foreach ($staying->take(3)->values() as $n => $reservation) {
+                try {
+                    $reserve->handle($reservation->guest, $reservation, $venue, [
+                        'date' => $tonight, 'time' => ['19:00', '20:30', '21:00'][$n],
+                        'guest_count' => 2, 'special_request' => $n === 0 ? 'Window table, anniversary.' : null,
+                    ]);
+                } catch (\App\Exceptions\NoAvailabilityException) {
+                    // The demo venue is full tonight; nothing to show for this guest.
+                }
+            }
+
+            // A sample menu file (one-page PDF) through the staff replace action.
+            $pdf = tempnam(sys_get_temp_dir(), 'menu');
+            file_put_contents($pdf, "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[]/Count 0>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n");
+            app(\App\Actions\Dining\ReplaceVenueMenuFileAction::class)->handle(
+                $venue,
+                new \Illuminate\Http\UploadedFile($pdf, 'menu.pdf', 'application/pdf', null, true),
+                'Dinner menu',
+            );
+            @unlink($pdf);
+        }
+    }
+
     private function eventInquiries(Collection $guests): Collection
     {
         $spaces = EventSpace::all()->keyBy(fn ($s) => $s->getTranslation('name', 'en'));

@@ -50,6 +50,9 @@ class MediaService
             // resource guards it with `whenLoaded`, so nested renders (a room
             // type's own `images`) neither pay for it nor break without it.
             ->with('mediable')
+            // Menu files are managed only through the venue `menu-file` route
+            // and never appear in the image picker (Phase 8, PR-1).
+            ->where('collection', 'images')
             ->orderByDesc('created_at')
             ->orderByDesc('id');
 
@@ -161,7 +164,11 @@ class MediaService
         return ['data' => $media, 'code' => 201];
     }
 
-    public function attach(Model $model, UploadedFile $file, int $sortOrder = 0): array
+    /**
+     * Upload a file onto a parent. `$collection` / `$title` are additive (Phase 8,
+     * D-27): `menu` is written only by ReplaceVenueMenuFileAction.
+     */
+    public function attach(Model $model, UploadedFile $file, int $sortOrder = 0, string $collection = 'images', ?string $title = null): array
     {
         $dir  = 'cms/' . class_basename($model) . '/' . $model->uuid;
         $path = $this->storeFile($file, $dir);
@@ -169,6 +176,8 @@ class MediaService
         $media = DB::transaction(fn () => Media::create([
             'mediable_type' => $model->getMorphClass(),
             'mediable_id'   => $model->id,
+            'collection'    => $collection,
+            'title'         => $title,
             'disk'          => 'public',
             'path'          => $path,
             'file_name'     => $file->getClientOriginalName(),
@@ -205,8 +214,9 @@ class MediaService
      */
     public function attachExisting(Model $parent, array $uuids): array
     {
-        $uuids   = array_values(array_unique($uuids));
-        $sources = Media::whereIn('uuid', $uuids)->get()->keyBy('uuid');
+        $uuids = array_values(array_unique($uuids));
+        // A menu file is never a placeable image: treated as missing (Phase 8, PR-1).
+        $sources = Media::whereIn('uuid', $uuids)->where('collection', 'images')->get()->keyBy('uuid');
 
         $missing = array_values(array_diff($uuids, $sources->keys()->all()));
 
@@ -221,6 +231,7 @@ class MediaService
             $existing = Media::query()
                 ->where('mediable_type', $parent->getMorphClass())
                 ->where('mediable_id', $parent->getKey())
+                ->where('collection', 'images')
                 ->get();
 
             $next = $existing->max('sort_order');
@@ -257,6 +268,7 @@ class MediaService
                 $created = Media::create([
                     'mediable_type' => $parent->getMorphClass(),
                     'mediable_id'   => $parent->getKey(),
+                    'collection'    => 'images',
                     'disk'          => $source->disk,
                     'path'          => $source->path,
                     'file_name'     => $source->file_name,
@@ -314,7 +326,10 @@ class MediaService
      */
     public function destroy(Model $parent, Media $media): array
     {
-        if ($media->mediable_type !== $parent->getMorphClass() || (int) $media->mediable_id !== (int) $parent->getKey()) {
+        // The nested route is an *images* route: a menu file is not under it (Phase 8, PR-1).
+        if ($media->mediable_type !== $parent->getMorphClass()
+            || (int) $media->mediable_id !== (int) $parent->getKey()
+            || $media->collection !== 'images') {
             throw new NotFoundException(__('custom.errors.not_found'), [
                 'media'  => $media->uuid,
                 'parent' => class_basename($parent),

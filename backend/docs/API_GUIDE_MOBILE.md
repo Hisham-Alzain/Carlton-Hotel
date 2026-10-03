@@ -500,6 +500,30 @@ List endpoints are paginated (`data.items` + `data.meta`, 15/page) unless noted.
 
 Menu item shape: `{ uuid, type, name, description, price_usd, is_vegan, photo }` where `type` is the category slug (`breakfast`, `starters`, `main`, `dessert`).
 
+#### Menu download
+
+`GET /api/public/dining-venues/{uuid}/menu/download` — no auth. Returns the link to the venue's downloadable menu file (PDF or image). It is a **URL, not a file stream**: open it externally (browser / system viewer).
+
+- **200** (envelope):
+
+```json
+{
+  "success": true,
+  "message": "...",
+  "data": {
+    "url": "https://.../storage/media/menu.pdf",
+    "file_name": "menu.pdf",
+    "mime_type": "application/pdf",
+    "size": 482113,
+    "updated_at": "2026-10-03T09:15:00+00:00"
+  },
+  "request_id": "..."
+}
+```
+
+- **204** with an **empty body and no envelope** when the venue has no menu file. Do not try to parse JSON; show "no menu available".
+- **404** `not_found` for an unknown, inactive, or deleted venue.
+
 ### Reviews
 
 - `GET /public/reviews/{type}/{uuid}` — published reviews, newest first, paginated. `{type}` is `room_type` or `dining_venue`.
@@ -734,12 +758,14 @@ Review shape: `{ uuid, rating, comment, is_verified_stay, created_at, author: { 
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `date` | string | ✅ | `Y-m-d`, today or later |
-| `time` | string | ✅ | `H:i` (24h) |
+| `date` | string | ✅ | `Y-m-d`, today or later. Hotel-local; "today" is the hotel's day |
+| `time` | string | ✅ | `H:i` (24h), hotel-local |
 | `guest_count` | integer | ✅ | 1–20 |
 | `special_request` | string | optional | Max 1000 — lands in the booking's `notes` |
 
 The backend assigns the smallest table that seats the party and is free for a two-hour seating window. You never send a table uuid.
+
+**Time zone:** `date` + `time` are in the hotel's local time (Asia/Damascus). The returned `scheduled_at` is the true UTC instant of that slot (19:00 Damascus becomes `16:00Z`); convert it to the device zone for display, or show the hotel-local slot you submitted.
 
 **Response `data`** (HTTP 201): a service booking with `bookable_type: "restaurant_table"`, the assigned table as `bookable.label`, plus `guest_count`.
 

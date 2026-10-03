@@ -80,10 +80,18 @@ class RolePresetsTest extends TestCase
             'service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view',
         ], $this->presetPermissions('concierge'));
 
+        // Phase 8 (D-12): the events preset gains the events.* slice.
         $this->assertSame(
-            ['service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view'],
+            ['events.deposit', 'events.manage', 'events.view', 'service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view'],
             $this->presetPermissions('events'),
         );
+
+        foreach (['reception', 'concierge'] as $role) {
+            $this->assertEmpty(
+                array_filter($this->presetPermissions($role), fn (string $p) => str_starts_with($p, 'events.')),
+                "{$role} must not hold events.* (event inquiries moved off tickets.* in Phase 8)",
+            );
+        }
 
         foreach (['kitchen', 'housekeeping'] as $role) {
             $this->assertEmpty(
@@ -102,7 +110,9 @@ class RolePresetsTest extends TestCase
 
     /**
      * Council A4 / PR-6: tickets.* is the guest-relations set, so reception
-     * and concierge also reach guest chat (read + reply) and event inquiries.
+     * and concierge also reach guest chat (read + reply). The event-inquiry
+     * half of that blast radius moved to events.* in Phase 8 (D-12, PR-2):
+     * both roles now get 403 on event inquiries and lose the summary key.
      * Pinned route by route; kitchen and housekeeping stay out.
      */
     public function test_ticket_preset_blast_radius(): void
@@ -117,7 +127,7 @@ class RolePresetsTest extends TestCase
             $this->withToken($this->presetToken($role))
                 ->postJson("/api/cms/conversations/{$conversation->uuid}/messages", ['body' => "Hello from {$role}"])
                 ->assertSuccessful();
-            $this->withToken($this->presetToken($role))->getJson('/api/cms/event-inquiries')->assertOk();
+            $this->withToken($this->presetToken($role))->getJson('/api/cms/event-inquiries')->assertStatus(403);
 
             $types = collect($this->withToken($this->presetToken($role))->getJson('/api/operations/queue')->assertOk()->json('data.items'))
                 ->pluck('type');
@@ -125,7 +135,7 @@ class RolePresetsTest extends TestCase
 
             $summary = $this->withToken($this->presetToken($role))->getJson('/api/dashboard/summary')->assertOk()->json('data');
             $this->assertArrayHasKey('tickets', $summary, $role);
-            $this->assertArrayHasKey('event_inquiries', $summary, $role);
+            $this->assertArrayNotHasKey('event_inquiries', $summary, $role);
         }
 
         $concierge = User::factory()->create()->assignRole('concierge');
@@ -134,10 +144,11 @@ class RolePresetsTest extends TestCase
 
         $this->withToken($conciergeToken)
             ->patchJson("/api/cms/event-inquiries/{$inquiry->uuid}/status", ['status' => 'in_review'])
-            ->assertSuccessful();
+            ->assertStatus(403);
         $this->withToken($conciergeToken)
             ->patchJson("/api/cms/event-inquiries/{$inquiry->uuid}/assign", ['user_uuid' => $concierge->uuid])
-            ->assertSuccessful();
+            ->assertStatus(403);
+        $this->assertSame('new', $inquiry->fresh()->status->value);
 
         $this->withToken($this->presetToken('reception'))
             ->patchJson("/api/cms/event-inquiries/{$inquiry->uuid}/status", ['status' => 'quoted'])

@@ -10,7 +10,9 @@ use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\RestaurantTable;
 use App\Models\ServiceBooking;
-use Illuminate\Support\Carbon;
+use App\Support\HotelClock;
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -19,6 +21,9 @@ use Illuminate\Support\Facades\DB;
  * The guest picks a venue, date, time and party size — never a specific table.
  * The smallest table that seats the party and is free for the seating window is
  * assigned, so large tables stay available for large parties.
+ *
+ * The guest's date/time are hotel-local; they are stored as UTC (Phase 8,
+ * D-22). Rows created before this fix keep their old instants (no backfill).
  */
 class ReserveTableAction
 {
@@ -27,7 +32,8 @@ class ReserveTableAction
 
     public function handle(Guest $guest, Reservation $reservation, DiningVenue $venue, array $data): array
     {
-        $scheduledAt = Carbon::parse("{$data['date']} {$data['time']}");
+        // `!` zeroes every field the format does not set (seconds included).
+        $scheduledAt = CarbonImmutable::createFromFormat('!Y-m-d H:i', "{$data['date']} {$data['time']}", HotelClock::timezone())->utc();
         $guestCount  = (int) $data['guest_count'];
 
         $booking = DB::transaction(function () use ($guest, $reservation, $venue, $data, $scheduledAt, $guestCount) {
@@ -52,7 +58,7 @@ class ReserveTableAction
         return ['data' => $booking->load('bookable'), 'code' => 201];
     }
 
-    private function findFreeTable(DiningVenue $venue, Carbon $scheduledAt, int $guestCount): ?RestaurantTable
+    private function findFreeTable(DiningVenue $venue, CarbonInterface $scheduledAt, int $guestCount): ?RestaurantTable
     {
         $windowStart = $scheduledAt->copy()->subMinutes(self::SEATING_MINUTES);
         $windowEnd   = $scheduledAt->copy()->addMinutes(self::SEATING_MINUTES);

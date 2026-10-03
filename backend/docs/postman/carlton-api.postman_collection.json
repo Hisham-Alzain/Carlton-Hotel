@@ -9517,6 +9517,378 @@
                 }
             ],
             "description": "Phase 7: support tickets (timeline, status, assign, reply, recovery actions, escalation) and the operations-queue claim and staff-list routes. Folio credit recovery is two steps: post the credit with POST /cms/folios/{folio}/line-items (Idempotency-Key header, folios.post), then link it via recovery-actions folio_item_uuid; amounts are USD. Queue paths are built from each row's queue_type (tickets, housekeeping-tasks, service-requests)."
+        },
+        {
+            "name": "Events & Dining (Phase 8)",
+            "description": "Phase 8: event-inquiry checklist, staff notes and cash deposit (events.* permissions), the staff table-reservations list, and the dining venue menu file (upload, remove, public download).",
+            "item": [
+                {
+                    "name": "[Admin] Event inquiry: set checklist item",
+                    "request": {
+                        "method": "PATCH",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{staff_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/event-inquiries/{{event_inquiry_quoted_uuid}}/checklist/contract",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "event-inquiries",
+                                "{{event_inquiry_quoted_uuid}}",
+                                "checklist",
+                                "contract"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"done\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "events.manage. Items: contract, deposit, guarantee, beo, av. done is explicit and required; resending the current state is a 200 no-op. 404 not_found for an unknown item; 422 event_checklist_item_derived for deposit (it follows the deposit state); 422 inquiry_state when the inquiry is cancelled. Returns the inquiry detail, message \"Checklist updated.\""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Admin] Event inquiry: update staff notes",
+                    "request": {
+                        "method": "PATCH",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{staff_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/event-inquiries/{{event_inquiry_quoted_uuid}}/notes",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "event-inquiries",
+                                "{{event_inquiry_quoted_uuid}}",
+                                "notes"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"staff_notes\": \"Call back Tuesday\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "events.manage. Internal staff notes (the guest's own brief stays in notes, read-only). The staff_notes key is required, max 5000 characters; null clears it. Allowed in every status including cancelled; last write wins. Returns the inquiry detail, message \"Notes updated.\""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Admin] Event inquiry: record deposit",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// One fresh key per send. To demo a safe retry, disable this line and resend: the second call answers 200 without a second payment.",
+                                    "pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PATCH",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{staff_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            },
+                            {
+                                "key": "Idempotency-Key",
+                                "value": "{{idempotency_key}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/event-inquiries/{{event_inquiry_quoted_uuid}}/deposit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "event-inquiries",
+                                "{{event_inquiry_quoted_uuid}}",
+                                "deposit"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"amount_usd\": \"500.00\",\n    \"method\": \"cash\",\n    \"note\": \"Deposit\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "events.deposit. The Idempotency-Key header is required (422 validation_failed without it). One deposit per inquiry, only while quoted or confirmed (else 422 inquiry_state). Same key and payload replays as 200 with no second payment; same key with a different payload is 409 idempotency_conflict; a second deposit with a new key is 422 event_deposit_already_recorded. Amount is USD, 0.01 to 99999.99. Returns the inquiry detail, message \"Deposit recorded.\""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Admin] List table reservations",
+                    "request": {
+                        "method": "GET",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{staff_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/table-reservations?date=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "table-reservations"
+                            ],
+                            "query": [
+                                {
+                                    "key": "date",
+                                    "value": "",
+                                    "description": "Hotel-local day, Y-m-d. Omit date, from and to to get today."
+                                },
+                                {
+                                    "key": "venue",
+                                    "value": "{{dining_venue_uuid}}",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "confirmed",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "from",
+                                    "value": "2026-10-01",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "to",
+                                    "value": "2026-10-07",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "service_requests.view. Read-only list of restaurant table bookings. Filters: venue, table, status (or status[in]=pending,confirmed), date OR from+to (inclusive, to >= from, at most 31 days). date together with from/to, or only one of from/to, is 422. Sort with sort=scheduled_at|guest_count and sort_dir; per_page defaults to 50, max 100."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Admin] Upload dining venue menu file",
+                    "request": {
+                        "method": "POST",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{staff_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/dining-venues/{{dining_venue_uuid}}/menu-file",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "dining-venues",
+                                "{{dining_venue_uuid}}",
+                                "menu-file"
+                            ]
+                        },
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "title",
+                                    "value": "Dinner menu",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "description": "cms.edit. Multipart: file (pdf, jpg, jpeg, png, webp; max 10 MB) plus optional title. 201 with the media resource, message \"Menu file uploaded.\"; replaces any existing menu file. 422 on wrong type, over 10 MB or missing file. Menu files never show in the venue images or the media library."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Admin] Remove dining venue menu file",
+                    "request": {
+                        "method": "DELETE",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{staff_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/cms/dining-venues/{{dining_venue_uuid}}/menu-file",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cms",
+                                "dining-venues",
+                                "{{dining_venue_uuid}}",
+                                "menu-file"
+                            ]
+                        },
+                        "description": "cms.edit. 200 with data null, message \"Menu file removed.\"; 404 not_found when the venue has no menu file."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Public] Download dining venue menu",
+                    "request": {
+                        "method": "GET",
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/public/dining-venues/{{dining_venue_uuid}}/menu/download",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "public",
+                                "dining-venues",
+                                "{{dining_venue_uuid}}",
+                                "menu",
+                                "download"
+                            ]
+                        },
+                        "description": "No auth. 200 with {url, file_name, mime_type, size, updated_at} (a public-disk URL, not a stream). 204 with an empty body (no envelope) when the venue has no menu file; 404 not_found for an unknown, inactive or deleted venue."
+                    },
+                    "response": []
+                }
+            ]
         }
     ]
 }

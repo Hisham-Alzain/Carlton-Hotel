@@ -60,6 +60,11 @@ return [
         'folio_dispute_raised'    => 'Dispute raised.',
         'folio_dispute_resolved'  => 'Dispute resolved.',
         'folio_dispute_rejected'  => 'Dispute rejected.',
+        'event_checklist_updated' => 'Checklist updated.',
+        'event_notes_updated'     => 'Notes updated.',
+        'event_deposit_recorded'  => 'Deposit recorded.',
+        'menu_file_uploaded'      => 'Menu file uploaded.',
+        'menu_file_removed'       => 'Menu file removed.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',
@@ -120,6 +125,8 @@ return [
         'idempotency_key_required'     => 'An Idempotency-Key header is required for this request.',
         'folio_item_dispute_open'      => 'This line item already has an open dispute.',
         'folio_dispute_state'          => 'This line item has no open dispute to close.',
+        'event_checklist_item_derived' => 'This item follows the deposit and cannot be changed directly.',
+        'event_deposit_already_recorded' => 'A deposit has already been recorded for this inquiry.',
     ],
     'auth'       => [
         'otp_sent'       => 'A verification code has been sent.',
@@ -196,6 +203,15 @@ return [
         'decimal'              => 'The :attribute must have :decimal decimal places.',
         'uuid'                 => 'The :attribute must be a valid UUID.',
         'prohibited_unless'    => 'The :attribute field is prohibited unless :other is in :values.',
+        'date_range_max'       => 'The date range may span at most :days days.',
+        'prohibits'            => 'The :attribute field cannot be used together with :other.',
+    ],
+    'event_checklist' => [
+        'contract'  => 'Contract signed',
+        'deposit'   => 'Deposit received',
+        'guarantee' => 'Final guarantee',
+        'beo'       => 'Banquet event order (BEO)',
+        'av'        => 'AV requirements',
     ],
     'attributes' => [
         'amount_usd' => 'amount (USD)',

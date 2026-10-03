@@ -21,6 +21,10 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * entities while each parent keeps its own `sort_order`, `alt_text` and `title`.
  * Every `morphMany(Media::class, 'mediable')` relation filters on the morph
  * columns with `=`, so library rows never leak into a parent's `images`.
+ *
+ * `collection` is the row's role on its parent: `images` (default) or `menu`
+ * (a dining venue's menu file, written only through the venue's `menu-file`
+ * route, Phase 8 D-07). Every images path is scoped to `images` (PR-1).
  */
 class Media extends Model
 {
@@ -34,6 +38,7 @@ class Media extends Model
     protected $fillable = [
         'mediable_type',
         'mediable_id',
+        'collection',
         'disk',
         'path',
         'file_name',
@@ -42,6 +47,11 @@ class Media extends Model
         'mime_type',
         'size',
         'sort_order',
+    ];
+
+    /** Mirrors the column default so an unsaved/unrefreshed row reads `images`. */
+    protected $attributes = [
+        'collection' => 'images',
     ];
 
     protected $casts = [

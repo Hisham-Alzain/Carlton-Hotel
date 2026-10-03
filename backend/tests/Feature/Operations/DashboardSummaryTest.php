@@ -47,7 +47,8 @@ class DashboardSummaryTest extends TestCase
                   ->assertJsonMissingPath('data.event_inquiries');
     }
 
-    public function test_tickets_view_unlocks_both_tickets_and_event_inquiry_blocks(): void
+    /** Phase 8 (PR-2): event-inquiry counts no longer ride on tickets.view. */
+    public function test_tickets_view_unlocks_tickets_only(): void
     {
         Ticket::factory()->create(['status' => TicketStatus::OPEN]);
         EventInquiry::factory()->create(['status' => 'new']);
@@ -57,8 +58,20 @@ class DashboardSummaryTest extends TestCase
             ->assertOk();
 
         $response->assertJsonPath('data.tickets.open', 1)
-                  ->assertJsonPath('data.event_inquiries.new', 1)
+                  ->assertJsonMissingPath('data.event_inquiries')
                   ->assertJsonMissingPath('data.service_requests');
+    }
+
+    public function test_events_view_unlocks_event_inquiries(): void
+    {
+        Ticket::factory()->create(['status' => TicketStatus::OPEN]);
+        EventInquiry::factory()->create(['status' => 'new']);
+
+        $this->withToken($this->staffToken('events.view'))
+            ->getJson('/api/dashboard/summary')
+            ->assertOk()
+            ->assertJsonPath('data.event_inquiries.new', 1)
+            ->assertJsonMissingPath('data.tickets');
     }
 
     public function test_no_permissions_returns_an_empty_summary(): void

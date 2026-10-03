@@ -71,12 +71,13 @@ class OperationsQueueService
 
             $summary[$type->summaryKey] = $type->modelClass::selectRaw('status, count(*) as count')
                 ->groupBy('status')->pluck('count', 'status');
+        }
 
-            // Event inquiries have no queue arm; their counts ride with tickets (P10).
-            if ($type->segment === 'tickets') {
-                $summary['event_inquiries'] = EventInquiry::selectRaw('status, count(*) as count')
-                    ->groupBy('status')->pluck('count', 'status');
-            }
+        // Event inquiries have no queue arm. Since Phase 8 (PR-2) their counts
+        // follow events.view, not the tickets arm (D-12).
+        if ($user->can('events.view')) {
+            $summary['event_inquiries'] = EventInquiry::selectRaw('status, count(*) as count')
+                ->groupBy('status')->pluck('count', 'status');
         }
 
         return ['data' => $summary, 'code' => 200];

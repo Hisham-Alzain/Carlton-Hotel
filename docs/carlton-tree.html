@@ -306,14 +306,15 @@ var TREE = {
   ]},
   {"name":"Dining","kind":"section","api":true,"dash":false,"mob":true,"children":[
    {"name":"venues · menus CMS","api":true,"dash":false,"mob":"na","meta":"35 routes · modifiers · tables",
-    "ep":["/cms/dining-venues","/cms/menu-categories","/cms/menu-items","/cms/restaurant-tables"]},
+    "ep":["/cms/dining-venues","/cms/menu-categories","/cms/menu-items","/cms/restaurant-tables","POST|DELETE /cms/dining-venues/{venue}/menu-file"]},
    {"name":"venues & menus","api":true,"dash":"na","mob":true,
     "ep":["GET /public/dining-venues","GET /public/dining-venues/{uuid}","GET …/menu-categories","GET …/menu"]},
    {"name":"reserve a table","api":true,"dash":"na","mob":"partial","meta":"time slots hard-coded",
     "ep":["POST /dining-venues/{uuid}/table-reservations"]},
    {"name":"bookable tables","api":true,"dash":"na","mob":false,"ep":["GET /public/dining-venues/{uuid}/tables"]},
-   {"name":"table reservations for staff","api":false,"dash":false,"mob":"na","meta":"no staff list route"},
-   {"name":"download menu","api":false,"dash":"na","mob":"mock","meta":"button stubbed"}
+   {"name":"table reservations for staff","api":true,"dash":false,"mob":"na","ep":["GET /cms/table-reservations"]},
+   {"name":"download menu","api":true,"dash":"na","mob":"mock","meta":"button stubbed",
+    "ep":["GET /public/dining-venues/{venue}/menu/download"]}
   ]},
   {"name":"Guest services","kind":"section","api":true,"dash":"mock","mob":true,"children":[
    {"name":"service catalog","api":true,"dash":"na","mob":"partial","meta":"tiles from DemoData, matched by code",
@@ -364,10 +365,10 @@ var TREE = {
    {"name":"event spaces CMS","api":true,"dash":false,"mob":"na","ep":["/cms/event-spaces (11 routes)"]},
    {"name":"public spaces · inquiry form","api":true,"dash":"na","mob":"na","meta":"website",
     "ep":["GET /public/event-spaces","GET /public/event-spaces/{id}","POST /event-inquiries"]},
-   {"name":"inquiry pipeline","api":"partial","dash":"mock","mob":"na","meta":"dash calls /events, backend has /cms/event-inquiries",
+   {"name":"inquiry pipeline","api":true,"dash":"mock","mob":"na","meta":"dashboard must adopt /cms/event-inquiries (no alias); gated events.*",
     "ep":["GET /cms/event-inquiries","GET /cms/event-inquiries/{i}","PATCH …/assign","PATCH …/status"]},
-   {"name":"checklist · deposit · notes","api":false,"dash":"mock","mob":"na",
-    "ep":["PATCH /events/{id}/checklist/{item} (mock)","PATCH /events/{id}/deposit (mock)","PATCH /events/{id}/notes (mock)"]}
+   {"name":"checklist · deposit · notes","api":true,"dash":"mock","mob":"na",
+    "ep":["PATCH /cms/event-inquiries/{inquiry}/checklist/{item}","PATCH /cms/event-inquiries/{inquiry}/notes","PATCH /cms/event-inquiries/{inquiry}/deposit"]}
   ]},
   {"name":"Content & site","kind":"section","api":true,"dash":false,"mob":"partial","children":[
    {"name":"home sliders","api":true,"dash":false,"mob":false,"meta":"app hero is DemoData",

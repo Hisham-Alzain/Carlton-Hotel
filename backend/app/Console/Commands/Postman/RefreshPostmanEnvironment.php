@@ -126,6 +126,7 @@ class RefreshPostmanEnvironment extends Command
             'page_uuid' => Page::where('slug', 'about-us')->firstOrFail()->uuid,
             'promotion_uuid' => Promotion::firstOrFail()->uuid,
             'event_inquiry_uuid' => EventInquiry::where('status', EventInquiryStatus::NEW)->firstOrFail()->uuid,
+            'event_inquiry_quoted_uuid' => (EventInquiry::where('status', EventInquiryStatus::QUOTED)->first() ?? EventInquiry::firstOrFail())->uuid,
             'spa_service_uuid' => SpaService::firstOrFail()->uuid,
             'restaurant_table_uuid' => RestaurantTable::firstOrFail()->uuid,
             'pool_cabana_uuid' => PoolCabana::firstOrFail()->uuid,

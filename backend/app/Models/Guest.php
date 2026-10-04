@@ -107,4 +107,22 @@ class Guest extends Authenticatable
     {
         return $this->hasMany(GuestNote::class);
     }
+
+    /** Phase 10: the guest's earn lots (consumed FIFO by the loyalty actions). */
+    public function loyaltyBatches(): HasMany
+    {
+        return $this->hasMany(LoyaltyEarnBatch::class);
+    }
+
+    /** Phase 10: the append-only points ledger. */
+    public function loyaltyLedgerEntries(): HasMany
+    {
+        return $this->hasMany(LoyaltyLedgerEntry::class);
+    }
+
+    /** Phase 10: vouchers bought from the rewards catalog. */
+    public function loyaltyVouchers(): HasMany
+    {
+        return $this->hasMany(LoyaltyVoucher::class);
+    }
 }

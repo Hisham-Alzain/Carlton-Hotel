@@ -96,6 +96,8 @@ class Reservation extends Model
     public function documents(): HasMany  { return $this->hasMany(GuestDocument::class); }
     /** `check_in_approvals.reservation_id` is unique, so at most one. */
     public function checkInApproval(): HasOne { return $this->hasOne(CheckInApproval::class); }
+    /** Phase 10: the loyalty discount applied at booking; `reservation_id` is unique, so at most one. */
+    public function loyaltyApplication(): HasOne { return $this->hasOne(LoyaltyReservationApplication::class); }
 
     /**
      * Issued, not revoked and not yet expired. Computed at read time, so an

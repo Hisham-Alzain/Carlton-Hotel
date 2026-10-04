@@ -70,6 +70,8 @@ class RecycleBinRetentionTest extends TestCase
         \App\Models\GalleryItem::class,
         \App\Models\HomeSlider::class,
         \App\Models\JournalPost::class,
+        // Phase 10: vouchers snapshot the reward and null their link on purge.
+        \App\Models\LoyaltyReward::class,
         \App\Models\MenuCategory::class,
         \App\Models\MenuItem::class,
         \App\Models\Page::class,

@@ -25,14 +25,14 @@ class PreArrivalDocumentsController extends GetxController {
 
   Future<void> pickDocuments() async {
     // v12 `pickFiles` implies multiple selection (`allowMultiple` is
-    // deprecated). It still returns null when the guest cancels.
+    // deprecated). It returns the files directly — an empty list when the
+    // guest cancels.
     final picked = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: allowedExtensions,
     );
-    if (picked == null) return;
 
-    for (final file in picked.files) {
+    for (final file in picked) {
       final path = file.path;
       if (path == null) continue;
       docs.add(

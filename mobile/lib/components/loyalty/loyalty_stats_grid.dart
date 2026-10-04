@@ -1,3 +1,5 @@
+import 'package:carlton/theme/theme.dart';
+import 'package:carlton/components/loyalty/loyalty_card_texture.dart';
 import 'package:carlton/extensions/points_extension.dart';
 import 'package:carlton/extensions/text_style_extension.dart';
 import 'package:carlton/l10n/app_translations.dart';
@@ -22,18 +24,7 @@ class LoyaltyStatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.antiqueGold20),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.slateShadow04,
-            blurRadius: 14,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
+      decoration: loyaltyPanelDecoration,
       child: Column(
         children: [
           // A 3px foil edge rather than a plain top border — the same gold
@@ -141,9 +132,8 @@ class _Stat extends StatelessWidget {
           Text(
             label.toUpperCase(),
             textAlign: TextAlign.center,
-            style: textStyle.labelSmall
+            style: textStyle.dmLabelSmall
                 ?.copyWith(
-                  fontFamily: 'DM Sans',
                   fontWeight: FontWeight.w600,
                   color: AppColors.taupeBrown,
                 )

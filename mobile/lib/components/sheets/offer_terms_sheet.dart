@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/models/promotion.dart';
@@ -50,8 +51,7 @@ class OfferTermsSheet extends StatelessWidget {
         if (secondary.isNotEmpty)
           Text(
             secondary,
-            style: textStyle.bodyMedium?.copyWith(
-              fontFamily: 'DM Sans',
+            style: textStyle.dmBodyMedium?.copyWith(
               color: AppColors.taupeBrown,
             ),
           ),
@@ -67,8 +67,7 @@ class OfferTermsSheet extends StatelessWidget {
               Expanded(
                 child: Text(
                   validity,
-                  style: textStyle.labelMedium?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelMedium?.copyWith(
                     color: AppColors.taupeBrown,
                   ),
                 ),
@@ -89,8 +88,7 @@ class OfferTermsSheet extends StatelessWidget {
               ),
               Text(
                 terms,
-                style: textStyle.bodySmall?.copyWith(
-                  fontFamily: 'DM Sans',
+                style: textStyle.dmBodySmall?.copyWith(
                   color: AppColors.taupeBrown,
                 ),
               ),

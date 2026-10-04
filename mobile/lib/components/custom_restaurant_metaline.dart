@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -30,8 +31,7 @@ class RestaurantMetaLine extends StatelessWidget {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Get.textTheme.labelMedium?.copyWith(
-              fontFamily: 'DM Sans',
+            style: Get.textTheme.dmLabelMedium?.copyWith(
               color: AppColors.slateGrey,
             ),
           ),

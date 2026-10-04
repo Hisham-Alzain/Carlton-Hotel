@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/controllers/auth/otp_verify_controller.dart';
 import 'package:carlton/components/custom_auth_background.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
@@ -25,12 +26,15 @@ class OtpVerifyView extends GetView<OtpVerifyController> {
           child: Column(
             spacing: 20,
             children: [
-              CustomPinput(
-                controller: controller.pinController,
-                digitCount: 6,
-                validator: (enteredOtp) =>
-                    CustomValidation().validateOtp(enteredOtp),
-                // onComplete: (_) => controller.verify(),
+              Obx(
+                () => CustomPinput(
+                  controller: controller.pinController,
+                  digitCount: 6,
+                  validator: (enteredOtp) =>
+                      CustomValidation().validateOtp(enteredOtp),
+                  errorText: controller.codeError.value,
+                  onChanged: controller.onCodeChanged,
+                ),
               ),
 
               // Ticks once a second off the controller's Timer; flips to the
@@ -40,10 +44,11 @@ class OtpVerifyView extends GetView<OtpVerifyController> {
                   child: controller.secondsRemaining.value > 0
                       ? Text(
                           AppTranslations.resendIn(
-                            '${controller.secondsRemaining.value}s',
+                            AppTranslations.retryAfterSeconds(
+                              controller.secondsRemaining.value,
+                            ),
                           ),
-                          style: textStyle.labelLarge?.copyWith(
-                            fontFamily: 'DM Sans',
+                          style: textStyle.dmLabelLarge?.copyWith(
                             color: AppColors.white50,
                             fontWeight: FontWeight.w400,
                           ),
@@ -52,8 +57,7 @@ class OtpVerifyView extends GetView<OtpVerifyController> {
                           onPressed: controller.resend,
                           child: Text(
                             AppTranslations.resendCodeLink,
-                            style: textStyle.labelLarge?.copyWith(
-                              fontFamily: 'DM Sans',
+                            style: textStyle.dmLabelLarge?.copyWith(
                               color: AppColors.antiqueGold,
                               fontWeight: FontWeight.w500,
                               decoration: TextDecoration.underline,

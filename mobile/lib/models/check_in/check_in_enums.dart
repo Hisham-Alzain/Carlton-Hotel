@@ -20,6 +20,11 @@ enum CheckInOutcome {
   /// The caller owns the message; ApiService cannot have shown one.
   incomplete,
 
+  /// The booking cannot be checked in yet — still awaiting hotel confirmation,
+  /// or before the arrival day. Nothing was sent; the caller explains why
+  /// (CheckInService.notOpenReason).
+  notOpenYet,
+
   /// The request was made and refused. ApiService has already reported it.
   failed,
 }

@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -49,8 +50,7 @@ class CustomAddOnSummaryTile extends StatelessWidget {
               ),
               Text(
                 subtitle,
-                style: textStyle.labelSmall?.copyWith(
-                  fontFamily: 'DM Sans',
+                style: textStyle.dmLabelSmall?.copyWith(
                   color: AppColors.taupeBrown,
                 ),
               ),

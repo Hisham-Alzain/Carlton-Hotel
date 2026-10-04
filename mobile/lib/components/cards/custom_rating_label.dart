@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:flutter/material.dart';
@@ -30,8 +31,7 @@ class CustomRatingLabel extends StatelessWidget {
           iconSize: 15,
           iconColor: AppColors.antiqueGold,
           spacing: 0,
-          textStyle: textStyle.labelMedium?.copyWith(
-            fontFamily: 'DM Sans',
+          textStyle: textStyle.dmLabelMedium?.copyWith(
             fontWeight: FontWeight.w600,
             color: AppColors.inkBlack,
           ),
@@ -39,10 +39,7 @@ class CustomRatingLabel extends StatelessWidget {
 
         Text(
           '($reviews)',
-          style: textStyle.labelSmall?.copyWith(
-            fontFamily: 'DM Sans',
-            color: AppColors.taupeBrown,
-          ),
+          style: textStyle.dmLabelSmall?.copyWith(color: AppColors.taupeBrown),
         ),
       ],
     );

@@ -16,8 +16,8 @@ class AccountController extends GetxController {
 
   void openLoyalty() => Get.toNamed(Routes.loyalty);
 
-  /// Edit the profile (reuses the Create Profile form, pre-filled).
-  void editProfile() => Get.toNamed(Routes.editProfile, arguments: true);
+  /// My Profile page — the stored details, with Edit Profile inside it.
+  void openProfile() => Get.toNamed(Routes.profile);
 
   /// Published FAQs (`GET /public/faqs`) plus a route into the staff chat.
   void openSupport() => Get.toNamed(Routes.support);
@@ -47,5 +47,4 @@ class AccountController extends GetxController {
       },
     );
   }
-
 }

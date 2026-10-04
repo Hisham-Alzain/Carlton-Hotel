@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/components/cards/custom_rating_label.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
@@ -6,6 +7,7 @@ import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:carlton/l10n/app_translations.dart';
 
 /// One card for every Discover listing — rooms, restaurants, and experiences
 /// share the same spine (image → title + rating → meta rows), so they use this
@@ -95,8 +97,7 @@ class CustomDiscoverCard extends StatelessWidget {
                         radius: 20,
                         child: Text(
                           badge!,
-                          style: textStyle.labelSmall?.copyWith(
-                            fontFamily: 'DM Sans',
+                          style: textStyle.dmLabelSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: AppColors.primary,
                           ),
@@ -155,8 +156,7 @@ class CustomDiscoverCard extends StatelessWidget {
                                 radius: 4,
                                 child: Text(
                                   label,
-                                  style: textStyle.labelSmall?.copyWith(
-                                    fontFamily: 'DM Sans',
+                                  style: textStyle.dmLabelSmall?.copyWith(
                                     color: AppColors.cocoaGold,
                                   ),
                                 ),
@@ -196,9 +196,8 @@ class CustomDiscoverCard extends StatelessWidget {
                     ),
                   ),
                   TextSpan(
-                    text: ' / night',
-                    style: textStyle.labelSmall?.copyWith(
-                      fontFamily: 'DM Sans',
+                    text: ' ${AppTranslations.perNightSuffix}',
+                    style: textStyle.dmLabelSmall?.copyWith(
                       color: AppColors.taupeBrown,
                     ),
                   ),

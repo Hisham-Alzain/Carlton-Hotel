@@ -1,7 +1,7 @@
-import 'package:carlton/components/reviews/review_submit_sheet.dart';
+// import 'package:carlton/components/reviews/review_submit_sheet.dart';
 import 'package:carlton/constants/error_codes.dart';
-import 'package:carlton/controllers/reviews/review_controller.dart';
-import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
+// import 'package:carlton/controllers/reviews/review_controller.dart';
+// import 'package:carlton/customWidgets/custom_bottom_sheet.dart'; // needed by openReviewSheet
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/extensions/date_extension.dart';
 import 'package:carlton/l10n/app_translations.dart';
@@ -116,12 +116,12 @@ class RestaurantController extends GetxController
     final venueRes = await venueF;
     final catRes = await catF;
     if (isClosed) return;
-    if (venueRes.statusCode == 200 && venueRes.data != null) {
+    if (venueRes.hasData) {
       final venue = DiningVenue.fromJson(venueRes.data!);
       about.value = venue.description.value;
       gallery.value = venue.images.map((i) => i.url).toList();
     }
-    if (catRes.statusCode == 200 && catRes.data != null) {
+    if (catRes.hasData) {
       menuCategories.value = catRes.data!
           .whereType<Map<String, dynamic>>()
           .map(MenuCategory.fromJson)
@@ -142,7 +142,7 @@ class RestaurantController extends GetxController
       showErrorDialog: false,
       cancelToken: cancelToken,
     );
-    if (res.statusCode != 200 || res.data == null) return null;
+    if (!res.hasData) return null;
     return (
       items: res.data!
           .whereType<Map<String, dynamic>>()
@@ -200,26 +200,27 @@ class RestaurantController extends GetxController
   void downloadMenu() =>
       CustomSnackbars.showInfo(message: AppTranslations.menuDownloadComingSoon);
 
-  /// Opens the "Write a Review" sheet for this venue. Lives here rather than in
-  /// the Reviews tab because it both auth-gates and navigates: a POST while
-  /// unauthenticated returns 401 and fires the global logout — the wrong
-  /// outcome for a review attempt.
-  void openReviewSheet() {
-    if (!MiddlewareService.find.isAuthenticated) {
-      CustomSnackbars.showInfo(message: AppTranslations.signInToReview);
-      Get.toNamed(Routes.signIn);
-      return;
-    }
-    final reviews = Get.find<ReviewController>();
-    CustomBottomSheet.show<bool>(
-      title: AppTranslations.writeAReview,
-      subtitle: restaurant.name,
-      child: ReviewSubmitSheet(
-        onSubmit: ({required rating, required comment}) =>
-            reviews.submitReview(rating: rating, comment: comment),
-      ),
-    );
-  }
+  // Reviews switched off for now (see RestaurantDetailView).
+  // /// Opens the "Write a Review" sheet for this venue. Lives here rather than in
+  // /// the Reviews tab because it both auth-gates and navigates: a POST while
+  // /// unauthenticated returns 401 and fires the global logout — the wrong
+  // /// outcome for a review attempt.
+  // void openReviewSheet() {
+  // if (!MiddlewareService.find.isAuthenticated) {
+  // CustomSnackbars.showInfo(message: AppTranslations.signInToReview);
+  // Get.toNamed(Routes.signIn);
+  // return;
+  // }
+  // final reviews = Get.find<ReviewController>();
+  // CustomBottomSheet.show<bool>(
+  // title: AppTranslations.writeAReview,
+  // subtitle: restaurant.name,
+  // child: ReviewSubmitSheet(
+  // onSubmit: ({required rating, required comment}) =>
+  // reviews.submitReview(rating: rating, comment: comment),
+  // ),
+  // );
+  // }
 
   /// Reserves a table (`POST /dining-venues/{uuid}/table-reservations`,
   /// tier-3a). A demo venue (no uuid) just confirms locally; a guest with no

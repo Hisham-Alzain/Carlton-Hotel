@@ -1,3 +1,5 @@
+import 'package:carlton/theme/theme.dart';
+import 'package:carlton/components/booking_step_header.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/booking_price_breakdown.dart';
 import 'package:carlton/components/booking_summary_header.dart';
@@ -14,7 +16,6 @@ import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 /// Step 5 — payment method + card form (Figma "Booking / Step 8"). Review
 /// Booking stays disabled until the selected method's details are complete.
@@ -33,21 +34,9 @@ class PaymentView extends StatelessWidget {
     final controller = Get.find<BookingFlowController>();
 
     return CustomScaffold(
-      appBar: AppBar(
-        title: Text(AppTranslations.reviewBooking),
-        iconTheme: IconThemeData(color: Colors.black),
-        actions: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.whisperGrey,
-            ),
-            child: IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.close, color: AppColors.inkBlack),
-            ),
-          ),
-        ],
+      appBar: BookingStepAppBar(
+        title: AppTranslations.reviewBooking,
+        onClose: Get.back,
       ),
       body: Obx(() {
         final TextTheme textStyle = Get.textTheme;
@@ -57,17 +46,7 @@ class PaymentView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 10,
             children: [
-              AnimatedSmoothIndicator(
-                activeIndex: 4,
-                count: 6,
-                effect: SlideEffect(
-                  dotHeight: 5,
-                  dotWidth: 50,
-                  spacing: 20,
-                  activeDotColor: AppColors.primary,
-                  dotColor: AppColors.iceBlue,
-                ),
-              ),
+              BookingStepIndicator(step: 4),
               BookingSummaryHeader(
                 roomName: controller.selectedRoom.value!.name,
                 roomImage: controller.selectedRoom.value!.images.first,
@@ -201,8 +180,7 @@ class _ComingSoonNote extends StatelessWidget {
           Expanded(
             child: Text(
               AppTranslations.cardUnavailable,
-              style: Get.textTheme.labelMedium?.copyWith(
-                fontFamily: 'DM Sans',
+              style: Get.textTheme.dmLabelMedium?.copyWith(
                 color: AppColors.dimGrey,
               ),
             ),

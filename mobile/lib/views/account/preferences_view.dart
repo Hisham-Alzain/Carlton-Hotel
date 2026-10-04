@@ -23,75 +23,78 @@ class PreferencesView extends GetView<PreferencesController> {
         () => ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            CustomDropdownField(
-              label: AppTranslations.language,
-              value: controller.languageLabel,
-              options: PreferenceOptions.languageOptions,
-              selectedId: controller.languageId,
-              onSelected: controller.chooseLanguage,
-            ),
-            const SizedBox(height: 20),
-            CustomDropdownField(
-              label: AppTranslations.currency,
-              value: controller.currencyLabel,
-              options: PreferenceOptions.currencyOptions,
-              selectedId: controller.currencyId,
-              onSelected: controller.chooseCurrency,
-            ),
-            const SizedBox(height: 28),
-            CustomSettingsSection(
-              title: AppTranslations.stayPreferences,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 24,
               children: [
                 CustomDropdownField(
-                  label: AppTranslations.bedType,
-                  value: controller.bedLabel,
-                  options: PreferenceOptions.bedOptions,
-                  selectedId: controller.bedId.value,
-                  onSelected: controller.chooseBed,
+                  label: AppTranslations.language,
+                  value: controller.languageLabel,
+                  options: PreferenceOptions.languageOptions,
+                  selectedId: controller.languageId,
+                  onSelected: controller.chooseLanguage,
                 ),
                 CustomDropdownField(
-                  label: AppTranslations.pillowLabel,
-                  value: controller.pillowLabel,
-                  options: PreferenceOptions.pillowOptions,
-                  selectedId: controller.pillowId.value,
-                  onSelected: controller.choosePillow,
+                  label: AppTranslations.currency,
+                  value: controller.currencyLabel,
+                  options: PreferenceOptions.currencyOptions,
+                  selectedId: controller.currencyId,
+                  onSelected: controller.chooseCurrency,
                 ),
-                CustomDropdownField(
-                  label: AppTranslations.mattressType,
-                  value: controller.mattressLabel,
-                  options: PreferenceOptions.mattressOptions,
-                  selectedId: controller.mattressId.value,
-                  onSelected: controller.chooseMattress,
+                CustomSettingsSection(
+                  title: AppTranslations.stayPreferences,
+                  children: [
+                    CustomDropdownField(
+                      label: AppTranslations.bedType,
+                      value: controller.bedLabel,
+                      options: PreferenceOptions.bedOptions,
+                      selectedId: controller.bedId.value,
+                      onSelected: controller.chooseBed,
+                    ),
+                    CustomDropdownField(
+                      label: AppTranslations.pillowLabel,
+                      value: controller.pillowLabel,
+                      options: PreferenceOptions.pillowOptions,
+                      selectedId: controller.pillowId.value,
+                      onSelected: controller.choosePillow,
+                    ),
+                    CustomDropdownField(
+                      label: AppTranslations.mattressType,
+                      value: controller.mattressLabel,
+                      options: PreferenceOptions.mattressOptions,
+                      selectedId: controller.mattressId.value,
+                      onSelected: controller.chooseMattress,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 28),
-            CustomSettingsSection(
-              title: AppTranslations.roomType,
-              children: [
-                CustomListRow(
-                  title: AppTranslations.smokingRoom,
-                  subtitle: AppTranslations.smokingRoomSubtitle,
-                  trailing: _switch(
-                    controller.smoking.value,
-                    controller.toggleSmoking,
-                  ),
-                ),
-                CustomListRow(
-                  title: AppTranslations.earlyCheckIn,
-                  subtitle: AppTranslations.earlyCheckInSubtitle,
-                  trailing: _switch(
-                    controller.earlyCheckIn.value,
-                    controller.toggleEarlyCheckIn,
-                  ),
-                ),
-                CustomListRow(
-                  title: AppTranslations.lateCheckOut,
-                  subtitle: AppTranslations.lateCheckOutSubtitle,
-                  trailing: _switch(
-                    controller.lateCheckout.value,
-                    controller.toggleLateCheckout,
-                  ),
+                CustomSettingsSection(
+                  title: AppTranslations.roomType,
+                  children: [
+                    CustomListRow(
+                      title: AppTranslations.smokingRoom,
+                      subtitle: AppTranslations.smokingRoomSubtitle,
+                      trailing: _switch(
+                        controller.smoking.value,
+                        controller.toggleSmoking,
+                      ),
+                    ),
+                    CustomListRow(
+                      title: AppTranslations.earlyCheckIn,
+                      subtitle: AppTranslations.earlyCheckInSubtitle,
+                      trailing: _switch(
+                        controller.earlyCheckIn.value,
+                        controller.toggleEarlyCheckIn,
+                      ),
+                    ),
+                    CustomListRow(
+                      title: AppTranslations.lateCheckOut,
+                      subtitle: AppTranslations.lateCheckOutSubtitle,
+                      trailing: _switch(
+                        controller.lateCheckout.value,
+                        controller.toggleLateCheckout,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -13,6 +13,7 @@ mixin PaginatedControllerMixin<T> on GetxController {
   Pagination _pagination = Pagination();
   bool get hasMore => _pagination.currentPage < _pagination.lastPage;
   DateTime? _lastScrollTrigger;
+  CancelToken? _cancelToken;
 
   late final ScrollController scrollController = ScrollController();
 
@@ -24,7 +25,20 @@ mixin PaginatedControllerMixin<T> on GetxController {
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   void initPagination(CancelToken cancelToken) {
-    scrollController.addListener(() => _onScroll(cancelToken));
+    _cancelToken = cancelToken;
+    scrollController.addListener(() => _onScroll(scrollController.position));
+  }
+
+  /// For a list that cannot take [scrollController] — one inside a
+  /// NestedScrollView must use the inner PrimaryScrollController, or the page
+  /// header stops scrolling with it. Wrap it in a
+  /// `NotificationListener<ScrollNotification>` with this as `onNotification`.
+  /// Horizontal scrollables inside the list (chip rows) are ignored.
+  bool onScrollNotification(ScrollNotification notification) {
+    if (notification.metrics.axis == Axis.vertical) {
+      _onScroll(notification.metrics);
+    }
+    return false;
   }
 
   @override
@@ -52,7 +66,9 @@ mixin PaginatedControllerMixin<T> on GetxController {
   }
 
   // ── Private ────────────────────────────────────────────────────────────────
-  void _onScroll(CancelToken cancelToken) {
+  void _onScroll(ScrollMetrics metrics) {
+    final cancelToken = _cancelToken;
+    if (cancelToken == null) return;
     // ✅ Debounce — ignore events within 300ms of the last trigger
     final now = DateTime.now();
     if (_lastScrollTrigger != null &&
@@ -61,9 +77,7 @@ mixin PaginatedControllerMixin<T> on GetxController {
       return;
     }
 
-    final nearBottom =
-        scrollController.position.pixels >=
-        scrollController.position.maxScrollExtent - 200;
+    final nearBottom = metrics.pixels >= metrics.maxScrollExtent - 200;
 
     if (nearBottom && hasMore && !loadingMore.value) {
       _lastScrollTrigger = now;

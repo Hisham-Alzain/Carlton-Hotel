@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/extensions/price_extension.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
@@ -91,9 +92,8 @@ class CustomRoomResultCard extends StatelessWidget {
                               ),
                             ),
                             TextSpan(
-                              text: '/night',
-                              style: textStyle.labelSmall?.copyWith(
-                                fontFamily: 'DM Sans',
+                              text: AppTranslations.perNightSuffix,
+                              style: textStyle.dmLabelSmall?.copyWith(
                                 color: AppColors.taupeBrown,
                               ),
                             ),
@@ -140,8 +140,7 @@ class CustomRoomResultCard extends StatelessWidget {
 
                           Text(
                             room.rating.toStringAsFixed(1),
-                            style: textStyle.labelMedium?.copyWith(
-                              fontFamily: 'DM Sans',
+                            style: textStyle.dmLabelMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: AppColors.inkBlack,
                             ),
@@ -149,8 +148,7 @@ class CustomRoomResultCard extends StatelessWidget {
 
                           Text(
                             '(${room.reviewCount})',
-                            style: textStyle.labelSmall?.copyWith(
-                              fontFamily: 'DM Sans',
+                            style: textStyle.dmLabelSmall?.copyWith(
                               color: AppColors.taupeBrown,
                             ),
                           ),
@@ -187,8 +185,7 @@ class CustomRoomResultCard extends StatelessWidget {
                         children: [
                           Text(
                             AppTranslations.totalForNights(nights),
-                            style: textStyle.labelMedium?.copyWith(
-                              fontFamily: 'DM Sans',
+                            style: textStyle.dmLabelMedium?.copyWith(
                               color: AppColors.taupeBrown,
                             ),
                           ),
@@ -204,8 +201,7 @@ class CustomRoomResultCard extends StatelessWidget {
                           if (_scarcityLabel.isNotEmpty)
                             Text(
                               _scarcityLabel,
-                              style: textStyle.labelSmall?.copyWith(
-                                fontFamily: 'DM Sans',
+                              style: textStyle.dmLabelSmall?.copyWith(
                                 color: AppColors.brickRed,
                               ),
                             ),
@@ -257,10 +253,7 @@ class CustomRoomResultCard extends StatelessWidget {
       radius: 4,
       child: Text(
         label,
-        style: textStyle.labelSmall?.copyWith(
-          fontFamily: 'DM Sans',
-          color: AppColors.cocoaGold,
-        ),
+        style: textStyle.dmLabelSmall?.copyWith(color: AppColors.cocoaGold),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -87,8 +88,7 @@ class CustomAuthBackground extends StatelessWidget {
                   Text(
                     subtitle!,
                     textAlign: TextAlign.center,
-                    style: textStyle.titleSmall?.copyWith(
-                      fontFamily: 'DM Sans',
+                    style: textStyle.dmTitleSmall?.copyWith(
                       fontWeight: FontWeight.w400,
                       color: Colors.white,
                     ),

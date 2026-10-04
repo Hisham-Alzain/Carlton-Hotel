@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -62,8 +63,7 @@ class LoyaltyEarnBanner extends StatelessWidget {
                 ),
                 Text(
                   AppTranslations.loyaltyEarnBody,
-                  style: textStyle.labelSmall?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelSmall?.copyWith(
                     color: AppColors.taupeBrown,
                   ),
                 ),

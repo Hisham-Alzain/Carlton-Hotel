@@ -76,6 +76,13 @@ class CheckInController extends GetxController {
   /// there is what made the Complete button look dead.
   Future<void> completeAndExit() async {
     if (isCompleting.value) return;
+    // Say why before asking for anything else: the server refuses a booking
+    // that is unconfirmed or not yet due, whatever the steps say.
+    final notOpen = service.notOpenReason;
+    if (notOpen != null) {
+      CustomSnackbars.showInfo(message: notOpen);
+      return;
+    }
     // Arrival time is part of check-in, and no wizard tab collects it — so the
     // sheet opens here, in the flow, rather than turning the guest away to find
     // the Home checklist row. Dismissing it without a pick cancels the attempt.
@@ -93,6 +100,9 @@ class CheckInController extends GetxController {
     switch (outcome) {
       case CheckInOutcome.incomplete:
         CustomSnackbars.showInfo(message: _missingStepsMessage());
+        return;
+      case CheckInOutcome.notOpenYet:
+        CustomSnackbars.showInfo(message: service.notOpenReason ?? '');
         return;
       case CheckInOutcome.failed:
         return;

@@ -1,9 +1,11 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/dining/custom_menu_item_tile.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/models/menu.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -23,7 +25,7 @@ class RestaurantMenuTab extends StatelessWidget {
   final bool loadingMore;
 
   /// Owned by the controller's pagination mixin; drives next-page loading.
-  final ScrollController? scrollController;
+  final NotificationListenerCallback<ScrollNotification>? onScroll;
   final ValueChanged<int> onSelectCategory;
   final VoidCallback onDownloadMenu;
 
@@ -33,7 +35,7 @@ class RestaurantMenuTab extends StatelessWidget {
     required this.selectedCategory,
     required this.loading,
     this.loadingMore = false,
-    this.scrollController,
+    this.onScroll,
     required this.onSelectCategory,
     required this.onDownloadMenu,
     super.key,
@@ -42,7 +44,7 @@ class RestaurantMenuTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: LogoLoadingIndicator(size: 50));
     }
 
     return Column(
@@ -83,13 +85,15 @@ class RestaurantMenuTab extends StatelessWidget {
                     ),
                   ),
                 )
-              : ListView.builder(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(10),
-                  itemCount: items.length,
-                  itemBuilder: (context, i) => Padding(
-                    padding: EdgeInsets.all(10),
-                    child: CustomMenuItemTile(item: items[i]),
+              : NotificationListener<ScrollNotification>(
+                  onNotification: onScroll,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(10),
+                    itemCount: items.length,
+                    itemBuilder: (context, i) => Padding(
+                      padding: EdgeInsets.all(10),
+                      child: CustomMenuItemTile(item: items[i]),
+                    ),
                   ),
                 ),
         ),
@@ -106,8 +110,7 @@ class RestaurantMenuTab extends StatelessWidget {
               icon: Icons.download,
               spacing: 10,
               mainAxisAlignment: MainAxisAlignment.center,
-              textStyle: Get.textTheme.labelLarge?.copyWith(
-                fontFamily: 'DM Sans',
+              textStyle: Get.textTheme.dmLabelLarge?.copyWith(
                 fontWeight: FontWeight.w500,
               ),
             ),

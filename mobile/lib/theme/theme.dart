@@ -13,6 +13,10 @@ class Themes {
     scaffoldBackgroundColor: AppColors.ghostWhite,
 
     fontFamily: _mainFontFamily,
+    // The display fonts (The Seasons, Cabinet Grotesk) lack glyphs such as the
+    // lira sign ₺; missing characters then come from the body font rather than
+    // the platform's. Survives `copyWith(fontFamily: ...)`.
+    fontFamilyFallback: const [_mainFontFamily, 'DM Sans'],
     textTheme: const TextTheme(
       displayLarge: TextStyle(
         fontSize: 57,
@@ -509,4 +513,19 @@ class Themes {
     ),
     menuBarTheme: MenuBarThemeData(),
   );
+}
+
+/// for doc shu r2yk bhek she
+extension DmSansTextTheme on TextTheme {
+  static const _family = 'DM Sans';
+
+  TextStyle? get dmHeadlineMedium =>
+      headlineMedium?.copyWith(fontFamily: _family);
+  TextStyle? get dmTitleMedium => titleMedium?.copyWith(fontFamily: _family);
+  TextStyle? get dmTitleSmall => titleSmall?.copyWith(fontFamily: _family);
+  TextStyle? get dmLabelLarge => labelLarge?.copyWith(fontFamily: _family);
+  TextStyle? get dmLabelMedium => labelMedium?.copyWith(fontFamily: _family);
+  TextStyle? get dmLabelSmall => labelSmall?.copyWith(fontFamily: _family);
+  TextStyle? get dmBodyMedium => bodyMedium?.copyWith(fontFamily: _family);
+  TextStyle? get dmBodySmall => bodySmall?.copyWith(fontFamily: _family);
 }

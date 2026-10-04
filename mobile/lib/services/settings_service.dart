@@ -110,18 +110,6 @@ class SettingsService extends GetxService {
     );
   }
 
-  /// Mirror a server-provided locale code (`en`/`ar`) into the app — called
-  /// when a guest signs in (their `preferred_locale`). A language the guest
-  /// picked on this device wins: the profile defaults to `en`, so adopting it
-  /// unconditionally flipped an Arabic UI to English at every sign-in.
-  Future<void> setLocaleFromCode(String code) async {
-    if (StorageService.getString(StorageKeys.language) != null) return;
-    if (code == locale.value.languageCode) return;
-    final match = langs.where((l) => l.local == code);
-    if (match.isEmpty) return;
-    await changeLanguage(match.first);
-  }
-
   bool get isArabic => locale.value.languageCode == 'ar';
 
   /// -------- CURRENCY --------

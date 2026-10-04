@@ -6,6 +6,7 @@ import 'package:carlton/models/home_models.dart';
 import 'package:carlton/models/promotion.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -25,20 +26,14 @@ class DiscoverView extends GetView<DiscoverController> {
       ),
       body: Obx(() {
         if (controller.loading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LogoLoadingIndicator(size: 50));
         }
         // A failed first page: offer Retry. Distinct from loaded-but-empty,
         // which renders the (empty) list with no button.
         if (controller.hasError.value) {
-          return CustomEmptyPlaceholder(
-            iconWidget: const Icon(
-              Icons.cloud_off_outlined,
-              size: 48,
-              color: AppColors.mediumGrey,
-            ),
+          return CustomEmptyPlaceholder.loadFailed(
             title: AppTranslations.checkConnectionShort,
-            primaryLabel: AppTranslations.retry,
-            onPrimary: controller.reload,
+            onRetry: controller.reload,
           );
         }
         return Column(
@@ -48,7 +43,7 @@ class DiscoverView extends GetView<DiscoverController> {
             if (controller.loadingMore.value)
               const Padding(
                 padding: EdgeInsets.all(10),
-                child: CircularProgressIndicator(),
+                child: SpinningIconIndicator(size: 28),
               ),
           ],
         );

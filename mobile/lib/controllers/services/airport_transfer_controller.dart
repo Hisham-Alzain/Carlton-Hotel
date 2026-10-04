@@ -1,8 +1,10 @@
+import 'package:carlton/components/check_in/arrival_time_sheet.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/extensions/date_extension.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/transfer.dart';
 import 'package:carlton/services/api/api_service.dart';
+import 'package:carlton/services/middleware_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -24,6 +26,11 @@ class AirportTransferController extends GetxController {
   /// [Transfer.maxPassengers] tightens it further once the API sends one.
   static const int maxPassengers = 7;
 
+  /// The instructions share `notes` (server max 1000 characters) with the
+  /// flight, terminal and party-size prefix, so they are capped well below it
+  /// — past the limit the booking would fail with a 422 the guest cannot read.
+  static const int maxInstructionsLength = 500;
+
   final flightNumberController = TextEditingController();
   final notesController = TextEditingController();
 
@@ -39,6 +46,7 @@ class AirportTransferController extends GetxController {
   final Rx<Transfer?> selected = Rx<Transfer?>(null);
   final RxBool loading = false.obs;
   final RxBool loadFailed = false.obs;
+  final RxBool submitting = false.obs;
 
   @override
   void onClose() {
@@ -46,6 +54,10 @@ class AirportTransferController extends GetxController {
     notesController.dispose();
     super.onClose();
   }
+
+  String? get notOpenReason => MiddlewareService.find.hasPendingBooking.value
+      ? AppTranslations.transferAwaitingConfirmation
+      : null;
 
   // ── Step 1 ────────────────────────────────────────────────────────────────
 
@@ -77,14 +89,24 @@ class AirportTransferController extends GetxController {
     date.value = picked;
   }
 
-  Future<void> pickArrivalTime() async {
-    final picked = await showTimePicker(
-      context: Get.context!,
-      initialTime: arrivalTime.value,
-    );
-    if (picked == null || isClosed) return;
-    arrivalTime.value = picked;
-  }
+  /// Every hour of the day — flights land around the clock, so unlike
+  /// check-in's afternoon-to-late-night slots nothing is left out.
+  static final List<int> arrivalHours = List.generate(24, (hour) => hour);
+
+  /// The same picker check-in uses, so the guest meets one arrival-time
+  /// control across the app, but offering the whole day.
+  Future<void> pickArrivalTime() => showArrivalSlotPicker(
+    hours: arrivalHours,
+    initialHour: arrivalTime.value.minute == 0 ? arrivalTime.value.hour : null,
+    // Check-in's own subtitle ("Check-in opens from 2:00 PM") is about the
+    // room, not the flight.
+    title: AppTranslations.arrivalTime,
+    subtitle: AppTranslations.transferArrivalSubtitle,
+    onConfirm: (hour) {
+      if (isClosed) return;
+      arrivalTime.value = TimeOfDay(hour: hour, minute: 0);
+    },
+  );
 
   /// `12:00 PM` — formatted through MaterialLocalizations so it follows the
   /// locale's 12/24-hour convention instead of being hardcoded to the design's.
@@ -95,6 +117,17 @@ class AirportTransferController extends GetxController {
       '${date.value.formatApiDate()} ${AppTranslations.at} $arrivalTimeLabel';
 
   String get terminal => terminals[terminalIndex.value];
+
+  // Summary values, shared by step 3 and the booking notes the hotel reads.
+  String get flightNumberLabel {
+    final flight = flightNumberController.text.trim();
+    return flight.isEmpty ? AppTranslations.notSpecified : flight;
+  }
+
+  String get terminalLabel => AppTranslations.terminalValue(terminal);
+
+  String get passengersLabel =>
+      AppTranslations.passengerCount(passengers.value);
 
   // ── Step 2 ────────────────────────────────────────────────────────────────
 
@@ -118,7 +151,7 @@ class AirportTransferController extends GetxController {
     if (isClosed) return;
 
     loading.value = false;
-    if (res.statusCode != 200 || res.data == null) {
+    if (!res.hasData) {
       loadFailed.value = true;
     } else {
       transfers.assignAll(Transfer.listFromJson(res.data!));
@@ -132,6 +165,23 @@ class AirportTransferController extends GetxController {
       t.maxPassengers == null || t.maxPassengers! >= count;
 
   bool seatsParty(Transfer t) => _seats(t, passengers.value);
+
+  /// Car artwork for a transfer (Figma vehicle images). The API has no image
+  /// field, so the class is read off the name — "(SUV)", "Shuttle", "Van" —
+  /// and anything unrecognised gets the saloon.
+  static String vehicleImage(Transfer t) {
+    final name = (t.name.values['en'] ?? t.name.value).toLowerCase();
+    if (RegExp(r'van|shuttle|group|bus').hasMatch(name)) {
+      return 'assets/images/transfer_van.png';
+    }
+    if (RegExp(r'suv|luxury|vip|limo').hasMatch(name)) {
+      return 'assets/images/transfer_luxury.png';
+    }
+    if (RegExp(r'business|sedan|saloon').hasMatch(name)) {
+      return 'assets/images/transfer_business.png';
+    }
+    return 'assets/images/transfer_economy.png';
+  }
 
   void selectTransfer(Transfer t) {
     selected.value = t;
@@ -165,12 +215,66 @@ class AirportTransferController extends GetxController {
     goTo(2);
   }
 
-  /// Submission is not wired: `POST /transport-requests` accepts only a free
-  /// text `notes` field, so none of the flight/terminal/vehicle data collected
-  /// here could be stored. Kept as an explicit dead end rather than silently
-  /// posting a summary string the hotel cannot act on.
-  void confirm() {
-    CustomSnackbars.showInfo(message: AppTranslations.transferComingSoon);
-    Get.back();
+  /// Books the chosen car as a service booking (`POST /service-bookings`,
+  /// `bookable_type: transfer`) scheduled for the flight's arrival. The flight,
+  /// terminal and party size have no fields of their own on that endpoint, so
+  /// they travel in `notes` ahead of the guest's own instructions — which is
+  /// where the concierge team reads them.
+  Future<void> confirm() async {
+    final transfer = selected.value;
+    if (transfer == null || submitting.value) return;
+
+    final arrival = DateTime(
+      date.value.year,
+      date.value.month,
+      date.value.day,
+      arrivalTime.value.hour,
+      arrivalTime.value.minute,
+    );
+    if (!arrival.isAfter(DateTime.now())) {
+      CustomSnackbars.showError(message: AppTranslations.transferTimeInPast);
+      goTo(0);
+      return;
+    }
+
+    final instructions = notesController.text.trim();
+    final notes = [
+      '${AppTranslations.flightLabel}: $flightNumberLabel',
+      terminalLabel,
+      passengersLabel,
+      if (instructions.isNotEmpty) instructions,
+    ].join(' · ');
+
+    submitting.value = true;
+    final res = await ApiService.find.post<Map<String, dynamic>>(
+      path: '/service-bookings',
+      data: {
+        'bookable_type': 'transfer',
+        'bookable_uuid': transfer.uuid,
+        'scheduled_at': arrival.toApiDateTime(),
+        'notes': notes,
+      },
+    );
+    if (isClosed) return;
+    submitting.value = false;
+    // Failures are already reported by ApiService's error dialog; the sheet
+    // stays open on step 3 so nothing the guest entered is lost.
+    if (!res.ok) return;
+
+    // The guest may have closed the sheet while the request was in flight;
+    // popping then would close the page underneath instead.
+    if (Get.isBottomSheetOpen ?? false) Get.back();
+    CustomSnackbars.showSuccess(message: AppTranslations.transferBooked);
+    _resetForm();
+  }
+
+  /// A fresh form for the next request once one has gone through.
+  void _resetForm() {
+    flightNumberController.clear();
+    notesController.clear();
+    terminalIndex.value = 0;
+    passengers.value = 1;
+    selected.value = null;
+    step.value = 0;
   }
 }

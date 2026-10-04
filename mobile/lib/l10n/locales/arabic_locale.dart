@@ -152,6 +152,14 @@ const Map<String, String> arKeys = {
   "auth.verifyIdentityTitle": "تحقق من هويتك",
   "auth.otpSentTo": "أرسلنا رمزاً مكوناً من 6 أرقام إلى @destination",
   "auth.codeMismatch": "الرمز غير مطابق",
+  "validation.invalidOtp": "أدخل الرمز المكوّن من 6 أرقام",
+  "book.perNightSuffix": "/ليلة",
+  "book.view.city": "المدينة",
+  "book.view.garden": "الحديقة",
+  "book.view.pool": "المسبح",
+  "book.view.courtyard": "الفناء",
+  "book.view.mountain": "الجبل",
+  "book.view.interior": "داخلية",
   "auth.resendIn": "إعادة الإرسال خلال @time",
   "auth.resendCodeLink": "إعادة إرسال الرمز",
   "auth.verifyButtonLabel": "تحقق",
@@ -213,6 +221,7 @@ const Map<String, String> arKeys = {
 
   // Services
   "services.title": "الخدمات",
+  "account.signInPromptTitle": "سجّل الدخول لعرض حسابك",
   "services.signInPromptTitle": "سجّل الدخول للوصول إلى خدمات الغرف",
   "services.signInPromptSubtitle":
       "احجز الآن وستُفتح قائمة الخدمات الكاملة بمجرد تسجيل الدخول.",
@@ -418,12 +427,16 @@ const Map<String, String> arKeys = {
   "checkIn.activatedDigitalKey": "تم تفعيل المفتاح الرقمي",
   "checkIn.digitalKeyHint": "يعمل والهاتف مقفل · اضغط مع الاستمرار",
   "checkIn.completeCheckIn": "إتمام تسجيل الوصول",
+  "checkIn.awaitingConfirmation":
+      "حجزك بانتظار تأكيد الفندق. يمكنك تسجيل الوصول بعد تأكيده.",
   "checkIn.finishStepsFirst": "أكمل @step قبل إتمام تسجيل الوصول.",
   "checkIn.stepIdentity": "التحقق من الهوية",
   "checkIn.stepSpecialRequests": "تفضيلات إقامتك",
   "checkIn.stepContactDetails": "بيانات الاتصال الخاصة بك",
   "checkIn.selectArrivalTime": "اختر وقت وصولك",
   "checkIn.arrivalTimeSubtitle": "تسجيل الوصول متاح من الساعة ٢:٠٠ مساءً",
+  "checkIn.arrivalEarlyHours": "ساعات الفجر",
+  "checkIn.arrivalMorning": "الصباح",
   "checkIn.arrivalAfternoon": "بعد الظهر",
   "checkIn.arrivalEvening": "المساء",
   "checkIn.arrivalLateNight": "وقت متأخر",
@@ -489,6 +502,12 @@ const Map<String, String> arKeys = {
   "general.requested": "تم الطلب",
   // Account
   "account.myProfile": "ملفي الشخصي",
+  "account.personalInformation": "المعلومات الشخصية",
+  "account.notAdded": "غير مضاف",
+  "account.verified": "موثّق",
+  "account.editProfile": "تعديل الملف الشخصي",
+  "account.saveChanges": "حفظ التغييرات",
+  "account.profileUpdated": "تم تحديث ملفك الشخصي",
   "account.security": "الأمان",
   "account.support": "الدعم",
   "account.helpAndSupport": "المساعدة والدعم",
@@ -722,6 +741,7 @@ const Map<String, String> arKeys = {
   "book.promoHint": "أدخل رمز الخصم",
   "book.promoCodeFirst": "أدخل رمز الخصم أولاً",
   "book.roomLoadFailed": "تعذّر تحميل هذه الغرفة.",
+  "book.signInToBookTitle": "سجّل الدخول للحجز",
   "book.signInToBook": "يرجى تسجيل الدخول لإتمام حجزك.",
   "book.selectRoomAndDates": "اختر غرفة وتواريخك أولاً.",
   "auth.otpExpired": "انتهت صلاحية الرمز — اضغط إعادة الإرسال.",
@@ -739,6 +759,7 @@ const Map<String, String> arKeys = {
   "transfer.flightNumberHint": "مثال: RB 110",
   "transfer.date": "التاريخ",
   "transfer.arrivalTime": "وقت الوصول",
+  "transfer.arrivalSubtitle": "متى تهبط رحلتك؟",
   "transfer.terminal": "الصالة",
   "transfer.passengers": "الركاب",
   "transfer.maxPassengers": "بحد أقصى @count ركاب",
@@ -764,12 +785,14 @@ const Map<String, String> arKeys = {
   "transfer.folioNote":
       "ستُضاف قيمة الخدمة إلى حساب غرفتك عند المغادرة. الإلغاء مجاني حتى ساعتين قبل موعد الانطلاق.",
   "transfer.confirmBooking": "تأكيد الحجز",
+  "transfer.at": "في",
+  "transfer.awaitingConfirmation":
+      "يتاح طلب النقل من المطار بعد أن يؤكد الفندق حجزك.",
+  "transfer.booked": "تم طلب النقل — سيؤكد الفندق موعد الاستقبال.",
+  "transfer.timeInPast": "اختر تاريخ ووقت وصول في المستقبل.",
   "transfer.selectVehicleFirst": "اختر مركبة للمتابعة.",
   "transfer.noVehicles": "لا توجد خدمات نقل متاحة حالياً.",
   "transfer.loadFailed": "تعذّر تحميل خدمات النقل.",
-  "transfer.bookingComingSoon": "حجز النقل قريباً",
-
-  "transfer.at": "في",
 
   "stays.nightsRemainingCount": "تبقى @count ليالٍ",
   "stays.nightsRemainingOne": "تبقت ليلة واحدة",
@@ -821,6 +844,7 @@ const Map<String, String> arKeys = {
   "book.addOnsNotBooked":
       "تم تأكيد غرفتك. لم نتمكن من حجز @items — يمكنك طلبها مرة أخرى من تبويب الخدمات.",
   "book.bookingReceivedBang": "تم استلام الحجز!",
+  "stays.signInPromptTitle": "سجّل الدخول لعرض إقاماتك",
   "stays.awaitingConfirmation": "بانتظار التأكيد",
   "book.awaitingHotelConfirmation":
       "بانتظار تأكيد الفندق. سيظهر حجزك في الصفحة الرئيسية بعد أن يؤكده الفندق.",

@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/custom_price_summary.dart';
 import 'package:carlton/controllers/stays/folio_controller.dart';
@@ -28,19 +29,13 @@ class FolioView extends GetView<FolioController> {
       ),
       body: Obx(() {
         if (controller.loading.value) {
-          return const Center(child: CustomProgressIndicator());
+          return const Center(child: LogoLoadingIndicator(size: 50));
         }
         if (controller.error.value) {
-          return CustomEmptyPlaceholder(
-            iconWidget: const Icon(
-              Icons.wifi_off_rounded,
-              size: 48,
-              color: AppColors.mediumGrey,
-            ),
+          return CustomEmptyPlaceholder.loadFailed(
             title: AppTranslations.folioLoadFailed,
             subtitle: AppTranslations.checkConnectionShort,
-            primaryLabel: AppTranslations.retry,
-            onPrimary: controller.load,
+            onRetry: controller.load,
           );
         }
         final folio = controller.folio.value;
@@ -120,8 +115,7 @@ class _ApprovedBanner extends StatelessWidget {
             Expanded(
               child: Text(
                 AppTranslations.folioApproved,
-                style: Get.textTheme.labelMedium?.copyWith(
-                  fontFamily: 'DM Sans',
+                style: Get.textTheme.dmLabelMedium?.copyWith(
                   color: AppColors.inkBlack,
                 ),
               ),
@@ -163,8 +157,7 @@ class _ItemRow extends StatelessWidget {
               if (_sourceLabel.isNotEmpty)
                 Text(
                   _sourceLabel,
-                  style: textStyle.labelSmall?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelSmall?.copyWith(
                     color: AppColors.taupeBrown,
                   ),
                 ),

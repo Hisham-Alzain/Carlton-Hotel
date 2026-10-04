@@ -52,7 +52,7 @@ class SupportController extends GetxController
       showErrorDialog: false,
       cancelToken: cancelToken,
     );
-    if (res.statusCode != 200 || res.data == null) return null;
+    if (!res.hasData) return null;
     return (
       items: Faq.listFromJson(res.data),
       pagination: res.meta ?? Pagination(),

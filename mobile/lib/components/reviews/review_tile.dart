@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/extensions/date_extension.dart';
@@ -53,8 +54,7 @@ class ReviewTile extends StatelessWidget {
                 ),
                 Text(
                   created,
-                  style: textStyle.labelSmall?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelSmall?.copyWith(
                     color: AppColors.taupeBrown,
                   ),
                 ),
@@ -76,8 +76,7 @@ class ReviewTile extends StatelessWidget {
                     backgroundColor: AppColors.cream,
                     child: Text(
                       AppTranslations.verifiedStay,
-                      style: textStyle.labelSmall?.copyWith(
-                        fontFamily: 'DM Sans',
+                      style: textStyle.dmLabelSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.walnutGold,
                       ),
@@ -88,8 +87,7 @@ class ReviewTile extends StatelessWidget {
             if (comment.isNotEmpty)
               Text(
                 comment,
-                style: textStyle.labelMedium?.copyWith(
-                  fontFamily: 'DM Sans',
+                style: textStyle.dmLabelMedium?.copyWith(
                   height: 1.5,
                   color: AppColors.dimGrey,
                 ),

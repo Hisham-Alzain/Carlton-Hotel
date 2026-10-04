@@ -9,6 +9,11 @@ class CustomPinput extends StatelessWidget {
   final int digitCount;
   final String? Function(String?)? validator;
   final void Function(String)? onComplete;
+  final ValueChanged<String>? onChanged;
+
+  /// An error from outside the validator (e.g. the server rejecting the
+  /// code). When set, the boxes turn red and show it until it is cleared.
+  final String? errorText;
 
   const CustomPinput({
     super.key,
@@ -16,6 +21,8 @@ class CustomPinput extends StatelessWidget {
     required this.digitCount,
     required this.validator,
     this.onComplete,
+    this.onChanged,
+    this.errorText,
   });
 
   @override
@@ -49,14 +56,27 @@ class CustomPinput extends StatelessWidget {
         border: Border.all(color: AppColors.salmonRed, width: 1.5),
       ),
       validator: validator,
+      forceErrorState: errorText != null,
+      errorText: errorText,
       errorTextStyle: errorStyle,
       onCompleted: onComplete,
+      onChanged: onChanged,
       closeKeyboardWhenCompleted: true,
       keyboardType: TextInputType.number,
-      errorBuilder: (context, errorText) => RowTextComponent(
-        text: errorText,
-        icon: Icons.error_outline,
-        iconColor: AppColors.salmonRed,
+      // Pinput passes (errorText, pin). Naming them (context, errorText) had
+      // this print the typed digits instead of the message. The style is
+      // explicit: RowTextComponent's default text is dark and vanished on the
+      // dark sign-in screens.
+      errorBuilder: (errorText, _) => Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: RowTextComponent(
+          text: errorText ?? '',
+          icon: Icons.error_outline,
+          iconSize: 18,
+          iconColor: AppColors.salmonRed,
+          spacing: 6,
+          textStyle: errorStyle,
+        ),
       ),
     );
   }

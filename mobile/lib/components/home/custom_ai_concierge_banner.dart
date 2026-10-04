@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/components/custom_logo_avatar.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
@@ -82,8 +83,7 @@ class CustomAiConciergeBanner extends StatelessWidget {
                       ),
                       Text(
                         AppTranslations.helpDescription,
-                        style: textStyle.labelMedium?.copyWith(
-                          fontFamily: 'DM Sans',
+                        style: textStyle.dmLabelMedium?.copyWith(
                           color: AppColors.slateGrey,
                         ),
                       ),

@@ -129,19 +129,47 @@ class CustomDropdownField extends StatelessWidget {
     );
   }
 
-  Widget _icon(PreferenceOption option) {
+  Widget _icon(PreferenceOption option) =>
+      _OptionGlyph(option: option, color: AppColors.inkBlack);
+}
+
+/// The 20×20 mark before an option's label: its SVG, its currency sign, or its
+/// Material icon. One builder for the field and the menu rows, which differ
+/// only in colour.
+class _OptionGlyph extends StatelessWidget {
+  final PreferenceOption option;
+  final Color color;
+
+  const _OptionGlyph({required this.option, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
     if (option.iconAsset != null) {
       return SvgPicture.asset(
         option.iconAsset!,
         width: 20,
         height: 20,
-        colorFilter: const ColorFilter.mode(
-          AppColors.inkBlack,
-          BlendMode.srcIn,
+        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      );
+    }
+    if (option.symbol != null) {
+      // FittedBox: `£S` is two glyphs wide, `$` and `₺` one — all must fit the
+      // same 20px slot the icons use, so the labels stay aligned.
+      return SizedBox(
+        width: 20,
+        height: 20,
+        child: FittedBox(
+          child: Text(
+            option.symbol!,
+            style: Get.textTheme.titleMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
       );
     }
-    return Icon(option.icon, size: 20, color: AppColors.inkBlack);
+    return Icon(option.icon, size: 20, color: color);
   }
 }
 
@@ -175,15 +203,7 @@ class _MenuRow extends StatelessWidget {
               SizedBox(
                 width: 20,
                 height: 20,
-                child: option.iconAsset != null
-                    ? SvgPicture.asset(
-                        option.iconAsset!,
-                        colorFilter: const ColorFilter.mode(
-                          AppColors.primary,
-                          BlendMode.srcIn,
-                        ),
-                      )
-                    : Icon(option.icon, size: 20, color: AppColors.primary),
+                child: _OptionGlyph(option: option, color: AppColors.primary),
               ),
               Expanded(
                 child: Text(
@@ -195,15 +215,7 @@ class _MenuRow extends StatelessWidget {
                 ),
               ),
               if (selected)
-                SvgPicture.asset(
-                  'assets/icons/check.svg',
-                  width: 18,
-                  height: 18,
-                  colorFilter: const ColorFilter.mode(
-                    AppColors.primary,
-                    BlendMode.srcIn,
-                  ),
-                ),
+                Icon(Icons.check, size: 18, color: AppColors.primary),
             ],
           ),
         ),

@@ -1,6 +1,8 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 /// The reservation time-slot picker (Figma): content-sized chips that wrap onto
 /// as many rows as they need. The selected slot fills primary with white text;
@@ -34,7 +36,7 @@ class CustomTimeSlotSelector extends StatelessWidget {
           // primary08 fill, a white border), so the pill styling is spelled out
           // here; only showCheckmark/labelPadding are inherited.
           return ChoiceChip(
-            label: Text(slot),
+            label: Text(_label(slot)),
             selected: isSelected,
             // The bool is ignored: tapping the selected slot re-selects it
             // rather than leaving the form with no time at all.
@@ -49,8 +51,7 @@ class CustomTimeSlotSelector extends StatelessWidget {
             side: BorderSide(
               color: isSelected ? AppColors.primary : AppColors.black10,
             ),
-            labelStyle: textStyle.labelMedium?.copyWith(
-              fontFamily: 'DM Sans',
+            labelStyle: textStyle.dmLabelMedium?.copyWith(
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               color: isSelected ? AppColors.white : AppColors.graphite,
             ),
@@ -58,5 +59,15 @@ class CustomTimeSlotSelector extends StatelessWidget {
         }),
       ],
     );
+  }
+
+  /// `7:30 PM` in the app language (`19:30`, `7:30 م`, …). The slot string
+  /// itself is never changed: RestaurantController converts it for the API.
+  static String _label(String slot) {
+    try {
+      return DateFormat.jm().format(DateFormat('h:mm a', 'en').parse(slot));
+    } on FormatException {
+      return slot;
+    }
   }
 }

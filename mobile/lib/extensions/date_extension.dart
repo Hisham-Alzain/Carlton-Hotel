@@ -17,4 +17,10 @@ extension DateExtensions on DateTime {
   String formatApiDate() {
     return DateFormat('yyyy-MM-dd').format(this);
   }
+
+  /// `2026-08-14T11:00:00.000Z` — the moment in UTC, for datetime fields the
+  /// API stores. Laravel saves a datetime's wall-clock part and drops any
+  /// offset, so a local time (or one sent as `+03:00`) would be stored as if
+  /// it were UTC and come back shifted by the guest's offset.
+  String toApiDateTime() => toUtc().toIso8601String();
 }

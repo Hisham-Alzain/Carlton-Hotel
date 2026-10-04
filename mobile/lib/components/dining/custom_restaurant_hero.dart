@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/cards/custom_rating_label.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
@@ -70,8 +71,7 @@ class CustomRestaurantHero extends StatelessWidget {
                       restaurant.cuisine,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: textStyle.labelMedium?.copyWith(
-                        fontFamily: 'DM Sans',
+                      style: textStyle.dmLabelMedium?.copyWith(
                         color: AppColors.white73,
                       ),
                     ),

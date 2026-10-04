@@ -9,7 +9,7 @@ import 'package:carlton/models/pagination.dart';
 ///
 /// ```dart
 /// final res = await _api.get<List<dynamic>>(path: '/public/room-types');
-/// if (res.statusCode != 200) return;
+/// if (!res.ok) return;
 /// rooms.assignAll(res.data!.map((e) => RoomType.fromJson(e)));
 /// ```
 ///
@@ -88,6 +88,9 @@ class ApiResponse<T> {
   /// True when the call succeeded. Equivalent to a 2xx check, but also the
   /// place to look when a call can legitimately return 201/204.
   bool get ok => error == null;
+
+  /// Succeeded and carried a body — the guard before reading `data!`.
+  bool get hasData => ok && data != null;
 
   bool get isCreated => statusCode == 201;
   bool get isNoContent => statusCode == 204;

@@ -32,7 +32,7 @@ class FolioController extends GetxController {
       showErrorDialog: false,
     );
     if (isClosed) return;
-    if (res.statusCode == 200 && res.data != null) {
+    if (res.hasData) {
       folio.value = Folio.fromJson(res.data!);
     } else {
       error.value = true;

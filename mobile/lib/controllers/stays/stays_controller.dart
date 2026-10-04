@@ -58,6 +58,22 @@ class StaysController extends GetxController
     // Open on Upcoming — the tab with the actionable reservation.
     tabController = TabController(length: 3, vsync: this, initialIndex: 1);
     initPagination(_cancel);
+    // A browsing guest has no stays and every call would be refused, which
+    // the tabs would report as a connection error. The view shows a sign-in
+    // prompt instead; the lists load once the guest signs in.
+    var signedIn = MiddlewareService.find.isAuthenticated;
+    if (signedIn) _loadAll();
+    _authWorker = ever(MiddlewareService.find.guest, (guest) {
+      // Only the signed-out → signed-in change reloads; a profile edit also
+      // updates the guest and must not refetch every tab.
+      if (guest != null && !signedIn) _loadAll();
+      signedIn = guest != null;
+    });
+  }
+
+  late final Worker _authWorker;
+
+  void _loadAll() {
     _loadActive();
     _loadUpcoming();
     loadItems(_cancel); // past
@@ -65,6 +81,7 @@ class StaysController extends GetxController
 
   @override
   void onClose() {
+    _authWorker.dispose();
     _cancel.cancel();
     tabController.dispose();
     // Chains into PaginatedControllerMixin.onClose → disposes scrollController.
@@ -106,7 +123,7 @@ class StaysController extends GetxController
       cancelToken: _cancel,
     );
     if (isClosed || res.isCancelled) return;
-    if (res.statusCode == 200 && res.data != null) {
+    if (res.hasData) {
       upcoming.value = UpcomingStay.listFromJson(
         res.data,
       ).map(_upcomingToStay).toList();
@@ -127,7 +144,7 @@ class StaysController extends GetxController
       showErrorDialog: false,
       cancelToken: cancelToken,
     );
-    if (res.statusCode != 200 || res.data == null) return null;
+    if (!res.hasData) return null;
     return (
       items: PastStay.listFromJson(res.data).map(_pastToStay).toList(),
       pagination: res.meta ?? Pagination(),
@@ -153,7 +170,7 @@ class StaysController extends GetxController
       roomName: s.roomName.value,
       status: StayStatus.active,
       subtitle: (s.roomNumber != null && s.roomNumber!.isNotEmpty)
-          ? 'Room ${s.roomNumber}'
+          ? AppTranslations.stayRoomNumber(s.roomNumber!)
           : null,
       checkedInSince: since,
       nightsRemaining: s.nightsRemaining,
@@ -174,8 +191,7 @@ class StaysController extends GetxController
       // The card force-unwraps subtitle/pricePerNight — never leave them null.
       subtitle: [
         // A guest-made booking stays `pending` until the hotel confirms it.
-        if (s.status == 'pending' || s.status == 'pending_verification')
-          AppTranslations.awaitingConfirmation,
+        if (s.isAwaitingHotel) AppTranslations.awaitingConfirmation,
         (s.roomNumber != null && s.roomNumber!.isNotEmpty)
             ? '${AppTranslations.receiptHotelName} · '
                   '${AppTranslations.stayRoomNumber('${s.roomNumber}')}'
@@ -185,7 +201,7 @@ class StaysController extends GetxController
       checkInLabel: s.checkIn != null ? _fullDate.format(s.checkIn!) : '',
       checkOutLabel: s.checkOut != null ? _fullDate.format(s.checkOut!) : '',
       resCode: s.bookingCode,
-      pricePerNight: '${usd(perNight.toString())}/night',
+      pricePerNight: AppTranslations.perNight(usd(perNight.toString())),
       isCancellable: s.isCancellable,
       nextCheckInDays: (days != null && days > 0) ? days : null,
     );
@@ -265,7 +281,7 @@ class StaysController extends GetxController
       cancelToken: _cancel,
     );
     if (isClosed || res.isCancelled) return;
-    if (res.statusCode != 200 || res.data == null) {
+    if (!res.hasData) {
       CustomSnackbars.showError(message: AppTranslations.receiptLoadFailed);
       return;
     }

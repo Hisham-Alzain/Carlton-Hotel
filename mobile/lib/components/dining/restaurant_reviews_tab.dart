@@ -5,6 +5,7 @@ import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/models/review.dart';
 import 'package:carlton/theme/app_colors.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -26,7 +27,7 @@ class RestaurantReviewsTab extends StatelessWidget {
 
   /// From `PaginatedControllerMixin` — the list must attach the caller's
   /// controller for scroll-triggered paging to fire.
-  final ScrollController scrollController;
+  final NotificationListenerCallback<ScrollNotification> onScroll;
 
   final VoidCallback onWriteReview;
 
@@ -41,7 +42,7 @@ class RestaurantReviewsTab extends StatelessWidget {
     required this.loading,
     required this.loadingMore,
     required this.hasError,
-    required this.scrollController,
+    required this.onScroll,
     required this.onWriteReview,
     required this.onRetry,
     super.key,
@@ -82,19 +83,13 @@ class RestaurantReviewsTab extends StatelessWidget {
   }
 
   Widget _list(TextTheme textStyle) {
-    if (loading) return const Center(child: CircularProgressIndicator());
+    if (loading) return const Center(child: LogoLoadingIndicator(size: 50));
 
     if (hasError) {
-      return CustomEmptyPlaceholder(
-        iconWidget: const Icon(
-          Icons.cloud_off_outlined,
-          size: 50,
-          color: AppColors.primary,
-        ),
+      return CustomEmptyPlaceholder.loadFailed(
         title: AppTranslations.diningReviewsLoadFailed,
         subtitle: AppTranslations.checkConnectionRetry,
-        primaryLabel: AppTranslations.retry,
-        onPrimary: onRetry,
+        onRetry: onRetry,
       );
     }
     if (reviews.isEmpty) {
@@ -108,22 +103,24 @@ class RestaurantReviewsTab extends StatelessWidget {
         subtitle: AppTranslations.beFirstToReview,
       );
     }
-    return ListView.builder(
-      controller: scrollController,
-      padding: const EdgeInsets.all(10),
-      itemCount: reviews.length + (loadingMore ? 1 : 0),
-      itemBuilder: (_, index) {
-        if (index >= reviews.length) {
-          return const Padding(
-            padding: EdgeInsets.all(10),
-            child: Center(child: CircularProgressIndicator()),
+    return NotificationListener<ScrollNotification>(
+      onNotification: onScroll,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(10),
+        itemCount: reviews.length + (loadingMore ? 1 : 0),
+        itemBuilder: (_, index) {
+          if (index >= reviews.length) {
+            return const Padding(
+              padding: EdgeInsets.all(10),
+              child: Center(child: SpinningIconIndicator(size: 28)),
+            );
+          }
+          return Padding(
+            padding: const EdgeInsets.all(10),
+            child: ReviewTile(review: reviews[index]),
           );
-        }
-        return Padding(
-          padding: const EdgeInsets.all(10),
-          child: ReviewTile(review: reviews[index]),
-        );
-      },
+        },
+      ),
     );
   }
 }

@@ -29,7 +29,7 @@ import 'ui/api_dialog_handler.dart';
 ///   data: {'phone': phone},
 ///   showLoading: true,
 /// );
-/// if (response.statusCode != 200) return;
+/// if (!response.ok) return;
 /// final user = User.fromJson(response.data!);
 /// ```
 ///

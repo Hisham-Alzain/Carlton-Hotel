@@ -1,7 +1,7 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// The shared shell for every modal sheet in the app: header (title, optional
@@ -122,8 +122,7 @@ class CustomBottomSheet extends StatelessWidget {
                           if (subtitle != null) ...[
                             Text(
                               subtitle!,
-                              style: textStyle.labelMedium?.copyWith(
-                                fontFamily: 'DM Sans',
+                              style: textStyle.dmLabelMedium?.copyWith(
                                 color: AppColors.taupeBrown,
                               ),
                             ),
@@ -142,14 +141,10 @@ class CustomBottomSheet extends StatelessWidget {
                           padding: EdgeInsets.zero,
                           iconSize: 16,
                           visualDensity: VisualDensity.compact,
-                          icon: SvgPicture.asset(
-                            'assets/icons/close.svg',
-                            width: 24,
-                            height: 24,
-                            colorFilter: const ColorFilter.mode(
-                              AppColors.taupeBrown,
-                              BlendMode.srcIn,
-                            ),
+                          icon: Icon(
+                            Icons.close,
+                            size: 24,
+                            color: AppColors.taupeBrown,
                           ),
                         ),
                       ),

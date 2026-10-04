@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
@@ -132,8 +133,7 @@ class CustomActiveBookingCard extends StatelessWidget {
                         ),
                         Text(
                           AppTranslations.nightsLeft,
-                          style: textStyle.labelSmall?.copyWith(
-                            fontFamily: 'DM Sans',
+                          style: textStyle.dmLabelSmall?.copyWith(
                             color: Colors.white.withValues(alpha: 0.55),
                           ),
                         ),
@@ -153,8 +153,7 @@ class CustomActiveBookingCard extends StatelessWidget {
                   _subtitleFor(stay, interactive),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textStyle.labelSmall?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelSmall?.copyWith(
                     color: Colors.white.withValues(alpha: 0.6),
                   ),
                 ),
@@ -254,8 +253,7 @@ class _DndRow extends StatelessWidget {
                   doNotDisturb ? AppTranslations.dndOn : AppTranslations.dndOff,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textStyle.labelSmall?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelSmall?.copyWith(
                     color: Colors.white.withValues(alpha: 0.5),
                   ),
                 ),
@@ -308,8 +306,7 @@ class _QuickAction extends StatelessWidget {
               ),
               Text(
                 label,
-                style: Get.textTheme.labelSmall?.copyWith(
-                  fontFamily: 'DM Sans',
+                style: Get.textTheme.dmLabelSmall?.copyWith(
                   fontWeight: FontWeight.w500,
                   color: Colors.white.withValues(alpha: 0.75),
                   fontSize: 8,

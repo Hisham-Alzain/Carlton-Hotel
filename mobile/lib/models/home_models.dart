@@ -56,7 +56,7 @@ class RoomItem {
     // which is a paragraph and overflowed the fixed-width meta chip.
     view: (roomType.viewType != null && roomType.viewType!.isNotEmpty)
         ? AppTranslations.roomView(
-            '${roomType.viewType![0].toUpperCase()}${roomType.viewType!.substring(1)}',
+            AppTranslations.viewTypeName(roomType.viewType!),
           )
         : '',
     area: roomType.sizeSqm != null

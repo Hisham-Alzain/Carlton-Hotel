@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/dining/custom_gallery_grid.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
@@ -48,8 +49,7 @@ class RestaurantInfoTab extends StatelessWidget {
           ),
           Text(
             about.isNotEmpty ? about : AppTranslations.detailsComingSoon,
-            style: textStyle.labelMedium?.copyWith(
-              fontFamily: 'DM Sans',
+            style: textStyle.dmLabelMedium?.copyWith(
               height: 1.5,
               color: AppColors.dimGrey,
             ),
@@ -158,8 +158,7 @@ class _InfoRow extends StatelessWidget {
             children: [
               Text(
                 label.toUpperCase(),
-                style: textStyle.labelSmall?.copyWith(
-                  fontFamily: 'DM Sans',
+                style: textStyle.dmLabelSmall?.copyWith(
                   color: AppColors.walnutGold,
                 ),
               ),

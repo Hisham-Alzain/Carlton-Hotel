@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/components/loyalty/loyalty_card_texture.dart';
 import 'package:carlton/extensions/points_extension.dart';
 import 'package:carlton/extensions/text_style_extension.dart';
@@ -26,173 +27,144 @@ class LoyaltyPointsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
 
-    return Container(
-      // Load-bearing: the sheen and glow layers below overflow the card
-      // bounds by design, and without the clip they paint over the scaffold.
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-          colors: [AppColors.primary, AppColors.abyssTeal],
+    return TealFoilCard(
+      radius: 22,
+      shadowAlpha: 0.35,
+      shadowBlur: 20,
+      shadowOffset: 10,
+      glows: const [
+        PositionedDirectional(
+          top: -50,
+          end: -30,
+          child: LoyaltyGlowCircle(size: 170),
         ),
-        // A gold hairline, not white — the edge of a foil-trimmed card rather
-        // than a generic dark panel.
-        border: Border.all(color: AppColors.antiqueGold56, width: 1),
-        boxShadow: [
-          // A translucent shadow, not the opaque swatch — a solid dark fill
-          // here painted as a flat smudge under the card instead of a soft
-          // drop shadow, which was most of why the card read as flat.
-          BoxShadow(
-            color: AppColors.abyssTeal.withValues(alpha: 0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          const PositionedDirectional(
-            top: -50,
-            end: -30,
-            child: LoyaltyGlowCircle(size: 170),
-          ),
-          const PositionedDirectional(
-            bottom: -70,
-            end: 60,
-            child: LoyaltyGlowCircle(size: 130),
-          ),
-          const Positioned.fill(child: LoyaltySheen()),
-
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
+        PositionedDirectional(
+          bottom: -70,
+          end: 60,
+          child: LoyaltyGlowCircle(size: 130),
+        ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 22,
+          children: [
+            // The brand mark and tier badge share a row so they read as
+            // opposite corners of a card face; the wordmark sits directly
+            // beneath the mark, the way it does on the app's own logo
+            // lockup (see custom_app_bar's CARLTON / HOTEL pairing).
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 22,
+              spacing: 10,
               children: [
-                // The brand mark and tier badge share a row so they read as
-                // opposite corners of a card face; the wordmark sits directly
-                // beneath the mark, the way it does on the app's own logo
-                // lockup (see custom_app_bar's CARLTON / HOTEL pairing).
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 10,
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        SvgPicture.asset(
-                          'assets/icons/badge_logo.svg',
-                          width: 30,
-                          height: 30,
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.sandGold,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                        const Spacer(),
-                        _TierBadge(label: account.tierLabel),
-                      ],
+                    SvgPicture.asset(
+                      'assets/icons/badge_logo.svg',
+                      width: 30,
+                      height: 30,
+                      colorFilter: const ColorFilter.mode(
+                        AppColors.sandGold,
+                        BlendMode.srcIn,
+                      ),
                     ),
-                    Text(
-                      AppTranslations.loyaltyProgramName.toUpperCase(),
-                      style: textStyle.labelSmall
-                          ?.copyWith(
-                            fontFamily: 'DM Sans',
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.white50,
-                          )
-                          .tracked(context, 2),
-                    ),
+                    const Spacer(),
+                    _TierBadge(label: account.tierLabel),
                   ],
                 ),
-
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 6,
-                  children: [
-                    Text(
-                      AppTranslations.loyaltyAvailablePoints.toUpperCase(),
-                      style: textStyle.labelSmall
-                          ?.copyWith(
-                            fontFamily: 'DM Sans',
-                            color: AppColors.white73,
-                          )
-                          .tracked(context, 1.6),
-                    ),
-                    Row(
-                      // Baseline rather than centre so the unit sits on the
-                      // line the numerals stand on, not halfway up them.
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      spacing: 6,
-                      children: [
-                        // Foil effect: ShaderMask paints the gradient through
-                        // the text's own alpha, so it reads as engraved gold
-                        // rather than a flat gold fill.
-                        ShaderMask(
-                          blendMode: BlendMode.srcIn,
-                          shaderCallback: (bounds) => const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.sandGold,
-                              AppColors.antiqueGold,
-                              AppColors.sandGold,
-                            ],
-                            stops: [0, 0.55, 1],
-                          ).createShader(bounds),
-                          child: Text(
-                            account.balance.formatPoints(),
-                            style: textStyle.displaySmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.white,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          AppTranslations.loyaltyPointsUnit,
-                          style: textStyle.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.white73,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                // Letter-spaced and grouped like an embossed card number —
-                // the member ID is the one figure on the card meant to be
-                // read at a glance, the way a card number is.
                 Text(
-                  account.memberId.toUpperCase(),
-                  style: textStyle.titleSmall
+                  AppTranslations.loyaltyProgramName.toUpperCase(),
+                  style: textStyle.dmLabelSmall
                       ?.copyWith(
-                        fontFamily: 'DM Sans',
                         fontWeight: FontWeight.w600,
-                        color: AppColors.white88,
+                        color: AppColors.white50,
                       )
-                      .tracked(context, 3),
+                      .tracked(context, 2),
                 ),
-
-                // Gold fading to nothing, not a flat white rule — the rule
-                // is part of the card's foil trim rather than a divider
-                // between two unrelated blocks.
-                Container(
-                  height: 1,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppColors.antiqueGold56, AppColors.white00],
-                    ),
-                  ),
-                ),
-
-                _TierProgress(account: account),
               ],
             ),
-          ),
-        ],
+
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 6,
+              children: [
+                Text(
+                  AppTranslations.loyaltyAvailablePoints.toUpperCase(),
+                  style: textStyle.dmLabelSmall
+                      ?.copyWith(color: AppColors.white73)
+                      .tracked(context, 1.6),
+                ),
+                Row(
+                  // Baseline rather than centre so the unit sits on the
+                  // line the numerals stand on, not halfway up them.
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  spacing: 6,
+                  children: [
+                    // Foil effect: ShaderMask paints the gradient through
+                    // the text's own alpha, so it reads as engraved gold
+                    // rather than a flat gold fill.
+                    ShaderMask(
+                      blendMode: BlendMode.srcIn,
+                      shaderCallback: (bounds) => const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.sandGold,
+                          AppColors.antiqueGold,
+                          AppColors.sandGold,
+                        ],
+                        stops: [0, 0.55, 1],
+                      ).createShader(bounds),
+                      child: Text(
+                        account.balance.formatPoints(),
+                        style: textStyle.displaySmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      AppTranslations.loyaltyPointsUnit,
+                      style: textStyle.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.white73,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            // Letter-spaced and grouped like an embossed card number —
+            // the member ID is the one figure on the card meant to be
+            // read at a glance, the way a card number is.
+            Text(
+              account.memberId.toUpperCase(),
+              style: textStyle.dmTitleSmall
+                  ?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white88,
+                  )
+                  .tracked(context, 3),
+            ),
+
+            // Gold fading to nothing, not a flat white rule — the rule
+            // is part of the card's foil trim rather than a divider
+            // between two unrelated blocks.
+            Container(
+              height: 1,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.antiqueGold56, AppColors.white00],
+                ),
+              ),
+            ),
+
+            _TierProgress(account: account),
+          ],
+        ),
       ),
     );
   }
@@ -228,8 +200,7 @@ class _TierBadge extends StatelessWidget {
           ),
           Text(
             label,
-            style: textStyle.labelSmall?.copyWith(
-              fontFamily: 'DM Sans',
+            style: textStyle.dmLabelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.sandGold,
             ),
@@ -276,8 +247,8 @@ class _TierProgress extends StatelessWidget {
                   points: remaining.formatPoints(),
                   tier: nextTier,
                 ),
-          style: textStyle.labelSmall
-              ?.copyWith(fontFamily: 'DM Sans', color: AppColors.white73)
+          style: textStyle.dmLabelSmall
+              ?.copyWith(color: AppColors.white73)
               .tracked(context, 0.8),
         ),
       ],

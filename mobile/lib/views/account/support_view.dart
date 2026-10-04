@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/account/custom_settings_section.dart';
 import 'package:carlton/controllers/account/support_controller.dart';
@@ -24,19 +25,13 @@ class SupportView extends GetView<SupportController> {
       ),
       body: Obx(() {
         if (controller.loading.value) {
-          return const Center(child: CustomProgressIndicator());
+          return const Center(child: LogoLoadingIndicator(size: 50));
         }
         if (controller.hasError.value) {
-          return CustomEmptyPlaceholder(
-            iconWidget: const Icon(
-              Icons.wifi_off_rounded,
-              size: 48,
-              color: AppColors.mediumGrey,
-            ),
+          return CustomEmptyPlaceholder.loadFailed(
             title: AppTranslations.supportLoadFailed,
             subtitle: AppTranslations.checkConnectionShort,
-            primaryLabel: AppTranslations.retry,
-            onPrimary: controller.reload,
+            onRetry: controller.reload,
           );
         }
         // Reachable and empty: the hotel has published no FAQs. Chat still works,
@@ -73,7 +68,7 @@ class SupportView extends GetView<SupportController> {
             if (controller.loadingMore.value)
               const Padding(
                 padding: EdgeInsets.only(bottom: 20),
-                child: CustomProgressIndicator(),
+                child: Center(child: SpinningIconIndicator(size: 28)),
               ),
             CustomFilledButton(
               width: double.infinity,
@@ -144,8 +139,7 @@ class _FaqRow extends GetView<SupportController> {
               if (expanded)
                 Text(
                   faq.answer.value,
-                  style: textStyle.bodySmall?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmBodySmall?.copyWith(
                     color: AppColors.taupeBrown,
                   ),
                 ),

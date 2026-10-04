@@ -1,3 +1,5 @@
+import 'package:carlton/theme/theme.dart';
+import 'package:carlton/components/booking_step_header.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/components/cards/custom_add_on_summary_tile.dart';
@@ -11,7 +13,6 @@ import 'package:carlton/components/custom_selectable_card.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 /// Step 3 — optional extras (Figma "Booking / Step 3"). The CTA label is
 /// dynamic: "Skip — No Extras" ↔ "Continue with N extras".
@@ -29,21 +30,9 @@ class AddOnsView extends StatelessWidget {
     );
 
     return CustomScaffold(
-      appBar: AppBar(
-        title: Text(AppTranslations.addOns),
-        iconTheme: IconThemeData(color: Colors.black),
-        actions: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.whisperGrey,
-            ),
-            child: IconButton(
-              onPressed: Get.back<void>,
-              icon: const Icon(Icons.close, color: AppColors.inkBlack),
-            ),
-          ),
-        ],
+      appBar: BookingStepAppBar(
+        title: AppTranslations.addOns,
+        onClose: Get.back,
       ),
       body: Obx(() {
         final TextTheme textStyle = Get.textTheme;
@@ -53,17 +42,7 @@ class AddOnsView extends StatelessWidget {
           child: Column(
             spacing: 10,
             children: [
-              AnimatedSmoothIndicator(
-                activeIndex: 2,
-                count: 6,
-                effect: SlideEffect(
-                  dotHeight: 5,
-                  dotWidth: 50,
-                  spacing: 20,
-                  activeDotColor: AppColors.primary,
-                  dotColor: AppColors.iceBlue,
-                ),
-              ),
+              BookingStepIndicator(step: 2),
               // CustomScrollView needs bounded height inside the Column, so
               // it stays wrapped in Expanded.
               Expanded(
@@ -97,7 +76,7 @@ class AddOnsView extends StatelessWidget {
                       const SliverToBoxAdapter(
                         child: Padding(
                           padding: EdgeInsets.all(20),
-                          child: CustomProgressIndicator(),
+                          child: Center(child: LogoLoadingIndicator(size: 50)),
                         ),
                       )
                     else if (controller.addOns.isEmpty)
@@ -147,8 +126,7 @@ class AddOnsView extends StatelessWidget {
                     title: AppTranslations.extrasTotal,
                     value:
                         '+${MoneyFormat.usd(controller.selectedAddOnsTotalUsd)}',
-                    titleStyle: textStyle.labelMedium?.copyWith(
-                      fontFamily: 'DM Sans',
+                    titleStyle: textStyle.dmLabelMedium?.copyWith(
                       color: AppColors.inkBlack,
                     ),
                     valueStyle: textStyle.labelMedium?.copyWith(

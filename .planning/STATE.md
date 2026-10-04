@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 9
-current_phase_name: Night Audit & Reports
+current_phase: 10
+current_phase_name: Loyalty Points Program
 status: executing
-stopped_at: Phase 9 complete (10/10 plans, suite 2376 green); Phase 10 (Loyalty) pending, unplanned
-last_updated: "2026-10-04T16:42:50.887Z"
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-10-04T18:18:30.139Z"
 last_activity: 2026-10-04
-last_activity_desc: Phase 9 closed (2376 tests green).
+last_activity_desc: Phase 10 execution started
 progress:
-  total_phases: 10
-  completed_phases: 9
-  total_plans: 74
-  completed_plans: 74
+  total_phases: 11
+  completed_phases: 5
+  total_plans: 98
+  completed_plans: 63
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-25)
 
 **Core value:** Every screen the dashboard and guest app already show works against a real, tested, convention-compliant `/api` endpoint instead of mock data.
-**Current focus:** Phase 10: Loyalty Points Program (pending, unplanned)
+**Current focus:** Phase 10 — Loyalty Points Program
 
 ## Current Position
 
-Phase: 9 of 10 (Night Audit & Reports) — complete; milestone phases 1-9 complete, Phase 10 (Loyalty) pending
-Plan: 10 of 10 in Phase 9 (09-01 .. 09-10 complete)
+Phase: 10 (Loyalty Points Program) — EXECUTING
+Plan: 2 of 15
 Status: Ready to execute
-Last activity: 2026-10-04 — Phase 9 closed (2376 tests green).
+Last activity: 2026-10-04 — Phase 10 execution started
 
-Progress: [█████████░] 90%
+Progress: [██████░░░░] 64%
 
 ## Performance Metrics
 
@@ -54,6 +54,11 @@ Progress: [█████████░] 90%
 - Trend: -
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 10 P01 | 45min | 3 tasks | 34 files |
 
 ## Accumulated Context
 
@@ -79,6 +84,8 @@ Recent decisions affecting current work:
 - [Phase 7]: Ticket timeline `ticket_actions` canonical and append-only; record-only recovery links Phase 5 folio credits; queue claim for all three types; reception/concierge gain `tickets.*` (A4 debt: chat + event inquiries ride on it)
 - [Phase 8]: Event-inquiry routes re-gated to new `events.view|manage|deposit` (26 -> 29 permissions, 11 -> 12 groups), resolving the event half of the A4 debt; event deposit is a ledger-backed `payments` row (single writer, Idempotency-Key); `media.collection` added for venue menu files; `ReserveTableAction` stores true UTC (closed 3886416)
 - [Phase 9 plan]: New `night_audit.manage` (29 -> 30 permissions, 12 -> 13 groups), no preset changes; audit GET gated `reports.view|night_audit.manage`; persisted business-date singleton advanced only by explicit `POST …/{audit}/close` (AUDIT-04 added); blockers only for unsettled departures + unassigned arrivals; reports use posted folio lines (revenue) and completed payments by payable type (collections), exact integer-cents aggregation
+- [Phase ?]: [Phase 10-01] LoyaltyReward registered in RecycleBinRetentionTest::SOFT_DELETABLE now (auto-discovered purge list); 10-08 step 8 is verify-only
+- [Phase ?]: [Phase 10-01] loyalty_rewards carries a standalone sort_order index (CmsListIndexTest) besides (is_active, sort_order); voucher/application FK indexes served by composite leftmost prefixes
 
 ### Pending Todos
 
@@ -112,6 +119,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-04T00:00:00.000Z
-Stopped at: Phase 9 complete; Phase 10 pending, unplanned
-Resume file: None (next: /gsd-plan-phase 10)
+Last session: 2026-10-04T18:18:30.112Z
+Stopped at: Completed 10-01-PLAN.md
+Resume file: None

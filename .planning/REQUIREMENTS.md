@@ -87,13 +87,13 @@ All routes are under `/api` (the code has no `/v1` segment — `bootstrap/app.ph
 ### Loyalty Points Program
 
 - [ ] **LOY-01**: Staff can read and update the six program settings (earn rate, redeem value, expiry months, expiry-warning days, minimum points to redeem, max % payable with points); changes are audited
-- [ ] **LOY-02**: With no rates configured the program is inactive (no earning, redemption refused); no rates are seeded
+- [x] **LOY-02**: With no rates configured the program is inactive (no earning, redemption refused); no rates are seeded
 - [ ] **LOY-03**: Settling a folio credits integer points (round half up) on room-stay spend and on services/F&B spend, once, atomically with settlement, under every settlement path, never on a cancelled reservation
-- [ ] **LOY-04**: Earning is idempotent: a retried or concurrent settlement never double-credits; guests with no account and unconfigured programs earn nothing; no historical backfill
+- [x] **LOY-04**: Earning is idempotent: a retried or concurrent settlement never double-credits; guests with no account and unconfigured programs earn nothing; no historical backfill
 - [ ] **LOY-05**: Staff can award or deduct points manually with a mandatory reason, idempotently and audited; a deduction can never exceed the available balance
 - [ ] **LOY-06**: A guest sees available points, points expiring soon, and a paginated ledger (earn / redeem / expire / adjust / clawback / refund) tied to bookings
 - [ ] **LOY-07**: Staff can view any guest's balance and ledger
-- [ ] **LOY-08**: Each earn batch expires after the configured months (hotel-local end of day); points are consumed FIFO; expired points are never spendable even before the sweep runs
+- [x] **LOY-08**: Each earn batch expires after the configured months (hotel-local end of day); points are consumed FIFO; expired points are never spendable even before the sweep runs
 - [ ] **LOY-09**: A daily job expires batches and writes expire ledger entries idempotently
 - [ ] **LOY-10**: A guest is notified once per batch N days before expiry through the existing notification system, in the guest's language
 - [ ] **LOY-11**: Staff manage a rewards catalog (AR/EN name and description, points cost, type discount voucher / free night / room upgrade) with a recycle bin
@@ -102,7 +102,7 @@ All routes are under `/api` (the code has no `/v1` segment — `bootstrap/app.ph
 - [ ] **LOY-14**: A guest lists their own vouchers by status
 - [ ] **LOY-15**: A guest can preview points earnable and the discount for a prospective booking without side effects
 - [ ] **LOY-16**: A guest can pay part of a booking with points (free-form) subject to the minimum and the max-% cap, or apply one voucher; the discount reduces the reservation total, is atomic with reservation creation and idempotent via `Idempotency-Key` (replay returns the same reservation)
-- [ ] **LOY-17**: Cancelling a reservation refunds spent points, restores a used voucher and claws back points earned from its settled folio, idempotently, never producing a negative balance
+- [x] **LOY-17**: Cancelling a reservation refunds spent points, restores a used voucher and claws back points earned from its settled folio, idempotently, never producing a negative balance
 - [ ] **LOY-18**: A callable, tested folio-refund reversal exists for the future refund flow
 - [ ] **LOY-19**: Staff can report points issued (earn + positive adjust), redeemed, expired, refunded, clawed back, adjusted out and outstanding points over a period
 - [ ] **LOY-20**: New `loyalty.*` permissions are seeded, enforced by route middleware and shown in the permission picker; no preset changes

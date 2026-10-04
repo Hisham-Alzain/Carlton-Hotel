@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 10
 current_phase_name: Loyalty Points Program
 status: executing
-stopped_at: Completed 10-01-PLAN.md
-last_updated: "2026-10-04T18:18:30.139Z"
+stopped_at: Completed 10-02-PLAN.md
+last_updated: "2026-10-04T18:36:14.404Z"
 last_activity: 2026-10-04
 last_activity_desc: Phase 10 execution started
 progress:
   total_phases: 11
   completed_phases: 5
   total_plans: 98
-  completed_plans: 63
+  completed_plans: 64
 ---
 
 # Project State
@@ -32,7 +32,7 @@ Plan: 2 of 15
 Status: Ready to execute
 Last activity: 2026-10-04 — Phase 10 execution started
 
-Progress: [██████░░░░] 64%
+Progress: [███████░░░] 65%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [██████░░░░] 64%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 10 P01 | 45min | 3 tasks | 34 files |
+| Phase 10 P02 | 30min | 2 tasks | 18 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,7 @@ Recent decisions affecting current work:
 - [Phase 9 plan]: New `night_audit.manage` (29 -> 30 permissions, 12 -> 13 groups), no preset changes; audit GET gated `reports.view|night_audit.manage`; persisted business-date singleton advanced only by explicit `POST …/{audit}/close` (AUDIT-04 added); blockers only for unsettled departures + unassigned arrivals; reports use posted folio lines (revenue) and completed payments by payable type (collections), exact integer-cents aggregation
 - [Phase ?]: [Phase 10-01] LoyaltyReward registered in RecycleBinRetentionTest::SOFT_DELETABLE now (auto-discovered purge list); 10-08 step 8 is verify-only
 - [Phase ?]: [Phase 10-01] loyalty_rewards carries a standalone sort_order index (CmsListIndexTest) besides (is_active, sort_order); voucher/application FK indexes served by composite leftmost prefixes
+- [Phase ?]: [Phase 10-02] LoyaltyMath rejects negatives in every entry point and LoyaltyProgram avoids ?? except minRedeemPoints(); a null rate or cap only ever means the capability is off
 
 ### Pending Todos
 
@@ -119,6 +121,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-04T18:18:30.112Z
-Stopped at: Completed 10-01-PLAN.md
+Last session: 2026-10-04T18:36:14.389Z
+Stopped at: Completed 10-02-PLAN.md
 Resume file: None

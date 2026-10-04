@@ -106,8 +106,8 @@ All routes are under `/api` (the code has no `/v1` segment — `bootstrap/app.ph
 - [ ] **LOY-18**: A callable, tested folio-refund reversal exists for the future refund flow
 - [ ] **LOY-19**: Staff can report points issued (earn + positive adjust), redeemed, expired, refunded, clawed back, adjusted out and outstanding points over a period
 - [ ] **LOY-20**: New `loyalty.*` permissions are seeded, enforced by route middleware and shown in the permission picker; no preset changes
-- [ ] **LOY-21**: Every new string exists in all five locale files; every new route has happy / 401 / 403 / 422 tests; docs, Postman and the tree are updated
-- [ ] **LOY-22**: With `redeem_value_usd` or `max_redeem_percent` unset, points-to-discount is refused (`loyalty_program_inactive`); an unset cap never behaves as 100%, and catalog redemption stays available
+- [x] **LOY-21**: Every new string exists in all five locale files; every new route has happy / 401 / 403 / 422 tests; docs, Postman and the tree are updated
+- [x] **LOY-22**: With `redeem_value_usd` or `max_redeem_percent` unset, points-to-discount is refused (`loyalty_program_inactive`); an unset cap never behaves as 100%, and catalog redemption stays available
 
 ### Documentation & Contract
 

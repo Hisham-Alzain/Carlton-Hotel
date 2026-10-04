@@ -375,7 +375,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Support Tickets & Queue | 11/11 | Complete | 2026-10-02 (0961153) |
 | 8. Events & Dining | 10/10 | Complete | 2026-10-03 (3886416) |
 | 9. Night Audit & Reports | 10/10 | Complete | 2026-10-04 |
-| 10. Loyalty Points Program | 1/15 | In Progress|  |
+| 10. Loyalty Points Program | 2/15 | In Progress|  |
 
 ### Phase 10: Loyalty Points Program
 
@@ -392,12 +392,12 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
   6. Contract gate: happy / 401 / 403 / 422 per route, 5 locales, docs/Postman/tree updated, Flutter/React teams notified of the contract strings and error codes.
 
 **Research**: Done (`10-RESEARCH.md`); rulings in `10-DISCUSSION-LOG.md`.
-**Plans:** 1/15 plans executed
+**Plans:** 2/15 plans executed
 
 Plans:
 
 - [x] 10-01-PLAN.md — Foundation: Phase 9 committed check, 7 tables, 6 enums, `config/loyalty.php`, models, factories, `BuildsLoyaltyFixtures` (LOY-02, LOY-04, LOY-08, LOY-17)
-- [ ] 10-02-PLAN.md — `LoyaltyMath`, `LoyaltyProgram`, 8 exceptions, error keys in 5 locales (LOY-02, LOY-08, LOY-21, LOY-22)
+- [x] 10-02-PLAN.md — `LoyaltyMath`, `LoyaltyProgram`, 8 exceptions, error keys in 5 locales (LOY-02, LOY-08, LOY-21, LOY-22)
 - [ ] 10-03-PLAN.md — `LoyaltyLedger`: FIFO spend, refund, clawback, expire (LOY-08, LOY-13, LOY-17)
 - [ ] 10-04-PLAN.md — Settings API, 3 `loyalty.*` permissions, count re-pins (LOY-01, LOY-02, LOY-20, LOY-21, LOY-22)
 - [ ] 10-05-PLAN.md — Earn wired into the 3 settlement sites (LOY-02, LOY-03, LOY-04)

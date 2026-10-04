@@ -2,6 +2,7 @@
 
 namespace App\Actions\Folio;
 
+use App\Actions\Loyalty\EarnLoyaltyPointsAction;
 use App\Actions\Payment\RecordCashPaymentAction;
 use App\Enums\FolioStatus;
 use App\Exceptions\FolioOverpaymentException;
@@ -25,10 +26,16 @@ use Illuminate\Support\Facades\DB;
  * Pre-departure money goes through the reservation-level deposit route; this
  * route is the departure desk (auto-settle closes the folio; there is no
  * reopen).
+ *
+ * Phase 10 (Q8): the settling payment also earns loyalty points, inline under
+ * this folio lock (EarnLoyaltyPointsAction).
  */
 class RecordFolioPaymentAction
 {
-    public function __construct(private readonly RecordCashPaymentAction $recordCashPayment) {}
+    public function __construct(
+        private readonly RecordCashPaymentAction $recordCashPayment,
+        private readonly EarnLoyaltyPointsAction $earnLoyalty,
+    ) {}
 
     public function handle(Folio $folio, User $recorder, array $data, string $key): array
     {
@@ -78,6 +85,7 @@ class RecordFolioPaymentAction
 
         if (bccomp($locked->balanceDueUsd(), '0', 2) <= 0) {
             $locked->update(['status' => FolioStatus::SETTLED, 'settled_at' => now()]);
+            $this->earnLoyalty->handle($locked);
 
             activity()
                 ->performedOn($locked)

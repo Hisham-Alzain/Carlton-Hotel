@@ -2,6 +2,7 @@
 
 namespace App\Actions\Folio;
 
+use App\Actions\Loyalty\EarnLoyaltyPointsAction;
 use App\Actions\Payment\RecordCashPaymentAction;
 use App\Enums\FolioStatus;
 use App\Exceptions\FolioSettledException;
@@ -23,10 +24,15 @@ use Illuminate\Validation\ValidationException;
  *    (tightening it to the exact balance is deferred), then the folio closes.
  *
  * The result carries `payment_recorded` so the controller can pick the message.
+ *
+ * Phase 10 (Q8): loyalty earn runs inline under this folio lock.
  */
 class SettleFolioAction
 {
-    public function __construct(private readonly RecordCashPaymentAction $recordCashPayment) {}
+    public function __construct(
+        private readonly RecordCashPaymentAction $recordCashPayment,
+        private readonly EarnLoyaltyPointsAction $earnLoyalty,
+    ) {}
 
     public function handle(Folio $folio, ?string $method, ?string $amount, User $recorder, ?string $notes = null): array
     {
@@ -44,6 +50,7 @@ class SettleFolioAction
 
             if (bccomp($balance, '0', 2) <= 0) {
                 $locked->update(['status' => FolioStatus::SETTLED, 'settled_at' => now()]);
+                $this->earnLoyalty->handle($locked);
 
                 activity()
                     ->performedOn($locked)
@@ -69,6 +76,7 @@ class SettleFolioAction
             $this->recordCashPayment->handle($locked, $method, FolioLedger::normalize($amount), $recorder, $notes);
 
             $locked->update(['status' => FolioStatus::SETTLED, 'settled_at' => now()]);
+            $this->earnLoyalty->handle($locked);
 
             return ['data' => $locked->fresh(), 'code' => 200, 'payment_recorded' => true];
         });

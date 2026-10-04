@@ -51,10 +51,13 @@ class VerifyOtpAction
                 : Guest::byEmail($identifier)->first();
 
             if (! $guest) {
+                // Phase 9.1 D-03: seed the locale SetLocale negotiated (always a configured one);
+                // the app mirrors preferred_locale on first login. Existing guests are never touched.
                 $guest = Guest::create(
-                    $isPhone
+                    ($isPhone
                         ? ['phone' => $identifier, 'phone_country' => 'SY']
-                        : ['email' => $identifier]
+                        : ['email' => $identifier])
+                    + ['preferred_locale' => app()->getLocale()]
                 );
             }
 

@@ -68,6 +68,7 @@ return [
         'night_audit_check_updated'    => 'Contrôle de l\'audit de nuit mis à jour.',
         'night_audit_blocker_resolved' => 'Point bloquant de l\'audit de nuit résolu.',
         'night_audit_closed'           => 'Date d\'exploitation clôturée.',
+        'exchange_rate_recorded'       => 'Taux de change enregistré.',
     ],
     'errors'     => [
         'server_error'           => 'Une erreur est survenue.',
@@ -136,6 +137,9 @@ return [
         'night_audit_closed'           => 'Cet audit de nuit est déjà clôturé.',
         'night_audit_item_resolved'    => 'Cet élément de l\'audit de nuit a déjà été résolu.',
         'night_audit_not_ready'        => 'L\'audit de nuit ne peut pas être clôturé tant que tous les contrôles et points bloquants ne sont pas résolus.',
+        'guest_account_deletion_blocked' => 'Votre compte ne peut pas être supprimé tant que vous avez un séjour en cours, une facture ouverte ou une réservation à venir. Veuillez contacter la réception.',
+        'guest_account_deleted'        => 'Ce compte client a été supprimé.',
+        'exchange_rate_large_change'   => 'Le nouveau taux diffère du taux actuel de plus de 50 %. Confirmez la modification pour l\'enregistrer.',
         'loyalty_program_inactive'     => 'Le programme de fidélité n\'est pas actif pour cette action.',
         'loyalty_insufficient_points'  => 'Vous n\'avez pas assez de points de fidélité.',
         'loyalty_below_minimum'        => 'Le nombre de points est inférieur au minimum échangeable.',
@@ -151,6 +155,7 @@ return [
         'logged_out'     => 'Déconnexion réussie.',
         'otp_verified'   => 'Vérification réussie.',
         'booking_linked' => 'Réservation associée avec succès.',
+        'account_deleted' => 'Votre compte a été supprimé.',
     ],
     'notifications' => [
         'welcome_title'        => 'Bienvenue au Carlton',
@@ -223,6 +228,7 @@ return [
         'date_range_max'       => 'La plage de dates ne peut pas dépasser :days jours.',
         'prohibits'            => 'Le champ :attribute ne peut pas être utilisé avec :other.',
         'report_period_too_long' => 'La période du rapport ne peut pas dépasser 31 jours.',
+        'accepted'               => 'Le champ :attribute doit être accepté.',
     ],
     'event_checklist' => [
         'contract'  => 'Contrat signé',
@@ -256,5 +262,9 @@ return [
     ],
     'attributes' => [
         'amount_usd' => 'montant (USD)',
+        'confirm'    => 'confirmation',
+        'currency'   => 'devise',
+        'rate'       => 'taux',
+        'confirm_large_change' => 'confirmation de variation importante',
     ],
 ];

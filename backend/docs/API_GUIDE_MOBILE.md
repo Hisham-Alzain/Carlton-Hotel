@@ -20,13 +20,13 @@ All paths below are relative to this base.
 | Header | When | Value |
 |---|---|---|
 | `Accept` | Always | `application/json` |
-| `Accept-Language` | Always | `en` or `ar` — controls only `message`/error/validation strings |
+| `Accept-Language` | Always | `en`, `ar`, `fr`, `tr` or `es` (negotiated server-side; falls back to the app default locale) — controls only `message`/error/validation strings |
 | `Content-Type` | Requests with body | `application/json` |
 | `Authorization` | Authenticated requests | `Bearer <guest-token>` |
 
 Mirror `guest.preferred_locale` (returned at login) into the app locale setting on first login.
 
-**`Accept-Language` does NOT localize content fields.** Bilingual content (room names, menu items, page bodies, etc.) is always returned as `{ "en": "...", "ar": "..." }` — the header only picks the language of the envelope's `message` and validation error strings. The app is responsible for picking `field.en` or `field.ar` itself based on the app's own locale.
+**`Accept-Language` does NOT localize content fields.** Translatable content (room names, menu items, page bodies, etc.) is returned as a locale-keyed map over the configured locales (`{ "en": "...", "ar": "...", "fr": "..." }`; a locale with no content may be absent) — the header only picks the language of the envelope's `message` and validation error strings. The app is responsible for picking `field[locale]` itself based on the app's own locale, falling back to `en`.
 
 ## Standard response envelope
 
@@ -93,7 +93,7 @@ Both gates reject with `error_code: no_active_reservation` (403) when unmet — 
 
 ## Endpoint index
 
-Every endpoint the app can reach — 62 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
+Every endpoint the app can reach — 64 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
 
 | Tier | Method | Path | Section |
 |---|---|---|---|
@@ -104,7 +104,9 @@ Every endpoint the app can reach — 62 in total. Tier column: **P** public (no 
 | G | GET | `/auth/guest/me` | [Guest Auth](#module-guest-auth) |
 | G | PUT | `/auth/guest/profile` | [Guest Auth](#module-guest-auth) |
 | G | PATCH | `/auth/guest/preferences` | [Guest Auth](#module-guest-auth) |
+| G | DELETE | `/auth/guest/me` | [Guest Auth](#module-guest-auth) |
 | G | POST | `/auth/guest/logout` | [Guest Auth](#module-guest-auth) |
+| P | GET | `/public/exchange-rates` | [Content](#module-content-tier-1-public) |
 | P | GET | `/public/home-sliders` | [Content](#module-content-tier-1-public) |
 | P | GET | `/public/room-types` | [Content](#module-content-tier-1-public) |
 | P | GET | `/public/room-types/{uuid}` | [Content](#module-content-tier-1-public) |
@@ -286,6 +288,7 @@ No code in the response — delivered via the chosen channel. `expires_in` is se
 - Store `token` in Flutter Secure Storage. Use as `Authorization: Bearer <token>` on all tier-2/3 requests.
 - `guest.uuid` is the stable guest identifier — never use integer IDs.
 - Mirror `guest.preferred_locale` into the app locale on first login.
+- When this call **creates** a new guest, `preferred_locale` is seeded from the request's negotiated `Accept-Language` locale (`en`/`ar`/`fr`/`tr`/`es`, falling back to the app default). An existing guest's `preferred_locale` is never changed by the header — send `Accept-Language` in the app locale on this call.
 
 ---
 
@@ -372,7 +375,7 @@ Show `masked_contact` so the guest knows where to look.
 | `phone` | E.164 format (`+963...`). |
 | `phone_country` | ISO 3166-1 alpha-2 (e.g. `SY`). |
 | `phone_verified` / `email_verified` | `false` = contact not yet OTP-verified. |
-| `preferred_locale` | `en` or `ar`. Mirror into app locale on first login. |
+| `preferred_locale` | One of `en`, `ar`, `fr`, `tr`, `es`. Mirror into app locale on first login. |
 | `first_name` / `last_name` | Null until the profile is completed — see below. |
 | `preferences` | `{ bed_type, pillow_type, floor_preference, other, updated_at }` on `me`, on the profile PUT response and wherever the guest object is nested (e.g. `GET /reservations` items' `guest`) — the same object `PATCH /auth/guest/preferences` returns (Phase 4, D-09). |
 
@@ -388,7 +391,7 @@ Show `masked_contact` so the guest knows where to look.
 | `last_name` | string | optional | Max 255 |
 | `phone` | string | optional | Normalized to E.164 server-side; send local format if you like |
 | `email` | string | optional | Lower-cased server-side |
-| `preferred_locale` | string | optional | `en` or `ar` |
+| `preferred_locale` | string | optional | `en`, `ar`, `fr`, `tr` or `es`. Trimmed and lower-cased (`"FR"` becomes `fr`). Region tags (`fr-FR`), unknown values (`de`), `""` and `null` are 422 `validation_failed` on `preferred_locale`. Omitting it leaves the stored value unchanged. |
 
 Send only the fields you are changing — omitted fields are left alone.
 
@@ -418,6 +421,54 @@ Send only the fields you are changing — omitted fields are left alone.
 **Response `data`** (HTTP 200): `{ "bed_type": "king", "pillow_type": "firm", "floor_preference": "high", "other": "Extra towels please", "updated_at": "2026-09-26T10:00:00+00:00" }`, message `"Preferences updated."`. The same object also appears as `preferences` on `GET /api/auth/guest/me`.
 
 **Failure `error_code`s:** `unauthenticated` (401), `validation_failed` (422 — unknown enum value, `extra` for `bed_type`, or `errors.preferences` on a body with none of the four keys).
+
+---
+
+### DELETE /api/auth/guest/me
+
+**Purpose:** In-app account deletion (Apple 5.1.1(v)). The account is anonymized, never hard-deleted.
+
+**Who can call:** Tier-2 (any guest token). Throttled 5/min per guest.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `confirm` | boolean | ✅ | Must be accepted: `true`, `1`, `"yes"` or `"on"`. Missing, `false` or `"no"` is 422 `validation_failed` with `errors.confirm`. |
+
+**Response** (HTTP 200): `{ "success": true, "message": "Your account has been deleted.", "data": null, "request_id": "..." }`. All of the guest's tokens on every device are revoked, so a second call (or any later call with the same token) is `401`.
+
+**Blocked** — 422 `guest_account_deletion_blocked`, message (en): "Your account can't be deleted while you have an active stay, an open bill or an upcoming booking. Please contact the front desk."
+```json
+{
+  "success": false,
+  "message": "...",
+  "error_code": "guest_account_deletion_blocked",
+  "context": { "reasons": ["active_reservation"], "booking_codes": ["CARL-7K2M9QXA"] },
+  "request_id": "..."
+}
+```
+
+`context.reasons` is in a fixed order and any subset of:
+
+| Reason | Meaning |
+|---|---|
+| `active_reservation` | A pending/confirmed stay with `check_out` today or later, or any `checked_in` stay. |
+| `open_folio` | A reservation whose folio is still open (e.g. after express check-out — staff must settle). |
+| `upcoming_service_booking` | A pending/confirmed service booking scheduled in the future. |
+
+`context.booking_codes`: sorted, at most 10, of the blocking reservations. Not blocking: cancelled, `pending_verification`, checked-out with a settled folio, and past no-show stays.
+
+**What happens**
+- **Erased:** name, first/last name, phone, email, verification timestamps, preferences; all sign-in tokens, device push tokens, in-app notifications, staff notes and OTP codes; chat conversations are closed and the guest's own messages' text and attachments removed; ID documents except those of completed (checked-out) stays; the phone copy on reservations.
+- **Kept (legal/accounting):** reservations (booking code, last name), folios, payments, refunds, disputes, service bookings/requests, tickets, event inquiries, reviews (shown without a name), ID registration documents of checked-out stays.
+- **Re-registration:** signing in again with the same phone/email creates a **new** account (new `uuid`). Old stays are not visible to it and cannot be re-linked.
+
+**App guidance:** show a confirmation dialog explaining what is deleted vs kept, then call. On 200, clear the token and local data and go to sign-in. On 422 `guest_account_deletion_blocked`, show the front-desk message and the `booking_codes`.
+
+**Failure `error_code`s:** `validation_failed` (422), `guest_account_deletion_blocked` (422), `unauthenticated` (401), `too_many_requests` (429, after 5 calls per minute).
+
+**Store compliance:** Apple 5.1.1(v) requires in-app deletion (this route). Google Play also needs a web path — the website offers it via guest OTP sign-in plus this same route.
 
 ---
 
@@ -530,6 +581,36 @@ Menu item shape: `{ uuid, type, name, description, price_usd, is_vegan, photo }`
 - `POST /api/reviews/{type}/{uuid}` — tier-2. Body `{ "rating": 1-5, "comment"?: string }`. Submitting again **edits** your existing review rather than adding a second one (201 the first time, 200 after).
 
 Review shape: `{ uuid, rating, comment, is_verified_stay, created_at, author: { first_name, last_name } }`. `is_verified_stay` is derived server-side from your reservation history — you cannot set it.
+
+### GET /api/public/exchange-rates
+
+**Purpose:** Display-only currency conversion rates for the SYP/TRY price labels.
+
+**Who can call:** Public (no token needed; a guest token also works). Throttled 60/min. Sent with `Cache-Control: public, max-age=300`. Not paginated — a flat object like `/public/settings`.
+
+**Response `data`:**
+```json
+{
+  "base": "USD",
+  "stale_after_hours": 168,
+  "rates": [
+    { "currency": "SYP", "rate": "13000.000000", "display_decimals": 0, "updated_at": "2026-10-04T08:00:00Z", "is_stale": false },
+    { "currency": "TRY", "rate": null, "display_decimals": 2, "updated_at": null, "is_stale": true }
+  ]
+}
+```
+
+| Field | Notes |
+|---|---|
+| `rates[]` | One entry per configured currency, in config order (`SYP`, `TRY` today). |
+| `rate` | Units of the currency per 1 USD, a **decimal string with 6 decimals** — parse as decimal, never float. `null` when no rate has been set yet; keep the app's built-in fallback. |
+| `display_decimals` | Round the converted amount to this many decimals. |
+| `updated_at` | ISO 8601 UTC, or `null` when no rate yet. |
+| `is_stale` | `true` when there is no rate or it is older than `stale_after_hours`. |
+
+**Conversion is display-only:** `usd × rate`, rounded to `display_decimals`. The server never charges or settles in SYP/TRY — every payment stays USD.
+
+**App guidance:** fetch on launch and on the checkout screen, keep the last good copy, and show "rates as of {updated_at}" when `is_stale`.
 
 ---
 

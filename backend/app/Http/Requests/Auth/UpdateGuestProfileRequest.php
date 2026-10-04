@@ -4,6 +4,7 @@ namespace App\Http\Requests\Auth;
 
 use App\Base\BaseRequest;
 use App\Support\NormalizesPhone;
+use App\Support\TranslatableRules;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -25,6 +26,10 @@ class UpdateGuestProfileRequest extends BaseRequest
         if ($this->filled('email')) {
             $this->merge(['email' => strtolower(trim($this->input('email')))]);
         }
+        if (is_string($this->input('preferred_locale'))) {
+            // 'FR' / ' fr ' fold to 'fr'; a region tag like 'fr-FR' is not folded and fails `in`.
+            $this->merge(['preferred_locale' => strtolower(trim($this->input('preferred_locale')))]);
+        }
     }
 
     public function rules(): array
@@ -36,7 +41,8 @@ class UpdateGuestProfileRequest extends BaseRequest
             'last_name'        => ['sometimes', 'required', 'string', 'max:255'],
             'phone'            => ['sometimes', 'nullable', 'string', Rule::unique('guests', 'phone')->ignore($guestId)],
             'email'            => ['sometimes', 'nullable', 'email', Rule::unique('guests', 'email')->ignore($guestId)],
-            'preferred_locale' => ['sometimes', 'in:en,ar'],
+            // Phase 9.1 D-01: the configured CMS locales are the only source, never a literal list.
+            'preferred_locale' => ['sometimes', 'string', Rule::in(TranslatableRules::locales())],
         ];
     }
 

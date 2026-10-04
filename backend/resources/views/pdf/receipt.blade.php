@@ -1,7 +1,7 @@
 @php
     $reservation = $receipt['reservation'];
     $folio       = $receipt['folio'];
-    $guestName   = trim("{$reservation->guest?->first_name} {$reservation->guest?->last_name}") ?: $reservation->guest?->name;
+    $guestName   = trim("{$reservation->guest?->first_name} {$reservation->guest?->last_name}") ?: ($reservation->guest?->name ?: $reservation->last_name); // Phase 9.1 D-12: an erased guest has no names
     $align       = $isRtl ? 'right' : 'left';
     $alignEnd    = $isRtl ? 'left' : 'right';
 @endphp

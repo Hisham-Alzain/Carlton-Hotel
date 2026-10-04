@@ -24,6 +24,8 @@ class GuestDirectoryTest extends TestCase
     private const ROW_KEYS = [
         'uuid', 'name', 'first_name', 'last_name', 'phone', 'phone_country', 'phone_verified',
         'email', 'email_verified', 'preferred_locale', 'stay_status', 'current_reservation', 'created_at',
+        // Phase 9.1 (D-12), additive.
+        'account_status', 'account_deleted_at',
     ];
 
     private int $roomSeq = 100;

@@ -40,6 +40,8 @@ class GuestProfileTest extends TestCase
         'email_verified', 'preferred_locale', 'created_at', 'stay_status', 'stats', 'preferences',
         'current_reservation', 'pre_arrival_checklist', 'stay_history', 'stays_total', 'has_more',
         'notes', 'notes_count',
+        // Phase 9.1 (D-12), additive.
+        'account_status', 'account_deleted_at',
     ];
 
     private const RESERVATION_KEYS = [

@@ -68,6 +68,7 @@ return [
         'night_audit_check_updated'    => 'Night audit check updated.',
         'night_audit_blocker_resolved' => 'Night audit blocker resolved.',
         'night_audit_closed'           => 'Business date closed.',
+        'exchange_rate_recorded'       => 'Exchange rate saved.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',
@@ -136,6 +137,9 @@ return [
         'night_audit_closed'           => 'This night audit is already closed.',
         'night_audit_item_resolved'    => 'This night audit item has already been resolved.',
         'night_audit_not_ready'        => 'The night audit cannot be closed until every check and blocker is resolved.',
+        'guest_account_deletion_blocked' => 'Your account can\'t be deleted while you have an active stay, an open bill or an upcoming booking. Please contact the front desk.',
+        'guest_account_deleted'        => 'This guest account has been deleted.',
+        'exchange_rate_large_change'   => 'The new rate differs from the current one by more than 50%. Confirm the change to save it.',
         'loyalty_program_inactive'     => 'The loyalty program is not active for this action.',
         'loyalty_insufficient_points'  => 'You do not have enough loyalty points.',
         'loyalty_below_minimum'        => 'The number of points is below the minimum you can redeem.',
@@ -151,6 +155,7 @@ return [
         'logged_out'     => 'Logged out successfully.',
         'otp_verified'   => 'Verification successful.',
         'booking_linked' => 'Booking linked successfully.',
+        'account_deleted' => 'Your account has been deleted.',
     ],
     'notifications' => [
         'welcome_title'        => 'Welcome to Carlton',
@@ -223,6 +228,7 @@ return [
         'date_range_max'       => 'The date range may span at most :days days.',
         'prohibits'            => 'The :attribute field cannot be used together with :other.',
         'report_period_too_long' => 'The report period may span at most 31 days.',
+        'accepted'               => 'The :attribute field must be accepted.',
     ],
     'event_checklist' => [
         'contract'  => 'Contract signed',
@@ -256,5 +262,9 @@ return [
     ],
     'attributes' => [
         'amount_usd' => 'amount (USD)',
+        'confirm'    => 'confirmation',
+        'currency'   => 'currency',
+        'rate'       => 'rate',
+        'confirm_large_change' => 'large-change confirmation',
     ],
 ];

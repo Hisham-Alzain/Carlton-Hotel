@@ -19,6 +19,7 @@ use App\Enums\OtpPurpose;
 use App\Enums\PaymentMethod;
 use App\Enums\ReservationSource;
 use App\Enums\ReservationStatus;
+use App\Exceptions\GuestAccountDeletedException;
 use App\Exceptions\HoldExpiredException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ReservationStateException;
@@ -197,8 +198,15 @@ class ReservationService
     private function resolveGuestForStaffBooking(array $data): Guest
     {
         if (! empty($data['guest_uuid'])) {
-            return Guest::where('uuid', $data['guest_uuid'])
+            $guest = Guest::where('uuid', $data['guest_uuid'])
                 ->firstOr(fn () => throw new NotFoundException());
+
+            // Phase 9.1 (D-12): an erased account cannot be handed a new live stay.
+            if ($guest->isDeleted()) {
+                throw new GuestAccountDeletedException(__('custom.errors.guest_account_deleted'));
+            }
+
+            return $guest;
         }
 
         $guest = null;

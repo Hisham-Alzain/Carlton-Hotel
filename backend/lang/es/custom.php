@@ -68,6 +68,7 @@ return [
         'night_audit_check_updated'    => 'Verificación de la auditoría nocturna actualizada.',
         'night_audit_blocker_resolved' => 'Bloqueo de la auditoría nocturna resuelto.',
         'night_audit_closed'           => 'Fecha operativa cerrada.',
+        'exchange_rate_recorded'       => 'Tipo de cambio guardado.',
     ],
     'errors'     => [
         'server_error'           => 'Se ha producido un error.',
@@ -136,6 +137,9 @@ return [
         'night_audit_closed'           => 'Esta auditoría nocturna ya está cerrada.',
         'night_audit_item_resolved'    => 'Este elemento de la auditoría nocturna ya se ha resuelto.',
         'night_audit_not_ready'        => 'La auditoría nocturna no se puede cerrar hasta que se resuelvan todas las verificaciones y bloqueos.',
+        'guest_account_deletion_blocked' => 'No se puede eliminar tu cuenta mientras tengas una estancia activa, una cuenta abierta o una reserva próxima. Ponte en contacto con recepción.',
+        'guest_account_deleted'        => 'Esta cuenta de huésped ha sido eliminada.',
+        'exchange_rate_large_change'   => 'El nuevo tipo difiere del actual en más de un 50 %. Confirma el cambio para guardarlo.',
         'loyalty_program_inactive'     => 'El programa de fidelidad no está activo para esta acción.',
         'loyalty_insufficient_points'  => 'No tienes suficientes puntos de fidelidad.',
         'loyalty_below_minimum'        => 'El número de puntos está por debajo del mínimo que puedes canjear.',
@@ -151,6 +155,7 @@ return [
         'logged_out'     => 'Sesión cerrada correctamente.',
         'otp_verified'   => 'Verificación correcta.',
         'booking_linked' => 'Reserva vinculada correctamente.',
+        'account_deleted' => 'Tu cuenta ha sido eliminada.',
     ],
     'notifications' => [
         'welcome_title'        => 'Bienvenido al Carlton',
@@ -223,6 +228,7 @@ return [
         'date_range_max'       => 'El rango de fechas no puede abarcar más de :days días.',
         'prohibits'            => 'El campo :attribute no se puede usar junto con :other.',
         'report_period_too_long' => 'El período del informe no puede abarcar más de 31 días.',
+        'accepted'               => 'El campo :attribute debe ser aceptado.',
     ],
     'event_checklist' => [
         'contract'  => 'Contrato firmado',
@@ -256,5 +262,9 @@ return [
     ],
     'attributes' => [
         'amount_usd' => 'importe (USD)',
+        'confirm'    => 'confirmación',
+        'currency'   => 'moneda',
+        'rate'       => 'tipo de cambio',
+        'confirm_large_change' => 'confirmación de cambio importante',
     ],
 ];

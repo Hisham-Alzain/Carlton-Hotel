@@ -38,6 +38,21 @@ class GuestFactory extends Factory
         return $this->state(['phone' => null, 'phone_country' => null]);
     }
 
+    /** Phase 9.1 (D-05): an erased account — PII null, status deleted. */
+    public function deleted(): static
+    {
+        return $this->state([
+            'name' => null, 'first_name' => null, 'last_name' => null,
+            'phone' => null, 'phone_country' => null, 'phone_verified_at' => null,
+            'email' => null, 'email_verified_at' => null,
+        ])->afterMaking(function (Guest $guest): void {
+            $guest->forceFill([
+                'account_status'     => \App\Enums\GuestAccountStatus::DELETED,
+                'account_deleted_at' => now(),
+            ]);
+        });
+    }
+
     public function phoneOnly(): static
     {
         return $this->state(['email' => null]);

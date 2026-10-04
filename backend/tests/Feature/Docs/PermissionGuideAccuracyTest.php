@@ -189,6 +189,11 @@ class PermissionGuideAccuracyTest extends TestCase
         );
     }
 
+    public function test_the_guide_no_longer_calls_pricing_edit_enforced_nowhere(): void
+    {
+        $this->assertStringNotContainsString('is enforced **nowhere**', $this->guide());
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
 
     /**

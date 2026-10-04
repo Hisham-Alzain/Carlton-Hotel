@@ -31,6 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 7: Support Tickets & Queue** - Full support-ticket lifecycle, queue claim, assignable staff list
 - [x] **Phase 8: Events & Dining** - Event inquiry checklist/deposit/notes, table reservation list, venue menu download (3886416)
 - [x] **Phase 9: Night Audit & Reports** - Per-business-date night audit with checks and blockers, explicit close, reports dashboard
+- [x] **Phase 9.1: Guest Account & App Support** (INSERTED) - Guest self-service account deletion (anonymize, retain accounting), 5-locale `preferred_locale`, public exchange rates (SYP/TRY) maintained by staff under `pricing.edit`
 - [ ] **Phase 10: Loyalty Points Program** - Earn on settlement, FIFO expiry, rewards catalog and vouchers, points at booking, cancellation reversals, staff settings/audit/reports
 
 ## Phase Details
@@ -359,10 +360,38 @@ Plans:
 - [x] 09-09-PLAN.md — Revenue (`by_source`), collections by payable type, open work, ≤ 8-query budget (REPORT-01)
 - [x] 09-10-PLAN.md — Guide, Postman, tree flips, phase gate, SUMMARY, decision coverage (DOCS-01, XCUT-01)
 
+### Phase 9.1: Guest Account & App Support (INSERTED)
+
+**Goal**: The Flutter guest app's three open asks work against tested endpoints. A guest can delete their own account: the personal data is erased, and bookings, folios and payments are kept for accounting. The profile accepts every configured language. The app reads current SYP/TRY exchange rates that staff maintain, so it no longer hard-codes them.
+**Mode:** mvp
+**Depends on**: Phase 4 (guest directory/profile, preferences, notes), Phase 5 (folio status), Phase 9 commit (shared routes/lang/docs). Executes before Phase 10.
+**Requirements**: GACC-01, GACC-02, GACC-03, LOCALE-01, FX-01, FX-02
+**Success Criteria** (what must be TRUE):
+
+  1. `DELETE /api/auth/guest/me` with `{"confirm":true}` anonymizes the guest in one transaction. PII, tokens, device tokens, notifications, staff notes and OTP rows go. Guest chat is redacted (including Firestore), and ID scans are deleted except on checked-out stays. Reservations, folios, payments, tickets and reviews stay intact. A live stay, an open folio or an upcoming service booking returns 422 `guest_account_deletion_blocked` with `context.reasons`. A repeat is harmless, and the same phone can register again as a new account.
+  2. Staff see deleted accounts flagged (`account_status`, `account_deleted_at`). The directory hides them unless filtered. Notes and preferences writes on them return 422 `guest_account_deleted`.
+  3. `PUT /api/auth/guest/profile` accepts `preferred_locale` ∈ `cms.locales` (en, ar, fr, tr, es). A guest created at OTP sign-in gets the negotiated request locale.
+  4. `GET /api/public/exchange-rates` returns USD-based SYP/TRY rates as decimal strings with `updated_at` and `is_stale`, in at most 2 queries, with `Cache-Control: max-age=300`. Staff with `pricing.edit` append rates (with a >50% change guard), read the board and page the history. The catalogue stays 30/13 and the presets are unchanged.
+  5. Contract gate: happy / 401 / 403 / 422 per new route, keys in all 5 locales, full suite green. The mobile/website/dashboard guides, the mobile changelog, Postman, the tree and the dashboard handoff are updated.
+
+**Reuses**: `GuestEntitlement::constrainLive`, `HotelClock`, `StaffService::deactivate` token-revocation pattern, `FileTrait`, `MirrorsToFirestore`, `TranslatableRules::locales()`, `RecordsRowLocks`, `CountsDomainQueries`, the inert `pricing.edit`
+**Research**: Done (`09.1-RESEARCH.md`)
+**Plans**: 9 plans (sequential waves 1-9)
+
+- [x] 09.1-01-PLAN.md — `preferred_locale` validated against `cms.locales`, column-fit guard, seed locale on OTP guest creation (LOCALE-01)
+- [x] 09.1-02-PLAN.md — `guests.account_status` + `account_deleted_at`, enum, factory state, 2 exceptions, 5-locale keys (GACC-01..03)
+- [x] 09.1-03-PLAN.md — `DeleteGuestAccountAction`: guards, anonymize/retain/delete matrix, activity-log redaction, after-commit file/Firestore cleanup, idempotent under lock (GACC-01, GACC-02)
+- [x] 09.1-04-PLAN.md — `DELETE /api/auth/guest/me` (confirm, throttle, 401/422 matrix, re-registration) (GACC-01, GACC-02)
+- [x] 09.1-05-PLAN.md — Staff visibility: directory default exclusion + filter, resource flags, write guards, receipt name fallback (GACC-03)
+- [x] 09.1-06-PLAN.md — FX foundation: `config/currency.php`, `CurrencyConfig`, append-only `exchange_rates`, model, exception, lang (FX-01, FX-02)
+- [x] 09.1-07-PLAN.md — Staff FX routes under `pricing.edit`, large-change guard, `$notYetBuilt` cleared (FX-02)
+- [x] 09.1-08-PLAN.md — `GET /api/public/exchange-rates` (shape, staleness, Cache-Control, query budget) (FX-01)
+- [x] 09.1-09-PLAN.md — Guides, changelog, Postman, tree, handoff, phase gate, SUMMARY, decision coverage, commit (DOCS-01, XCUT-01)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 9.1 → 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -375,12 +404,13 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Support Tickets & Queue | 11/11 | Complete | 2026-10-02 (0961153) |
 | 8. Events & Dining | 10/10 | Complete | 2026-10-03 (3886416) |
 | 9. Night Audit & Reports | 10/10 | Complete | 2026-10-04 |
+| 9.1. Guest Account & App Support (INSERTED) | 9/9 | Complete | 2026-10-04 (uncommitted) |
 | 10. Loyalty Points Program | 2/15 | In Progress|  |
 
 ### Phase 10: Loyalty Points Program
 
 **Goal**: Guests earn integer points once per settled folio, see a FIFO-expiring balance and ledger, redeem catalog rewards into vouchers and pay part of a booking with points; cancellations undo every loyalty effect without ever producing a negative balance. Staff configure the six program values, manage the catalog, adjust points with an audited reason and report issued/redeemed/expired points.
-**Depends on**: Phase 3 (`HotelClock`), Phase 4 (`NotificationService::pushToGuest`), Phase 5 (settle/payment actions, `IdempotentWrite`, `FolioLedger`). Ordered after Phase 9 only because both edit the permission catalogue, `routes/api.php`, five lang files and docs (soft dependency; execute after the Phase 9 commit and re-read permission counts at execution).
+**Depends on**: Phase 3 (`HotelClock`), Phase 4 (`NotificationService::pushToGuest`), Phase 5 (settle/payment actions, `IdempotentWrite`, `FolioLedger`). Ordered after Phase 9 only because both edit the permission catalogue, `routes/api.php`, five lang files and docs (soft dependency; execute after the Phase 9 commit and re-read permission counts at execution). Executes after Phase 9.1 (INSERTED). 9.1 adds no permission, so the baseline is still 30/13. Phase 10 must add one thing: when a guest account is deleted (9.1 `DeleteGuestAccountAction`), the loyalty balance is forfeited (expire entries), and the deletion activity counts stay PII-free.
 **Requirements**: LOY-01 .. LOY-22
 **Success Criteria** (what must be TRUE):
 

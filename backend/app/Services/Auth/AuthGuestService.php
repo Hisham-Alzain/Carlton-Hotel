@@ -5,6 +5,7 @@ use App\Actions\Auth\LinkBookingCodeAction;
 use App\Actions\Auth\RequestOtpAction;
 use App\Actions\Auth\UpdateGuestProfileAction;
 use App\Actions\Auth\VerifyOtpAction;
+use App\Actions\Guest\DeleteGuestAccountAction;
 use App\Actions\Guest\UpdateGuestPreferencesAction;
 use App\Enums\OtpChannel;
 use App\Enums\OtpPurpose;
@@ -19,7 +20,14 @@ class AuthGuestService
         private readonly LinkBookingCodeAction $linkBookingCode,
         private readonly UpdateGuestProfileAction $updateProfile,
         private readonly UpdateGuestPreferencesAction $updatePreferences,
+        private readonly DeleteGuestAccountAction $deleteAccount,
     ) {}
+
+    /** Phase 9.1 (D-06..D-09): the token's own guest erases their account. */
+    public function deleteAccount(Guest $guest): array
+    {
+        return $this->deleteAccount->handle($guest);
+    }
 
     public function requestOtp(string $identifier, OtpChannel|string $channel, OtpPurpose|string $purpose): array
     {

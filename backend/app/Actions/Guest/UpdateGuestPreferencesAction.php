@@ -2,6 +2,7 @@
 
 namespace App\Actions\Guest;
 
+use App\Exceptions\GuestAccountDeletedException;
 use App\Models\Guest;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,15 @@ class UpdateGuestPreferencesAction
 
         $write['preferences_updated_at'] = now();
 
-        DB::transaction(fn () => $guest->fill($write)->save());
+        DB::transaction(function () use ($guest, $write): void {
+            // Phase 9.1 (D-12): never re-attach personal data to an erased account.
+            // (The guest route cannot reach one — its tokens are gone.)
+            if (Guest::whereKey($guest->id)->lockForUpdate()->first()?->isDeleted()) {
+                throw new GuestAccountDeletedException(__('custom.errors.guest_account_deleted'));
+            }
+
+            $guest->fill($write)->save();
+        });
 
         return ['data' => $guest->refresh(), 'code' => 200];
     }

@@ -139,4 +139,95 @@ class GuestProfileTest extends TestCase
             ->putJson('/api/auth/guest/profile', ['first_name' => 'X'])
             ->assertStatus(401);
     }
+
+    // ── preferred_locale: every configured locale (Phase 9.1 D-01) ────────
+
+    /** @return array<string, array{string}> */
+    public static function configuredLocales(): array
+    {
+        return ['en' => ['en'], 'ar' => ['ar'], 'fr' => ['fr'], 'tr' => ['tr'], 'es' => ['es']];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('configuredLocales')]
+    public function test_every_configured_locale_is_accepted_and_persisted(string $locale): void
+    {
+        $guest = Guest::factory()->create(['preferred_locale' => 'en']);
+
+        $this->actingAs($guest, 'guests')
+            ->putJson('/api/auth/guest/profile', ['preferred_locale' => $locale])
+            ->assertOk()
+            ->assertJsonPath('data.preferred_locale', $locale);
+
+        $this->assertSame($locale, $guest->fresh()->preferred_locale);
+    }
+
+    public function test_locale_is_trimmed_and_lower_cased_before_validation(): void
+    {
+        $guest = Guest::factory()->create(['preferred_locale' => 'en']);
+
+        $this->actingAs($guest, 'guests')
+            ->putJson('/api/auth/guest/profile', ['preferred_locale' => 'FR'])
+            ->assertOk()
+            ->assertJsonPath('data.preferred_locale', 'fr');
+
+        $this->actingAs($guest, 'guests')
+            ->putJson('/api/auth/guest/profile', ['preferred_locale' => ' tr '])
+            ->assertOk()
+            ->assertJsonPath('data.preferred_locale', 'tr');
+
+        $this->assertSame('tr', $guest->fresh()->preferred_locale);
+    }
+
+    /** @return array<string, array{mixed}> */
+    public static function rejectedLocales(): array
+    {
+        return [
+            'unconfigured' => ['de'],
+            'region tag'   => ['fr-FR'],
+            'empty'        => [''],
+            'null'         => [null],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('rejectedLocales')]
+    public function test_unsupported_locale_values_are_rejected(mixed $value): void
+    {
+        $guest = Guest::factory()->create(['preferred_locale' => 'ar']);
+
+        $this->actingAs($guest, 'guests')
+            ->putJson('/api/auth/guest/profile', ['preferred_locale' => $value])
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'validation_failed')
+            ->assertJsonValidationErrors('preferred_locale');
+
+        $this->assertSame('ar', $guest->fresh()->preferred_locale);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('configuredLocales')]
+    public function test_locale_rejection_message_is_translated_in_every_locale(string $requestLocale): void
+    {
+        $guest = Guest::factory()->create();
+
+        $message = $this->actingAs($guest, 'guests')
+            ->withHeader('Accept-Language', $requestLocale)
+            ->putJson('/api/auth/guest/profile', ['preferred_locale' => 'de'])
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'validation_failed')
+            ->json('errors.preferred_locale.0');
+
+        $this->assertIsString($message);
+        $this->assertDoesNotMatchRegularExpression('/^[a-z_]+(\.[a-z_]+)+$/', $message, 'raw translation key leaked');
+    }
+
+    public function test_omitting_the_locale_leaves_it_unchanged(): void
+    {
+        $guest = Guest::factory()->create(['preferred_locale' => 'ar', 'first_name' => 'Layla']);
+
+        $this->actingAs($guest, 'guests')
+            ->putJson('/api/auth/guest/profile', ['first_name' => 'Nour'])
+            ->assertOk()
+            ->assertJsonPath('data.preferred_locale', 'ar');
+
+        $this->assertSame('ar', $guest->fresh()->preferred_locale);
+    }
 }

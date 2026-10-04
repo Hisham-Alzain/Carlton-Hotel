@@ -20,6 +20,27 @@ nine commits (`2fd294f` → `5d254a7`).
 
 ---
 
+## 2026-10-04 — Phase 9.1 — Guest account & app support
+
+All changes are additive.
+
+**Added**
+
+- Five-locale `preferred_locale`: `PUT /api/auth/guest/profile` now accepts `en|ar|fr|tr|es` (trimmed and lower-cased; `fr-FR`, `de`, `""` and `null` are 422 `validation_failed`; omitting it leaves the value unchanged). `Accept-Language` accepts the same five locales. When `POST /api/auth/guest/verify-otp` creates a new guest, `preferred_locale` is seeded from the negotiated `Accept-Language`; an existing guest is never changed by the header.
+- `DELETE /api/auth/guest/me` (guest token, 5/min per guest): body `{"confirm": true}`; 200 with `data: null`; anonymizes the account and revokes all tokens. 422 `guest_account_deletion_blocked` with `context: {reasons, booking_codes}` when the guest has an active stay, open folio or upcoming service booking.
+- `GET /api/public/exchange-rates` (public, 60/min, `Cache-Control: public, max-age=300`): `{base, stale_after_hours, rates[{currency, rate, display_decimals, updated_at, is_stale}]}`; `rate` is a 6-decimal string, `null` when not set. Display-only; all payments stay USD.
+
+**New error code:** `guest_account_deletion_blocked` (422).
+
+**Flutter actions**
+
+- a) Send `Accept-Language` in the app locale (`en`/`ar`/`fr`/`tr`/`es`) on `verify-otp` so new accounts get the right `preferred_locale`.
+- b) The profile locale picker may now send `fr`, `tr` and `es`.
+- c) Delete-account screen: confirmation dialog, then `DELETE /auth/guest/me` with `{"confirm": true}`. On 200 clear the token and local data. On 422 `guest_account_deletion_blocked` show the front-desk message and use `context.booking_codes`. A second call after success is 401 (expected).
+- d) Replace hard-coded SYP/TRY rates with `GET /public/exchange-rates`; keep the built-in values as a fallback when `rate` is null or the call fails; show "rates as of {updated_at}" when `is_stale`.
+
+---
+
 ## 2026-10-03 — Phase 8 — Events & Dining
 
 **Added**

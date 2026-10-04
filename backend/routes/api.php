@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\AmenityController as AdminAmenityController;
 use App\Http\Controllers\Admin\CheckInApprovalController;
 use App\Http\Controllers\Admin\DepartureServiceController;
 use App\Http\Controllers\Admin\DiningVenueMenuFileController;
+use App\Http\Controllers\Admin\ExchangeRateController as AdminExchangeRateController;
+use App\Http\Controllers\Api\ExchangeRateController as ApiExchangeRateController;
 use App\Http\Controllers\Admin\GuestController as AdminGuestController;
 use App\Http\Controllers\Admin\HomeSliderController as AdminHomeSliderController;
 use App\Http\Controllers\Admin\HousekeepingTaskController;
@@ -133,6 +135,10 @@ Route::prefix('auth')->group(function () {
         Route::middleware('auth:guests')->group(function () {
             Route::post('/logout', [GuestAuthController::class, 'logout']);
             Route::get('/me',      [GuestAuthController::class, 'me']);
+            // Phase 9.1 (D-06): account deletion. Anonymizes the guest (never a hard
+            // delete — the row anchors bookings and payments). Inside auth:guests the
+            // throttle keys on the guest id.
+            Route::delete('/me',   [GuestAuthController::class, 'deleteAccount'])->middleware('throttle:5,1');
             Route::put('/profile', [GuestAuthController::class, 'updateProfile']);
             // Phase 4 (D-09): no guest identifier — the token's own guest only.
             Route::patch('/preferences', [GuestAuthController::class, 'updatePreferences']);
@@ -198,6 +204,10 @@ Route::prefix('public')->group(function () {
     // Global site copy — a flat {group: {key: value}} map, NOT paginated and NOT
     // {items, meta}. Deliberate exception; see Api\SiteSettingController::index().
     Route::get('/settings',                   [ApiSiteSettingController::class, 'index']);
+    // Phase 9.1 (D-15, D-18): display exchange rates. Public because prices show
+    // before sign-in. A flat bounded object, not {items, meta} (the /settings
+    // precedent). Cache-Control max-age=300; no server cache.
+    Route::get('/exchange-rates',             [ApiExchangeRateController::class, 'index'])->middleware('throttle:60,1');
 
     // P4 — Availability & pricing (public)
     Route::get('/availability', [AvailabilityController::class, 'check']);
@@ -517,6 +527,15 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
     // through the D-04 lifecycle without holding any CMS rights, and stacking
     // cms.edit here would hand status rights to every content editor.
     Route::middleware('permission:rooms.status')->patch('/rooms/{room}/status', [AdminRoomController::class, 'updateStatus']);
+
+    // ── Phase 9.1 — exchange rates (pricing.edit; D-19: reuses the inert string,
+    // no preset holds it). Append-only: no update or delete route. /history sits
+    // before any {param} route.
+    Route::middleware('permission:pricing.edit')->group(function () {
+        Route::get ('/exchange-rates',         [AdminExchangeRateController::class, 'index']);
+        Route::get ('/exchange-rates/history', [AdminExchangeRateController::class, 'history']);
+        Route::post('/exchange-rates',         [AdminExchangeRateController::class, 'store']);
+    });
 });
 
 // ──────────────────────────────────────────────────────────────────────

@@ -55,6 +55,9 @@ class GuestProfileResource extends BaseResource
             'has_more'              => $this->resource['has_more'],
             'notes'                 => GuestNoteResource::collection($this->resource['notes'])->resolve($request),
             'notes_count'           => $this->resource['notes_count'],
+            // Phase 9.1 (D-12): additive — an erased account shows as `deleted`.
+            'account_status'        => $guest->account_status?->value ?? 'active',
+            'account_deleted_at'    => $guest->account_deleted_at?->toIso8601String(),
         ];
     }
 }

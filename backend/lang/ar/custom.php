@@ -68,6 +68,7 @@ return [
         'night_audit_check_updated'    => 'تم تحديث فحص التدقيق الليلي.',
         'night_audit_blocker_resolved' => 'تم حل معوّق التدقيق الليلي.',
         'night_audit_closed'           => 'تم إغلاق تاريخ العمل.',
+        'exchange_rate_recorded'       => 'تم حفظ سعر الصرف.',
     ],
     'errors'     => [
         'server_error'           => 'حدث خطأ ما.',
@@ -136,6 +137,9 @@ return [
         'night_audit_closed'           => 'هذا التدقيق الليلي مغلق بالفعل.',
         'night_audit_item_resolved'    => 'تم حل عنصر التدقيق الليلي هذا بالفعل.',
         'night_audit_not_ready'        => 'لا يمكن إغلاق التدقيق الليلي قبل حل جميع الفحوصات والمعوّقات.',
+        'guest_account_deletion_blocked' => 'لا يمكن حذف حسابك أثناء وجود إقامة نشطة أو فاتورة مفتوحة أو حجز قادم. يرجى التواصل مع مكتب الاستقبال.',
+        'guest_account_deleted'        => 'تم حذف حساب الضيف هذا.',
+        'exchange_rate_large_change'   => 'يختلف السعر الجديد عن السعر الحالي بأكثر من 50%. أكّد التغيير لحفظه.',
         'loyalty_program_inactive'     => 'برنامج الولاء غير مفعّل لهذا الإجراء.',
         'loyalty_insufficient_points'  => 'ليس لديك نقاط ولاء كافية.',
         'loyalty_below_minimum'        => 'عدد النقاط أقل من الحد الأدنى الذي يمكنك استبداله.',
@@ -151,6 +155,7 @@ return [
         'logged_out'     => 'تم تسجيل الخروج بنجاح.',
         'otp_verified'   => 'تم التحقق بنجاح.',
         'booking_linked' => 'تم ربط الحجز بنجاح.',
+        'account_deleted' => 'تم حذف حسابك.',
     ],
     'notifications' => [
         'welcome_title'        => 'مرحباً بك في كارلتون',
@@ -223,6 +228,7 @@ return [
         'date_range_max'       => 'يجب ألا تتجاوز مدة النطاق الزمني :days يومًا.',
         'prohibits'            => 'لا يمكن استخدام الحقل :attribute مع :other.',
         'report_period_too_long' => 'يجب ألا تتجاوز فترة التقرير 31 يومًا.',
+        'accepted'               => 'يجب قبول :attribute.',
     ],
     'event_checklist' => [
         'contract'  => 'تم توقيع العقد',
@@ -256,5 +262,9 @@ return [
     ],
     'attributes' => [
         'amount_usd' => 'المبلغ (بالدولار الأمريكي)',
+        'confirm'    => 'التأكيد',
+        'currency'   => 'العملة',
+        'rate'       => 'السعر',
+        'confirm_large_change' => 'تأكيد التغيير الكبير',
     ],
 ];

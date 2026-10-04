@@ -41,6 +41,9 @@ class GuestDirectoryResource extends BaseResource
             'stay_status'         => $stayStatus->value,
             'current_reservation' => $current ? StayPayload::summary($current) : null,
             'created_at'          => $guest->created_at?->toIso8601String(),
+            // Phase 9.1 (D-12): additive — an erased account shows as `deleted`.
+            'account_status'      => $guest->account_status?->value ?? 'active',
+            'account_deleted_at'  => $guest->account_deleted_at?->toIso8601String(),
         ];
     }
 }

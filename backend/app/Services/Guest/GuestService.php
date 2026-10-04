@@ -57,7 +57,9 @@ class GuestService extends BaseService
             ])
             ->orderBy('last_name')
             ->orderBy('name')
-            ->orderBy('id');
+            ->orderBy('id')
+            // Phase 9.1 (D-12): erased accounts are blank rows; shown only on request.
+            ->when(! array_key_exists('account_status', $params), fn ($q) => $q->activeAccounts());
 
         ($filter ?? $this->makeFilter($params))?->apply($query);
 

@@ -823,6 +823,22 @@ Earning is active iff `earn_rate > 0`. Points-discount is active iff `redeem_val
 
 ---
 
+## 6.1 Phase 9.1: Exchange rates and guest account deletion (BUILT)
+
+Full contract in `backend/docs/API_GUIDE_DASHBOARD.md` (*Module: Exchange rates*, *Module: Guests*).
+
+**Exchange-rate screen** (nav gated on `pricing.edit`; rates are display-only, units of the currency per 1 USD, money stays USD):
+- Board: `GET /cms/exchange-rates` returns `{base, stale_after_hours, rates[]}`, one row per configured currency (`SYP`, `TRY`). Show `rate`, `updated_at`, `set_by`, `note`; badge `is_stale`; a currency with `rate: null` has never been set.
+- History: `GET /cms/exchange-rates/history` (paginated, newest first, `?currency=` or `?currency[in]=`).
+- Add-rate form: `POST /cms/exchange-rates` `{currency, rate, note?, confirm_large_change?}`. History is append-only (no edit/delete). On `422 exchange_rate_large_change` (move of more than 50%), show `context.current_rate`, `proposed_rate`, `change_percent` in a confirm dialog, then resend with `confirm_large_change: true`.
+- **No seeded role holds `pricing.edit`.** Grant it per account (`POST /staff/{uuid}/permissions`); the super admin passes. Catalogue stays 13 groups / 30 permissions.
+
+**Guest directory:** rows and profile now carry `account_status` (`active` | `deleted`) and `account_deleted_at`. Deleted accounts are hidden by default; add an `account_status` filter (`deleted`, or `[in]=active,deleted`) and render a "Deleted" badge. A deleted profile still returns 200 with null name/phone/email and keeps its reservations. Disable the note and preference forms for it.
+
+**New error codes:** `exchange_rate_large_change` (422), `guest_account_deleted` (422, notes/preferences on a deleted guest). `guest_account_deletion_blocked` (422) is guest-app only.
+
+---
+
 ## 7. Known gaps and gotchas
 
 1. **No `/v1`.** The base is `/api`. Ignore `/api/v1` in any planning note.

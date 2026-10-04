@@ -112,6 +112,7 @@ Always log or surface `request_id` in error states — it identifies the exact r
 | `validation_failed` | 422 | Bad request body or query params; `errors` is present |
 | `too_many_requests` | 429 | OTP rate limit on the booking flow |
 | `server_error` | 500 | Unhandled exception; `message` is the raw text only in local env |
+| `guest_account_deletion_blocked` | 422 | Account-deletion page only — an active stay, open bill or upcoming booking; see Module: Account Deletion |
 | `no_availability` · `invalid_promo` · `hold_expired` · `otp_invalid` · `otp_expired` · `otp_locked` | 409/422/429 | Booking flow only — see Module: Availability, Quote & Booking |
 
 Treat an unrecognised `error_code` as a generic failure rather than crashing; new codes can be added.
@@ -735,6 +736,47 @@ treatments as marketing content, `GET /public/spa-services` is the honest source
 
 ---
 
+## Module: Account Deletion (Google Play web path)
+
+Google Play requires a web path for deleting an app account. The website can offer one by reusing the existing guest OTP sign-in and the app's delete route. This is a short-lived, page-scoped session: sign in, delete, discard the token — the website still has no logged-in state anywhere else.
+
+**Flow**
+1. `POST /auth/guest/request-otp` then `POST /auth/guest/verify-otp` (same calls the booking flow uses) to obtain a guest bearer token. Note: if the phone/email has no account, verify-otp **creates** a new guest, whose `preferred_locale` is seeded from `Accept-Language` (`en`/`ar`/`fr`/`tr`/`es`).
+2. Show a confirmation page explaining what is deleted vs kept (below).
+3. `DELETE /api/auth/guest/me` with `Authorization: Bearer <guest-token>` and body `{ "confirm": true }`.
+4. On 200 (`data: null`, message "Your account has been deleted."), discard the token and show a confirmation.
+
+**`DELETE /api/auth/guest/me`:** guest token only, throttled 5/min per guest. `confirm` must be accepted (`true`, `1`, `"yes"`, `"on"`); missing/false/`"no"` is 422 `validation_failed` with `errors.confirm`. A staff token, no token, or a token reused after a successful deletion is 401 (all of the guest's tokens on every device are revoked).
+
+**Blocked** — 422 `guest_account_deletion_blocked`, message (en): "Your account can't be deleted while you have an active stay, an open bill or an upcoming booking. Please contact the front desk."
+```json
+{ "success": false, "message": "...", "error_code": "guest_account_deletion_blocked",
+  "context": { "reasons": ["active_reservation"], "booking_codes": ["CARL-7K2M9QXA"] }, "request_id": "..." }
+```
+`context.reasons` is any subset, in fixed order, of `active_reservation`, `open_folio`, `upcoming_service_booking`. `context.booking_codes` is sorted, at most 10. Show the message and the codes and point the guest to the front desk.
+
+**What happens:** the account is anonymized, never hard-deleted. Erased: name, phone, email, verification timestamps, preferences, sign-in tokens, device push tokens, in-app notifications, staff notes, OTP codes, the guest's own chat messages, and ID documents except those of checked-out stays. Kept for legal/accounting: reservations (booking code, last name), folios, payments, refunds, disputes, service bookings/requests, tickets, event inquiries, reviews (shown without a name), and ID registration documents of checked-out stays. Signing in again with the same phone/email creates a new, empty account; old stays cannot be re-linked.
+
+---
+
+## Module: Exchange Rates
+
+### GET /public/exchange-rates
+
+**Purpose:** Display-only SYP/TRY conversion for price labels.
+
+**Who can call:** Public — no headers required. Throttled 60/min; sent with `Cache-Control: public, max-age=300`. Not paginated — a flat object like `/public/settings`.
+
+```json
+{ "base": "USD", "stale_after_hours": 168, "rates": [
+  { "currency": "SYP", "rate": "13000.000000", "display_decimals": 0, "updated_at": "2026-10-04T08:00:00Z", "is_stale": false },
+  { "currency": "TRY", "rate": null, "display_decimals": 2, "updated_at": null, "is_stale": true } ] }
+```
+
+`rate` is units of the currency per 1 USD, a decimal **string** with 6 decimals — parse as decimal, not float. One entry per configured currency in config order (`SYP`, `TRY` today). A currency with no rate yet has `rate: null`, `updated_at: null`, `is_stale: true` — fall back to showing USD only. `is_stale` is true when there is no rate or it is older than `stale_after_hours`; show "rates as of {updated_at}" in that case. Conversion is display-only (`usd × rate`, rounded to `display_decimals`); every payment stays in USD.
+
+---
+
 ## Coming in P11 — Public chatbot
 
 `POST /chatbot/message` — anonymous, knowledge-and-triage. Documented at P11.
@@ -747,6 +789,7 @@ The following endpoints are **app-only** or **dashboard-only** and must not appe
 
 - `POST /auth/guest/request-otp` and `/verify-otp` used as a login (session) flow — the website only uses OTP in the booking-verification context above
 - `POST /auth/guest/link-booking-code` — app-only (links a reservation to an app account)
+- `DELETE /auth/guest/me` is the one session-style exception, and only on the dedicated account-deletion page described in [Module: Account Deletion](#module-account-deletion-google-play-web-path) — never elsewhere on the site
 - `GET /auth/guest/me`, `POST /auth/logout` — session endpoints; the website has no session
 - All tier-2 and tier-3 endpoints (my-reservations, profile, device tokens, chat, in-room services, folio, checkout) — app-only
 - `POST /reviews/{type}/{uuid}` — submitting a review needs a guest token; the website may only *read* reviews

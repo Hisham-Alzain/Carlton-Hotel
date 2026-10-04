@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Base\BaseController;
+use App\Http\Requests\Auth\DeleteGuestAccountRequest;
 use App\Http\Requests\Auth\GuestLogoutRequest;
 use App\Http\Requests\Auth\LinkBookingCodeRequest;
 use App\Http\Requests\Auth\RequestOtpRequest;
@@ -74,6 +75,14 @@ class GuestAuthController extends BaseController
     {
         $result = $this->service->updatePreferences($request->user('guests'), $request->validated());
         return $this->success(new GuestPreferencesResource($result['data']), 'custom.messages.preferences_updated', 200, $request);
+    }
+
+    // Phase 9.1 (D-06, D-09): the guest erases their own account. Anonymized, not
+    // hard-deleted; every token is revoked, so a second call is 401.
+    public function deleteAccount(DeleteGuestAccountRequest $request): JsonResponse
+    {
+        $this->service->deleteAccount($request->user('guests'));
+        return $this->success(null, 'custom.auth.account_deleted', 200, $request);
     }
 
     // Revokes the calling token and, when sent, deregisters this device's FCM token.

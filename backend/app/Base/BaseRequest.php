@@ -73,6 +73,8 @@ abstract class BaseRequest extends FormRequest
             'current_password' => __('custom.validation.current_password', ['attribute' => ':attribute']),
             'confirmed'        => __('custom.validation.confirmed',        ['attribute' => ':attribute']),
             'different'        => __('custom.validation.different',        ['attribute' => ':attribute', 'other' => ':other']),
+            // Phase 9.1 (D-06): `confirm: true` on DELETE /auth/guest/me.
+            'accepted'         => __('custom.validation.accepted',         ['attribute' => ':attribute']),
 
             // `Rule::enum()` is a ValidationRule object, not a string rule: it
             // fails with its own `$fail('validation.enum')`, and Laravel looks a

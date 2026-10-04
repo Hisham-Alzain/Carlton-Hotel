@@ -809,6 +809,48 @@
                     "response": []
                 },
                 {
+                    "name": "Guest — Delete Account",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{guest_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/guest/me",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "guest",
+                                "me"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"confirm\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Anonymizes the guest account (row is never removed). Irreversible; 422 guest_account_deletion_blocked when deletion is blocked."
+                    },
+                    "response": []
+                },
+                {
                     "name": "[Guest] Logout",
                     "request": {
                         "method": "POST",
@@ -1366,6 +1408,34 @@
                             ]
                         },
                         "description": "Published reviews for a room type, newest first. {type} is room_type or dining_venue."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Exchange Rates (public)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/public/exchange-rates",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "public",
+                                "exchange-rates"
+                            ]
+                        },
+                        "description": "Display-only rates (units per 1 USD), no note/set_by. Cache-Control public, max-age=300; throttle 60/min."
                     },
                     "response": []
                 }
@@ -7013,6 +7083,123 @@
                         "description": "Hides the review publicly and removes it from the rating aggregate in the same write."
                     },
                     "response": []
+                },
+                {
+                    "name": "Exchange Rates (pricing.edit)",
+                    "item": [
+                        {
+                            "name": "Exchange Rates — Board",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{staff_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/cms/exchange-rates",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "cms",
+                                        "exchange-rates"
+                                    ]
+                                },
+                                "description": "Requires pricing.edit (no preset holds it; grant per account). One entry per configured currency."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Exchange Rates — History",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{staff_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/cms/exchange-rates/history?currency=SYP",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "cms",
+                                        "exchange-rates",
+                                        "history"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "currency",
+                                            "value": "SYP"
+                                        }
+                                    ]
+                                },
+                                "description": "Paginated, newest first. Also ?currency[in]=SYP,TRY and per_page (max 100)."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Exchange Rates — Add Rate",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{staff_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/cms/exchange-rates",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "cms",
+                                        "exchange-rates"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"currency\": \"SYP\",\n    \"rate\": \"13000\",\n    \"note\": \"CBS bulletin\",\n    \"confirm_large_change\": false\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "description": "Appends a row. 422 exchange_rate_large_change when the rate moves >50%; resend with confirm_large_change true."
+                            },
+                            "response": []
+                        }
+                    ]
                 }
             ],
             "description": "cms.edit — only super_admin holds this permission among the seeded accounts, so use {{staff_token}}. The public read shapes (Module 04) mirror these exactly."

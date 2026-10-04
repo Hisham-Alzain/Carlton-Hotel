@@ -3,10 +3,12 @@ namespace App\Models;
 
 use App\Enums\BedType;
 use App\Enums\FloorPreference;
+use App\Enums\GuestAccountStatus;
 use App\Enums\PillowType;
 use App\Models\Reservation;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -26,9 +28,22 @@ class Guest extends Authenticatable
 
     protected $hidden = [];
 
+    /**
+     * Phase 9.1 (D-05): `account_status` / `account_deleted_at` are deliberately
+     * NOT fillable (a profile PUT can never set them) and so never logged by
+     * `logFillable()`; DeleteGuestAccountAction sets them with forceFill. A
+     * deleted account is anonymized in place, never soft-deleted: soft-delete
+     * scopes would hide the row from `$reservation->guest` and accounting joins.
+     */
+    protected $attributes = [
+        'account_status' => 'active',
+    ];
+
     protected function casts(): array
     {
         return [
+            'account_status'     => GuestAccountStatus::class,
+            'account_deleted_at' => 'datetime',
             'phone_verified_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'bed_type'               => BedType::class,
@@ -64,6 +79,17 @@ class Guest extends Authenticatable
     {
         $this->email_verified_at = now();
         $this->save();
+    }
+
+    public function isDeleted(): bool
+    {
+        return $this->account_status === GuestAccountStatus::DELETED;
+    }
+
+    /** Accounts that have not been erased (Phase 9.1, D-12). */
+    public function scopeActiveAccounts(Builder $query): Builder
+    {
+        return $query->where('account_status', GuestAccountStatus::ACTIVE->value);
     }
 
     public function scopeByPhone($query, string $e164)

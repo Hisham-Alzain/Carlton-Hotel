@@ -68,6 +68,7 @@ return [
         'night_audit_check_updated'    => 'Gece denetimi kontrolü güncellendi.',
         'night_audit_blocker_resolved' => 'Gece denetimi engeli çözüldü.',
         'night_audit_closed'           => 'İş günü kapatıldı.',
+        'exchange_rate_recorded'       => 'Döviz kuru kaydedildi.',
     ],
     'errors'     => [
         'server_error'           => 'Bir hata oluştu.',
@@ -136,6 +137,9 @@ return [
         'night_audit_closed'           => 'Bu gece denetimi zaten kapatılmış.',
         'night_audit_item_resolved'    => 'Bu gece denetimi öğesi zaten çözülmüş.',
         'night_audit_not_ready'        => 'Tüm kontroller ve engeller çözülmeden gece denetimi kapatılamaz.',
+        'guest_account_deletion_blocked' => 'Devam eden bir konaklamanız, açık bir hesabınız veya yaklaşan bir rezervasyonunuz varken hesabınız silinemez. Lütfen resepsiyonla iletişime geçin.',
+        'guest_account_deleted'        => 'Bu misafir hesabı silindi.',
+        'exchange_rate_large_change'   => 'Yeni kur, mevcut kurdan %50\'den fazla farklı. Kaydetmek için değişikliği onaylayın.',
         'loyalty_program_inactive'     => 'Sadakat programı bu işlem için etkin değil.',
         'loyalty_insufficient_points'  => 'Yeterli sadakat puanınız yok.',
         'loyalty_below_minimum'        => 'Puan sayısı kullanabileceğiniz asgari değerin altında.',
@@ -151,6 +155,7 @@ return [
         'logged_out'     => 'Çıkış başarılı.',
         'otp_verified'   => 'Doğrulama başarılı.',
         'booking_linked' => 'Rezervasyon başarıyla eşleştirildi.',
+        'account_deleted' => 'Hesabınız silindi.',
     ],
     'notifications' => [
         'welcome_title'        => "Carlton'a hoş geldiniz",
@@ -223,6 +228,7 @@ return [
         'date_range_max'       => 'Tarih aralığı en fazla :days gün olabilir.',
         'prohibits'            => ':attribute alanı :other ile birlikte kullanılamaz.',
         'report_period_too_long' => 'Rapor dönemi en fazla 31 gün olabilir.',
+        'accepted'               => ':attribute kabul edilmelidir.',
     ],
     'event_checklist' => [
         'contract'  => 'Sözleşme imzalandı',
@@ -256,5 +262,9 @@ return [
     ],
     'attributes' => [
         'amount_usd' => 'tutar (USD)',
+        'confirm'    => 'onay',
+        'currency'   => 'para birimi',
+        'rate'       => 'kur',
+        'confirm_large_change' => 'büyük değişiklik onayı',
     ],
 ];

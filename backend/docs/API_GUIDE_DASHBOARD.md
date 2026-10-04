@@ -179,7 +179,7 @@ Most are route middleware, which is the norm. Two families are not, and are enfo
 
 ### Genuinely inert — do not build UI against these
 
-`pricing.edit` is seeded, appears in `GET /api/permissions`, and is enforced **nowhere** — no route middleware, no policy, no service check. Granting it currently permits nothing and withholding it currently blocks nothing; it has no endpoint planned yet. Every other permission in the catalog is enforced somewhere (the reports permission became real in Phase 9 — see Night audit and Reports).
+None. Every permission in the catalog is now enforced somewhere. The last inert one, pricing.edit, became real in Phase 9.1: the exchange-rate routes require it (see *Module: Exchange rates*). It is still held by no role preset, so grant it per account. (The reports permission became real in Phase 9 — see Night audit and Reports.)
 
 ### Role presets
 
@@ -190,6 +190,8 @@ Since Phase 7 `reception` also holds `tickets.view` and `tickets.respond`, and `
 Since Phase 8 the catalogue is 12 modules / 29 permissions: the new `events` group adds `events.view`, `events.manage` and `events.deposit`. **Contract tightening versus Phase 7:** event inquiries are gated by `events.*` only — `tickets.*` no longer opens any event-inquiry route. Only the `events` preset holds `events.*`, so `reception` and `concierge` lost all event-inquiry access (index, show, status and assign now answer `403`); `tickets.*` still opens `/cms/conversations` for them. The `event_inquiries` key of `GET /dashboard/summary` now follows `events.view` (it used to follow `tickets.view`), so reception and concierge no longer receive it. Gate the Events navigation item on `events.view`.
 
 Since Phase 9 the catalogue is 13 modules / 30 permissions: the new `night_audit` group adds `night_audit.manage`, and `reports.view` is now enforced (see *Module: Night audit* and *Module: Reports*). **No role preset holds `reports.view` or `night_audit.manage`** — assign them per account through the existing permission-assignment endpoint (`POST /staff/{uuid}/permissions`). Suggested accounts: a night manager gets `reports.view` + `night_audit.manage`; a night auditor without revenue access gets `night_audit.manage` only. The super admin passes everything.
+
+Since Phase 9.1 `pricing.edit` is enforced by the exchange-rate routes (see *Module: Exchange rates*). It is still in **no** role preset — grant it per account through `POST /staff/{uuid}/permissions`; the catalogue stays 13 modules / 30 permissions.
 
 ---
 
@@ -1573,11 +1575,12 @@ Staff guest directory, profile, notes and preferences (Phase 4). Seeded on the `
 | `preferred_locale` | Operators `eq`, `in`. |
 | `sort` / `sort_dir` | `sort` one of `name`, `last_name`, `created_at`; `sort_dir` `asc` (default) / `desc`. Default order (no `sort`): `last_name asc, name asc, id asc`. |
 | `stay_status` | One of `in_house`, `departing`, `arriving`, `upcoming`, `past`, `none`, evaluated against the hotel-local date. Non-exclusive predicates (an `in_house` filter also lists guests departing today) — the row's own `stay_status` below is the precedence-based one. Empty value = no filter. **Any other value is `422` `validation_failed` on `stay_status`.** |
+| `account_status` | `active` or `deleted`; operators `eq`, `in` (`?account_status=deleted`, `?account_status[in]=active,deleted`). **Deleted (erased) accounts are excluded by default**; send `deleted` for only them or `in` for both. |
 | `per_page` | Default 15, hard cap 100. |
 
-Guests with no reservations are listed (`stay_status: "none"`).
+Guests with no reservations are listed (`stay_status: "none"`). Since Phase 9.1 every row also carries `account_status` (`"active"` | `"deleted"`) and `account_deleted_at` (ISO-8601 or `null`), so each row has 15 keys.
 
-**Row shape** (13 keys):
+**Row shape** (13 keys, plus `account_status` and `account_deleted_at`):
 ```json
 {
   "uuid": "...", "name": "...", "first_name": "...", "last_name": "...",
@@ -1623,6 +1626,7 @@ Guests with no reservations are listed (`stay_status: "none"`).
 }
 ```
 
+- Phase 9.1 adds `account_status` (`"active"` | `"deleted"`) and `account_deleted_at` (ISO-8601 or `null`). A deleted (erased) guest still answers `200` and keeps its reservations, but names, phone and email are `null`. Guests delete their own account via `DELETE /auth/guest/me` (guest app); the row is anonymized, never removed. Receipt PDFs of an erased guest name the payer from the reservation's last name.
 - `current_reservation` is the in-house stay if any, else the next arrival; `null` when neither exists.
 - `documents` is metadata only — no `file_path`, no URL. `digital_key` here is the **staff shape** (`{issued_at, expires_at, revoked_at, active}`) — the code itself never appears in a staff response.
 - `pre_arrival_checklist` is derived, never stored, and is `null` without a target reservation. Six items, in order, each `{key, done, ...detail}`: `documents_uploaded` (`count`), `check_in_approved` (`status`), `preferences_set`, `arrival_time_set` (`arrival_time`), `room_assigned` (`room_number`), `digital_key_issued` (`expires_at`). `complete` is true only when all six are done; a guest declaring `floor_preference: "any"` still counts as `preferences_set`.
@@ -1647,7 +1651,7 @@ Guests with no reservations are listed (`stay_status: "none"`).
 
 **Response:** HTTP 201, `{ uuid, body, author: {uuid, name}, created_at }`, message `"Guest note added."`.
 
-**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `not_found` (404), `validation_failed` (422, `errors.body`).
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `not_found` (404), `validation_failed` (422, `errors.body`), `guest_account_deleted` (422, the guest deleted their account — "This guest account has been deleted.").
 
 ### PATCH /guests/{uuid}/preferences — `guests.edit`
 
@@ -1664,7 +1668,7 @@ Guests with no reservations are listed (`stay_status: "none"`).
 
 **Response `data`:** `{ bed_type, pillow_type, floor_preference, other, updated_at }` — the same shape `PATCH /auth/guest/preferences` returns on the guest side. Message `"Preferences updated."`.
 
-**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `not_found` (404), `validation_failed` (422 — including an unknown enum value, `extra` for `bed_type`, or `errors.preferences` on an empty body).
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403), `not_found` (404), `validation_failed` (422 — including an unknown enum value, `extra` for `bed_type`, or `errors.preferences` on an empty body), `guest_account_deleted` (422, the guest deleted their account).
 
 ---
 
@@ -2299,6 +2303,62 @@ ADR, RevPAR, MTD/YTD, per-room-type revenue, a daily breakdown, booking-source r
 
 ---
 
+## Module: Exchange rates (`pricing.edit`)
+
+Display-only conversion rates (Phase 9.1): units of the currency per 1 USD. Money stays USD everywhere else. All three routes are `auth:users` + `permission:pricing.edit` (the super admin passes). No role preset holds `pricing.edit` — grant it per account. There are no update/delete routes: every save appends a row, and the history is the table.
+
+### GET /api/cms/exchange-rates
+
+**Who can call:** `pricing.edit`. Not paginated — one entry per configured currency (`SYP`, `TRY`) in config order.
+
+```json
+{
+  "success": true,
+  "message": "Success.",
+  "data": {
+    "base": "USD",
+    "stale_after_hours": 168,
+    "rates": [
+      { "currency": "SYP", "rate": "13000.000000", "display_decimals": 0, "updated_at": "2026-10-04T08:00:00Z", "is_stale": false, "note": "CBS bulletin", "set_by": { "uuid": "...", "name": "Rana Finance" } },
+      { "currency": "TRY", "rate": null, "display_decimals": 2, "updated_at": null, "is_stale": true, "note": null, "set_by": null }
+    ]
+  }
+}
+```
+
+A currency with no rate yet has `rate`, `updated_at`, `note` and `set_by` all `null` and `is_stale: true`.
+
+### GET /api/cms/exchange-rates/history
+
+**Who can call:** `pricing.edit`. Paginated `{ items, meta }`, newest first. Query: `currency` (`?currency=SYP` or `?currency[in]=SYP,TRY`), `per_page` (max 100).
+
+**Item:** `{ "uuid", "currency", "rate": "13000.000000", "note", "set_by": { "uuid", "name" }, "created_at": "2026-10-04T08:00:00Z" }`.
+
+### POST /api/cms/exchange-rates
+
+**Who can call:** `pricing.edit`.
+
+**Request body:** `{ "currency": "SYP", "rate": "13000", "note": "CBS bulletin", "confirm_large_change": false }`
+
+| Field | Rules |
+|---|---|
+| `currency` | Required; a configured code (`SYP`, `TRY`), case-insensitive; `USD` is rejected. |
+| `rate` | Required; string or number matching `^\d{1,14}(\.\d{1,6})?$`, greater than 0. |
+| `note` | Nullable, max 255. |
+| `confirm_large_change` | Optional boolean. |
+
+**Response:** HTTP 201, message `"Exchange rate saved."`, `data` is the history item above.
+
+**Large-change guard:** when a current rate exists and the new one differs by more than 50% either way, the save is refused with `422` `exchange_rate_large_change` unless `confirm_large_change` is `true`. `context`: `{ "currency": "SYP", "current_rate": "13000.000000", "proposed_rate": "130.000000", "change_percent": "-99.000000" }`. Show the numbers to the user and resend with `confirm_large_change: true` to save.
+
+**Failure `error_code`s:** `unauthorized` (401), `forbidden` (403, no `pricing.edit`), `validation_failed` (422), `exchange_rate_large_change` (422).
+
+### Public board
+
+`GET /api/public/exchange-rates` (no auth) returns the same board without `note` / `set_by`; `Cache-Control: public, max-age=300`, throttled 60/min. Used by the guest app, not the dashboard.
+
+---
+
 ## Error codes quick reference
 
 | Code | HTTP | Meaning |
@@ -2352,6 +2412,9 @@ ADR, RevPAR, MTD/YTD, per-room-type revenue, a daily breakdown, booking-source r
 | `night_audit_closed` | 422 | Check/blocker PATCH on a closed audit; `context: { business_date, closed_at }` |
 | `night_audit_item_resolved` | 422 | Check/blocker already terminal; `context: { item, status }` |
 | `night_audit_not_ready` | 422 | Close with pending checks or open blockers; `context: { checks_pending, blockers_open }` |
+| `exchange_rate_large_change` | 422 | New exchange rate differs from the current one by more than 50% either way and `confirm_large_change` is not `true`; `context: { currency, current_rate, proposed_rate, change_percent }` |
+| `guest_account_deleted` | 422 | Note or preferences write, or a front-desk booking (`POST /cms/reservations` with `guest_uuid`), on a guest whose account was deleted |
+| `guest_account_deletion_blocked` | 422 | Guest-app only (`DELETE /auth/guest/me` blocked); not returned by dashboard routes |
 
 ---
 

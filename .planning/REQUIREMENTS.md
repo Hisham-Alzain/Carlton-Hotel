@@ -84,6 +84,15 @@ All routes are under `/api` (the code has no `/v1` segment — `bootstrap/app.ph
 - [x] **AUDIT-04** (scope completion, Phase 9): A manager closes the current business date once every check is terminal and every blocker resolved (`POST /operations/night-audit/{audit}/close`, permission `night_audit.manage`); this advances the business date by one day
 - [x] **REPORT-01**: Staff can read a reports dashboard (occupancy, arrivals/departures, revenue, open requests/tickets) (`GET /reports/dashboard`, permission `reports.view`)
 
+### Guest Account & App Support (Phase 9.1, INSERTED)
+
+- [x] **GACC-01**: Guest can delete their own account (`DELETE /auth/guest/me`, body `confirm: true`, throttled). All of the guest's tokens and device tokens are revoked. A live stay, an open folio or an upcoming service booking blocks with 422 `guest_account_deletion_blocked` (`context.reasons`, `booking_codes`). A repeat is harmless.
+- [x] **GACC-02**: Deletion anonymizes rather than deletes. Personal data is erased (identity, preferences, notifications, staff notes, OTP rows, guest chat content, ID scans except on checked-out stays, PII in activity-log properties). Reservations, folios, payments, tickets, service records and reviews are kept for accounting. The same phone/email can register again as a new account.
+- [x] **GACC-03**: Staff see deleted accounts flagged (`account_status`, `account_deleted_at`). The guest directory hides them unless filtered, and staff notes/preferences writes on them return 422 `guest_account_deleted`.
+- [x] **LOCALE-01**: Guest `preferred_locale` accepts every configured locale (en, ar, fr, tr, es) from `cms.locales`. A guest created at OTP sign-in is given the negotiated request locale.
+- [x] **FX-01**: Anyone can read the current USD-based exchange rates for the configured currencies (SYP, TRY) with `updated_at` and staleness (`GET /public/exchange-rates`). Conversion is display-only.
+- [x] **FX-02**: Staff with `pricing.edit` append new rates (append-only history, >50% change needs confirmation, audited) and read the current board and the paginated history (`/cms/exchange-rates`). No new permission and no preset change.
+
 ### Loyalty Points Program
 
 - [ ] **LOY-01**: Staff can read and update the six program settings (earn rate, redeem value, expiry months, expiry-warning days, minimum points to redeem, max % payable with points); changes are audited
@@ -194,12 +203,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUDIT-03 | Phase 9 | Complete |
 | AUDIT-04 | Phase 9 | Complete |
 | REPORT-01 | Phase 9 | Complete |
+| GACC-01 | Phase 9.1 | Complete |
+| GACC-02 | Phase 9.1 | Complete |
+| GACC-03 | Phase 9.1 | Complete |
+| LOCALE-01 | Phase 9.1 | Complete |
+| FX-01 | Phase 9.1 | Complete |
+| FX-02 | Phase 9.1 | Complete |
 
 **Coverage:**
-- v1 requirements: 74 total (AUDIT-04 added 2026-10-04 as Phase 9 scope completion; LOY-01..22 added 2026-10-04 for Phase 10)
-- Mapped to phases: 74
+
+- v1 requirements: 80 total (AUDIT-04 added 2026-10-04 as Phase 9 scope completion; LOY-01..22 added 2026-10-04 for Phase 10; GACC-01..03, LOCALE-01, FX-01..02 added 2026-10-04 for inserted Phase 9.1)
+- Mapped to phases: 80
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-25*
-*Last updated: 2026-10-04 — Phase 10 planning: LOY-01..LOY-22 added*
+*Last updated: 2026-10-04 — Phase 9.1 inserted: GACC-01..03, LOCALE-01, FX-01..02 added (LOY-01..LOY-22 added earlier the same day for Phase 10)*

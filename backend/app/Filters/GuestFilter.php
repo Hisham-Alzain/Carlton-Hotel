@@ -26,6 +26,8 @@ class GuestFilter extends BaseFilter
         'phone'            => ['eq', 'like'],
         'email'            => ['eq', 'like'],
         'preferred_locale' => ['eq', 'in'],
+        // Phase 9.1 (D-12): GuestService hides `deleted` unless this param is sent.
+        'account_status'   => ['eq', 'in'],
     ];
 
     protected array $sortable = ['name', 'last_name', 'created_at'];

@@ -1,40 +1,60 @@
-# Phase 9 local research
+# Phase 9 research (re-verified 2026-10-04)
 
-Status: complete planning research; implementation/test claims remain unverified. Source labels below are file groups, not context-mode knowledge-base entries (context-mode tools were unavailable).
+Status: planning research, re-verified against the tree at `3886416` (Phase 8 closed). Supersedes the Codex draft research of 2026-10-03 where it conflicts with `09-CONTEXT.md` (D-01..D-25). No tests were run by the planner.
 
-| Source label | Evidence | Consequence |
+## Premise verification
+
+| Premise | Where checked | Result |
 |---|---|---|
-| phase9-requirements | `.planning/PROJECT.md`, REQUIREMENTS AUDIT-01..03/REPORT-01, ROADMAP Phase9 | Five checks including Phase5 dispute hook; bounded reports; no existing business-date state |
-| phase9-audit-ui | `dashboard/src/mocks/data/nightAudit.js`, pages/NightAudit.jsx, services/nightAuditService.js, store/nightAuditStore.js | Mock has property_day, checks, blockers, readiness, closed_at/by; source mock also contains close/reopen functions. Actual page/service has no close call. Its FOLIOS_VIEW gate and mock fields need adaptation |
-| phase9-reports-ui | `dashboard/src/mocks/data/reports.js`, pages/Reports.jsx, services/reportsService.js | Static synthetic ADR/RevPAR/MTD/YTD/room-type/source values; no reliable contract for real accounting semantics |
-| phase9-time | `backend/app/Support/HotelClock.php`, config/hotel.php | Hotel timezone default Asia/Damascus; dayWindow strict date and DST-safe half-open UTC; app timestamp storage UTC |
-| phase9-ledger | Models/Folio.php, FolioItem.php, Payment.php; Support/FolioLedger.php; migrations 2026_09_26_130000..130200 | Folio signed lines, exact decimal/bcmath; SQLite SUM may return binary REAL; openDisputes and unsettled hooks; payments include reservation and folio sources; refunds not subtracted yet |
-| phase9-events | Phase8 SUMMARY.md and PROJECT key decisions | Event deposits are completed payments for EventInquiry FQCN; do not add model to morph map; separate from stay/room revenue |
-| phase9-stays | Models/Reservation.php, Enums/ReservationStatus.php, reservation/reservation_rooms migrations | Date stays, many room lines, nullable assignment, price snapshots; no no-show enum; holdings scope includes live unverified holds but reporting deliberately excludes them |
-| phase9-work | Models/Ticket.php, ServiceRequest.php; Enums/TicketStatus.php, ServiceRequestStatus.php, ServiceRequestPriority.php | High ticket priority is integer 3; active ticket states four; active request states new/in_progress |
-| phase9-access | RolesAndPermissionsSeeder.php | reports.view exists; 29 permissions/12 groups after Phase8; no hotel manager preset; reports.manage is per-account with unchanged existing presets |
+| Routes at `/api`, no `/v1` | `bootstrap/app.php:22` (`api:` routes file, no `apiPrefix`) | holds |
+| `HotelClock::today()`, `dayWindow()` strict + DST-safe half-open UTC, `timezone()` | `app/Support/HotelClock.php:20,26,42` | holds; `dayWindow` throws `InvalidArgumentException` on a non round-trip date |
+| `FolioLedger` bcmath helpers | `app/Support/FolioLedger.php` (`normalize`, `fromNumeric`, `sum`, `paid`, `balance`) | holds; no SQL-aggregate helper exists → `MoneyAggregate` is new (D-21) |
+| `RecordsRowLocks` | `tests/Concerns/RecordsRowLocks.php` (`lockedSelects`, `assertLocksRow`) | holds; records MySQL `for update` inside a SQLite comment |
+| `whereDate` house idiom on reservation dates | `CheckAvailabilityAction:177-178`, `StayService:60-61`, `GuestFilter:65-79`, `CreateTurnoverTaskOnCheckOut:48` | holds |
+| `payable_type` is FQCN | `RecordCashPaymentAction:36,45` (`get_class`), morph map `AppServiceProvider:70` (4 bookables only), `Folio::ledgerPayments` OR-join (`Folio.php:85-86`) | holds |
+| Catalogue 29 / 12 | seeder list (`reports.view` line 34, Phase 8 `events.*` last), `SeederTest:14,43,231`, `PermissionsGroupedTest:29` | holds → 30 / 13 |
+| `$notYetBuilt = ['pricing.edit','reports.view']` | `CmsAccessControlTest:124` | holds; the test scans route `permission:` middleware (pipe lists split) and `app/` string literals |
+| Group labels translated? | `PermissionAssignmentService::groupedPermissions` (prefix split), `lang/en/custom.php` sections | no group-label keys exist → none to add |
+| Locales | `lang/{en,ar,fr,tr,es}/custom.php`, 219 lines each; `tests/Feature/Cms/LocaleFoundationTest.php` | holds |
+| Indexes: payments | `create_payments_table` (`morphs('payable')`, `index('recorded_by')`) | no status/created_at index → D-08 |
+| Indexes: folio_items | `create_folio_items_table` (`folio_id`), `add_ledger_columns` (`posted_by`, `reverses_item_id`) | no created_at index → D-08 |
+| Indexes: tickets | `create_tickets_table` (`status`, department, assignee, guest, chatbot), `add_support_columns` (reservation, room, created_by, source) | **only `status`; no `(status, priority)`** → R-1, no new index |
+| Indexes: disputes | `create_folio_item_disputes_table` (`status`, `(folio_item_id,status)`) | holds |
+| Rooms | `rooms.status` string(20) since `2026_09_26_100000`; `is_active` indexed; `Room` uses `SoftDeletes`; live-row unique on `number` | holds |
+| Reservations | `booking_code` unique; status enum values; `reservation_rooms.room_id` nullable FK; `folios.reservation_id` unique | holds |
+| Refund writer | `grep Refund:: app/` → only `Payment::refunds()` relation | none → `refunds_included:false` |
+| Exceptions | flat `app/Exceptions/*`, `DomainException(message, ctx)`; handler uses `custom.errors.<code>` fallback (`bootstrap/app.php:60`) | holds |
+| Query-budget idiom | `expectsDatabaseQueryCount(n)` in `EventInquiryDetailTest:233,246` | holds; R-4 uses a `DB::listen` counter to exclude `activity_log` |
+| Tree | `docs/carlton-tree.html:304` (night audit), `:347` (reports), 88 `"api":true` | holds |
 
-## Query and index design
+## Query and index design (final)
 
-Audit evaluator: one count and capped UUID query per category (10 SELECTs), no nested relationship iteration. Distinct parent reservation queries use EXISTS/NOT EXISTS for folio/room-line conditions. Dirty rooms exclude deleted_at and inactive. Samples ordered by id so equal snapshots are deterministic. A category blocker's evidence is read through its check, not independently duplicated.
+Audit first open (≤ 24 statements, D-22): state `insertOrIgnore` (init only) + state `select … for update`; audit lookup; audit insert; per category 1 COUNT + 1 LIMIT-20 sample (10, or fewer with the LIMIT-21 trick); 1 bulk check insert; 0–1 bulk blocker insert; eager loads (checks+actor, blockers+actor+check, opener, closer ≈ 5). Re-read ≤ 7: state lock/select, audit lookup, eager loads. Mutation ≤ 12: state lock, audit lock, child lock, update, reload eager loads.
 
-Report shape: one capacity count; one room-night overlap SUM over eligible reservation room lines; one conditional aggregate for arrivals/departures; one signed folio-line aggregate; one payment aggregate grouped/conditional by morph type; one active requests count; one active tickets count. <=12 SELECTs allows resource/setup overhead but never per-record SQL. Response contains aggregates only, no pagination bypass disguised as a report.
+Evaluator SQL shapes:
+- Unsettled departures: `reservations` `whereDate(check_out, D)` + status IN + `(NOT EXISTS folio OR EXISTS folio status=open)` via `whereDoesntHave/orWhereHas('folio', …)` — one row per reservation by construction.
+- Unassigned arrivals: `whereDate(check_in, D)` + status IN + `(doesntHave('rooms') OR whereHas rooms whereNull room_id)` — once per reservation.
+- Dirty rooms: `Room::query()` (SoftDeletes scope) `where is_active` + `status=dirty`, order by `number`.
+- High-priority tickets: `whereIn(status, TicketStatus::active())` + `priority >= 3`, order by id.
+- Disputes: `folio_item_disputes` join `folio_items` join `folios` for `folio_uuid`, `status=open`, order by dispute id.
 
-Existing indexes: reservations check_in/check_out/status each indexed; reservation_rooms reservation_id/room_id indexed; rooms status/is_active and soft-delete live uniqueness; folios reservation_id unique/status; disputes status and folio_item_id/status; tickets status/priority and created_at; requests status; payments payable_type/payable_id morph index but no period index; folio_items financial source indexes from Phase5 but no report period index.
+Reports (≤ 8 SELECTs, expected 7): capacity COUNT; room-night pairs GROUP BY (check_in, check_out); arrivals/departures conditional aggregate; folio lines GROUP BY source with cents CASE sums; payments GROUP BY payable_type with cents sum; SR status GROUP BY; ticket status GROUP BY. All period-independent in count.
 
-Add period indexes on folio_items.created_at and payments(status,created_at,payable_type). Add reservations(status,check_in,check_out) for eligible overlap/arrivals; check_out/status is useful for departures/audit if EXPLAIN or schema checks justify the extra composite. Avoid redundant ticket status/priority and dispute status indexes. New audit tables index each actor FK plus audit/status/unique identifiers. Do not drop existing indexes. Migration down removes only new named indexes.
+Indexes added (D-08, own migration): `folio_items(created_at)`, `payments(status, created_at)`. The draft's extra `reservations(status, check_in, check_out)` and `payments(…, payable_type)` composites are dropped: existing single-column reservation indexes serve the bounded queries, and the payments grouping runs over the index-filtered window.
 
-Monetary aggregates: SQLite per-row integer cents then integer SUM avoids carrying SQLite binary aggregate error into bcadd. MySQL DECIMAL SUM is exact; helper must return a normalized two-decimal string with no PHP float arithmetic. Test 0.10 repeated, negative credits, large totals and empty aggregate. If using rounded integer cents, overflow bounds should be within signed 64-bit; DECIMAL(10,2) per row and max 31-day operational report is practical, but overflow must fail rather than silently coerce.
+## Money
 
-Room-night overlap: MAX(0, MIN(check_out,to+1)-MAX(check_in,from)), evaluated by supported driver SQL date operations over DATE columns. Do not turn a timestamp day into DATE in server timezone. Bind all user dates. Denominator uses current live active room capacity; historical unavailable inventory is not reconstructable from current data alone.
+SQLite returns REAL for `SUM(DECIMAL)` (same issue `Folio::refreshTotals` works around). Per-row `CAST(ROUND(col*100) AS INTEGER)` then integer SUM is exact because stored values are 2dp; MySQL `ROUND(DECIMAL*100)` stays DECIMAL and is exact. `fromCents` normalises to an integer string and divides with bcmath. Signed 64-bit integer cents cannot overflow for DECIMAL(10,2) rows over a ≤31-day window at hotel scale; the unit test exercises near-max values × many rows.
 
-## Explicit uncertainties and risks
+## Occupancy
 
-- SQLite can verify unique constraints and lock clauses via RecordsRowLocks, not InnoDB race semantics; actual MySQL simultaneous first-open/close remains an environment-dependent QA check.
-- First-open snapshots are not a cross-domain point-in-time lock. Source categories can change during/after capture; disclose and require human attestation.
-- Mutable generated folio items can change earlier posting totals. `posted_folio_lines` is the honest basis; closing audit does not freeze all source ledgers.
-- Current reservation status and present room inventory make historical occupancy an operational reconstruction, not a formal historical ledger.
-- Reports UI's synthetic ADR/RevPAR/MTD/YTD is outside the required real aggregate contract. No unsupported figures should be invented to preserve visual mock parity.
-- The complete skill guide contains a stale general API-version bullet contradicting its routing section and actual code; use actual `/api` routes.
+Portable fold (D-17): group eligible room lines by `(check_in, check_out)` pairs overlapping the period, then in PHP `max(0, min(check_out, to+1) − max(check_in, from))` nights × count, parsing both storage formats with `CarbonImmutable::parse(...)->toDateString()`. Rows bounded by distinct pairs, not reservations.
 
-No external web research was needed: all decisions depend on local supported code/schema, not a claim of external financial policy.
+## Risks and limits (survive into SUMMARY and guide)
+
+- SQLite proves lock intent (`RecordsRowLocks`) and unique constraints only; concurrent first-open/close serialization is MySQL-only (manual check).
+- Snapshot is current state at first open, not a cross-domain point-in-time cut.
+- `posted_folio_lines` changes while folios are open; reservation lines are lump-sum.
+- Occupancy uses present inventory and current reservation status; no no-show status.
+- Dashboard mocks need adaptation (fields, gate, first-use `date`); the API does not reproduce mock ADR/RevPAR/MTD/YTD.
+- Baseline test count: orchestrator states 2167; Phase 8 SUMMARY records 2165 — re-measured in 09-01 (R-5).

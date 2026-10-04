@@ -9889,6 +9889,268 @@
                     "response": []
                 }
             ]
+        },
+        {
+            "name": "Night Audit & Reports",
+            "item": [
+                {
+                    "name": "[Admin] Night audit: get (opens lazily)",
+                    "request": {
+                        "method": "GET",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{staff_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/operations/night-audit?date={{business_date}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "operations",
+                                "night-audit"
+                            ],
+                            "query": [
+                                {
+                                    "key": "date",
+                                    "value": "{{business_date}}"
+                                }
+                            ]
+                        },
+                        "description": "reports.view OR night_audit.manage. date is strict Y-m-d and optional once the business date is initialised. The FIRST call ever must send date=<the night being closed> from a night_audit.manage account: without it 422 night_audit_not_initialized; reports.view-only with a date before init is 403 forbidden (reason night_audit_not_initialized); a future init date is 422 night_audit_date_in_future. A non-current date with no audit is 422 night_audit_date_mismatch. audit is null when the current business date is after the hotel's today. The audit is a snapshot created on first read of the current date and never re-evaluated. The test script saves audit_uuid, check_uuid (first pending check) and blocker_uuid (first blocker)."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const audit = pm.response.json().data.audit;",
+                                    "    if (audit) {",
+                                    "        pm.collectionVariables.set('audit_uuid', audit.uuid);",
+                                    "        const pending = (audit.checks || []).find(c => c.status === 'pending');",
+                                    "        if (pending) { pm.collectionVariables.set('check_uuid', pending.uuid); }",
+                                    "        if ((audit.blockers || []).length) { pm.collectionVariables.set('blocker_uuid', audit.blockers[0].uuid); }",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "[Admin] Night audit: resolve/override check",
+                    "request": {
+                        "method": "PATCH",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{staff_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/operations/night-audit/checks/{{check_uuid}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "operations",
+                                "night-audit",
+                                "checks",
+                                "{{check_uuid}}"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"resolved\",\n    \"note\": \"Verified at the desk.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "night_audit.manage. status is resolved or overridden; note is required (trimmed, 1..1000). Never touches the check's blocker. 422 night_audit_closed (checked first), 422 night_audit_item_resolved {item: check, status}. Returns {state, audit}, message \"Night audit check updated.\""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Admin] Night audit: resolve blocker",
+                    "request": {
+                        "method": "PATCH",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{staff_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/operations/night-audit/blockers/{{blocker_uuid}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "operations",
+                                "night-audit",
+                                "blockers",
+                                "{{blocker_uuid}}"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"note\": \"Guest on city ledger.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "night_audit.manage. note is required; status is optional and must be \"resolved\". There is no override for blockers. This is an attestation, not a live re-check. 422 night_audit_closed, 422 night_audit_item_resolved {item: blocker, status}. Returns {state, audit}."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Admin] Night audit: close business date",
+                    "request": {
+                        "method": "POST",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{staff_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/operations/night-audit/{{audit_uuid}}/close",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "operations",
+                                "night-audit",
+                                "{{audit_uuid}}",
+                                "close"
+                            ]
+                        },
+                        "description": "night_audit.manage. No body (anything sent is ignored). Needs every check terminal (passed/resolved/overridden) and every blocker resolved, else 422 night_audit_not_ready {checks_pending, blockers_open}. An audit that is not for the current business date is 422 night_audit_date_mismatch. Repeating the close is a 200 no-op. On success the business date advances one day; there is no reopen. Message \"Business date closed.\""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "[Admin] Reports: dashboard",
+                    "request": {
+                        "method": "GET",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{staff_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{staff_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/reports/dashboard?date_from={{date_from}}&date_to={{date_to}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "reports",
+                                "dashboard"
+                            ],
+                            "query": [
+                                {
+                                    "key": "date_from",
+                                    "value": "{{date_from}}"
+                                },
+                                {
+                                    "key": "date_to",
+                                    "value": "{{date_to}}"
+                                }
+                            ]
+                        },
+                        "description": "reports.view ONLY (night_audit.manage alone is 403). date_from and date_to are sent together or not at all (default both = hotel today); strict Y-m-d, date_to >= date_from, at most 31 days inclusive, else 422 validation_failed. Returns period, occupancy, arrivals, departures, revenue (posted folio lines), collections (completed payments, refunds excluded) and open_work (current state)."
+                    },
+                    "response": []
+                }
+            ]
         }
     ]
 }

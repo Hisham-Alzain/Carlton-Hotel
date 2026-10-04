@@ -11,7 +11,7 @@ class SeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_all_29_permissions_seeded(): void
+    public function test_all_30_permissions_seeded(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $expected = [
@@ -36,11 +36,13 @@ class SeederTest extends TestCase
             'housekeeping.view', 'housekeeping.assign', 'housekeeping.update',
             // Phase 8 (D-12): the event-inquiry slice, split off tickets.*
             'events.view', 'events.manage', 'events.deposit',
+            // Phase 9 (D-15): night-audit attestation and close
+            'night_audit.manage',
         ];
         foreach ($expected as $p) {
             $this->assertDatabaseHas('permissions', ['name' => $p, 'guard_name' => 'users']);
         }
-        $this->assertCount(29, Permission::where('guard_name', 'users')->get());
+        $this->assertCount(30, Permission::where('guard_name', 'users')->get());
     }
 
     public function test_housekeeping_permissions_are_granted_to_housekeeping_and_reception(): void
@@ -115,8 +117,10 @@ class SeederTest extends TestCase
 
         $ungrantable = Permission::where('guard_name', 'users')->pluck('name')
             ->reject(fn ($p) => $granted->contains($p))
-            // Deliberately role-less: super-admin-only capabilities.
-            ->reject(fn ($p) => in_array($p, ['staff.manage', 'pricing.edit', 'reports.view'], true))
+            // Deliberately role-less: super-admin-only or per-account capabilities.
+            // Phase 9 (D-15): night_audit.manage is assigned per account (no
+            // management preset exists; one needs an owner decision).
+            ->reject(fn ($p) => in_array($p, ['staff.manage', 'pricing.edit', 'reports.view', 'night_audit.manage'], true))
             ->values();
 
         $this->assertSame([], $ungrantable->all(), 'Permissions granted by no role preset: '.$ungrantable->implode(', '));
@@ -228,7 +232,7 @@ class SeederTest extends TestCase
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-        $this->assertCount(29, Permission::where('guard_name', 'users')->get());
+        $this->assertCount(30, Permission::where('guard_name', 'users')->get());
         $this->assertCount(7, Role::where('guard_name', 'users')->get());
 
         // Idempotent down to the pivot: re-running must not double up grants.

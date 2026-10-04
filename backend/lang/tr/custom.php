@@ -65,6 +65,9 @@ return [
         'event_deposit_recorded'  => 'Kapora kaydedildi.',
         'menu_file_uploaded'      => 'Menü dosyası yüklendi.',
         'menu_file_removed'       => 'Menü dosyası kaldırıldı.',
+        'night_audit_check_updated'    => 'Gece denetimi kontrolü güncellendi.',
+        'night_audit_blocker_resolved' => 'Gece denetimi engeli çözüldü.',
+        'night_audit_closed'           => 'İş günü kapatıldı.',
     ],
     'errors'     => [
         'server_error'           => 'Bir hata oluştu.',
@@ -127,6 +130,12 @@ return [
         'folio_dispute_state'          => 'Bu kalemde kapatılacak açık bir itiraz yok.',
         'event_checklist_item_derived' => 'Bu madde kaporaya bağlıdır ve doğrudan değiştirilemez.',
         'event_deposit_already_recorded' => 'Bu talep için zaten bir kapora kaydedilmiş.',
+        'night_audit_not_initialized'  => 'Gece denetimi henüz başlatılmadı. Kapattığınız iş günü tarihiyle açın.',
+        'night_audit_date_mismatch'    => 'Yalnızca mevcut iş günü tarihi denetlenebilir.',
+        'night_audit_date_in_future'   => 'İş günü tarihi gelecekte olamaz.',
+        'night_audit_closed'           => 'Bu gece denetimi zaten kapatılmış.',
+        'night_audit_item_resolved'    => 'Bu gece denetimi öğesi zaten çözülmüş.',
+        'night_audit_not_ready'        => 'Tüm kontroller ve engeller çözülmeden gece denetimi kapatılamaz.',
     ],
     'auth'       => [
         'otp_sent'       => 'Doğrulama kodu gönderildi.',
@@ -205,6 +214,7 @@ return [
         'prohibited_unless'    => ':other, :values içinde olmadıkça :attribute alanı yasaktır.',
         'date_range_max'       => 'Tarih aralığı en fazla :days gün olabilir.',
         'prohibits'            => ':attribute alanı :other ile birlikte kullanılamaz.',
+        'report_period_too_long' => 'Rapor dönemi en fazla 31 gün olabilir.',
     ],
     'event_checklist' => [
         'contract'  => 'Sözleşme imzalandı',
@@ -212,6 +222,29 @@ return [
         'guarantee' => 'Nihai garanti',
         'beo'       => 'Etkinlik sipariş formu (BEO)',
         'av'        => 'Görsel-işitsel gereksinimler',
+    ],
+    'night_audit' => [
+        'checks' => [
+            'unsettled_departures'       => 'Kapatılmamış çıkışlar',
+            'unassigned_arrivals'        => 'Odası atanmamış girişler',
+            'dirty_rooms'                => 'Kirli odalar',
+            'open_high_priority_tickets' => 'Açık yüksek öncelikli talepler',
+            'open_folio_disputes'        => 'Açık folyo itirazları',
+        ],
+        'check_statuses' => [
+            'passed'     => 'Geçti',
+            'pending'    => 'Beklemede',
+            'resolved'   => 'Çözüldü',
+            'overridden' => 'Geçersiz kılındı',
+        ],
+        'blocker_statuses' => [
+            'open'     => 'Açık',
+            'resolved' => 'Çözüldü',
+        ],
+        'statuses' => [
+            'open'   => 'Açık',
+            'closed' => 'Kapalı',
+        ],
     ],
     'attributes' => [
         'amount_usd' => 'tutar (USD)',

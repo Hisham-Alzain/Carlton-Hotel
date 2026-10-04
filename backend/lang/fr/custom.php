@@ -65,6 +65,9 @@ return [
         'event_deposit_recorded'  => 'Acompte enregistré.',
         'menu_file_uploaded'      => 'Fichier du menu téléversé.',
         'menu_file_removed'       => 'Fichier du menu supprimé.',
+        'night_audit_check_updated'    => 'Contrôle de l\'audit de nuit mis à jour.',
+        'night_audit_blocker_resolved' => 'Point bloquant de l\'audit de nuit résolu.',
+        'night_audit_closed'           => 'Date d\'exploitation clôturée.',
     ],
     'errors'     => [
         'server_error'           => 'Une erreur est survenue.',
@@ -127,6 +130,12 @@ return [
         'folio_dispute_state'          => "Cette ligne n'a aucune contestation ouverte à clôturer.",
         'event_checklist_item_derived' => "Cet élément suit l'acompte et ne peut pas être modifié directement.",
         'event_deposit_already_recorded' => 'Un acompte a déjà été enregistré pour cette demande.',
+        'night_audit_not_initialized'  => 'L\'audit de nuit n\'a pas encore été démarré. Ouvrez-le avec la date d\'exploitation que vous clôturez.',
+        'night_audit_date_mismatch'    => 'Seule la date d\'exploitation en cours peut être auditée.',
+        'night_audit_date_in_future'   => 'La date d\'exploitation ne peut pas être dans le futur.',
+        'night_audit_closed'           => 'Cet audit de nuit est déjà clôturé.',
+        'night_audit_item_resolved'    => 'Cet élément de l\'audit de nuit a déjà été résolu.',
+        'night_audit_not_ready'        => 'L\'audit de nuit ne peut pas être clôturé tant que tous les contrôles et points bloquants ne sont pas résolus.',
     ],
     'auth'       => [
         'otp_sent'       => 'Un code de vérification a été envoyé.',
@@ -205,6 +214,7 @@ return [
         'prohibited_unless'    => 'Le champ :attribute est interdit sauf si :other est dans :values.',
         'date_range_max'       => 'La plage de dates ne peut pas dépasser :days jours.',
         'prohibits'            => 'Le champ :attribute ne peut pas être utilisé avec :other.',
+        'report_period_too_long' => 'La période du rapport ne peut pas dépasser 31 jours.',
     ],
     'event_checklist' => [
         'contract'  => 'Contrat signé',
@@ -212,6 +222,29 @@ return [
         'guarantee' => 'Garantie finale',
         'beo'       => 'Ordre de banquet (BEO)',
         'av'        => 'Besoins audiovisuels',
+    ],
+    'night_audit' => [
+        'checks' => [
+            'unsettled_departures'       => 'Départs non réglés',
+            'unassigned_arrivals'        => 'Arrivées sans chambre attribuée',
+            'dirty_rooms'                => 'Chambres sales',
+            'open_high_priority_tickets' => 'Tickets prioritaires ouverts',
+            'open_folio_disputes'        => 'Contestations de folio ouvertes',
+        ],
+        'check_statuses' => [
+            'passed'     => 'Réussi',
+            'pending'    => 'En attente',
+            'resolved'   => 'Résolu',
+            'overridden' => 'Forcé',
+        ],
+        'blocker_statuses' => [
+            'open'     => 'Ouvert',
+            'resolved' => 'Résolu',
+        ],
+        'statuses' => [
+            'open'   => 'Ouvert',
+            'closed' => 'Clôturé',
+        ],
     ],
     'attributes' => [
         'amount_usd' => 'montant (USD)',

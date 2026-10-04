@@ -65,6 +65,9 @@ return [
         'event_deposit_recorded'  => 'Depósito registrado.',
         'menu_file_uploaded'      => 'Archivo del menú subido.',
         'menu_file_removed'       => 'Archivo del menú eliminado.',
+        'night_audit_check_updated'    => 'Verificación de la auditoría nocturna actualizada.',
+        'night_audit_blocker_resolved' => 'Bloqueo de la auditoría nocturna resuelto.',
+        'night_audit_closed'           => 'Fecha operativa cerrada.',
     ],
     'errors'     => [
         'server_error'           => 'Se ha producido un error.',
@@ -127,6 +130,12 @@ return [
         'folio_dispute_state'          => 'Esta partida no tiene ninguna reclamación abierta que cerrar.',
         'event_checklist_item_derived' => 'Este elemento depende del depósito y no se puede modificar directamente.',
         'event_deposit_already_recorded' => 'Ya se registró un depósito para esta consulta.',
+        'night_audit_not_initialized'  => 'La auditoría nocturna aún no se ha iniciado. Ábrala con la fecha operativa que está cerrando.',
+        'night_audit_date_mismatch'    => 'Solo se puede auditar la fecha operativa actual.',
+        'night_audit_date_in_future'   => 'La fecha operativa no puede ser futura.',
+        'night_audit_closed'           => 'Esta auditoría nocturna ya está cerrada.',
+        'night_audit_item_resolved'    => 'Este elemento de la auditoría nocturna ya se ha resuelto.',
+        'night_audit_not_ready'        => 'La auditoría nocturna no se puede cerrar hasta que se resuelvan todas las verificaciones y bloqueos.',
     ],
     'auth'       => [
         'otp_sent'       => 'Se ha enviado un código de verificación.',
@@ -205,6 +214,7 @@ return [
         'prohibited_unless'    => 'El campo :attribute está prohibido a menos que :other esté en :values.',
         'date_range_max'       => 'El rango de fechas no puede abarcar más de :days días.',
         'prohibits'            => 'El campo :attribute no se puede usar junto con :other.',
+        'report_period_too_long' => 'El período del informe no puede abarcar más de 31 días.',
     ],
     'event_checklist' => [
         'contract'  => 'Contrato firmado',
@@ -212,6 +222,29 @@ return [
         'guarantee' => 'Garantía final',
         'beo'       => 'Orden de evento de banquete (BEO)',
         'av'        => 'Requisitos audiovisuales',
+    ],
+    'night_audit' => [
+        'checks' => [
+            'unsettled_departures'       => 'Salidas sin liquidar',
+            'unassigned_arrivals'        => 'Llegadas sin habitación asignada',
+            'dirty_rooms'                => 'Habitaciones sucias',
+            'open_high_priority_tickets' => 'Tickets abiertos de alta prioridad',
+            'open_folio_disputes'        => 'Reclamaciones de folio abiertas',
+        ],
+        'check_statuses' => [
+            'passed'     => 'Superada',
+            'pending'    => 'Pendiente',
+            'resolved'   => 'Resuelta',
+            'overridden' => 'Omitida',
+        ],
+        'blocker_statuses' => [
+            'open'     => 'Abierto',
+            'resolved' => 'Resuelto',
+        ],
+        'statuses' => [
+            'open'   => 'Abierta',
+            'closed' => 'Cerrada',
+        ],
     ],
     'attributes' => [
         'amount_usd' => 'importe (USD)',

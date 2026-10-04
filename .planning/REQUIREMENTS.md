@@ -1,9 +1,9 @@
 # Requirements: Carlton Hotel Backend — API Gap Closure
 
 **Defined:** 2026-09-25
-**Core Value:** Every screen the dashboard and guest app already show works against a real, tested, convention-compliant `/api/v1` endpoint instead of mock data.
+**Core Value:** Every screen the dashboard and guest app already show works against a real, tested, convention-compliant `/api` endpoint instead of mock data.
 
-All routes are under `/api/v1`. Staff routes use `auth:users` + permission middleware; guest routes use `auth:guests` (+ `has_booking` / `is_checked_in` gates where the existing pattern applies). Public ids are UUIDs. Every requirement is done only when its feature tests (happy / 401 / 403 / 422), AR/EN keys, API guide + Postman entries exist and its node in `docs/carlton-tree.html` is flipped to `api:true`.
+All routes are under `/api` (the code has no `/v1` segment — `bootstrap/app.php` sets no `apiPrefix`; the code wins, as in Phases 2–9). Staff routes use `auth:users` + permission middleware; guest routes use `auth:guests` (+ `has_booking` / `is_checked_in` gates where the existing pattern applies). Public ids are UUIDs. Every requirement is done only when its feature tests (happy / 401 / 403 / 422), keys in all 5 locales (en/ar/fr/tr/es), API guide + Postman entries exist and its node in `docs/carlton-tree.html` is flipped to `api:true`.
 
 ## v1 Requirements
 
@@ -70,18 +70,44 @@ All routes are under `/api/v1`. Staff routes use `auth:users` + permission middl
 
 ### Events & Dining
 
-- [ ] **EVENT-01**: Staff can toggle checklist items on an event inquiry (`PATCH /cms/event-inquiries/{inquiry}/checklist/{item}`)
-- [ ] **EVENT-02**: Staff can record a deposit against an event inquiry using the existing payment action, idempotent via `Idempotency-Key` (`PATCH /cms/event-inquiries/{inquiry}/deposit`)
-- [ ] **EVENT-03**: Staff can update internal event inquiry notes (`staff_notes`) (`PATCH /cms/event-inquiries/{inquiry}/notes`)
-- [ ] **DINING-01**: Staff can list restaurant table reservations with venue/date filters (`GET /cms/table-reservations`)
-- [ ] **DINING-02**: Guest can download a venue menu (media URL, 204 when none, 404 for unknown/inactive venue; staff manage the file via `/cms/dining-venues/{venue}/menu-file`) (`GET /public/dining-venues/{venue}/menu/download`)
+- [x] **EVENT-01**: Staff can toggle checklist items on an event inquiry (`PATCH /cms/event-inquiries/{inquiry}/checklist/{item}`)
+- [x] **EVENT-02**: Staff can record a deposit against an event inquiry using the existing payment action, idempotent via `Idempotency-Key` (`PATCH /cms/event-inquiries/{inquiry}/deposit`)
+- [x] **EVENT-03**: Staff can update internal event inquiry notes (`staff_notes`) (`PATCH /cms/event-inquiries/{inquiry}/notes`)
+- [x] **DINING-01**: Staff can list restaurant table reservations with venue/date filters (`GET /cms/table-reservations`)
+- [x] **DINING-02**: Guest can download a venue menu (media URL, 204 when none, 404 for unknown/inactive venue; staff manage the file via `/cms/dining-venues/{venue}/menu-file`) (`GET /public/dining-venues/{venue}/menu/download`)
 
 ### Night Audit & Reports
 
-- [ ] **AUDIT-01**: Staff can open the night audit for a business date; it is created lazily and its checks (unsettled departures, unassigned arrivals, dirty rooms, open high-priority tickets) are evaluated and persisted (`GET /operations/night-audit?date`, permission `reports.view`)
-- [ ] **AUDIT-02**: Staff can mark a night-audit check resolved/overridden with a note (`PATCH /operations/night-audit/checks/{check}`)
-- [ ] **AUDIT-03**: Staff can resolve a night-audit blocker (`PATCH /operations/night-audit/blockers/{blocker}`)
-- [ ] **REPORT-01**: Staff can read a reports dashboard (occupancy, arrivals/departures, revenue, open requests/tickets) (`GET /reports/dashboard`, permission `reports.view`)
+- [x] **AUDIT-01**: Staff can open the night audit for a business date; it is created lazily and its checks (unsettled departures, unassigned arrivals, dirty rooms, open high-priority tickets, open folio disputes) are evaluated and persisted (`GET /operations/night-audit?date`, permission `reports.view` or `night_audit.manage`; initializing the business date requires `night_audit.manage`)
+- [x] **AUDIT-02**: Staff can mark a night-audit check resolved/overridden with a note (`PATCH /operations/night-audit/checks/{check}`, permission `night_audit.manage`)
+- [x] **AUDIT-03**: Staff can resolve a night-audit blocker (`PATCH /operations/night-audit/blockers/{blocker}`, permission `night_audit.manage`)
+- [x] **AUDIT-04** (scope completion, Phase 9): A manager closes the current business date once every check is terminal and every blocker resolved (`POST /operations/night-audit/{audit}/close`, permission `night_audit.manage`); this advances the business date by one day
+- [x] **REPORT-01**: Staff can read a reports dashboard (occupancy, arrivals/departures, revenue, open requests/tickets) (`GET /reports/dashboard`, permission `reports.view`)
+
+### Loyalty Points Program
+
+- [ ] **LOY-01**: Staff can read and update the six program settings (earn rate, redeem value, expiry months, expiry-warning days, minimum points to redeem, max % payable with points); changes are audited
+- [ ] **LOY-02**: With no rates configured the program is inactive (no earning, redemption refused); no rates are seeded
+- [ ] **LOY-03**: Settling a folio credits integer points (round half up) on room-stay spend and on services/F&B spend, once, atomically with settlement, under every settlement path, never on a cancelled reservation
+- [ ] **LOY-04**: Earning is idempotent: a retried or concurrent settlement never double-credits; guests with no account and unconfigured programs earn nothing; no historical backfill
+- [ ] **LOY-05**: Staff can award or deduct points manually with a mandatory reason, idempotently and audited; a deduction can never exceed the available balance
+- [ ] **LOY-06**: A guest sees available points, points expiring soon, and a paginated ledger (earn / redeem / expire / adjust / clawback / refund) tied to bookings
+- [ ] **LOY-07**: Staff can view any guest's balance and ledger
+- [ ] **LOY-08**: Each earn batch expires after the configured months (hotel-local end of day); points are consumed FIFO; expired points are never spendable even before the sweep runs
+- [ ] **LOY-09**: A daily job expires batches and writes expire ledger entries idempotently
+- [ ] **LOY-10**: A guest is notified once per batch N days before expiry through the existing notification system, in the guest's language
+- [ ] **LOY-11**: Staff manage a rewards catalog (AR/EN name and description, points cost, type discount voucher / free night / room upgrade) with a recycle bin
+- [ ] **LOY-12**: A guest can browse active rewards
+- [ ] **LOY-13**: A guest redeems a reward into a voucher (code, status, expiry); the redeem is idempotent and transactional and spends points FIFO
+- [ ] **LOY-14**: A guest lists their own vouchers by status
+- [ ] **LOY-15**: A guest can preview points earnable and the discount for a prospective booking without side effects
+- [ ] **LOY-16**: A guest can pay part of a booking with points (free-form) subject to the minimum and the max-% cap, or apply one voucher; the discount reduces the reservation total, is atomic with reservation creation and idempotent via `Idempotency-Key` (replay returns the same reservation)
+- [ ] **LOY-17**: Cancelling a reservation refunds spent points, restores a used voucher and claws back points earned from its settled folio, idempotently, never producing a negative balance
+- [ ] **LOY-18**: A callable, tested folio-refund reversal exists for the future refund flow
+- [ ] **LOY-19**: Staff can report points issued (earn + positive adjust), redeemed, expired, refunded, clawed back, adjusted out and outstanding points over a period
+- [ ] **LOY-20**: New `loyalty.*` permissions are seeded, enforced by route middleware and shown in the permission picker; no preset changes
+- [ ] **LOY-21**: Every new string exists in all five locale files; every new route has happy / 401 / 403 / 422 tests; docs, Postman and the tree are updated
+- [ ] **LOY-22**: With `redeem_value_usd` or `max_redeem_percent` unset, points-to-discount is refused (`loyalty_program_inactive`); an unset cap never behaves as 100%, and catalog redemption stays available
 
 ### Documentation & Contract
 
@@ -158,21 +184,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OPS-01 | Phase 7 | Pending |
 | OPS-02 | Phase 7 | Pending |
 | OPS-03 | Phase 7 | Pending |
-| EVENT-01 | Phase 8 | Pending |
-| EVENT-02 | Phase 8 | Pending |
-| EVENT-03 | Phase 8 | Pending |
-| DINING-01 | Phase 8 | Pending |
-| DINING-02 | Phase 8 | Pending |
-| AUDIT-01 | Phase 9 | Pending |
-| AUDIT-02 | Phase 9 | Pending |
-| AUDIT-03 | Phase 9 | Pending |
-| REPORT-01 | Phase 9 | Pending |
+| EVENT-01 | Phase 8 | Complete (3886416) |
+| EVENT-02 | Phase 8 | Complete (3886416) |
+| EVENT-03 | Phase 8 | Complete (3886416) |
+| DINING-01 | Phase 8 | Complete (3886416) |
+| DINING-02 | Phase 8 | Complete (3886416) |
+| AUDIT-01 | Phase 9 | Complete |
+| AUDIT-02 | Phase 9 | Complete |
+| AUDIT-03 | Phase 9 | Complete |
+| AUDIT-04 | Phase 9 | Complete |
+| REPORT-01 | Phase 9 | Complete |
 
 **Coverage:**
-- v1 requirements: 51 total
-- Mapped to phases: 51
+- v1 requirements: 74 total (AUDIT-04 added 2026-10-04 as Phase 9 scope completion; LOY-01..22 added 2026-10-04 for Phase 10)
+- Mapped to phases: 74
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-25*
-*Last updated: 2026-09-25 after roadmap creation*
+*Last updated: 2026-10-04 — Phase 10 planning: LOY-01..LOY-22 added*

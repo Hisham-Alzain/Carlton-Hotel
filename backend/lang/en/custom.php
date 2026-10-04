@@ -65,6 +65,9 @@ return [
         'event_deposit_recorded'  => 'Deposit recorded.',
         'menu_file_uploaded'      => 'Menu file uploaded.',
         'menu_file_removed'       => 'Menu file removed.',
+        'night_audit_check_updated'    => 'Night audit check updated.',
+        'night_audit_blocker_resolved' => 'Night audit blocker resolved.',
+        'night_audit_closed'           => 'Business date closed.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',
@@ -127,6 +130,12 @@ return [
         'folio_dispute_state'          => 'This line item has no open dispute to close.',
         'event_checklist_item_derived' => 'This item follows the deposit and cannot be changed directly.',
         'event_deposit_already_recorded' => 'A deposit has already been recorded for this inquiry.',
+        'night_audit_not_initialized'  => 'The night audit has not been started yet. Open it with the business date you are closing.',
+        'night_audit_date_mismatch'    => 'Only the current business date can be audited.',
+        'night_audit_date_in_future'   => 'The business date cannot be in the future.',
+        'night_audit_closed'           => 'This night audit is already closed.',
+        'night_audit_item_resolved'    => 'This night audit item has already been resolved.',
+        'night_audit_not_ready'        => 'The night audit cannot be closed until every check and blocker is resolved.',
     ],
     'auth'       => [
         'otp_sent'       => 'A verification code has been sent.',
@@ -205,6 +214,7 @@ return [
         'prohibited_unless'    => 'The :attribute field is prohibited unless :other is in :values.',
         'date_range_max'       => 'The date range may span at most :days days.',
         'prohibits'            => 'The :attribute field cannot be used together with :other.',
+        'report_period_too_long' => 'The report period may span at most 31 days.',
     ],
     'event_checklist' => [
         'contract'  => 'Contract signed',
@@ -212,6 +222,29 @@ return [
         'guarantee' => 'Final guarantee',
         'beo'       => 'Banquet event order (BEO)',
         'av'        => 'AV requirements',
+    ],
+    'night_audit' => [
+        'checks' => [
+            'unsettled_departures'       => 'Unsettled departures',
+            'unassigned_arrivals'        => 'Unassigned arrivals',
+            'dirty_rooms'                => 'Dirty rooms',
+            'open_high_priority_tickets' => 'Open high-priority tickets',
+            'open_folio_disputes'        => 'Open folio disputes',
+        ],
+        'check_statuses' => [
+            'passed'     => 'Passed',
+            'pending'    => 'Pending',
+            'resolved'   => 'Resolved',
+            'overridden' => 'Overridden',
+        ],
+        'blocker_statuses' => [
+            'open'     => 'Open',
+            'resolved' => 'Resolved',
+        ],
+        'statuses' => [
+            'open'   => 'Open',
+            'closed' => 'Closed',
+        ],
     ],
     'attributes' => [
         'amount_usd' => 'amount (USD)',

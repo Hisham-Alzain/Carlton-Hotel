@@ -301,8 +301,8 @@ var TREE = {
     "ep":["GET /cms/reservations/{r}/folio","POST /cms/folios/{f}/line-items","POST /cms/folios/{f}/payments","PATCH /cms/folios/{f}/line-items/{i}/dispute","PATCH /folio/items/{i}/dispute"]},
    {"name":"payment gateway","api":"partial","dash":"na","mob":"partial","meta":"ManualDriver: cash · on_arrival",
     "note":"No online gateway. The app blocks card, Apple Pay and Google Pay; only Pay at hotel works."},
-   {"name":"night audit","api":false,"dash":"mock","mob":"na",
-    "ep":["GET /operations/night-audit (mock)","PATCH …/checks/{id} (mock)","PATCH …/blockers/{id} (mock)"]}
+   {"name":"night audit","api":true,"dash":"mock","mob":"na","meta":"reports.view | night_audit.manage",
+    "ep":["GET /api/operations/night-audit","PATCH /api/operations/night-audit/checks/{check}","PATCH /api/operations/night-audit/blockers/{blocker}","POST /api/operations/night-audit/{audit}/close"]}
   ]},
   {"name":"Dining","kind":"section","api":true,"dash":false,"mob":true,"children":[
    {"name":"venues · menus CMS","api":true,"dash":false,"mob":"na","meta":"35 routes · modifiers · tables",
@@ -344,7 +344,7 @@ var TREE = {
     "ep":["GET /operations/queue","PATCH /operations/queue/{type}/{uuid}/assign","PATCH /operations/queue/{type}/{uuid}/status","PATCH /operations/queue/{type}/{uuid}/claim","GET /operations/staff"]},
    {"name":"support tickets","api":true,"dash":"mock","mob":"na","meta":"timeline · recovery links · escalation cap",
     "ep":["GET /support-tickets","POST /support-tickets","GET /support-tickets/{ticket}","PATCH /support-tickets/{ticket}/status","PATCH /support-tickets/{ticket}/assign","POST /support-tickets/{ticket}/reply","POST /support-tickets/{ticket}/recovery-actions","POST /support-tickets/{ticket}/escalate"]},
-   {"name":"reports","api":false,"dash":"mock","mob":"na","ep":["GET /reports/dashboard (mock)"]}
+   {"name":"reports","api":true,"dash":"mock","mob":"na","meta":"reports.view only","ep":["GET /api/reports/dashboard"]}
   ]},
   {"name":"Guests & messaging","kind":"section","api":true,"dash":"mock","mob":true,"children":[
    {"name":"guest directory · profile","api":true,"dash":"mock","mob":"na","meta":"notes · preferences · pre-arrival checklist · stay history",

@@ -1,30 +1,40 @@
-# Phase 9 implementation patterns and ownership
+# Phase 9 patterns — new files mapped to closest analogs
 
-Load backend/CLAUDE.md and `.claude/skills/tupcode-laravel-backend/SKILL.md` before backend work; guide section 17 is the finishing gate. All Base classes are App\Base. Custom non-CRUD controllers use BaseController and respondFromService with Resources, not hand-written envelopes. Services/actions never request(), HTTP responses or HTTP exceptions. Domain errors receive stable error_code and translated strings. Requests validate; resources shape already-loaded data only. Controllers import concrete typed route-bound UUID models.
+Load `backend/CLAUDE.md` and `backend/.claude/skills/tupcode-laravel-backend/SKILL.md` before backend work; its §17 checklist is the finishing gate. Plans are executed sequentially (waves 1–10), so there is no parallel file ownership; each plan lists the exact files it may touch.
 
-Audit public interfaces:
+## File map
 
-- `Actions/Reports/OpenNightAuditAction::handle(?string $date): array` returns ['data'=>NightAudit,'code'=>200]; transaction creates/loads state, snapshots once, returns eager-loaded audit.
-- `Actions/Reports/UpdateNightAuditCheckAction::handle(NightAuditCheck $check,array $data,User $actor): array` returns full updated audit.
-- `Actions/Reports/ResolveNightAuditBlockerAction::handle(NightAuditBlocker $blocker,array $data,User $actor): array` returns full updated audit.
-- `Actions/Reports/CloseNightAuditAction::handle(NightAudit $audit,User $actor): array` returns full updated audit.
-- `Services/Reports/NightAuditService::show(NightAudit $audit): array` loads checks/actors/blockers/actors/closedBy once. It may extend BaseService with NightAudit as model; never expose inherited CRUD routes.
-- `Services/Reports/NightAuditEvaluator::evaluate(string $businessDate): array` returns five immutable category payloads with count, UUID samples and truncation; it does not persist or change source tables.
-
-Report interface: `Services/Reports/ReportDashboardService::dashboard(string $startDate,string $endDate): array`, `Support/ReportAggregates` encapsulates supported SQLite/MySQL exact-cent and day-overlap expressions. Report Request normalizes optional dates in controller/service boundary; no request access in service. Resource consumes a bounded array.
-
-Audit response core: uuid, business_date, status(open|closed), evaluated_at UTC, snapshot_basis, current_business_date, last_closed_date, checks[], blockers[], closed_at/by, readiness(checks_pending,blockers_open,can_close). Public actors only uuid/name via eager resource shape; notes never overwrite guest notes. Check: uuid/type/label/status/issue_count/evidence_uuids/evidence_truncated/note/acted_at/acted_by. Blocker: uuid/check_uuid/type/status/note/acted_at/acted_by; category count/evidence may use already-loaded check. No internal IDs.
-
-Report response core: period{date_from,date_to,days,timezone}, generated_at, occupancy{basis,active_rooms,occupied_room_nights,available_room_nights,occupancy_rate}, arrivals, departures, revenue{basis,currency,charges_usd,credits_usd,net_usd}, collections{currency,stays_usd,event_deposits_usd,other_usd,total_usd,refunds_included:false}, open_work{basis,as_of,service_requests,tickets}. All *_usd strings; counts integers; only nonmoney occupancy ratio may be numeric floating point.
-
-## Safe parallel ownership
-
-| Owner | Files | Must not edit |
+| New / changed file | Closest analog | Notes |
 |---|---|---|
-| Audit engineer, plan 09-01 | New NightAudit* models/enums/factories; Actions/Reports/*NightAudit*; Services/Reports/NightAudit*; Requests/Reports/*NightAudit*; Resources/Reports/NightAudit*; Controllers/Staff/NightAuditController; new `2026_10_03_100000_create_night_audit_tables.php`; own test files | routes, lang, permissions, report classes, shared docs/state |
-| Reports engineer, plan 09-02 | ReportDashboardService; ReportAggregates; DashboardReportRequest/Resource; Staff/ReportDashboardController; `2026_10_03_100100_add_reporting_indexes.php`; own report tests | audit files, routes, lang, permission seeder, shared docs/state |
-| Root integrator, plans 09-03/04 | routes/api.php, five lang/custom.php, RolesAndPermissionsSeeder + count/preset tests, guides/changelog/Postman/tree, Phase9 summaries/shared planning status | Do not overwrite engineer-owned files while their work is active |
+| `database/migrations/2026_10_04_100000_create_night_audit_tables.php` | `2026_10_02_100100_create_event_inquiry_checklist_items_table.php`, `2026_09_26_130200_create_folio_item_disputes_table.php` | 4 tables (D-07); explicit `restrictOnDelete`; `down()` drops in reverse FK order |
+| `database/migrations/2026_10_04_100100_add_report_indexes.php` | `2026_10_02_100300_add_scheduled_index_to_service_bookings_table.php` | named indexes; `down()` drops only them (D-08) |
+| `app/Enums/NightAudit{Status,CheckType,CheckStatus,BlockerStatus}.php` | `app/Enums/EventChecklistItem.php`, `FolioDisputeStatus.php` | string-backed; `NightAuditCheckType::isBlocking()`, `label()`; `NightAuditCheckStatus::isTerminal()` |
+| `app/Models/NightAudit{State,,Check,Blocker}.php` | `app/Models/EventInquiryChecklistItem.php` | `HasUuid` (not on State), `HasFactory`, `LogsActivity` with `logOnly` status/acted_by/closed_* (D-14); casts dates/enums/JSON; relations `checks`, `blockers`, `opener`, `closer`, `actor`, `check`, `audit` |
+| `database/factories/NightAudit*Factory.php` | `EventInquiryChecklistItemFactory.php` | states `closed()`, `pending()`, `blocking()` at engineer discretion |
+| `app/Support/MoneyAggregate.php` | `app/Support/FolioLedger.php`, `HotelClock.php` | static, driver switch on `DB::connection()->getDriverName()` (D-21) |
+| `app/Actions/NightAudit/OpenNightAuditAction.php` | `app/Actions/Events/RecordEventDepositAction.php` (lock + replay), `app/Actions/Folio/*` | `handle(?string $date, bool $canInitialize, User $actor): array` → `['data' => ['state'=>NightAuditState,'audit'=>?NightAudit], 'code'=>200]` |
+| `app/Support/NightAuditEvaluator.php` (or private methods) | `OperationsQueueService::summary` (grouped counts) | `evaluate(string $date): array<type, {count, evidence, truncated}>`; read-only |
+| `app/Actions/NightAudit/ResolveNightAuditCheckAction.php`, `ResolveNightAuditBlockerAction.php`, `CloseNightAuditAction.php` | `app/Actions/Events/RecordEventDepositAction.php` | lock order state → audit → child; return the same payload as open |
+| `app/Services/Operations/NightAuditService.php` | `app/Services/Operations/OperationsQueueService.php` | `payload(NightAuditState, ?NightAudit): array` eager-loads `checks.actor`, `blockers.actor`, `blockers.check`, `opener`, `closer` |
+| `app/Services/Reports/ReportService.php` | `OperationsQueueService::summary` | `dashboard(string $from, string $to): array`; ≤ 8 queries |
+| `app/Http/Controllers/Admin/NightAuditController.php`, `ReportController.php` | `Admin/FrontDeskController.php`, `Admin/OperationsStaffController.php` | extend `BaseController`, `respondFromService`; pass `$request->user()` and `->can('night_audit.manage')` to actions; never query |
+| `app/Http/Requests/NightAudit/*Request.php`, `Requests/Reports/ReportDashboardRequest.php` | `Requests/Events/UpdateEventChecklistItemRequest.php` | extend `BaseRequest`; `prepareForValidation` trims `note`; strict `date_format:Y-m-d` + round-trip closure; 31-day rule message `custom.validation.report_period_too_long` |
+| `app/Http/Resources/NightAudit/*Resource.php`, `Resources/Reports/ReportDashboardResource.php` | `Resources/Events/*` | `whenLoaded` only; UUIDs only; ISO-8601 Z via `->toIso8601ZuluString()` or house helper |
+| `app/Exceptions/NightAudit{NotInitialized,DateMismatch,DateInFuture,Closed,ItemResolved,NotReady}Exception.php` | `EventDepositAlreadyRecordedException.php` | one-liners; 422; context passed by the thrower |
+| `routes/api.php` (new block after `/operations/staff`, ~line 795) | the `operations/queue` and `dashboard/summary` blocks | `Route::middleware(['auth:users', 'permission:…'])` per D-01 |
+| `database/seeders/RolesAndPermissionsSeeder.php` | Phase 8 `events.*` entry | append `'night_audit.manage'` with a Phase 9 comment; presets untouched |
+| `lang/{en,ar,fr,tr,es}/custom.php` | Phase 8 `event_checklist` section | new `night_audit` section (check labels, statuses), keys in `errors`, `messages`, `validation`; same order everywhere |
 
-New exceptions may be audit-owned by `NightAudit*Exception` naming; reports use ordinary request validation. Audit engineer sends translation key/message/context inventory to root. Root seeds/re-pins before engineer feature tests require middleware; engineers can run service/unit tests first. Shared route registration is root responsibility and happens once concrete classes exist. No author edits another's tests to weaken failures.
+## Contract shapes
 
-Reference existing `tests/Concerns/RecordsRowLocks.php` for lock intent and Phase8 `EventDepositTest` for auth/envelope/UUID isolation; do not assert SQLite is a concurrent row-lock engine. Full suite root only to avoid overlapping resource-heavy processes. Test fixture database always in-memory/scratch.
+Audit payload and report payload: exactly as `09-CONTEXT.md` D-13 and D-16..D-19. Money = 2dp strings; `occupancy_rate` = 4dp string; counts = ints; timestamps ISO-8601 Z; ids = UUIDs only.
+
+## Test conventions
+
+- Real Sanctum bearer tokens (`$user->createToken('t')->plainTextToken`), never `actingAs` (Phase 8 standing rule 7).
+- Seed `RolesAndPermissionsSeeder` in permission tests; preset tokens via `User::factory()->create()->assignRole($role)`.
+- Locks: `use RecordsRowLocks; $this->lockedSelects(fn () => …)`; assert order state → audit → child.
+- Budgets (R-4): a small `CountsDomainQueries` helper (test concern) wrapping `DB::listen`, ignoring statements that touch `activity_log`, around the action/service call only.
+- Time: `$this->travelTo(...)`, `config(['hotel.timezone' => 'Europe/London'])` for DST.
+- SQLite date storage: seed `check_in/check_out` via `DB::table('reservations')->update(['check_out' => 'Y-m-d 00:00:00'])` to prove `whereDate`.
+- Scratch migrations: temp SQLite file under the scratchpad; never `database/database.sqlite` or its `.bak-*`.

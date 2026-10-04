@@ -40,6 +40,10 @@ class RolesAndPermissionsSeeder extends Seeder
             // Phase 8 (D-12): the event-inquiry slice, split off tickets.*;
             // deposit is a money write and gets its own string (folios.settle precedent).
             'events.view', 'events.manage', 'events.deposit',
+            // Phase 9 (D-15): attest night-audit checks/blockers and close the
+            // business date. Read via reports.view|night_audit.manage. In no
+            // preset — assigned per account; a night auditor needs no revenue access.
+            'night_audit.manage',
         ];
 
         foreach ($permissions as $name) {

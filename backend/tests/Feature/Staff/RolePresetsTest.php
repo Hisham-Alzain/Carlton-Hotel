@@ -101,6 +101,46 @@ class RolePresetsTest extends TestCase
         }
     }
 
+    /**
+     * Phase 9 (D-15): night_audit.manage and reports.view are granted per
+     * account only. Every preset is pinned exactly as seeded at 3886416.
+     */
+    public function test_phase9_leaves_every_preset_unchanged(): void
+    {
+        $expected = [
+            'reception' => [
+                'folios.dispute', 'folios.post', 'folios.settle', 'folios.view',
+                'guests.edit', 'guests.view', 'housekeeping.assign', 'housekeeping.view',
+                'reservations.cancel', 'reservations.create', 'reservations.view', 'rooms.status',
+                'service_requests.update', 'service_requests.view', 'tickets.respond', 'tickets.view',
+            ],
+            'kitchen'      => ['service_requests.update', 'service_requests.view'],
+            'housekeeping' => [
+                'housekeeping.assign', 'housekeeping.update', 'housekeeping.view', 'rooms.status',
+                'service_requests.update', 'service_requests.view',
+            ],
+            'concierge' => [
+                'guests.edit', 'guests.view', 'service_requests.assign', 'service_requests.update',
+                'service_requests.view', 'tickets.assign', 'tickets.respond', 'tickets.view',
+            ],
+            'events' => [
+                'events.deposit', 'events.manage', 'events.view', 'service_requests.view',
+                'tickets.assign', 'tickets.respond', 'tickets.view',
+            ],
+            'content_editor'  => ['cms.edit', 'cms.restore', 'cms.view'],
+            'content_manager' => ['cms.edit', 'cms.purge', 'cms.restore', 'cms.view'],
+        ];
+
+        foreach ($expected as $role => $permissions) {
+            $actual = $this->presetPermissions($role);
+            $this->assertSame($permissions, $actual, $role);
+            $this->assertEmpty(
+                array_filter($actual, fn (string $p) => str_starts_with($p, 'night_audit.') || str_starts_with($p, 'reports.')),
+                "{$role} must not hold night_audit.* or reports.*",
+            );
+        }
+    }
+
     private function presetToken(string $role): string
     {
         $this->app['auth']->forgetGuards();

@@ -27,7 +27,9 @@ use App\Http\Controllers\Admin\FolioController as AdminFolioController;
 use App\Http\Controllers\Api\ConversationController as ApiConversationController;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
+use App\Http\Controllers\Admin\NightAuditController;
 use App\Http\Controllers\Admin\OperationsQueueController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\OperationsStaffController;
 use App\Http\Controllers\Admin\FrontDeskController;
 use App\Http\Controllers\Admin\EventInquiryController as AdminEventInquiryController;
@@ -793,6 +795,29 @@ Route::middleware('auth:users')->get('/dashboard/summary', [OperationsQueueContr
 // no /operations/queue/staff alias.
 Route::middleware(['auth:users', 'permission:service_requests.view|tickets.view|housekeeping.view'])
     ->get('/operations/staff', [OperationsStaffController::class, 'index']);
+
+// ──────────────────────────────────────────────────────────────────────
+// P9 — Night audit (D-01, D-15). Read with reports.view OR
+// night_audit.manage (a night auditor needs no revenue access); attest and
+// close with night_audit.manage only. Only a night_audit.manage holder may
+// initialize the business date (checked in OpenNightAuditAction). No /v1,
+// no alias routes.
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware(['auth:users', 'permission:reports.view|night_audit.manage'])
+    ->get('/operations/night-audit', [NightAuditController::class, 'show']);
+
+Route::middleware(['auth:users', 'permission:night_audit.manage'])->group(function () {
+    Route::patch('/operations/night-audit/checks/{check}', [NightAuditController::class, 'updateCheck']);
+    Route::patch('/operations/night-audit/blockers/{blocker}', [NightAuditController::class, 'resolveBlocker']);
+    Route::post('/operations/night-audit/{audit}/close', [NightAuditController::class, 'close']);
+});
+
+// ──────────────────────────────────────────────────────────────────────
+// P9 — Reports (D-01, D-15, D-16). reports.view only: night_audit.manage
+// alone does not see revenue.
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware(['auth:users', 'permission:reports.view'])
+    ->get('/reports/dashboard', [ReportController::class, 'dashboard']);
 
 // ──────────────────────────────────────────────────────────────────────
 // Phase 2 — Front desk: room board and the availability / rates grids.

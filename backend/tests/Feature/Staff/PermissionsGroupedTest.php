@@ -26,7 +26,12 @@ class PermissionsGroupedTest extends TestCase
                     ->assertStatus(200)->assertJson(['success' => true]);
 
         $groups = $res->json('data');
-        $this->assertCount(12, $groups);
+        $this->assertCount(13, $groups);
+
+        // Phase 9 (D-15): the `night_audit` group is the attest/close verb only.
+        $nightAuditGroup = collect($groups)->firstWhere('module', 'night_audit');
+        $this->assertNotNull($nightAuditGroup, 'night_audit group exists');
+        $this->assertSame(['night_audit.manage'], $nightAuditGroup['permissions']);
 
         // Phase 8 (D-12): the `events` group is the event-inquiry slice.
         $eventsGroup = collect($groups)->firstWhere('module', 'events');

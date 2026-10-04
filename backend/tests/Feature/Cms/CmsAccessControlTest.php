@@ -118,10 +118,11 @@ class CmsAccessControlTest extends TestCase
      */
     public function test_every_seeded_permission_is_enforced_somewhere(): void
     {
-        // Seeded ahead of the phases that will consume them (pricing admin,
-        // reporting). Both are role-less today; remove from this list as soon
-        // as the endpoint that enforces them lands.
-        $notYetBuilt = ['pricing.edit', 'reports.view'];
+        // Seeded ahead of the phase that will consume it (pricing admin).
+        // Role-less today; remove from this list as soon as the endpoint that
+        // enforces it lands. reports.view and night_audit.manage are enforced
+        // by the Phase 9 night-audit and reports routes (D-15).
+        $notYetBuilt = ['pricing.edit'];
 
         $enforcedByRoutes = collect(Route::getRoutes()->getRoutes())
             ->flatMap(fn ($route) => $route->gatherMiddleware())

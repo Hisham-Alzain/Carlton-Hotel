@@ -137,7 +137,7 @@ After login, the `permissions` array in the user object is the source of truth f
 
 A `super_admin` account bypasses all permission checks on the server.
 
-**Full permission catalog** (12 modules, 29 permissions): `reservations.view|create|cancel`, `folios.view|settle|post|dispute`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `events.view|manage|deposit`, `pricing.edit`, `reports.view`, `staff.manage`, `guests.view|edit`, `housekeeping.view|assign|update`.
+**Full permission catalog** (13 modules, 30 permissions): `reservations.view|create|cancel`, `folios.view|settle|post|dispute`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `events.view|manage|deposit`, `pricing.edit`, `reports.view`, `night_audit.manage`, `staff.manage`, `guests.view|edit`, `housekeeping.view|assign|update`.
 
 ### `cms.view` is enforced — gate read-only navigation on it
 
@@ -179,7 +179,7 @@ Most are route middleware, which is the norm. Two families are not, and are enfo
 
 ### Genuinely inert — do not build UI against these
 
-`pricing.edit` and `reports.view` are seeded, appear in `GET /api/permissions`, and are enforced **nowhere** — no route middleware, no policy, no service check. Granting either currently permits nothing and withholding either currently blocks nothing. `reports.view` becomes real when P12 ships its report endpoints; `pricing.edit` has no endpoint planned yet. Every other permission in the catalog is enforced somewhere.
+`pricing.edit` is seeded, appears in `GET /api/permissions`, and is enforced **nowhere** — no route middleware, no policy, no service check. Granting it currently permits nothing and withholding it currently blocks nothing; it has no endpoint planned yet. Every other permission in the catalog is enforced somewhere (the reports permission became real in Phase 9 — see Night audit and Reports).
 
 ### Role presets
 
@@ -188,6 +188,8 @@ Seven presets: `reception`, `kitchen`, `housekeeping`, `concierge`, `events`, `c
 Since Phase 7 `reception` also holds `tickets.view` and `tickets.respond`, and `concierge` also holds `tickets.view`, `tickets.assign` and `tickets.respond`; `events` already held all three. `kitchen` and `housekeeping` hold no `tickets.*`. **These permissions are shared with other surfaces, so the grant has a wider blast radius than the support-ticket routes:** `tickets.view` opens `GET /cms/conversations` and its messages (the guest chat inbox), and `tickets.respond` allows `POST /cms/conversations/{uuid}/messages` (replying to a guest in chat).
 
 Since Phase 8 the catalogue is 12 modules / 29 permissions: the new `events` group adds `events.view`, `events.manage` and `events.deposit`. **Contract tightening versus Phase 7:** event inquiries are gated by `events.*` only — `tickets.*` no longer opens any event-inquiry route. Only the `events` preset holds `events.*`, so `reception` and `concierge` lost all event-inquiry access (index, show, status and assign now answer `403`); `tickets.*` still opens `/cms/conversations` for them. The `event_inquiries` key of `GET /dashboard/summary` now follows `events.view` (it used to follow `tickets.view`), so reception and concierge no longer receive it. Gate the Events navigation item on `events.view`.
+
+Since Phase 9 the catalogue is 13 modules / 30 permissions: the new `night_audit` group adds `night_audit.manage`, and `reports.view` is now enforced (see *Module: Night audit* and *Module: Reports*). **No role preset holds `reports.view` or `night_audit.manage`** — assign them per account through the existing permission-assignment endpoint (`POST /staff/{uuid}/permissions`). Suggested accounts: a night manager gets `reports.view` + `night_audit.manage`; a night auditor without revenue access gets `night_audit.manage` only. The super admin passes everything.
 
 ---
 
@@ -528,7 +530,7 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 ]
 ```
 
-12 modules: `reservations`, `folios`, `cms`, `rooms`, `service_requests`, `tickets`, `events`, `pricing`, `reports`, `guests`, `staff`, `housekeeping`.
+13 modules: `reservations`, `folios`, `cms`, `rooms`, `service_requests`, `tickets`, `events`, `pricing`, `reports`, `night_audit`, `guests`, `staff`, `housekeeping`.
 
 ---
 
@@ -2053,6 +2055,250 @@ Records a service-recovery gesture on the ticket. It is **record-only**: it neve
 
 ---
 
+## Module: Night audit (`reports.view` or `night_audit.manage`)
+
+All four routes sit under `/api/operations/night-audit` (staff bearer token, `auth:users`, no `/v1`) and return the **same** `data` payload: `{ state, audit }`.
+
+| Route | Gate | Purpose |
+|---|---|---|
+| `GET /operations/night-audit?date=Y-m-d` | `reports.view` OR `night_audit.manage` | Read (and lazily open) the audit for a business date |
+| `PATCH /operations/night-audit/checks/{check}` | `night_audit.manage` | Resolve or override one check |
+| `PATCH /operations/night-audit/blockers/{blocker}` | `night_audit.manage` | Attest a blocker as resolved |
+| `POST /operations/night-audit/{audit}/close` | `night_audit.manage` | Close the business date |
+
+Timestamps are UTC ISO-8601 with `Z`. Unknown uuids answer `404 not_found`. Errors use the standard envelope `{ success: false, message, error_code, context, request_id }`.
+
+### GET /operations/night-audit
+
+`date` is optional and strict `Y-m-d`. `data` = `{ state: { current_business_date, last_closed_date }, audit: null | { uuid, business_date, status (open|closed), snapshot_basis ("current_state_at_open"), evaluated_at, opened_by {uuid,name}|null, closed_at, closed_by, readiness { checks_pending, blockers_open, can_close }, checks[5], blockers[] } }`.
+
+```json
+{
+  "success": true,
+  "message": "Success.",
+  "data": {
+    "state": { "current_business_date": "2026-10-10", "last_closed_date": null },
+    "audit": {
+      "uuid": "05634aa0-1471-4ac7-86e9-f8ab8e1c41a5",
+      "business_date": "2026-10-10",
+      "status": "open",
+      "snapshot_basis": "current_state_at_open",
+      "evaluated_at": "2026-10-10T19:00:00Z",
+      "opened_by": { "uuid": "1be23a59-7d1d-4315-9305-1e35cdc5854e", "name": "Night Manager" },
+      "closed_at": null,
+      "closed_by": null,
+      "readiness": { "checks_pending": 2, "blockers_open": 1, "can_close": false },
+      "checks": [
+        {
+          "uuid": "3350f3c4-de8f-4cc8-bfd6-35acadc91df5",
+          "type": "unsettled_departures",
+          "label": "Unsettled departures",
+          "blocking": true,
+          "status": "pending",
+          "issue_count": 1,
+          "evidence": [{ "reservation_uuid": "6e869037-cf5f-4727-9aa3-c0fb27783298", "booking_code": "CARL-VKYVIMBP" }],
+          "evidence_truncated": false,
+          "note": null,
+          "acted_by": null,
+          "acted_at": null,
+          "blocker_uuid": "9c599adb-66e4-44d6-a26f-a52865c9245b"
+        },
+        {
+          "uuid": "a4598939-74ca-4834-99e9-ee9549b2c86e",
+          "type": "dirty_rooms",
+          "label": "Dirty rooms",
+          "blocking": false,
+          "status": "pending",
+          "issue_count": 1,
+          "evidence": [{ "room_uuid": "add051e9-2939-42d4-8877-8f2d587ac57e", "number": "204" }],
+          "evidence_truncated": false,
+          "note": null,
+          "acted_by": null,
+          "acted_at": null,
+          "blocker_uuid": null
+        }
+      ],
+      "blockers": [
+        {
+          "uuid": "9c599adb-66e4-44d6-a26f-a52865c9245b",
+          "check_uuid": "3350f3c4-de8f-4cc8-bfd6-35acadc91df5",
+          "type": "unsettled_departures",
+          "status": "open",
+          "note": null,
+          "acted_by": null,
+          "acted_at": null
+        }
+      ]
+    }
+  },
+  "request_id": "2559b287-9681-4a02-ad5b-5d2cda3da377"
+}
+```
+
+(`checks` trimmed here; the real array always has 5 entries in the fixed order below, and `unassigned_arrivals`, `open_high_priority_tickets`, `open_folio_disputes` appear with `status: "passed"` and empty `evidence` when clean.)
+
+**Check shape:** `{ uuid, type, label (localized), blocking, status (passed|pending|resolved|overridden), issue_count, evidence[≤20], evidence_truncated, note, acted_by, acted_at, blocker_uuid|null }`. **Blocker shape:** `{ uuid, check_uuid, type, status (open|resolved), note, acted_by, acted_at }`. Evidence holds public ids only.
+
+#### The five checks (fixed order)
+
+| `type` | Blocking | Pending when (business date D) | Evidence item |
+|---|---|---|---|
+| `unsettled_departures` | yes | departures on D (confirmed / checked_in / checked_out) with no folio or an open folio | `{ reservation_uuid, booking_code }` |
+| `unassigned_arrivals` | yes | arrivals on D with no room line, or a line without a room | `{ reservation_uuid, booking_code }` |
+| `dirty_rooms` | no | live active rooms with status `dirty` | `{ room_uuid, number }` |
+| `open_high_priority_tickets` | no | active tickets with priority >= 3 | `{ ticket_uuid }` |
+| `open_folio_disputes` | no | open folio disputes (never block closing) | `{ dispute_uuid, folio_uuid }` |
+
+An empty check is `passed`; a non-empty one is `pending`. A **blocker exists only for a non-empty blocking check**, so an audit has 0 to 2 blockers. Dirty rooms, tickets and disputes are the **current state at the moment the audit was opened**, even when the audit is for an old date.
+
+#### Snapshot semantics
+
+The audit is created lazily on the first `GET` of the current business date, is evaluated **once** and is never re-evaluated (`snapshot_basis: "current_state_at_open"`). Resolving the real-world problem does not change `status` or `issue_count`; staff record the outcome through the PATCH routes. Past audits are returned as history.
+
+#### First-initialization runbook
+
+No business-date state exists until the first night auditor (a `night_audit.manage` holder) calls `GET ?date=<the night being closed>`. Outcomes:
+
+| Situation | Response |
+|---|---|
+| Before init, no `date` | `422 night_audit_not_initialized`, `context: { requires: "date" }` |
+| Before init, `date` sent by a `reports.view`-only account | `403 forbidden`, `context: { reason: "night_audit_not_initialized" }` |
+| Before init, `date` in the future | `422 night_audit_date_in_future`, `context: { requested_date, hotel_today }` |
+| After init, no `date` | current business date |
+| After init, a past `date` that has an audit | `200`, that audit as history |
+| After init, a `date` that is not current and has no audit | `422 night_audit_date_mismatch`, `context: { requested_date, current_business_date }` |
+| Current business date is after the hotel's today (e.g. D was closed at 23:30 and the page reloads) | `200` with `audit: null` |
+
+The client must therefore send `date` on first use.
+
+### PATCH /operations/night-audit/checks/{check} — `night_audit.manage`
+
+Body: `{ "status": "resolved" | "overridden", "note": "<required, trimmed 1..1000>" }`. Success message `Night audit check updated.` and the full `{ state, audit }` payload. It **never touches the blocker** of a blocking check; resolve that separately.
+
+### PATCH /operations/night-audit/blockers/{blocker} — `night_audit.manage`
+
+Body: `{ "note": "<required>", "status": "resolved" }` (`status` optional and, if present, must be `resolved`). There is no override for blockers. This is an **attestation**, not a live re-check: the server does not verify that the departure was actually settled.
+
+### POST /operations/night-audit/{audit}/close — `night_audit.manage`
+
+No body (anything sent is ignored). Requires every check terminal (`passed`, `resolved` or `overridden`) **and** every blocker `resolved`. Repeating the call on a closed audit answers `200` unchanged. On success the business date advances one calendar day. There is no reopen.
+
+```json
+{
+  "success": true,
+  "message": "Business date closed.",
+  "data": {
+    "state": { "current_business_date": "2026-10-11", "last_closed_date": "2026-10-10" },
+    "audit": { "uuid": "05634aa0-1471-4ac7-86e9-f8ab8e1c41a5", "business_date": "2026-10-10", "status": "closed", "closed_at": "2026-10-10T19:00:00Z", "closed_by": { "uuid": "1be23a59-7d1d-4315-9305-1e35cdc5854e", "name": "Night Manager" }, "readiness": { "checks_pending": 0, "blockers_open": 0, "can_close": false }, "checks": ["..."], "blockers": ["..."] }
+  },
+  "request_id": "..."
+}
+```
+
+(`audit` trimmed; same shape as `GET`. `can_close` is `false` once closed.) Not ready:
+
+```json
+{
+  "success": false,
+  "message": "The night audit cannot be closed until every check and blocker is resolved.",
+  "error_code": "night_audit_not_ready",
+  "context": { "checks_pending": 1, "blockers_open": 1 },
+  "request_id": "52f74d2b-7415-47c9-8dc9-b7c97135d27d"
+}
+```
+
+### Check vs blocker
+
+| | Check | Blocker |
+|---|---|---|
+| Exists for | all 5 types | non-empty blocking checks only (0–2) |
+| Terminal states | `passed`, `resolved`, `overridden` | `resolved` |
+| Route | `PATCH /checks/{check}` | `PATCH /blockers/{blocker}` |
+| Body | `status` + `note` | `note` (+ optional `status: "resolved"`) |
+| Override allowed | yes | no |
+
+### Error codes (this module)
+
+| `error_code` | HTTP | When | `context` |
+|---|---|---|---|
+| `night_audit_not_initialized` | 422 | No state yet and no `date` | `{ requires: "date" }` |
+| `night_audit_date_in_future` | 422 | First-init `date` is after the hotel's today | `{ requested_date, hotel_today }` |
+| `night_audit_date_mismatch` | 422 | `date` not current and no audit; or close on a non-current audit | `{ requested_date, current_business_date }` |
+| `night_audit_closed` | 422 | Any PATCH on a closed audit (checked first) | `{ business_date, closed_at }` |
+| `night_audit_item_resolved` | 422 | PATCH on an already terminal check or blocker | `{ item: "check" \| "blocker", status }` |
+| `night_audit_not_ready` | 422 | Close with pending checks or open blockers | `{ checks_pending, blockers_open }` |
+| `forbidden` | 403 | Missing permission; or `reports.view`-only account before init (`reason: "night_audit_not_initialized"`) | |
+| `not_found` | 404 | Unknown check, blocker or audit uuid | |
+| `validation_failed` | 422 | Bad `date`, `status` or missing `note` | |
+
+### Dashboard handoff (Phase 9)
+
+Mock to API mapping for the React team: `property_day` → `business_date`; `done` → `status`; mock `in_progress` → `open`. The gate is `reports.view` | `night_audit.manage`, **not** `FOLIOS_VIEW`. Handoff notes, an audit history list and severity levels are not provided.
+
+---
+
+## Module: Reports (`reports.view` only)
+
+### GET /api/reports/dashboard?date_from=&date_to=
+
+**Who can call:** `reports.view` **only** — an account with `night_audit.manage` alone gets `403`.
+
+**Query:** `date_from` and `date_to` are sent together or not at all; strict `Y-m-d`; `date_to >= date_from`; at most 31 days inclusive (`custom.validation.report_period_too_long`). Default for both is the hotel's today; future dates are allowed. Validation errors answer `422 validation_failed`.
+
+```json
+{
+  "success": true,
+  "message": "Success.",
+  "data": {
+    "period": { "date_from": "2026-10-01", "date_to": "2026-10-10", "days": 10, "timezone": "Asia/Damascus" },
+    "generated_at": "2026-10-10T19:00:00Z",
+    "occupancy": { "occupied_room_nights": 0, "available_room_nights": 10, "occupancy_rate": "0.0000" },
+    "arrivals": 1,
+    "departures": 1,
+    "revenue": {
+      "basis": "posted_folio_lines",
+      "currency": "USD",
+      "charges_usd": "120.00",
+      "credits_usd": "0.00",
+      "net_usd": "120.00",
+      "by_source": { "reservation": "120.00", "service_booking": "0.00", "service_request": "0.00", "manual": "0.00", "credit": "0.00" }
+    },
+    "collections": {
+      "basis": "completed_payments",
+      "refunds_included": false,
+      "stays_usd": "50.00",
+      "event_deposits_usd": "0.00",
+      "other_usd": "0.00",
+      "total_usd": "50.00"
+    },
+    "open_work": {
+      "basis": "current_state",
+      "as_of": "2026-10-10T19:00:00Z",
+      "service_requests": { "new": 0, "in_progress": 0, "total": 0 },
+      "tickets": { "open": 0, "assigned": 0, "in_progress": 0, "waiting_guest": 0, "total": 0 }
+    }
+  },
+  "request_id": "8bba903e-3361-49d7-ac1c-ba7edffb0d87"
+}
+```
+
+### Metric definitions and limits
+
+- **`occupied_room_nights`** — booked room-nights: every room line of `confirmed` / `checked_in` / `checked_out` stays, assigned to a room or not, counting nights in `[check_in, check_out)` that fall inside the period. There is no no-show status, so a past confirmed stay that never checked in still counts.
+- **`available_room_nights`** — active live rooms **today** × `days` (rooms in maintenance included).
+- **`occupancy_rate`** — 4-decimal string, **not clamped** (it can exceed `1`), `"0.0000"` when there are no rooms.
+- **`arrivals` / `departures`** — reservations in the same statuses, each counted once.
+- **`revenue`** — folio lines posted inside the hotel-local period (`basis: "posted_folio_lines"`), USD. Reservation lines are lump sums and may be re-priced while a folio is still open.
+- **`collections`** — completed payments only (`basis: "completed_payments"`); refunds are **not** included, so this is not "net cash". Event deposits are reported here and never in revenue.
+- **`open_work`** — current state at `as_of`, independent of the period.
+- Money is a 2-decimal string. This is an operational posting/cash view, **not audited accounting**.
+
+### Not provided
+
+ADR, RevPAR, MTD/YTD, per-room-type revenue, a daily breakdown, booking-source revenue, the mock `revenue_today` / `kpis`, handoff notes, an audit-history list, severity, and exports. Do not build UI that expects them.
+
+---
+
 ## Error codes quick reference
 
 | Code | HTTP | Meaning |
@@ -2100,6 +2346,12 @@ Records a service-recovery gesture on the ticket. It is **record-only**: it neve
 | `assignee_not_eligible` | 422 | The would-be assignee is inactive, not staff, or lacks the queue type's work permission; `context: { user_uuid, required_permission }` |
 | `service_request_closed` | 422 | Assign or claim on a terminal service request; `context: { status }` |
 | `queue_item_already_claimed` | 409 | Claim on an item someone else holds; `context: { assigned_user_uuid }` |
+| `night_audit_not_initialized` | 422 | Night audit read before the first business date was set, with no `date`; `context: { requires: "date" }` |
+| `night_audit_date_in_future` | 422 | First-initialization `date` is after the hotel's today; `context: { requested_date, hotel_today }` |
+| `night_audit_date_mismatch` | 422 | `date` is not the current business date and has no audit, or close on a non-current audit; `context: { requested_date, current_business_date }` |
+| `night_audit_closed` | 422 | Check/blocker PATCH on a closed audit; `context: { business_date, closed_at }` |
+| `night_audit_item_resolved` | 422 | Check/blocker already terminal; `context: { item, status }` |
+| `night_audit_not_ready` | 422 | Close with pending checks or open blockers; `context: { checks_pending, blockers_open }` |
 
 ---
 

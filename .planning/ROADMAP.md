@@ -2,7 +2,7 @@
 
 ## Overview
 
-This milestone replaces the mock data behind the Carlton staff dashboard and guest app with real, tested `/api/v1` endpoints. It adds to the existing P0–P10 backend (283 routes, 250 green tests) one module at a time, in dependency order. It starts with the account endpoints guests and staff are missing. Next come the room status lifecycle, the front-desk reservation verbs, and the guest directory with online check-in. After those come folio writes, housekeeping and guest services, and support tickets on the shared operations queue. Event and dining extensions follow. Night audit and reports come last because they read from every earlier domain. Each phase is planned with `/gsd-plan-phase`, built by the `council-build` workflow and committed locally (never pushed) once the full suite is green.
+This milestone replaces the mock data behind the Carlton staff dashboard and guest app with real, tested `/api` endpoints (the code mounts routes at `/api` with no `/v1` segment; the code wins over older `/api/v1` wording). It adds to the existing P0–P10 backend (283 routes, 250 green tests) one module at a time, in dependency order. It starts with the account endpoints guests and staff are missing. Next come the room status lifecycle, the front-desk reservation verbs, and the guest directory with online check-in. After those come folio writes, housekeeping and guest services, and support tickets on the shared operations queue. Event and dining extensions follow. Night audit and reports come last because they read from every earlier domain. Each phase is planned with `/gsd-plan-phase`, built by the `council-build` workflow and committed locally (never pushed) once the full suite is green.
 
 **Every phase passes the same contract gate before it counts as done.** This covers DOCS-01 and XCUT-01, which are cross-cutting:
 
@@ -29,8 +29,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Folio Extensions** - Staff folio read, line-item posting, payments, guest and staff line-item disputes
 - [x] **Phase 6: Housekeeping & Guest Services** - Housekeeping task board tied to room status, service-request board, departure services
 - [x] **Phase 7: Support Tickets & Queue** - Full support-ticket lifecycle, queue claim, assignable staff list
-- [ ] **Phase 8: Events & Dining** - Event inquiry checklist/deposit/notes, table reservation list, venue menu download
-- [ ] **Phase 9: Night Audit & Reports** - Per-business-date night audit with checks and blockers, reports dashboard
+- [x] **Phase 8: Events & Dining** - Event inquiry checklist/deposit/notes, table reservation list, venue menu download (3886416)
+- [x] **Phase 9: Night Audit & Reports** - Per-business-date night audit with checks and blockers, explicit close, reports dashboard
+- [ ] **Phase 10: Loyalty Points Program** - Earn on settlement, FIFO expiry, rewards catalog and vouchers, points at booking, cancellation reversals, staff settings/audit/reports
 
 ## Phase Details
 
@@ -318,33 +319,45 @@ Plans:
 **Reuses**: `EventInquiry` / `EventRequirement`, `EventInquiryService`, `RecordCashPaymentAction`, `IdempotentWrite` and `FolioLedger::normalize` (Phase 5), `HotelClock::dayWindow`, `PurgesMedia` / `MediaService`, `RecordsRowLocks`, `ReserveTableAction` (tz fix) / `RestaurantTable`, `DiningVenue` / `DiningVenueService` + `Media`
 **Plans**: 10 plans (sequential waves 1-10)
 
-- [ ] 08-01-PLAN.md — Foundation: 4 additive migrations (`staff_notes`/deposit columns, checklist table, `media.collection`, `service_bookings` index), `EventChecklistItem` / `EventDepositStatus` enums, checklist model, relations, factories, five-locale labels (EVENT-01..03, DINING-01, DINING-02)
-- [ ] 08-02-PLAN.md — `events.view|manage|deposit` (29/12), event-inquiry routes and dashboard-summary key re-gated off `tickets.*`, preset/seeder/guide re-pins (EVENT-01..03, XCUT-01)
-- [ ] 08-03-PLAN.md — Inquiry list/detail resources (checklist, deposit, staff_notes, assigned_user), list ≤ 6 / show ≤ 9 queries, additive `inquiry_state` context (EVENT-01..03)
-- [ ] 08-04-PLAN.md — Checklist toggle (explicit `done`, derived deposit 422, lazy rows) and staff notes writer (EVENT-01, EVENT-03)
-- [ ] 08-05-PLAN.md — Ledger-backed deposit: `RecordEventDepositAction`, Idempotency-Key replay/409, single deposit, status guards, folio isolation (EVENT-02)
-- [ ] 08-06-PLAN.md — `ReserveTableAction` timezone fix: hotel-local slot stored as true UTC, hotel-local "today" (DINING-01)
-- [ ] 08-07-PLAN.md — `GET /cms/table-reservations`: filter (venue/table/status/date/range, default today), resource, ≤ 6 queries (DINING-01)
-- [ ] 08-08-PLAN.md — Venue menu file: `POST|DELETE /cms/dining-venues/{venue}/menu-file`, replace action, images paths blind to menu rows (DINING-02)
-- [ ] 08-09-PLAN.md — Public `GET /public/dining-venues/{venue}/menu/download` (200 / 204 / 404, ≤ 2 queries) (DINING-02)
-- [ ] 08-10-PLAN.md — Guides, changelog, Postman, tree flips, demo data, PROJECT.md, phase gate, SUMMARY, decision coverage (DOCS-01, XCUT-01)
+- [x] 08-01-PLAN.md — Foundation: 4 additive migrations (`staff_notes`/deposit columns, checklist table, `media.collection`, `service_bookings` index), `EventChecklistItem` / `EventDepositStatus` enums, checklist model, relations, factories, five-locale labels (EVENT-01..03, DINING-01, DINING-02)
+- [x] 08-02-PLAN.md — `events.view|manage|deposit` (29/12), event-inquiry routes and dashboard-summary key re-gated off `tickets.*`, preset/seeder/guide re-pins (EVENT-01..03, XCUT-01)
+- [x] 08-03-PLAN.md — Inquiry list/detail resources (checklist, deposit, staff_notes, assigned_user), list ≤ 6 / show ≤ 9 queries, additive `inquiry_state` context (EVENT-01..03)
+- [x] 08-04-PLAN.md — Checklist toggle (explicit `done`, derived deposit 422, lazy rows) and staff notes writer (EVENT-01, EVENT-03)
+- [x] 08-05-PLAN.md — Ledger-backed deposit: `RecordEventDepositAction`, Idempotency-Key replay/409, single deposit, status guards, folio isolation (EVENT-02)
+- [x] 08-06-PLAN.md — `ReserveTableAction` timezone fix: hotel-local slot stored as true UTC, hotel-local "today" (DINING-01)
+- [x] 08-07-PLAN.md — `GET /cms/table-reservations`: filter (venue/table/status/date/range, default today), resource, ≤ 6 queries (DINING-01)
+- [x] 08-08-PLAN.md — Venue menu file: `POST|DELETE /cms/dining-venues/{venue}/menu-file`, replace action, images paths blind to menu rows (DINING-02)
+- [x] 08-09-PLAN.md — Public `GET /public/dining-venues/{venue}/menu/download` (200 / 204 / 404, ≤ 2 queries) (DINING-02)
+- [x] 08-10-PLAN.md — Guides, changelog, Postman, tree flips, demo data, PROJECT.md, phase gate, SUMMARY, decision coverage (DOCS-01, XCUT-01)
 
 ### Phase 9: Night Audit & Reports
 
 **Goal**: Management closes each business date with a transparent night audit of checks and blockers, and reads a reports dashboard covering occupancy, arrivals and departures, revenue and open work.
 **Mode:** mvp
 **Depends on**: Phase 3, Phase 5, Phase 6, Phase 7
-**Requirements**: AUDIT-01, AUDIT-02, AUDIT-03, REPORT-01
+**Requirements**: AUDIT-01, AUDIT-02, AUDIT-03, AUDIT-04, REPORT-01
 **Success Criteria** (what must be TRUE):
 
-  1. Staff with `reports.view` open `GET /operations/night-audit?date` for a business date. The audit is created on first open and lists evaluated, persisted checks: unsettled departures, unassigned arrivals, dirty rooms, open high-priority tickets, and open folio disputes. Re-opening the same date never duplicates the audit or its checks, and the date is taken from the request or persisted state, never from the wall clock.
-  2. Staff mark a check resolved or overridden with a note via `PATCH /operations/night-audit/checks/{check}` and resolve a blocker via `PATCH /operations/night-audit/blockers/{blocker}`. The audit then shows who acted and when, and acting on an already-resolved item returns a domain error.
-  3. `GET /reports/dashboard` returns occupancy, arrivals/departures, revenue, and open requests/tickets for the requested period. The figures match the underlying bookings, folios, requests and tickets, and are computed with a bounded number of queries.
-  4. Contract gate: all new routes pass happy / 401 / 403 / 422 tests with the suite green, AR/EN keys exist, and the night-audit and reports nodes are `api:true`. The guides and Postman are updated, and any new permissions are listed in the summary.
+  1. Staff with `reports.view` or `night_audit.manage` open `GET /api/operations/night-audit?date` for a business date (initializing the business date needs `night_audit.manage`). The audit is created on first open and lists evaluated, persisted checks: unsettled departures, unassigned arrivals, dirty rooms, open high-priority tickets, and open folio disputes. Re-opening the same date never duplicates the audit or its checks, and the date is taken from the request or persisted state, never from the wall clock.
+  2. Staff with `night_audit.manage` mark a check resolved or overridden with a note via `PATCH /api/operations/night-audit/checks/{check}` and resolve a blocker via `PATCH /api/operations/night-audit/blockers/{blocker}`. The audit then shows who acted and when, and acting on an already-resolved or closed item returns a domain error (`night_audit_item_resolved` / `night_audit_closed`).
+  3. A manager closes the current business date via `POST /api/operations/night-audit/{audit}/close` once every check is terminal and every blocker resolved; the business date then advances by one calendar day (AUDIT-04).
+  4. `GET /api/reports/dashboard` returns occupancy, arrivals/departures, revenue, and open requests/tickets for the requested period. The figures match the underlying bookings, folios, requests and tickets, and are computed with a bounded number of queries.
+  5. Contract gate: all new routes pass happy / 401 / 403 / 422 tests with the suite green, keys exist in all 5 locales (en/ar/fr/tr/es), and the night-audit and reports nodes are `api:true`. The guides and Postman are updated, and `night_audit.manage` (catalogue 30 permissions / 13 groups) is listed in the summary.
 
-**Reuses**: `reports.view` (already seeded), the `FolioStatus` / `RoomStatus` / `TicketStatus` enums and the domain tables from Phases 2–7
-**Research**: Required. Needs a business-date / last-closed-date model (no precedent in the codebase) and a report aggregation and indexing design.
-**Plans**: TBD
+**Reuses**: `reports.view` (already seeded), the `FolioStatus` / `RoomStatus` / `TicketStatus` enums and the domain tables from Phases 2–7, `HotelClock::today/dayWindow`, `FolioLedger` (and its new `MoneyAggregate` sibling), `RecordsRowLocks`, `TicketStatus::active()` and `ServiceRequestStatus::active()`, `ServiceRequestPriority::fromTicketScale`, `FolioItemSource`
+**Research**: Done (`09-RESEARCH.md`): persisted business-date singleton, snapshot-at-first-open, portable room-night fold, integer-cents money aggregation, two report indexes.
+**Plans**: 10 plans (sequential waves 1-10)
+
+- [x] 09-01-PLAN.md — Foundation: 4 audit tables, report indexes (`folio_items.created_at`, `payments(status, created_at)`), 4 enums, models, factories (AUDIT-01..04, REPORT-01)
+- [x] 09-02-PLAN.md — `MoneyAggregate`: exact integer-cents SQL aggregation + bcmath, explicit driver support (REPORT-01)
+- [x] 09-03-PLAN.md — Five read-only evaluators with exact counts, ≤ 20 public evidence, volume-invariant queries; `CountsDomainQueries` (AUDIT-01)
+- [x] 09-04-PLAN.md — `OpenNightAuditAction`: business-date state, initialization rules, future guard, idempotent lazy creation under lock; 6 exceptions; audit lang keys in 5 locales (AUDIT-01)
+- [x] 09-05-PLAN.md — `GET /operations/night-audit`, `night_audit.manage` seeded (30/13), presets unchanged, `$notYetBuilt` cleared of `reports.view` (AUDIT-01, XCUT-01)
+- [x] 09-06-PLAN.md — Check resolve/override and blocker resolve routes, closed-first and terminal guards, independent sign-off (AUDIT-02, AUDIT-03)
+- [x] 09-07-PLAN.md — `POST …/{audit}/close`: readiness gate, idempotent repeat, one-calendar-day advance, invariants (AUDIT-04)
+- [x] 09-08-PLAN.md — `GET /reports/dashboard` period contract, occupancy (portable fold), arrivals/departures (REPORT-01)
+- [x] 09-09-PLAN.md — Revenue (`by_source`), collections by payable type, open work, ≤ 8-query budget (REPORT-01)
+- [x] 09-10-PLAN.md — Guide, Postman, tree flips, phase gate, SUMMARY, decision coverage (DOCS-01, XCUT-01)
 
 ## Progress
 
@@ -360,5 +373,26 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Folio Extensions | 0/TBD | Not started | - |
 | 6. Housekeeping & Guest Services | 0/TBD | Not started | - |
 | 7. Support Tickets & Queue | 11/11 | Complete | 2026-10-02 (0961153) |
-| 8. Events & Dining | 0/10 | Planned | - |
-| 9. Night Audit & Reports | 0/TBD | Not started | - |
+| 8. Events & Dining | 10/10 | Complete | 2026-10-03 (3886416) |
+| 9. Night Audit & Reports | 10/10 | Complete | 2026-10-04 |
+
+### Phase 10: Loyalty Points Program
+
+**Goal**: Guests earn integer points once per settled folio, see a FIFO-expiring balance and ledger, redeem catalog rewards into vouchers and pay part of a booking with points; cancellations undo every loyalty effect without ever producing a negative balance. Staff configure the six program values, manage the catalog, adjust points with an audited reason and report issued/redeemed/expired points.
+**Depends on**: Phase 3 (`HotelClock`), Phase 4 (`NotificationService::pushToGuest`), Phase 5 (settle/payment actions, `IdempotentWrite`, `FolioLedger`). Ordered after Phase 9 only because both edit the permission catalogue, `routes/api.php`, five lang files and docs (soft dependency; execute after the Phase 9 commit and re-read permission counts at execution).
+**Requirements**: LOY-01 .. LOY-22
+**Success Criteria** (what must be TRUE):
+
+  1. Every settlement path (`SettleFolioAction` x2, `RecordFolioPaymentAction` auto-settle) credits half-up points per `stay`/`service` bucket inside the folio-locked transaction, exactly once, never for cancelled reservations, and nothing when `earn_rate` is unset.
+  2. `GET /api/loyalty/account|ledger|rewards|vouchers` return only the caller's data with the agreed contract strings; expired-but-unswept points are never available; the daily jobs expire batches idempotently and warn each batch once in the guest's locale.
+  3. `POST /api/loyalty/rewards/{reward}/redeem` and `POST /api/reservations` with `loyalty_points`/`voucher_code` are idempotent under `Idempotency-Key`, enforce min/cap/one-voucher server-side, and `GET /api/loyalty/preview` equals the booked `total_usd` for identical inputs.
+  4. Cancelling a reservation refunds spent points (original batch or fresh `refund` batch), restores the voucher and claws back folio earnings with recorded shortfall; a second cancel is a no-op; `ReverseLoyaltyForFolioAction` is unit-tested.
+  5. Staff with `loyalty.view/manage/adjust` use `/api/cms/loyalty/*` (settings, rewards + bin, guest ledger, adjustments, reports); catalogue grows by 3 permissions / 1 group, presets unchanged.
+  6. Contract gate: happy / 401 / 403 / 422 per route, 5 locales, docs/Postman/tree updated, Flutter/React teams notified of the contract strings and error codes.
+
+**Research**: Done (`10-RESEARCH.md`); rulings in `10-DISCUSSION-LOG.md`.
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 10 to break down)

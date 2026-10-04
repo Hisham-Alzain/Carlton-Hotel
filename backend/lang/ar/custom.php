@@ -65,6 +65,9 @@ return [
         'event_deposit_recorded'  => 'تم تسجيل العربون.',
         'menu_file_uploaded'      => 'تم رفع ملف القائمة.',
         'menu_file_removed'       => 'تم حذف ملف القائمة.',
+        'night_audit_check_updated'    => 'تم تحديث فحص التدقيق الليلي.',
+        'night_audit_blocker_resolved' => 'تم حل معوّق التدقيق الليلي.',
+        'night_audit_closed'           => 'تم إغلاق تاريخ العمل.',
     ],
     'errors'     => [
         'server_error'           => 'حدث خطأ ما.',
@@ -127,6 +130,12 @@ return [
         'folio_dispute_state'          => 'لا يوجد اعتراض مفتوح على هذا البند لإغلاقه.',
         'event_checklist_item_derived' => 'يتبع هذا البند العربون ولا يمكن تغييره مباشرة.',
         'event_deposit_already_recorded' => 'تم تسجيل عربون لهذا الطلب مسبقًا.',
+        'night_audit_not_initialized'  => 'لم يبدأ التدقيق الليلي بعد. افتحه بتاريخ العمل الذي تقوم بإغلاقه.',
+        'night_audit_date_mismatch'    => 'لا يمكن تدقيق إلا تاريخ العمل الحالي.',
+        'night_audit_date_in_future'   => 'لا يمكن أن يكون تاريخ العمل في المستقبل.',
+        'night_audit_closed'           => 'هذا التدقيق الليلي مغلق بالفعل.',
+        'night_audit_item_resolved'    => 'تم حل عنصر التدقيق الليلي هذا بالفعل.',
+        'night_audit_not_ready'        => 'لا يمكن إغلاق التدقيق الليلي قبل حل جميع الفحوصات والمعوّقات.',
     ],
     'auth'       => [
         'otp_sent'       => 'تم إرسال رمز التحقق.',
@@ -205,6 +214,7 @@ return [
         'prohibited_unless'    => 'الحقل :attribute غير مسموح به إلا إذا كان :other ضمن :values.',
         'date_range_max'       => 'يجب ألا تتجاوز مدة النطاق الزمني :days يومًا.',
         'prohibits'            => 'لا يمكن استخدام الحقل :attribute مع :other.',
+        'report_period_too_long' => 'يجب ألا تتجاوز فترة التقرير 31 يومًا.',
     ],
     'event_checklist' => [
         'contract'  => 'تم توقيع العقد',
@@ -212,6 +222,29 @@ return [
         'guarantee' => 'الضمان النهائي',
         'beo'       => 'أمر تنفيذ المناسبة (BEO)',
         'av'        => 'متطلبات الصوت والصورة',
+    ],
+    'night_audit' => [
+        'checks' => [
+            'unsettled_departures'       => 'مغادرات غير مسوّاة',
+            'unassigned_arrivals'        => 'وصولات بلا غرفة مخصصة',
+            'dirty_rooms'                => 'غرف غير نظيفة',
+            'open_high_priority_tickets' => 'تذاكر مفتوحة عالية الأولوية',
+            'open_folio_disputes'        => 'اعتراضات مفتوحة على الفواتير',
+        ],
+        'check_statuses' => [
+            'passed'     => 'ناجح',
+            'pending'    => 'قيد الانتظار',
+            'resolved'   => 'تم الحل',
+            'overridden' => 'تم التجاوز',
+        ],
+        'blocker_statuses' => [
+            'open'     => 'مفتوح',
+            'resolved' => 'تم الحل',
+        ],
+        'statuses' => [
+            'open'   => 'مفتوح',
+            'closed' => 'مغلق',
+        ],
     ],
     'attributes' => [
         'amount_usd' => 'المبلغ (بالدولار الأمريكي)',

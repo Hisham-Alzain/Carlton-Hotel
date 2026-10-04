@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/extensions/price_extension.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
@@ -54,8 +55,7 @@ class CustomMenuItemTile extends StatelessWidget {
                   item.description.value,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: textStyle.labelMedium?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelMedium?.copyWith(
                     color: AppColors.dimGrey,
                   ),
                 ),
@@ -80,8 +80,7 @@ class CustomMenuItemTile extends StatelessWidget {
                         ),
                         child: Text(
                           AppTranslations.vegan,
-                          style: textStyle.labelSmall?.copyWith(
-                            fontFamily: 'DM Sans',
+                          style: textStyle.dmLabelSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: AppColors.forestGreen,
                           ),

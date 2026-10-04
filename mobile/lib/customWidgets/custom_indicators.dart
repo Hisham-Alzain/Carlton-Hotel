@@ -76,7 +76,7 @@ class LogoLoadingIndicator extends StatefulWidget {
     super.key,
     this.assetPath = 'assets/icons/white_logo.svg',
     this.size = 80,
-    this.color,
+    this.color = AppColors.primary,
     this.shadowColor = AppColors.primary,
     this.duration = const Duration(milliseconds: 2000),
   });
@@ -244,7 +244,7 @@ class SpinningIconIndicator extends StatefulWidget {
   const SpinningIconIndicator({
     super.key,
     this.assetPath = 'assets/icons/white_logo.svg',
-    this.color,
+    this.color = AppColors.primary,
     this.size = 50,
     this.duration = const Duration(milliseconds: 1200),
   });

@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/components/custom_initial_avatar.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/models/chat_message.dart';
@@ -74,8 +75,7 @@ class CustomChatBubble extends StatelessWidget {
                 if (message.text.isNotEmpty)
                   Text(
                     message.text,
-                    style: textStyle.labelMedium?.copyWith(
-                      fontFamily: 'DM Sans',
+                    style: textStyle.dmLabelMedium?.copyWith(
                       height: 1.4,
                       color: isAgent ? AppColors.inkBlack : AppColors.white,
                     ),
@@ -85,8 +85,7 @@ class CustomChatBubble extends StatelessWidget {
           ),
           Text(
             message.time,
-            style: textStyle.labelSmall?.copyWith(
-              fontFamily: 'DM Sans',
+            style: textStyle.dmLabelSmall?.copyWith(
               color: AppColors.taupeBrown,
             ),
           ),

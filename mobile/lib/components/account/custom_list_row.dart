@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -80,8 +81,7 @@ class CustomListRow extends StatelessWidget {
                     if (subtitle != null)
                       Text(
                         subtitle!,
-                        style: textStyle.labelSmall?.copyWith(
-                          fontFamily: 'DM Sans',
+                        style: textStyle.dmLabelSmall?.copyWith(
                           color: AppColors.primary50,
                         ),
                       ),

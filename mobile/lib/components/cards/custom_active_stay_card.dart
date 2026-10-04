@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
@@ -222,9 +223,8 @@ class CustomActiveStayCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: textStyle.labelSmall?.copyWith(
+            style: textStyle.dmLabelSmall?.copyWith(
               fontSize: 8,
-              fontFamily: 'DM Sans',
               fontWeight: FontWeight.w600,
               color: AppColors.antiqueGold,
             ),
@@ -232,8 +232,7 @@ class CustomActiveStayCard extends StatelessWidget {
 
           Text(
             dayAndMonth,
-            style: textStyle.labelLarge?.copyWith(
-              fontFamily: 'DM Sans',
+            style: textStyle.dmLabelLarge?.copyWith(
               fontWeight: FontWeight.w600,
               color: Colors.white,
             ),
@@ -241,9 +240,8 @@ class CustomActiveStayCard extends StatelessWidget {
 
           Text(
             year,
-            style: textStyle.labelSmall?.copyWith(
+            style: textStyle.dmLabelSmall?.copyWith(
               fontSize: 8,
-              fontFamily: 'DM Sans',
               fontWeight: FontWeight.w600,
               color: AppColors.antiqueGold,
             ),

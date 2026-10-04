@@ -37,7 +37,7 @@ class FindBookingController extends GetxController {
     if (isClosed) return;
     isSubmitting.value = false;
 
-    if (response.statusCode != 200 || response.data == null) return;
+    if (!response.hasData) return;
 
     // Stash so the OTP screen can re-trigger link-booking-code on resend.
     await SessionService.setPendingBookingLink(
@@ -46,7 +46,8 @@ class FindBookingController extends GetxController {
 
     // The server masks the number it texted; show that, but verify against
     // the number the guest typed — the same one, since the lookup matched it.
-    final masked = response.data!['identifier_masked'] as String? ?? phoneNumber;
+    final masked =
+        response.data!['identifier_masked'] as String? ?? phoneNumber;
     Get.toNamed(
       Routes.otpVerify,
       arguments: OtpVerifyArgs(

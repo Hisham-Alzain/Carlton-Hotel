@@ -117,6 +117,24 @@ class UpcomingStay {
             .map(UpcomingStay.fromJson)
             .toList()
       : const [];
+
+  /// Statuses the hotel has not confirmed yet. The server leaves these out of
+  /// `has_booking` and will not check them in or book services against them.
+  static const awaitingHotelStatuses = {'pending', 'pending_verification'};
+
+  bool get isAwaitingHotel => awaitingHotelStatuses.contains(status);
+
+  /// The stay the server acts on: the earliest confirmed one (the list is
+  /// ordered by arrival), or the earliest of all when none is confirmed yet.
+  /// Picking plain `first` would let an earlier pending booking hide a
+  /// confirmed one that check-in and transfers would accept.
+  static UpcomingStay? primary(List<UpcomingStay> stays) {
+    if (stays.isEmpty) return null;
+    return stays.firstWhere(
+      (stay) => !stay.isAwaitingHotel,
+      orElse: () => stays.first,
+    );
+  }
 }
 
 /// `GET /api/stays/past` — paginated (`data.items` + `data.meta`), most recent

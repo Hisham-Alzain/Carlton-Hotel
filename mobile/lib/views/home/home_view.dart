@@ -1,4 +1,5 @@
 import 'package:carlton/components/cards/custom_discover_card.dart';
+import 'package:carlton/components/sheets/airport_transfer_sheet.dart';
 import 'package:carlton/components/cards/custom_home_card.dart';
 import 'package:carlton/components/custom_info_banner.dart';
 import 'package:carlton/components/custom_home_container.dart';
@@ -236,7 +237,7 @@ class _AirportTransferSection extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    return AirportTransferSection(onRequest: controller.goToServices);
+    return const AirportTransferSection(onRequest: showAirportTransferSheet);
   }
 }
 

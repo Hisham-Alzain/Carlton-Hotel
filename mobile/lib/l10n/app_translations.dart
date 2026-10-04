@@ -216,6 +216,8 @@ class AppTranslations {
   // Services
   static String get servicesTitle => 'services.title'.tr;
   static String get signInPromptTitle => 'services.signInPromptTitle'.tr;
+  static String get accountSignInPromptTitle => 'account.signInPromptTitle'.tr;
+  static String get staysSignInPromptTitle => 'stays.signInPromptTitle'.tr;
   static String get signInPromptSubtitle => 'services.signInPromptSubtitle'.tr;
   static String get signInButtonLabel => 'services.signInButtonLabel'.tr;
   static String get createAccountButtonLabel =>
@@ -455,11 +457,15 @@ class AppTranslations {
   static String get completeCheckIn => 'checkIn.completeCheckIn'.tr;
   static String finishStepsFirst(String step) =>
       'checkIn.finishStepsFirst'.trParams({'step': step});
+  static String get checkInAwaitingConfirmation =>
+      'checkIn.awaitingConfirmation'.tr;
   static String get stepIdentity => 'checkIn.stepIdentity'.tr;
   static String get stepSpecialRequests => 'checkIn.stepSpecialRequests'.tr;
   static String get stepContactDetails => 'checkIn.stepContactDetails'.tr;
   static String get selectArrivalTime => 'checkIn.selectArrivalTime'.tr;
   static String get arrivalTimeSubtitle => 'checkIn.arrivalTimeSubtitle'.tr;
+  static String get arrivalEarlyHours => 'checkIn.arrivalEarlyHours'.tr;
+  static String get arrivalMorning => 'checkIn.arrivalMorning'.tr;
   static String get arrivalAfternoon => 'checkIn.arrivalAfternoon'.tr;
   static String get arrivalEvening => 'checkIn.arrivalEvening'.tr;
   static String get arrivalLateNight => 'checkIn.arrivalLateNight'.tr;
@@ -524,6 +530,12 @@ class AppTranslations {
 
   // Account
   static String get myProfile => 'account.myProfile'.tr;
+  static String get personalInformation => 'account.personalInformation'.tr;
+  static String get notAdded => 'account.notAdded'.tr;
+  static String get verified => 'account.verified'.tr;
+  static String get editProfile => 'account.editProfile'.tr;
+  static String get saveChanges => 'account.saveChanges'.tr;
+  static String get profileUpdated => 'account.profileUpdated'.tr;
   static String get security => 'account.security'.tr;
   static String get accountSupport => 'account.support'.tr;
   static String get helpAndSupport => 'account.helpAndSupport'.tr;
@@ -796,6 +808,17 @@ class AppTranslations {
   static String perNight(String price) =>
       'book.perNight'.trParams({'price': price});
 
+  /// The `/night` tail on its own, for a price drawn in a separate style.
+  static String get perNightSuffix => 'book.perNightSuffix'.tr;
+
+  /// A room-type `view_type` code (`city`, `pool`, …) in the app language.
+  /// An unknown code shows as sent rather than disappearing.
+  static String viewTypeName(String code) {
+    final key = 'book.view.$code';
+    final translated = key.tr;
+    return translated == key ? code : translated;
+  }
+
   static String balanceDue(String amount) =>
       'stays.balanceDue'.trParams({'amount': amount});
 
@@ -826,6 +849,7 @@ class AppTranslations {
   static String get promoHint => 'book.promoHint'.tr;
   static String get promoCodeFirst => 'book.promoCodeFirst'.tr;
   static String get roomLoadFailed => 'book.roomLoadFailed'.tr;
+  static String get signInToBookTitle => 'book.signInToBookTitle'.tr;
   static String get signInToBook => 'book.signInToBook'.tr;
   static String get selectRoomAndDates => 'book.selectRoomAndDates'.tr;
   static String get otpExpired => 'auth.otpExpired'.tr;
@@ -858,6 +882,7 @@ class AppTranslations {
   static String get flightNumberHint => 'transfer.flightNumberHint'.tr;
   static String get transferDate => 'transfer.date'.tr;
   static String get arrivalTime => 'transfer.arrivalTime'.tr;
+  static String get transferArrivalSubtitle => 'transfer.arrivalSubtitle'.tr;
   static String get terminal => 'transfer.terminal'.tr;
   static String get passengers => 'transfer.passengers'.tr;
   static String get chooseYourCar => 'transfer.chooseYourCar'.tr;
@@ -880,7 +905,10 @@ class AppTranslations {
   static String get selectVehicleFirst => 'transfer.selectVehicleFirst'.tr;
   static String get noTransfers => 'transfer.noVehicles'.tr;
   static String get transferLoadFailed => 'transfer.loadFailed'.tr;
-  static String get transferComingSoon => 'transfer.bookingComingSoon'.tr;
+  static String get transferBooked => 'transfer.booked'.tr;
+  static String get transferAwaitingConfirmation =>
+      'transfer.awaitingConfirmation'.tr;
+  static String get transferTimeInPast => 'transfer.timeInPast'.tr;
 
   static String maxPassengers(int count) =>
       'transfer.maxPassengers'.trParams({'count': '$count'});

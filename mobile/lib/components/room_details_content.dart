@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/cards/custom_rating_label.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
@@ -95,8 +96,7 @@ class RoomDetailsContent extends StatelessWidget {
                 ),
                 Text(
                   room.description,
-                  style: textStyle.labelMedium?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelMedium?.copyWith(
                     color: AppColors.dimGrey,
                   ),
                 ),
@@ -119,8 +119,7 @@ class RoomDetailsContent extends StatelessWidget {
                   child: CustomPriceSummaryRow(
                     title: AppTranslations.totalForNights(nights),
                     value: '\$$stayTotal',
-                    titleStyle: textStyle.labelMedium?.copyWith(
-                      fontFamily: 'DM Sans',
+                    titleStyle: textStyle.dmLabelMedium?.copyWith(
                       color: AppColors.inkBlack,
                     ),
                     valueStyle: textStyle.labelLarge?.copyWith(
@@ -141,8 +140,8 @@ class RoomDetailsContent extends StatelessWidget {
   TextStyle? _headingStyle(TextTheme textStyle) => textStyle.labelLarge
       ?.copyWith(fontWeight: FontWeight.w600, color: AppColors.inkBlack);
 
-  TextStyle? _tileTextStyle(TextTheme textStyle) => textStyle.labelMedium
-      ?.copyWith(fontFamily: 'DM Sans', color: AppColors.inkBlack);
+  TextStyle? _tileTextStyle(TextTheme textStyle) =>
+      textStyle.dmLabelMedium?.copyWith(color: AppColors.inkBlack);
 
   Widget _pairedGrid<T>(
     List<T> items,

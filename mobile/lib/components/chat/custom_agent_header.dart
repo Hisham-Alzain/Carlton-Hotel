@@ -82,7 +82,7 @@ class CustomAgentHeader extends StatelessWidget {
           ),
           child: RowTextComponent(
             text: AppTranslations.call,
-            iconPath: 'assets/icons/call.svg',
+            icon: Icons.call_outlined,
             iconSize: 14,
             iconColor: AppColors.primary,
             spacing: 6,

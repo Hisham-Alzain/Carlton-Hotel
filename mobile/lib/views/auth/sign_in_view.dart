@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/controllers/auth/sign_in_controller.dart';
 import 'package:carlton/components/custom_auth_background.dart';
 import 'package:carlton/customWidgets/custom_country_code_picker.dart';
@@ -58,28 +59,7 @@ class SignInView extends GetView<SignInController> {
                         validator: (enteredEmail) =>
                             CustomValidation().validateEmail(enteredEmail),
                       )
-                    : Row(
-                        spacing: 10,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          CustomCountryCodePicker(phoneField: controller.phone),
-                          Flexible(
-                            child: CustomTextField(
-                              controller: controller.phone.controller,
-                              inputFormatters: [controller.phone.formatter],
-                              textInputType: TextInputType.phone,
-                              textDirection: TextDirection.ltr,
-                              captionLabel: AppTranslations.phoneNumber,
-                              hintText: AppTranslations.phoneNumberHint,
-                              validator: (enteredPhoneNumber) =>
-                                  CustomValidation().validatePhoneNumber(
-                                    enteredPhoneNumber,
-                                    dialCode: controller.phone.dialCode,
-                                  ),
-                            ),
-                          ),
-                        ],
-                      ),
+                    : CustomPhoneField(phoneField: controller.phone),
               ),
               Obx(
                 () => CustomFilledButton(
@@ -104,18 +84,16 @@ class SignInView extends GetView<SignInController> {
                   children: [
                     Text(
                       AppTranslations.newGuestPrompt,
-                      style: textStyle.labelLarge?.copyWith(
-                        fontFamily: 'DM Sans',
+                      style: textStyle.dmLabelLarge?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => Get.toNamed(Routes.createProfile),
+                      onTap: () => Get.toNamed(Routes.phoneEntry),
                       child: Text(
                         AppTranslations.createAccountLink,
-                        style: textStyle.labelLarge?.copyWith(
-                          fontFamily: 'DM Sans',
+                        style: textStyle.dmLabelLarge?.copyWith(
                           color: AppColors.antiqueGold,
                           fontWeight: FontWeight.w500,
                           decoration: TextDecoration.underline,

@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/custom_price_summary.dart';
 import 'package:carlton/models/booking_models.dart';
@@ -56,8 +57,7 @@ class BookingPriceBreakdown extends StatelessWidget {
                   ),
                   Text(
                     AppTranslations.finalTotalForStay,
-                    style: textStyle.labelSmall?.copyWith(
-                      fontFamily: 'DM Sans',
+                    style: textStyle.dmLabelSmall?.copyWith(
                       color: AppColors.primary,
                     ),
                   ),

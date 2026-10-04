@@ -158,6 +158,14 @@ const Map<String, String> trKeys = {
   "auth.verifyIdentityTitle": "Kimliğinizi doğrulayın",
   "auth.otpSentTo": "6 haneli kodu şuraya gönderdik: @destination",
   "auth.codeMismatch": "Bu kod eşleşmiyor",
+  "validation.invalidOtp": "6 haneli kodu girin",
+  "book.perNightSuffix": "/gece",
+  "book.view.city": "Şehir",
+  "book.view.garden": "Bahçe",
+  "book.view.pool": "Havuz",
+  "book.view.courtyard": "Avlu",
+  "book.view.mountain": "Dağ",
+  "book.view.interior": "İç",
   "auth.resendIn": "Yeniden gönderim: @time",
   "auth.resendCodeLink": "Kodu yeniden gönder",
   "auth.verifyButtonLabel": "DOĞRULA",
@@ -223,6 +231,7 @@ const Map<String, String> trKeys = {
 
   // Services
   "services.title": "Hizmetler",
+  "account.signInPromptTitle": "Hesabınızı görmek için giriş yapın",
   "services.signInPromptTitle": "Oda hizmetlerine erişmek için giriş yapın",
   "services.signInPromptSubtitle":
       "Rezervasyon yapın; giriş yaptığınızda hizmetlerin tamamı açılır.",
@@ -440,6 +449,8 @@ const Map<String, String> trKeys = {
   "checkIn.activatedDigitalKey": "Dijital anahtar etkinleştirildi",
   "checkIn.digitalKeyHint": "Telefon kilitliyken çalışır · basılı tutun",
   "checkIn.completeCheckIn": "Giriş işlemini tamamla",
+  "checkIn.awaitingConfirmation":
+      "Rezervasyonunuz otelin onayını bekliyor. Onaylandıktan sonra check-in yapabilirsiniz.",
   "checkIn.finishStepsFirst":
       "Giriş işlemini tamamlamadan önce şunu bitirin: @step.",
   "checkIn.stepIdentity": "kimlik doğrulama",
@@ -447,6 +458,8 @@ const Map<String, String> trKeys = {
   "checkIn.stepContactDetails": "iletişim bilgileriniz",
   "checkIn.selectArrivalTime": "Varış saatinizi seçin",
   "checkIn.arrivalTimeSubtitle": "Giriş işlemi 14.00'ten itibaren açıktır",
+  "checkIn.arrivalEarlyHours": "Sabaha karşı",
+  "checkIn.arrivalMorning": "Sabah",
   "checkIn.arrivalAfternoon": "Öğleden sonra",
   "checkIn.arrivalEvening": "Akşam",
   "checkIn.arrivalLateNight": "Gece geç saat",
@@ -513,6 +526,12 @@ const Map<String, String> trKeys = {
   "general.requested": "Talep edildi",
   // Account
   "account.myProfile": "Profilim",
+  "account.personalInformation": "Kişisel Bilgiler",
+  "account.notAdded": "Eklenmedi",
+  "account.verified": "Doğrulandı",
+  "account.editProfile": "Profili Düzenle",
+  "account.saveChanges": "Değişiklikleri Kaydet",
+  "account.profileUpdated": "Profiliniz güncellendi",
   "account.security": "Güvenlik",
   "account.support": "Destek",
   "account.helpAndSupport": "Yardım ve destek",
@@ -751,6 +770,7 @@ const Map<String, String> trKeys = {
   "book.promoHint": "Promosyon kodunu girin",
   "book.promoCodeFirst": "Önce bir promosyon kodu girin",
   "book.roomLoadFailed": "Bu oda yüklenemedi.",
+  "book.signInToBookTitle": "Rezervasyon için giriş yapın",
   "book.signInToBook": "Rezervasyonunuzu tamamlamak için giriş yapın.",
   "book.selectRoomAndDates": "Önce bir oda ve tarihlerinizi seçin.",
   "auth.otpExpired": "Kodun süresi doldu - Yeniden gönder'e dokunun.",
@@ -768,6 +788,7 @@ const Map<String, String> trKeys = {
   "transfer.flightNumberHint": "ör. RB 110",
   "transfer.date": "Tarih",
   "transfer.arrivalTime": "Varış saati",
+  "transfer.arrivalSubtitle": "Uçağınız ne zaman iniyor?",
   "transfer.terminal": "Terminal",
   "transfer.passengers": "Yolcular",
   "transfer.maxPassengers": "en fazla @count yolcu",
@@ -793,12 +814,14 @@ const Map<String, String> trKeys = {
   "transfer.folioNote":
       "Ödeme, çıkışta oda hesabınıza yansıtılır. Alıştan 2 saat öncesine kadar iptal ücretsizdir.",
   "transfer.confirmBooking": "Rezervasyonu onayla",
+  "transfer.at": "-",
+  "transfer.awaitingConfirmation":
+      "Havalimanı transferi, otel rezervasyonunuzu onayladıktan sonra açılır.",
+  "transfer.booked": "Transfer talep edildi — otel karşılamanızı onaylayacak.",
+  "transfer.timeInPast": "Gelecekte bir varış tarihi ve saati seçin.",
   "transfer.selectVehicleFirst": "Devam etmek için bir araç seçin.",
   "transfer.noVehicles": "Şu anda uygun transfer yok.",
   "transfer.loadFailed": "Transferler yüklenemedi.",
-  "transfer.bookingComingSoon": "Transfer rezervasyonu çok yakında",
-
-  "transfer.at": "-",
 
   "stays.nightsRemainingCount": "@count gece kaldı",
   "stays.nightsRemainingOne": "1 gece kaldı",
@@ -853,6 +876,7 @@ const Map<String, String> trKeys = {
   "book.addOnsNotBooked":
       "Odanız onaylandı. @items rezerve edilemedi — Hizmetler sekmesinden yeniden talep edebilirsiniz.",
   "book.bookingReceivedBang": "Rezervasyon alındı!",
+  "stays.signInPromptTitle": "Konaklamalarınızı görmek için giriş yapın",
   "stays.awaitingConfirmation": "Onay bekleniyor",
   "book.awaitingHotelConfirmation":
       "Otel onayı bekleniyor. Otel onayladığında rezervasyonunuz Ana Sayfada görünecek.",

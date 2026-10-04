@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/services/settings_service.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -67,8 +68,7 @@ class CustomTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
 
-    final labelStyle = textStyle.labelMedium?.copyWith(
-      fontFamily: 'DM Sans',
+    final labelStyle = textStyle.dmLabelMedium?.copyWith(
       color: labelColor ?? Colors.white,
       fontWeight: FontWeight.w900,
     );

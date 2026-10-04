@@ -62,7 +62,7 @@ class ReviewController extends GetxController
       showErrorDialog: false,
       cancelToken: cancelToken,
     );
-    if (res.statusCode != 200 || res.data == null) return null;
+    if (!res.hasData) return null;
     final items = res.data!
         .whereType<Map<String, dynamic>>()
         .map(Review.fromJson)

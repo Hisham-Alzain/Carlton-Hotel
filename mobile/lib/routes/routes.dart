@@ -21,6 +21,7 @@ import 'package:carlton/views/auth/sign_in_view.dart';
 import 'package:carlton/views/account/loyalty_view.dart';
 import 'package:carlton/views/account/legal_view.dart';
 import 'package:carlton/views/account/preferences_view.dart';
+import 'package:carlton/views/account/profile_view.dart';
 import 'package:carlton/views/account/support_view.dart';
 import 'package:carlton/views/stays/folio_view.dart';
 import 'package:carlton/views/discover/experience_detail_view.dart';
@@ -37,7 +38,7 @@ abstract class Routes {
   static const otpVerify = '/otp-verify';
   static const welcomeBack = '/welcome-back';
   static const createProfile = '/create-profile';
-  static const editProfile = '/account/edit-profile';
+  static const profile = '/account/profile';
   static const phoneEntry = '/phone-entry';
   static const reservationChoice = '/reservation-choice';
   static const findBooking = '/find-booking';
@@ -98,11 +99,6 @@ abstract class Pages {
       binding: CreateProfileBinding(),
     ),
     GetPage(
-      name: Routes.editProfile,
-      page: () => const CreateProfileView(),
-      binding: CreateProfileBinding(),
-    ),
-    GetPage(
       name: Routes.phoneEntry,
       page: () => const ContactEntryView(),
       binding: PhoneEntryBinding(),
@@ -150,6 +146,11 @@ abstract class Pages {
       name: Routes.folio,
       page: () => const FolioView(),
       binding: FolioBinding(),
+    ),
+    GetPage(
+      name: Routes.profile,
+      page: () => const ProfileView(),
+      binding: ProfileBinding(),
     ),
     GetPage(
       name: Routes.support,

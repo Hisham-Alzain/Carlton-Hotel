@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/controllers/discover/experience_controller.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_indicators.dart';
@@ -72,7 +73,7 @@ class ExperienceDetailView extends GetView<ExperienceController> {
               if (controller.loading.value) {
                 return const Padding(
                   padding: EdgeInsets.all(20),
-                  child: CustomProgressIndicator(),
+                  child: Center(child: LogoLoadingIndicator(size: 50)),
                 );
               }
               final about = controller.about.value;
@@ -80,8 +81,7 @@ class ExperienceDetailView extends GetView<ExperienceController> {
               if (about.isEmpty) return const SizedBox.shrink();
               return Text(
                 about,
-                style: textStyle.bodyMedium?.copyWith(
-                  fontFamily: 'DM Sans',
+                style: textStyle.dmBodyMedium?.copyWith(
                   color: AppColors.taupeBrown,
                 ),
               );
@@ -109,8 +109,7 @@ class _MetaRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: Get.textTheme.labelMedium?.copyWith(
-              fontFamily: 'DM Sans',
+            style: Get.textTheme.dmLabelMedium?.copyWith(
               color: AppColors.taupeBrown,
             ),
           ),

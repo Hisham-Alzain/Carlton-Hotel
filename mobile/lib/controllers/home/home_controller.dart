@@ -229,9 +229,6 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     await Future.wait([_loadContent(), _loadActiveBooking()]);
   }
 
-  /// Reservation statuses that still wait on the hotel to confirm.
-  static const _awaitingHotel = {'pending', 'pending_verification'};
-
   /// True while [upcomingStay] is a booking the hotel has not confirmed yet.
   final RxBool upcomingPending = false.obs;
 
@@ -271,17 +268,18 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         showErrorDialog: false,
       );
       if (isClosed) return;
-      if (upRes.statusCode == 200 && upRes.data != null) {
-        final list = UpcomingStay.listFromJson(upRes.data);
-        upcomingStay.value = list.isNotEmpty
-            ? _upcomingToStay(list.first)
-            : null;
-        upcomingPending.value =
-            list.isNotEmpty && _awaitingHotel.contains(list.first.status);
+      if (upRes.hasData) {
+        final primary = UpcomingStay.primary(
+          UpcomingStay.listFromJson(upRes.data),
+        );
+        upcomingStay.value = primary == null ? null : _upcomingToStay(primary);
+        // Pending only when no upcoming booking is confirmed — a confirmed one
+        // behind an earlier pending one still opens check-in and transfers.
+        upcomingPending.value = primary?.isAwaitingHotel ?? false;
         MiddlewareService.find.hasPendingBooking.value = upcomingPending.value;
         // The pre-arrival hero reads the booking from CheckInService, which
         // otherwise loads it only when the check-in wizard opens.
-        if (list.isNotEmpty && Get.isRegistered<CheckInService>()) {
+        if (primary != null && Get.isRegistered<CheckInService>()) {
           CheckInService.find.loadReservation();
         }
       }
@@ -302,14 +300,14 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       final folioRes = await folioF;
       final reqRes = await reqF;
       if (isClosed) return;
-      if (folioRes.statusCode == 200 && folioRes.data != null) {
+      if (folioRes.hasData) {
         final folio = Folio.fromJson(folioRes.data!);
         billLines.assignAll(
           folio.items.map((i) => (i.description, _usd(i.amountUsd))),
         );
         billTotal.value = _usd(folio.totalUsd);
       }
-      if (reqRes.statusCode == 200 && reqRes.data != null) {
+      if (reqRes.hasData) {
         activeRequests.assignAll(ServiceRequest.listFromJson(reqRes.data!));
       }
     } else {
@@ -377,7 +375,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       checkOutLabel: s.checkOut != null ? _fullDate.format(s.checkOut!) : '',
       nightsRemaining: s.nights,
       resCode: s.bookingCode,
-      pricePerNight: '${_usd(perNight.toString())}/night',
+      pricePerNight: AppTranslations.perNight(_usd(perNight.toString())),
       isCancellable: s.isCancellable,
     );
   }
@@ -565,7 +563,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     // Both calls pass showErrorDialog:false, so without this flag a failed
     // request would be indistinguishable from an empty result.
     contentError.value = !roomsRes.ok || !diningRes.ok;
-    if (roomsRes.statusCode == 200 && roomsRes.data != null) {
+    if (roomsRes.hasData) {
       rooms.assignAll(
         roomsRes.data!
             .whereType<Map<String, dynamic>>()
@@ -573,7 +571,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
             .map(RoomItem.fromRoomType),
       );
     }
-    if (diningRes.statusCode == 200 && diningRes.data != null) {
+    if (diningRes.hasData) {
       restaurants.assignAll(
         diningRes.data!
             .whereType<Map<String, dynamic>>()
@@ -581,14 +579,14 @@ class HomeController extends GetxController with WidgetsBindingObserver {
             .map(RestaurantItem.fromDiningVenue),
       );
     }
-    if (experiencesRes.statusCode == 200 && experiencesRes.data != null) {
+    if (experiencesRes.hasData) {
       experiences.assignAll(
         Experience.listFromJson(
           experiencesRes.data,
         ).map(ExperienceItem.fromExperience),
       );
     }
-    if (slidersRes.statusCode == 200 && slidersRes.data != null) {
+    if (slidersRes.hasData) {
       heroSliders.assignAll(HomeSlider.listFromJson(slidersRes.data));
     }
     contentLoading.value = false;

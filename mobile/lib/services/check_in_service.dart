@@ -1,5 +1,6 @@
 import 'package:carlton/constants/preference_options.dart';
 import 'package:carlton/enums/enums.dart';
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/check_in/arrival_slot.dart';
 import 'package:carlton/models/check_in/check_in_enums.dart';
 import 'package:carlton/models/check_in/pre_arrival_step.dart';
@@ -61,6 +62,7 @@ class CheckInService extends GetxService {
   /// session ends.
   void reset() {
     reservation.value = ReservationSummary.empty;
+    _stay = null;
     completed
       ..clear()
       ..add(PreArrivalStep.contactDetails);
@@ -150,6 +152,23 @@ class CheckInService extends GetxService {
       .where((s) => !completed.contains(s))
       .toList();
 
+  /// The stay [loadReservation] last fetched — what check-in would act on.
+  UpcomingStay? _stay;
+
+  /// Why check-in cannot be completed yet, or null when it can (or when the
+  /// stay is unknown — the server then decides). Only the rule that always
+  /// holds on `POST /stays/check-in` is checked here: a booking still awaiting
+  /// the hotel cannot be checked in. The arrival-day rule is left to the
+  /// server, which can lift it (backend `BOOKING_EARLY_CHECK_IN`).
+  String? get notOpenReason {
+    final stay = _stay;
+    if (stay == null) return null;
+    if (stay.isAwaitingHotel) {
+      return AppTranslations.checkInAwaitingConfirmation;
+    }
+    return null;
+  }
+
   /// Loads the guest's own reservation for the wizard's booking panel.
   ///
   /// Best-effort: on failure [ReservationSummary.empty] stays, which is the
@@ -168,13 +187,14 @@ class CheckInService extends GetxService {
       showErrorDialog: false,
     );
     if (isClosed) return;
-    if (response.statusCode != 200 || response.data == null) return;
-    final upcoming = UpcomingStay.listFromJson(response.data);
-    if (upcoming.isEmpty) return;
+    if (!response.hasData) return;
+    final stay = UpcomingStay.primary(UpcomingStay.listFromJson(response.data));
+    if (stay == null) return;
+    _stay = stay;
     reservation.value = ReservationSummary.fromUpcomingStay(
-      upcoming.first,
+      stay,
       // Locale resolution belongs here, not in the model — see the factory.
-      suiteName: upcoming.first.roomName.value,
+      suiteName: stay.roomName.value,
       guest: MiddlewareService.find.guest.value,
     );
   }
@@ -192,12 +212,13 @@ class CheckInService extends GetxService {
   /// never reaches the network, so the caller — not ApiService — owes the guest
   /// an explanation.
   Future<CheckInOutcome> completeCheckIn() async {
+    if (notOpenReason != null) return CheckInOutcome.notOpenYet;
     if (!isReadyToCheckIn) return CheckInOutcome.incomplete;
 
     final response = await ApiService.find.post<Map<String, dynamic>>(
       path: '/stays/check-in',
     );
-    if (response.statusCode != 200) return CheckInOutcome.failed;
+    if (!response.ok) return CheckInOutcome.failed;
 
     // has_booking / is_checked_in gate the in-stay sections Home is about to
     // render, so refresh them from /me before Home re-resolves — otherwise it

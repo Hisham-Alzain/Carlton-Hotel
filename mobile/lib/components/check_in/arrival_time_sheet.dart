@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/customWidgets/custom_bottom_sheet.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/l10n/app_translations.dart';
@@ -7,37 +8,64 @@ import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Body of the arrival-time sheet: the eight ETA slots grouped under their
+/// Body of the arrival-time sheet: the offered hours grouped under their
 /// period headings. The Home checklist offers "Set arrival time · Tap to add
 /// your ETA" but the Figma file contains no screen for it, so this is the
 /// smallest thing that makes the row functional.
 ///
 /// Content only — the title, subtitle and Confirm button belong to
-/// [showArrivalTimeSheet]'s call to [CustomBottomSheet.show].
+/// [showArrivalSlotPicker]'s call to [CustomBottomSheet.show].
 class ArrivalTimeSheet extends StatelessWidget {
-  const ArrivalTimeSheet({required this.draft, super.key});
+  const ArrivalTimeSheet({
+    required this.hours,
+    required this.draft,
+    this.openEndedHour,
+    super.key,
+  });
 
-  /// Uncommitted selection, owned by [showArrivalTimeSheet].
-  final Rx<ArrivalSlot?> draft;
+  /// The 24-hour clock hours offered, one chip each.
+  final List<int> hours;
+
+  /// The hour that stands for "this time or later" ("After 10:00 PM").
+  final int? openEndedHour;
+
+  /// Uncommitted selection, owned by [showArrivalSlotPicker].
+  final Rx<int?> draft;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 20,
-      children: ArrivalPeriod.values
-          .map((period) => _PeriodGroup(period: period, draft: draft))
-          .toList(),
+      children: [
+        for (final period in ArrivalPeriod.values)
+          if (hours.any((hour) => ArrivalPeriod.of(hour) == period))
+            _PeriodGroup(
+              period: period,
+              hours: hours
+                  .where((hour) => ArrivalPeriod.of(hour) == period)
+                  .toList(),
+              openEndedHour: openEndedHour,
+              draft: draft,
+            ),
+      ],
     );
   }
 }
 
 /// One heading plus the chips belonging to it.
 class _PeriodGroup extends StatelessWidget {
-  const _PeriodGroup({required this.period, required this.draft});
+  const _PeriodGroup({
+    required this.period,
+    required this.hours,
+    required this.openEndedHour,
+    required this.draft,
+  });
 
   final ArrivalPeriod period;
-  final Rx<ArrivalSlot?> draft;
+  final List<int> hours;
+  final int? openEndedHour;
+  final Rx<int?> draft;
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +77,7 @@ class _PeriodGroup extends StatelessWidget {
       children: [
         Text(
           _headingFor(period),
-          style: textStyle.labelMedium?.copyWith(
-            fontFamily: 'DM Sans',
+          style: textStyle.dmLabelMedium?.copyWith(
             color: AppColors.taupeBrown,
             letterSpacing: 0.5,
           ),
@@ -58,9 +85,14 @@ class _PeriodGroup extends StatelessWidget {
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: ArrivalSlot.values
-              .where((slot) => slot.period == period)
-              .map((slot) => _SlotChip(slot: slot, draft: draft))
+          children: hours
+              .map(
+                (hour) => _SlotChip(
+                  hour: hour,
+                  isOpenEnded: hour == openEndedHour,
+                  draft: draft,
+                ),
+              )
               .toList(),
         ),
       ],
@@ -70,18 +102,25 @@ class _PeriodGroup extends StatelessWidget {
   /// Lives here rather than on [ArrivalPeriod] because the models in
   /// `models/check_in/` are plain enums that never reach into `l10n/`.
   String _headingFor(ArrivalPeriod period) => switch (period) {
+    ArrivalPeriod.earlyHours => AppTranslations.arrivalEarlyHours,
+    ArrivalPeriod.morning => AppTranslations.arrivalMorning,
     ArrivalPeriod.afternoon => AppTranslations.arrivalAfternoon,
     ArrivalPeriod.evening => AppTranslations.arrivalEvening,
     ArrivalPeriod.lateNight => AppTranslations.arrivalLateNight,
   };
 }
 
-/// A single selectable slot.
+/// A single selectable hour.
 class _SlotChip extends StatelessWidget {
-  const _SlotChip({required this.slot, required this.draft});
+  const _SlotChip({
+    required this.hour,
+    required this.isOpenEnded,
+    required this.draft,
+  });
 
-  final ArrivalSlot slot;
-  final Rx<ArrivalSlot?> draft;
+  final int hour;
+  final bool isOpenEnded;
+  final Rx<int?> draft;
 
   @override
   Widget build(BuildContext context) {
@@ -89,20 +128,18 @@ class _SlotChip extends StatelessWidget {
 
     // TimeOfDay.format resolves through MaterialLocalizations, so the label
     // picks up the locale's numerals and its 12/24-hour convention for free.
-    final time = TimeOfDay(hour: slot.hour, minute: 0).format(context);
-    final label = slot.isOpenEnded
-        ? AppTranslations.arrivalAfterTime(time)
-        : time;
+    final time = TimeOfDay(hour: hour, minute: 0).format(context);
+    final label = isOpenEnded ? AppTranslations.arrivalAfterTime(time) : time;
 
-    // Scoped to this chip so selecting a slot repaints two chips, not all
-    // eight.
+    // Scoped to this chip so selecting an hour repaints two chips, not all of
+    // them.
     return Obx(() {
-      final selected = draft.value == slot;
+      final selected = draft.value == hour;
 
       return ChoiceChip(
         label: Text(label),
         selected: selected,
-        onSelected: (_) => draft.value = slot,
+        onSelected: (_) => draft.value = hour,
         // chipTheme suppresses the checkmark for the read-only filter chips it
         // was written for; here it is the selection affordance.
         showCheckmark: true,
@@ -128,19 +165,40 @@ class _SlotChip extends StatelessWidget {
   }
 }
 
-/// Opens the sheet. Home's checklist row calls this.
-Future<void> showArrivalTimeSheet() {
-  // Draft rather than writing straight through to CheckInService: a mistap on
-  // a chip is undone by picking another, and nothing is committed until
-  // Confirm. Scoped to this call so the service never holds provisional UI
-  // state.
-  final draft = Rx<ArrivalSlot?>(CheckInService.find.arrivalSlot.value);
+/// Opens the sheet for check-in. Home's checklist row calls this.
+Future<void> showArrivalTimeSheet() => showArrivalSlotPicker(
+  hours: ArrivalSlot.values.map((slot) => slot.hour).toList(),
+  openEndedHour: ArrivalSlot.afterTenPm.hour,
+  initialHour: CheckInService.find.arrivalSlot.value?.hour,
+  onConfirm: (hour) =>
+      CheckInService.find.markArrivalTime(ArrivalSlot.fromHour(hour)),
+);
+
+/// The arrival-hour picker itself, shared by check-in and the airport
+/// transfer's Arrival Time so both ask the same question the same way. Each
+/// passes the [hours] it accepts; [onConfirm] receives the hour only when the
+/// guest taps Confirm.
+Future<void> showArrivalSlotPicker({
+  required List<int> hours,
+  required ValueChanged<int> onConfirm,
+  int? initialHour,
+  int? openEndedHour,
+  String? title,
+  String? subtitle,
+}) {
+  // Draft rather than writing straight through: a mistap on a chip is undone
+  // by picking another, and nothing is committed until Confirm.
+  final draft = Rx<int?>(hours.contains(initialHour) ? initialHour : null);
 
   return CustomBottomSheet.show<void>(
-    title: AppTranslations.selectArrivalTime,
-    subtitle: AppTranslations.arrivalTimeSubtitle,
+    title: title ?? AppTranslations.selectArrivalTime,
+    subtitle: subtitle ?? AppTranslations.arrivalTimeSubtitle,
     heightFactor: 0.6,
-    child: ArrivalTimeSheet(draft: draft),
+    child: ArrivalTimeSheet(
+      hours: hours,
+      openEndedHour: openEndedHour,
+      draft: draft,
+    ),
     actions: Obx(
       () => CustomFilledButton(
         width: double.infinity,
@@ -149,7 +207,7 @@ Future<void> showArrivalTimeSheet() {
         onPressed: draft.value == null
             ? null
             : () {
-                CheckInService.find.markArrivalTime(draft.value!);
+                onConfirm(draft.value!);
                 Get.back();
               },
         child: Text(AppTranslations.confirmArrivalTime),

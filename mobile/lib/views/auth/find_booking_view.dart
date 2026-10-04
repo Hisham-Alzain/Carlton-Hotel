@@ -33,28 +33,9 @@ class FindBookingView extends GetView<FindBookingController> {
                     .validateRequiredField(enteredReservationCode),
               ),
               // The phone on the reservation — the code is texted to it.
-              Row(
-                spacing: 10,
+              CustomPhoneField(
+                phoneField: controller.phone,
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  CustomCountryCodePicker(phoneField: controller.phone),
-                  Flexible(
-                    child: CustomTextField(
-                      controller: controller.phone.controller,
-                      inputFormatters: [controller.phone.formatter],
-                      textInputType: TextInputType.phone,
-                      textDirection: TextDirection.ltr,
-                      captionLabel: AppTranslations.phoneNumber,
-                      hintText: AppTranslations.phoneNumberHint,
-                      validator: (enteredPhoneNumber) =>
-                          CustomValidation().validatePhoneNumber(
-                            enteredPhoneNumber,
-                            dialCode: controller.phone.dialCode,
-                          ),
-                    ),
-                  ),
-                ],
               ),
               Obx(
                 () => CustomFilledButton(

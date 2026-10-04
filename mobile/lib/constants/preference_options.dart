@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 /// The fixed catalogues behind every preference picker (Figma Preferences +
 /// option-picker sheets). These are product reference data, not placeholder
 /// content: there is no catalogue endpoint, and the icons are the exported
-/// Figma glyphs under `assets/icons`. Language and currency use Material
-/// glyphs because the design shows none.
+/// Figma glyphs under `assets/icons`. Language uses a Material glyph because
+/// the design shows none; currency shows each currency's own sign.
 abstract class PreferenceOptions {
   /// Resolved per read rather than `const`: the labels are `.tr` lookups,
   /// so a const list would freeze whichever locale was active at load.
@@ -127,7 +127,7 @@ abstract class PreferenceOptions {
       PreferenceOption(
         id: c.value,
         label: '${c.code} — ${AppTranslations.currencyName(c.value)}',
-        icon: Icons.payments_outlined,
+        symbol: c.symbol,
       ),
   ];
 

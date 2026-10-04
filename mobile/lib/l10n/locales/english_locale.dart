@@ -150,6 +150,14 @@ const Map<String, String> enKeys = {
   "auth.verifyIdentityTitle": "Verify your identity",
   "auth.otpSentTo": "We sent a 6-digit code to @destination",
   "auth.codeMismatch": "That code does not match",
+  "validation.invalidOtp": "Enter the 6-digit code",
+  "book.perNightSuffix": "/night",
+  "book.view.city": "City",
+  "book.view.garden": "Garden",
+  "book.view.pool": "Pool",
+  "book.view.courtyard": "Courtyard",
+  "book.view.mountain": "Mountain",
+  "book.view.interior": "Interior",
   "auth.resendIn": "Resend in @time",
   "auth.resendCodeLink": "Resend code",
   "auth.verifyButtonLabel": "VERIFY",
@@ -213,6 +221,7 @@ const Map<String, String> enKeys = {
 
   // Services
   "services.title": "Services",
+  "account.signInPromptTitle": "Sign in to see your account",
   "services.signInPromptTitle": "Sign in to access room services",
   "services.signInPromptSubtitle":
       "Book Now and the full services list unlock once you sign in.",
@@ -423,12 +432,16 @@ const Map<String, String> enKeys = {
   "checkIn.activatedDigitalKey": "Activated Digital Key",
   "checkIn.digitalKeyHint": "Works with phone locked · tap and hold",
   "checkIn.completeCheckIn": "Complete Check-In",
+  "checkIn.awaitingConfirmation":
+      "Your booking is waiting for the hotel to confirm it. You can check in once it's confirmed.",
   "checkIn.finishStepsFirst": "Finish @step before completing check-in.",
   "checkIn.stepIdentity": "identity verification",
   "checkIn.stepSpecialRequests": "your stay preferences",
   "checkIn.stepContactDetails": "your contact details",
   "checkIn.selectArrivalTime": "Select your arrival time",
   "checkIn.arrivalTimeSubtitle": "Check-in opens from 2:00 PM",
+  "checkIn.arrivalEarlyHours": "Early hours",
+  "checkIn.arrivalMorning": "Morning",
   "checkIn.arrivalAfternoon": "Afternoon",
   "checkIn.arrivalEvening": "Evening",
   "checkIn.arrivalLateNight": "Late night",
@@ -496,6 +509,12 @@ const Map<String, String> enKeys = {
   "general.requested": "Requested",
   // Account
   "account.myProfile": "My Profile",
+  "account.personalInformation": "Personal Information",
+  "account.notAdded": "Not added",
+  "account.verified": "Verified",
+  "account.editProfile": "Edit Profile",
+  "account.saveChanges": "Save Changes",
+  "account.profileUpdated": "Your profile has been updated",
   "account.security": "Security",
   "account.support": "Support",
   "account.helpAndSupport": "Help & Support",
@@ -729,6 +748,7 @@ const Map<String, String> enKeys = {
   "book.promoHint": "Enter promo code",
   "book.promoCodeFirst": "Enter a promo code first",
   "book.roomLoadFailed": "Could not load this room.",
+  "book.signInToBookTitle": "Sign in to book",
   "book.signInToBook": "Please sign in to complete your booking.",
   "book.selectRoomAndDates": "Select a room and your dates first.",
   "auth.otpExpired": "Code expired - tap Resend.",
@@ -746,6 +766,7 @@ const Map<String, String> enKeys = {
   "transfer.flightNumberHint": "e.g. RB 110",
   "transfer.date": "Date",
   "transfer.arrivalTime": "Arrival Time",
+  "transfer.arrivalSubtitle": "When does your flight land?",
   "transfer.terminal": "Terminal",
   "transfer.passengers": "Passengers",
   "transfer.maxPassengers": "max @count passengers",
@@ -772,12 +793,14 @@ const Map<String, String> enKeys = {
   "transfer.folioNote":
       "Payment will be charged to your room folio on checkout. Cancellation free up to 2 hours before pickup.",
   "transfer.confirmBooking": "Confirm Booking",
+  "transfer.at": "at",
+  "transfer.awaitingConfirmation":
+      "Airport transfers open once the hotel confirms your booking.",
+  "transfer.booked": "Transfer requested — the hotel will confirm your pickup.",
+  "transfer.timeInPast": "Choose an arrival date and time in the future.",
   "transfer.selectVehicleFirst": "Select a vehicle to continue.",
   "transfer.noVehicles": "No transfers available right now.",
   "transfer.loadFailed": "Could not load transfers.",
-  "transfer.bookingComingSoon": "Transfer booking is coming soon",
-
-  "transfer.at": "at",
 
   "stays.nightsRemainingCount": "@count nights remaining",
   "stays.nightsRemainingOne": "1 night remaining",
@@ -831,6 +854,7 @@ const Map<String, String> enKeys = {
   "book.addOnsNotBooked":
       "Your room is confirmed. We could not reserve @items — request it again from the Services tab.",
   "book.bookingReceivedBang": "Booking Received!",
+  "stays.signInPromptTitle": "Sign in to see your stays",
   "stays.awaitingConfirmation": "Awaiting confirmation",
   "book.awaitingHotelConfirmation":
       "Awaiting hotel confirmation. Your booking appears on Home once the hotel confirms it.",

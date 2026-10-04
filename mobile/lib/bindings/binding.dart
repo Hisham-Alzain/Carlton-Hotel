@@ -3,6 +3,7 @@ import 'package:carlton/controllers/account/account_controller.dart';
 import 'package:carlton/controllers/account/loyalty_controller.dart';
 import 'package:carlton/controllers/account/legal_controller.dart';
 import 'package:carlton/controllers/account/preferences_controller.dart';
+import 'package:carlton/controllers/account/profile_controller.dart';
 import 'package:carlton/controllers/account/support_controller.dart';
 import 'package:carlton/controllers/discover/experience_controller.dart';
 import 'package:carlton/controllers/dining/restaurant_controller.dart';
@@ -26,7 +27,7 @@ import 'package:carlton/controllers/auth/sign_in_controller.dart';
 import 'package:carlton/controllers/splash/splash_screen_controller.dart';
 import 'package:carlton/controllers/auth/welcome_back_controller.dart';
 import 'package:carlton/models/booking_models.dart';
-import 'package:carlton/models/home_models.dart';
+// import 'package:carlton/models/home_models.dart'; // needed by the restaurant ReviewController
 import 'package:carlton/models/review.dart';
 import 'package:get/get.dart';
 
@@ -78,16 +79,18 @@ class RestaurantBinding implements Bindings {
   @override
   void dependencies() {
     Get.lazyPut(() => RestaurantController());
-    // Reviews tab (autoLoad) — target derived from the route argument; a demo
-    // venue (empty uuid) skips the fetch and renders the empty state.
-    Get.lazyPut(
-      () => ReviewController(
-        reviewType: ReviewTargetType.diningVenue,
-        targetUuid: Get.arguments is RestaurantItem
-            ? (Get.arguments as RestaurantItem).uuid
-            : '',
-      ),
-    );
+    // Reviews tab switched off for now (see RestaurantDetailView).
+    // // Reviews tab (autoLoad) — target derived from the route argument; a demo
+    // // venue (empty uuid) skips the fetch and renders the empty state. Read the
+    // // argument now: the lazy factory runs at first Get.find, when a sheet or
+    // // dialog on top may have made Get.arguments something else.
+    // final venue = Get.arguments;
+    // Get.lazyPut(
+    // () => ReviewController(
+    // reviewType: ReviewTargetType.diningVenue,
+    // targetUuid: venue is RestaurantItem ? venue.uuid : '',
+    // ),
+    // );
   }
 }
 
@@ -97,12 +100,14 @@ class RoomDetailsBinding implements Bindings {
     // Room Details only submits reviews — the list is never rendered, so
     // autoLoad is off. A demo room (empty uuid) can't be reviewed; the view
     // hides the CTA in that case.
+    // Read the argument now, not in the factory: the controller is first
+    // found from the review sheet, where Get.arguments is no longer the room —
+    // the POST went to `/reviews/room_type/` with no uuid (404).
+    final room = Get.arguments;
     Get.lazyPut(
       () => ReviewController(
         reviewType: ReviewTargetType.roomType,
-        targetUuid: Get.arguments is RoomOption
-            ? (Get.arguments as RoomOption).uuid
-            : '',
+        targetUuid: room is RoomOption ? room.uuid : '',
         autoLoad: false,
       ),
     );
@@ -176,6 +181,13 @@ class FolioBinding implements Bindings {
   @override
   void dependencies() {
     Get.lazyPut(() => FolioController());
+  }
+}
+
+class ProfileBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => ProfileController());
   }
 }
 

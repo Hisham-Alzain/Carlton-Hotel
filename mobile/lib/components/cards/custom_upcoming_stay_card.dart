@@ -1,3 +1,5 @@
+import 'package:carlton/theme/theme.dart';
+import 'package:carlton/theme/app_shadows.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
@@ -31,14 +33,7 @@ class CustomUpcomingStayCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.cloudGrey48, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.pebbleGrey32,
-            blurRadius: 4,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: const [AppShadows.banner],
       ),
       child: Column(
         spacing: 10,
@@ -69,8 +64,7 @@ class CustomUpcomingStayCard extends StatelessWidget {
                       backgroundColor: AppColors.sandBeige,
                       child: Text(
                         AppTranslations.upcoming,
-                        style: textStyle.labelSmall?.copyWith(
-                          fontFamily: 'DM Sans',
+                        style: textStyle.dmLabelSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: AppColors.espressoBrown,
                         ),
@@ -103,8 +97,7 @@ class CustomUpcomingStayCard extends StatelessWidget {
                       backgroundColor: AppColors.white90,
                       child: Text(
                         stay.pricePerNight!,
-                        style: textStyle.titleMedium?.copyWith(
-                          fontFamily: 'DM Sans',
+                        style: textStyle.dmTitleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: AppColors.primary,
                         ),
@@ -114,8 +107,7 @@ class CustomUpcomingStayCard extends StatelessWidget {
                 ),
                 Text(
                   stay.subtitle!,
-                  style: textStyle.labelMedium?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelMedium?.copyWith(
                     color: AppColors.taupeBrown,
                   ),
                 ),
@@ -193,8 +185,7 @@ class _DateContainer extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: textStyle.labelSmall?.copyWith(
-              fontFamily: 'DM Sans',
+            style: textStyle.dmLabelSmall?.copyWith(
               color: AppColors.bronzeGold,
             ),
           ),

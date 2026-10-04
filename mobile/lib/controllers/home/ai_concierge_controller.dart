@@ -124,7 +124,7 @@ class AiConciergeController extends GetxController {
       cancelToken: _cancel,
     );
     if (isClosed || res.isCancelled) return;
-    if (res.statusCode != 200) {
+    if (!res.ok) {
       loadingThread.value = false;
       threadError.value = true;
       return;
@@ -147,7 +147,7 @@ class AiConciergeController extends GetxController {
       cancelToken: _cancel,
     );
     if (isClosed || msgRes.isCancelled) return;
-    if (msgRes.statusCode != 200) {
+    if (!msgRes.ok) {
       loadingThread.value = false;
       threadError.value = true;
       return;
@@ -177,12 +177,13 @@ class AiConciergeController extends GetxController {
 
   /// Pick a single image (≤5MB) to attach to the next message.
   Future<void> pickAttachment() async {
-    final result = await FilePicker.pickFiles(type: FileType.image);
-    if (result == null || result.files.isEmpty) return;
-    final picked = result.files.first;
+    final picked = await FilePicker.pickFile(type: FileType.image);
+    if (picked == null) return;
     final path = picked.path;
     if (path == null) return;
-    if (picked.size > _maxAttachmentBytes) {
+    final size = picked.lengthSync() ?? await picked.length();
+    if (isClosed) return;
+    if (size > _maxAttachmentBytes) {
       CustomSnackbars.showError(message: AppTranslations.imageTooLarge);
       return;
     }
@@ -238,7 +239,7 @@ class AiConciergeController extends GetxController {
     if (isClosed || res.isCancelled) return;
 
     // POST status is undocumented — accept both 200 and 201 as success.
-    if (res.statusCode != 200 && res.statusCode != 201) {
+    if (!res.ok) {
       sending.value = false;
       if (res.error != null) ApiService.find.dialogs.showError(res.error!);
       return;

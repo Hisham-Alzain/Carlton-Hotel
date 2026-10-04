@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -60,8 +61,7 @@ class CustomCounterField extends StatelessWidget {
                 if (subtitle != null) ...[
                   Text(
                     subtitle!,
-                    style: textStyle.labelMedium?.copyWith(
-                      fontFamily: 'DM Sans',
+                    style: textStyle.dmLabelMedium?.copyWith(
                       color: AppColors.taupeBrown,
                     ),
                   ),

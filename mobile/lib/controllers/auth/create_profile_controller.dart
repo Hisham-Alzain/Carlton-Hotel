@@ -5,28 +5,15 @@ import 'package:carlton/services/middleware_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Completes (onboarding, after OTP) or edits the guest profile via
-/// `PUT /auth/guest/profile`. Edit mode — signalled by passing `true` as the
-/// route argument (from Account) — pre-fills the form and pops back on save;
-/// onboarding routes into the app shell.
+/// Completes the guest profile during onboarding (after OTP) via
+/// `PUT /auth/guest/profile`, then routes into the app shell. Editing an
+/// existing profile happens in place on My Profile (ProfileController).
 class CreateProfileController extends GetxController {
   final formKey = GlobalKey<FormState>();
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
 
-  late final bool isEdit;
   final RxBool isSubmitting = false.obs;
-
-  @override
-  void onInit() {
-    super.onInit();
-    isEdit = Get.arguments == true;
-    if (isEdit) {
-      final guest = MiddlewareService.find.guest.value;
-      firstNameController.text = guest?.firstName ?? '';
-      lastNameController.text = guest?.lastName ?? '';
-    }
-  }
 
   Future<void> submit() async {
     if (!formKey.currentState!.validate()) return;
@@ -42,7 +29,7 @@ class CreateProfileController extends GetxController {
     if (isClosed) return;
     isSubmitting.value = false;
 
-    if (response.statusCode != 200 || response.data == null) return;
+    if (!response.hasData) return;
 
     // The profile response omits the /me-only entitlement flags — preserve the
     // ones already on the in-memory guest so an edit doesn't wipe them.
@@ -54,13 +41,9 @@ class CreateProfileController extends GetxController {
       ),
     );
 
-    if (isEdit) {
-      Get.back();
-    } else {
-      // First-time profile completion is the other tail of the auth flow —
-      // resolve Home from the reservation, same as the returning-guest path.
-      await HomeController.restoreAndGoHome();
-    }
+    // First-time profile completion is the other tail of the auth flow —
+    // resolve Home from the reservation, same as the returning-guest path.
+    await HomeController.restoreAndGoHome();
   }
 
   @override

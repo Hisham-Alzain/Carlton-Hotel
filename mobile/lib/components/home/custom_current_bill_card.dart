@@ -1,3 +1,4 @@
+import 'package:carlton/components/home/custom_home_card.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/custom_price_summary.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
@@ -21,28 +22,17 @@ class CustomCurrentBillCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(10),
-      color: AppColors.white,
-      surfaceTintColor: Colors.transparent,
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppColors.black06),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: SectionContainer(
-          title: AppTranslations.currentBill,
-          buttonText: AppTranslations.fullStatement,
-          icon: Icons.chevron_right,
-          iconColor: AppColors.primary,
-          onPressed: onFullStatement,
-          child: CustomPriceSummary(
-            lineItems: lines,
-            totalLabel: AppTranslations.estimatedTotal,
-            totalValue: total,
-          ),
+    return CustomHomeCard(
+      child: SectionContainer(
+        title: AppTranslations.currentBill,
+        buttonText: AppTranslations.fullStatement,
+        icon: Icons.chevron_right,
+        iconColor: AppColors.primary,
+        onPressed: onFullStatement,
+        child: CustomPriceSummary(
+          lineItems: lines,
+          totalLabel: AppTranslations.estimatedTotal,
+          totalValue: total,
         ),
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -36,6 +37,30 @@ class CustomEmptyPlaceholder extends StatelessWidget {
     this.iconContainerColor,
     super.key,
   });
+
+  /// A list that failed to load: the offline icon, [title], and Retry. Kept
+  /// apart from the loaded-but-empty state, which has no button — retrying an
+  /// empty list returns the same list.
+  CustomEmptyPlaceholder.loadFailed({
+    required this.title,
+    required VoidCallback onRetry,
+    this.subtitle,
+    super.key,
+  }) : iconWidget = const Icon(
+         Icons.cloud_off_outlined,
+         size: 48,
+         color: AppColors.mediumGrey,
+       ),
+       primaryLabel = AppTranslations.retry,
+       onPrimary = onRetry,
+       iconPath = null,
+       iconWidth = null,
+       iconHeight = null,
+       titleColor = AppColors.slateGrey,
+       subtitleColor = AppColors.slateGrey,
+       secondaryLabel = null,
+       onSecondary = null,
+       iconContainerColor = null;
 
   @override
   Widget build(BuildContext context) {

@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/enums/enums.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -83,8 +84,7 @@ class CustomSelectableCard extends StatelessWidget {
                     if (subtitle != null) ...[
                       Text(
                         subtitle!,
-                        style: textStyle.labelSmall?.copyWith(
-                          fontFamily: 'DM Sans',
+                        style: textStyle.dmLabelSmall?.copyWith(
                           color: AppColors.taupeBrown,
                         ),
                       ),
@@ -173,17 +173,7 @@ class _Control extends StatelessWidget {
             ? null
             : Border.all(color: AppColors.black10, width: 1),
       ),
-      child: selected
-          ? SvgPicture.asset(
-              'assets/icons/check.svg',
-              width: 12,
-              height: 12,
-              colorFilter: const ColorFilter.mode(
-                Colors.white,
-                BlendMode.srcIn,
-              ),
-            )
-          : null,
+      child: selected ? Icon(Icons.check, size: 12, color: Colors.white) : null,
     );
   }
 }

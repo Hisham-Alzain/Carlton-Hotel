@@ -157,6 +157,14 @@ const Map<String, String> frKeys = {
   "auth.verifyIdentityTitle": "Vérifiez votre identité",
   "auth.otpSentTo": "Nous avons envoyé un code à 6 chiffres à @destination",
   "auth.codeMismatch": "Ce code ne correspond pas",
+  "validation.invalidOtp": "Saisissez le code à 6 chiffres",
+  "book.perNightSuffix": "/nuit",
+  "book.view.city": "Ville",
+  "book.view.garden": "Jardin",
+  "book.view.pool": "Piscine",
+  "book.view.courtyard": "Cour",
+  "book.view.mountain": "Montagne",
+  "book.view.interior": "Intérieure",
   "auth.resendIn": "Renvoyer dans @time",
   "auth.resendCodeLink": "Renvoyer le code",
   "auth.verifyButtonLabel": "VÉRIFIER",
@@ -222,6 +230,7 @@ const Map<String, String> frKeys = {
 
   // Services
   "services.title": "Services",
+  "account.signInPromptTitle": "Connectez-vous pour voir votre compte",
   "services.signInPromptTitle":
       "Connectez-vous pour accéder aux services de chambre",
   "services.signInPromptSubtitle":
@@ -448,6 +457,8 @@ const Map<String, String> frKeys = {
   "checkIn.digitalKeyHint":
       "Fonctionne téléphone verrouillé · appuyez et maintenez",
   "checkIn.completeCheckIn": "Finaliser l'enregistrement",
+  "checkIn.awaitingConfirmation":
+      "Votre réservation attend la confirmation de l'hôtel. Vous pourrez faire l'enregistrement une fois confirmée.",
   "checkIn.finishStepsFirst":
       "Terminez @step avant de finaliser l'enregistrement.",
   "checkIn.stepIdentity": "la vérification d'identité",
@@ -455,6 +466,8 @@ const Map<String, String> frKeys = {
   "checkIn.stepContactDetails": "vos coordonnées",
   "checkIn.selectArrivalTime": "Choisissez votre heure d'arrivée",
   "checkIn.arrivalTimeSubtitle": "L'enregistrement ouvre à partir de 14h00",
+  "checkIn.arrivalEarlyHours": "Petit matin",
+  "checkIn.arrivalMorning": "Matin",
   "checkIn.arrivalAfternoon": "Après-midi",
   "checkIn.arrivalEvening": "Soirée",
   "checkIn.arrivalLateNight": "Nuit",
@@ -522,6 +535,12 @@ const Map<String, String> frKeys = {
   "general.requested": "Demandé",
   // Account
   "account.myProfile": "Mon profil",
+  "account.personalInformation": "Informations personnelles",
+  "account.notAdded": "Non renseigné",
+  "account.verified": "Vérifié",
+  "account.editProfile": "Modifier le profil",
+  "account.saveChanges": "Enregistrer",
+  "account.profileUpdated": "Votre profil a été mis à jour",
   "account.security": "Sécurité",
   "account.support": "Assistance",
   "account.helpAndSupport": "Aide et assistance",
@@ -763,6 +782,7 @@ const Map<String, String> frKeys = {
   "book.promoHint": "Saisissez le code promo",
   "book.promoCodeFirst": "Saisissez d'abord un code promo",
   "book.roomLoadFailed": "Impossible de charger cette chambre.",
+  "book.signInToBookTitle": "Connectez-vous pour réserver",
   "book.signInToBook":
       "Veuillez vous connecter pour finaliser votre réservation.",
   "book.selectRoomAndDates": "Choisissez d'abord une chambre et vos dates.",
@@ -781,6 +801,7 @@ const Map<String, String> frKeys = {
   "transfer.flightNumberHint": "ex. RB 110",
   "transfer.date": "Date",
   "transfer.arrivalTime": "Heure d'arrivée",
+  "transfer.arrivalSubtitle": "À quelle heure votre vol atterrit-il ?",
   "transfer.terminal": "Terminal",
   "transfer.passengers": "Passagers",
   "transfer.maxPassengers": "@count passagers max",
@@ -807,12 +828,15 @@ const Map<String, String> frKeys = {
   "transfer.folioNote":
       "Le paiement sera imputé à votre note de chambre au départ. Annulation gratuite jusqu'à 2 heures avant la prise en charge.",
   "transfer.confirmBooking": "Confirmer la réservation",
+  "transfer.at": "à",
+  "transfer.awaitingConfirmation":
+      "Les transferts aéroport sont disponibles dès que l'hôtel confirme votre réservation.",
+  "transfer.booked":
+      "Transfert demandé — l'hôtel confirmera votre prise en charge.",
+  "transfer.timeInPast": "Choisissez une date et une heure d'arrivée futures.",
   "transfer.selectVehicleFirst": "Choisissez un véhicule pour continuer.",
   "transfer.noVehicles": "Aucun transfert disponible pour le moment.",
   "transfer.loadFailed": "Impossible de charger les transferts.",
-  "transfer.bookingComingSoon": "La réservation de transfert arrive bientôt",
-
-  "transfer.at": "à",
 
   "stays.nightsRemainingCount": "@count nuits restantes",
   "stays.nightsRemainingOne": "1 nuit restante",
@@ -867,6 +891,7 @@ const Map<String, String> frKeys = {
   "book.addOnsNotBooked":
       "Votre chambre est confirmée. Nous n'avons pas pu réserver @items — refaites la demande depuis l'onglet Services.",
   "book.bookingReceivedBang": "Réservation reçue !",
+  "stays.signInPromptTitle": "Connectez-vous pour voir vos séjours",
   "stays.awaitingConfirmation": "En attente de confirmation",
   "book.awaitingHotelConfirmation":
       "En attente de confirmation de l'hôtel. Votre réservation apparaîtra sur l'accueil une fois confirmée.",

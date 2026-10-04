@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -56,8 +57,7 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                 ),
                 Text(
                   AppTranslations.noPaymentRequiredNow,
-                  style: textStyle.labelMedium?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelMedium?.copyWith(
                     color: AppColors.graphite,
                   ),
                 ),
@@ -77,8 +77,7 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                 Text(
                   '${AppTranslations.reservationSecuredNoCharge} '
                   '${AppTranslations.paymentAtFrontDesk}',
-                  style: textStyle.labelMedium?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelMedium?.copyWith(
                     color: AppColors.inkBlack,
                   ),
                 ),
@@ -106,20 +105,15 @@ class CustomPayAtHotelPanel extends StatelessWidget {
                   child: Row(
                     spacing: 8,
                     children: [
-                      SvgPicture.asset(
-                        'assets/icons/check.svg',
-                        width: 14,
-                        height: 14,
-                        colorFilter: const ColorFilter.mode(
-                          AppColors.successGreen,
-                          BlendMode.srcIn,
-                        ),
+                      Icon(
+                        Icons.check,
+                        size: 14,
+                        color: AppColors.successGreen,
                       ),
                       Expanded(
                         child: Text(
                           AppTranslations.freeCancellation48h,
-                          style: textStyle.labelMedium?.copyWith(
-                            fontFamily: 'DM Sans',
+                          style: textStyle.dmLabelMedium?.copyWith(
                             color: AppColors.inkBlack,
                           ),
                         ),
@@ -154,10 +148,7 @@ class _MethodRow extends StatelessWidget {
       iconSize: 15,
       iconColor: AppColors.graphite,
       spacing: 10,
-      textStyle: textStyle.labelMedium?.copyWith(
-        fontFamily: 'DM Sans',
-        color: AppColors.inkBlack,
-      ),
+      textStyle: textStyle.dmLabelMedium?.copyWith(color: AppColors.inkBlack),
     );
   }
 }

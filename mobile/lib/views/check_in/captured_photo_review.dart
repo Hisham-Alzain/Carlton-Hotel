@@ -4,7 +4,6 @@ import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 /// Review screen for the just-captured photo (Figma 2237:4861): success badge,
@@ -20,19 +19,11 @@ class CapturedPhotoReview extends GetView<ScanIdController> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 20,
         children: [
-          Center(
+          const Center(
             child: CustomIconChip.circle(
               size: 50,
               backgroundColor: AppColors.lagoonTeal,
-              child: SvgPicture.asset(
-                'assets/icons/check.svg',
-                width: 24,
-                height: 24,
-                colorFilter: const ColorFilter.mode(
-                  AppColors.white,
-                  BlendMode.srcIn,
-                ),
-              ),
+              child: Icon(Icons.check, color: Colors.white),
             ),
           ),
           Text(

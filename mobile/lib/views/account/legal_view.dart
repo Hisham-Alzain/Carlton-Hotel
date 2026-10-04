@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/controllers/account/legal_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
@@ -23,19 +24,13 @@ class LegalView extends GetView<LegalController> {
       ),
       body: Obx(() {
         if (controller.loading.value) {
-          return const Center(child: CustomProgressIndicator());
+          return const Center(child: LogoLoadingIndicator(size: 50));
         }
         if (controller.error.value) {
-          return CustomEmptyPlaceholder(
-            iconWidget: const Icon(
-              Icons.wifi_off_rounded,
-              size: 48,
-              color: AppColors.mediumGrey,
-            ),
+          return CustomEmptyPlaceholder.loadFailed(
             title: AppTranslations.legalLoadFailed,
             subtitle: AppTranslations.checkConnectionShort,
-            primaryLabel: AppTranslations.retry,
-            onPrimary: controller.load,
+            onRetry: controller.load,
           );
         }
         return ListView(
@@ -99,8 +94,7 @@ class _PageCard extends GetView<LegalController> {
               if (expanded)
                 Text(
                   page.content.value,
-                  style: textStyle.bodySmall?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmBodySmall?.copyWith(
                     color: AppColors.taupeBrown,
                   ),
                 ),

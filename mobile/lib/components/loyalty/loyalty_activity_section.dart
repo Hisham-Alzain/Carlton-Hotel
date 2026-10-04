@@ -1,3 +1,5 @@
+import 'package:carlton/theme/theme.dart';
+import 'package:carlton/components/loyalty/loyalty_card_texture.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
 import 'package:carlton/extensions/date_extension.dart';
@@ -26,18 +28,7 @@ class LoyaltyActivitySection extends StatelessWidget {
 
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.antiqueGold20),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.slateShadow04,
-            blurRadius: 14,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
+      decoration: loyaltyPanelDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -62,8 +53,7 @@ class LoyaltyActivitySection extends StatelessWidget {
                   ),
                   child: Text(
                     AppTranslations.loyaltyEntryCount(transactions.length),
-                    style: textStyle.labelSmall?.copyWith(
-                      fontFamily: 'DM Sans',
+                    style: textStyle.dmLabelSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppColors.bronzeGold,
                     ),
@@ -179,11 +169,8 @@ class _ActivityRow extends StatelessWidget {
                     Text(
                       '${transaction.bookingRef} · '
                       '${transaction.date.formatDatePicker()}',
-                      style: textStyle.labelSmall
-                          ?.copyWith(
-                            fontFamily: 'DM Sans',
-                            color: AppColors.taupeBrown,
-                          )
+                      style: textStyle.dmLabelSmall
+                          ?.copyWith(color: AppColors.taupeBrown)
                           .tracked(context, 0.8),
                     ),
                   ],

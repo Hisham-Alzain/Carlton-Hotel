@@ -1,3 +1,5 @@
+import 'package:carlton/theme/theme.dart';
+import 'package:carlton/components/home/custom_home_card.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
@@ -32,57 +34,46 @@ class CustomActiveRequestsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
 
-    return Card(
-      margin: const EdgeInsets.all(10),
-      color: AppColors.white,
-      surfaceTintColor: Colors.transparent,
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppColors.black06),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 10,
-          children: [
-            if (showHeading)
-              Text(
-                AppTranslations.activeRequests,
-                style: textStyle.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.inkBlack,
-                ),
-              ),
-            // The index is only used to suppress the divider above the first
-            // row, so it stays inside the row rather than being interleaved
-            // here.
-            ...requests.indexed.map(
-              (entry) => _RequestRow(
-                request: entry.$2,
-                onTap: () => onOpen(entry.$2),
-                showDivider: entry.$1 > 0,
+    return CustomHomeCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 10,
+        children: [
+          if (showHeading)
+            Text(
+              AppTranslations.activeRequests,
+              style: textStyle.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.inkBlack,
               ),
             ),
-            CustomFilledButton(
-              width: double.infinity,
-              height: 50,
-              onPressed: onNewRequest,
-              backgroundColor: AppColors.whisperGrey,
-              foregroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: const BorderSide(color: AppColors.black10),
-              ),
-              // The Icon takes its colour from the button's foregroundColor.
-              child: RowTextComponent(
-                text: AppTranslations.newRequest,
-                icon: Icons.add,
-              ),
+          // The index is only used to suppress the divider above the first
+          // row, so it stays inside the row rather than being interleaved
+          // here.
+          ...requests.indexed.map(
+            (entry) => _RequestRow(
+              request: entry.$2,
+              onTap: () => onOpen(entry.$2),
+              showDivider: entry.$1 > 0,
             ),
-          ],
-        ),
+          ),
+          CustomFilledButton(
+            width: double.infinity,
+            height: 50,
+            onPressed: onNewRequest,
+            backgroundColor: AppColors.whisperGrey,
+            foregroundColor: AppColors.primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: const BorderSide(color: AppColors.black10),
+            ),
+            // The Icon takes its colour from the button's foregroundColor.
+            child: RowTextComponent(
+              text: AppTranslations.newRequest,
+              icon: Icons.add,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -146,8 +137,7 @@ class _RequestRow extends StatelessWidget {
                       ),
                       Text(
                         request.detail,
-                        style: textStyle.labelSmall?.copyWith(
-                          fontFamily: 'DM Sans',
+                        style: textStyle.dmLabelSmall?.copyWith(
                           color: AppColors.slateGrey,
                         ),
                       ),

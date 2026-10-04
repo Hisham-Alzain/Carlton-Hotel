@@ -1,3 +1,5 @@
+import 'package:carlton/theme/theme.dart';
+import 'package:carlton/theme/app_shadows.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/cards/custom_payment_card_preview.dart';
 import 'package:carlton/customWidgets/custom_text_field.dart';
@@ -32,13 +34,7 @@ class CustomCardForm extends StatelessWidget {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.black07, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.black06,
-            blurRadius: 12,
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: const [AppShadows.card],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,16 +100,13 @@ class CustomCardForm extends StatelessWidget {
                   fillColor: AppColors.whisperGrey,
                   onChanged: (_) => onChanged(),
                 ),
-                // iconSize 14 matches lock.svg's own 13.997 viewBox, which is
-                // what the unsized SvgPicture rendered at before.
                 RowTextComponent(
                   text: AppTranslations.cardSecurityNote,
-                  iconPath: 'assets/icons/lock.svg',
+                  icon: Icons.lock_outline,
                   iconSize: 14,
                   iconColor: AppColors.taupeBrown,
                   spacing: 10,
-                  textStyle: textStyle.labelSmall?.copyWith(
-                    fontFamily: 'DM Sans',
+                  textStyle: textStyle.dmLabelSmall?.copyWith(
                     color: AppColors.taupeBrown,
                   ),
                 ),

@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 10
 current_phase_name: Loyalty Points Program
 status: executing
-stopped_at: Completed 10-02-PLAN.md
-last_updated: "2026-10-04T18:36:14.404Z"
+stopped_at: Completed 10-03-PLAN.md
+last_updated: "2026-10-04T19:10:00.000Z"
 last_activity: 2026-10-04
 last_activity_desc: Phase 10 execution started
 progress:
   total_phases: 11
   completed_phases: 5
   total_plans: 98
-  completed_plans: 64
+  completed_plans: 65
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 10 (Loyalty Points Program) — EXECUTING
-Plan: 2 of 15
+Plan: 4 of 15
 Status: Ready to execute
 Last activity: 2026-10-04 — Phase 10 execution started
 
@@ -60,6 +60,7 @@ Progress: [███████░░░] 65%
 |------|----------|-------|-------|
 | Phase 10 P01 | 45min | 3 tasks | 34 files |
 | Phase 10 P02 | 30min | 2 tasks | 18 files |
+| Phase 10 P03 | 35min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,7 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 10-01] LoyaltyReward registered in RecycleBinRetentionTest::SOFT_DELETABLE now (auto-discovered purge list); 10-08 step 8 is verify-only
 - [Phase ?]: [Phase 10-01] loyalty_rewards carries a standalone sort_order index (CmsListIndexTest) besides (is_active, sort_order); voucher/application FK indexes served by composite leftmost prefixes
 - [Phase ?]: [Phase 10-02] LoyaltyMath rejects negatives in every entry point and LoyaltyProgram avoids ?? except minRedeemPoints(); a null rate or cap only ever means the capability is off
+- [Phase ?]: [Phase 10-03] LoyaltyLedger is the only point mover; a clawback draws on an active/depleted origin even when unswept past expiry (points leave once), refund() takes only redeem entries and clawback() only earn entries
 
 ### Pending Todos
 
@@ -121,6 +123,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-04T18:36:14.389Z
-Stopped at: Completed 10-02-PLAN.md
+Last session: 2026-10-04T19:10:00.000Z
+Stopped at: Completed 10-03-PLAN.md
 Resume file: None

@@ -97,7 +97,7 @@ All routes are under `/api` (the code has no `/v1` segment — `bootstrap/app.ph
 
 - [x] **LOY-01**: Staff can read and update the six program settings (earn rate, redeem value, expiry months, expiry-warning days, minimum points to redeem, max % payable with points); changes are audited
 - [x] **LOY-02**: With no rates configured the program is inactive (no earning, redemption refused); no rates are seeded
-- [ ] **LOY-03**: Settling a folio credits integer points (round half up) on room-stay spend and on services/F&B spend, once, atomically with settlement, under every settlement path, never on a cancelled reservation
+- [x] **LOY-03**: Settling a folio credits integer points (round half up) on room-stay spend and on services/F&B spend, once, atomically with settlement, under every settlement path, never on a cancelled reservation
 - [x] **LOY-04**: Earning is idempotent: a retried or concurrent settlement never double-credits; guests with no account and unconfigured programs earn nothing; no historical backfill
 - [ ] **LOY-05**: Staff can award or deduct points manually with a mandatory reason, idempotently and audited; a deduction can never exceed the available balance
 - [ ] **LOY-06**: A guest sees available points, points expiring soon, and a paginated ledger (earn / redeem / expire / adjust / clawback / refund) tied to bookings

@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 10
 current_phase_name: Loyalty Points Program
 status: executing
-stopped_at: Completed 10-04-PLAN.md
-last_updated: "2026-10-04T19:10:00.000Z"
+stopped_at: Completed 10-05-PLAN.md
+last_updated: "2026-10-04T19:23:26.624Z"
 last_activity: 2026-10-04
 last_activity_desc: Phase 10 execution started
 progress:
   total_phases: 11
   completed_phases: 5
   total_plans: 98
-  completed_plans: 66
+  completed_plans: 67
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 10 (Loyalty Points Program) — EXECUTING
-Plan: 5 of 15
+Plan: 6 of 15
 Status: Ready to execute
 Last activity: 2026-10-04 — Phase 10 execution started
 
-Progress: [███████░░░] 65%
+Progress: [███████░░░] 68%
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [███████░░░] 65%
 | Phase 10 P02 | 30min | 2 tasks | 18 files |
 | Phase 10 P03 | 35min | 2 tasks | 3 files |
 | Phase 10 P04 | 40min | 3 tasks | 17 files |
+| Phase 10 P05 | 40min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,7 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 10-02] LoyaltyMath rejects negatives in every entry point and LoyaltyProgram avoids ?? except minRedeemPoints(); a null rate or cap only ever means the capability is off
 - [Phase ?]: [Phase 10-03] LoyaltyLedger is the only point mover; a clawback draws on an active/depleted origin even when unswept past expiry (points leave once), refund() takes only redeem entries and clawback() only earn entries
 - [Phase ?]: [Phase 10-04] Loyalty settings PUT applies present keys only (explicit null clears); loyalty.view/manage/adjust seeded in no preset (30 -> 33 permissions, 13 -> 14 groups); loyalty.adjust sits in CmsAccessControlTest::$notYetBuilt until plan 10-07
+- [Phase 10-05]: Earn runs inline in the folio-locked settle transaction at all three settlement statements; only UniqueConstraintViolationException is caught, so any other failure rolls the settlement back
 
 ### Pending Todos
 
@@ -125,6 +127,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-04T19:10:00.000Z
-Stopped at: Completed 10-04-PLAN.md
+Last session: 2026-10-04T19:23:26.603Z
+Stopped at: Completed 10-05-PLAN.md
 Resume file: None

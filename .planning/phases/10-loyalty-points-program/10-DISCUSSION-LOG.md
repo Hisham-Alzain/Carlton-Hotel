@@ -12,3 +12,12 @@ Standing rule: full auto, no user prompts mid-milestone; decisions go to the Fab
 | ROADMAP `Mode: mvp` | Not adopted (consultant suggested it, but it changes plan shape to vertical slices; Phase 10 stays standard) | Orchestrator |
 
 Full rulings are in `10-CONTEXT.md` section "Resolved planning rulings".
+
+## Later gates (same run)
+| Gate | Decision | Decided by |
+|------|----------|------------|
+| UI-SPEC gate (frontend=true false positive from dashboard/ and mobile/ dirs) | Skipped; phase is backend API only | Orchestrator |
+| Codebase-drift advisory | Ignored (non-blocking) | Orchestrator |
+| Plan checker | VERIFICATION PASSED on first iteration, 15 plans, no blockers/warnings | gsd-plan-checker (haiku) |
+| Requirements / decision coverage | LOY-01..22 all in plans; decision gate skipped (CONTEXT has no `<decisions>` block) | Orchestrator |
+| Phase 9 | Committed (82169a5) before plans finished; soft-dependency note kept | n/a |

@@ -375,6 +375,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Support Tickets & Queue | 11/11 | Complete | 2026-10-02 (0961153) |
 | 8. Events & Dining | 10/10 | Complete | 2026-10-03 (3886416) |
 | 9. Night Audit & Reports | 10/10 | Complete | 2026-10-04 |
+| 10. Loyalty Points Program | 0/15 | Planned | - |
 
 ### Phase 10: Loyalty Points Program
 
@@ -391,8 +392,22 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
   6. Contract gate: happy / 401 / 403 / 422 per route, 5 locales, docs/Postman/tree updated, Flutter/React teams notified of the contract strings and error codes.
 
 **Research**: Done (`10-RESEARCH.md`); rulings in `10-DISCUSSION-LOG.md`.
-**Plans:** 0 plans
+**Plans:** 15 plans (sequential waves 1-15)
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 10 to break down)
+- [ ] 10-01-PLAN.md — Foundation: Phase 9 committed check, 7 tables, 6 enums, `config/loyalty.php`, models, factories, `BuildsLoyaltyFixtures` (LOY-02, LOY-04, LOY-08, LOY-17)
+- [ ] 10-02-PLAN.md — `LoyaltyMath`, `LoyaltyProgram`, 8 exceptions, error keys in 5 locales (LOY-02, LOY-08, LOY-21, LOY-22)
+- [ ] 10-03-PLAN.md — `LoyaltyLedger`: FIFO spend, refund, clawback, expire (LOY-08, LOY-13, LOY-17)
+- [ ] 10-04-PLAN.md — Settings API, 3 `loyalty.*` permissions, count re-pins (LOY-01, LOY-02, LOY-20, LOY-21, LOY-22)
+- [ ] 10-05-PLAN.md — Earn wired into the 3 settlement sites (LOY-02, LOY-03, LOY-04)
+- [ ] 10-06-PLAN.md — Guest account and ledger, staff guest view (LOY-06, LOY-07, LOY-08)
+- [ ] 10-07-PLAN.md — Manual adjust (LOY-05, LOY-20)
+- [ ] 10-08-PLAN.md — Rewards CRUD with recycle bin, guest catalog (LOY-11, LOY-12)
+- [ ] 10-09-PLAN.md — Redeem into voucher, my vouchers (LOY-13, LOY-14, LOY-22)
+- [ ] 10-10-PLAN.md — `PriceLoyaltyRedemptionAction` and `GET /loyalty/preview` (LOY-15, LOY-16, LOY-22)
+- [ ] 10-11-PLAN.md — Booking with points or voucher, idempotent replay (LOY-16)
+- [ ] 10-12-PLAN.md — Cancel reversals and folio-refund seam (LOY-17, LOY-18)
+- [ ] 10-13-PLAN.md — Daily expiry and expiry-warning jobs (LOY-08, LOY-09, LOY-10)
+- [ ] 10-14-PLAN.md — Loyalty reports (LOY-19, LOY-20)
+- [ ] 10-15-PLAN.md — Guides, Postman, tree, phase gate, SUMMARY (LOY-01, LOY-21)

@@ -122,7 +122,10 @@ class CmsAccessControlTest extends TestCase
         // Phase 9.1: pricing.edit is enforced by the exchange-rate routes (D-19).
         // reports.view and night_audit.manage are enforced by the Phase 9
         // night-audit and reports routes (D-15).
-        $notYetBuilt = [];
+        // loyalty.adjust is enforced by POST /cms/loyalty/guests/{guest}/adjustments
+        // in plan 10-07, which removes it from this list. loyalty.view and
+        // loyalty.manage are enforced by the settings routes from plan 10-04.
+        $notYetBuilt = ['loyalty.adjust'];
 
         $enforcedByRoutes = collect(Route::getRoutes()->getRoutes())
             ->flatMap(fn ($route) => $route->gatherMiddleware())

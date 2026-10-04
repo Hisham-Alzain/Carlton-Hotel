@@ -69,6 +69,7 @@ return [
         'night_audit_blocker_resolved' => 'Night audit blocker resolved.',
         'night_audit_closed'           => 'Business date closed.',
         'exchange_rate_recorded'       => 'Exchange rate saved.',
+        'loyalty_settings_updated'     => 'Loyalty settings updated.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',

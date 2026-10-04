@@ -69,6 +69,7 @@ return [
         'night_audit_blocker_resolved' => 'Bloqueo de la auditoría nocturna resuelto.',
         'night_audit_closed'           => 'Fecha operativa cerrada.',
         'exchange_rate_recorded'       => 'Tipo de cambio guardado.',
+        'loyalty_settings_updated'     => 'Configuración del programa de fidelidad actualizada.',
     ],
     'errors'     => [
         'server_error'           => 'Se ha producido un error.',

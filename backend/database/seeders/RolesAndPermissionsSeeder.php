@@ -44,6 +44,11 @@ class RolesAndPermissionsSeeder extends Seeder
             // business date. Read via reports.view|night_audit.manage. In no
             // preset — assigned per account; a night auditor needs no revenue access.
             'night_audit.manage',
+            // Phase 10 (Q7): view = settings/rewards read, guest balance/ledger, reports;
+            // manage = settings write and rewards CRUD; adjust = manual award/deduct
+            // (money-like write, own string, folios.settle precedent). In no preset —
+            // assigned per account.
+            'loyalty.view', 'loyalty.manage', 'loyalty.adjust',
         ];
 
         foreach ($permissions as $name) {

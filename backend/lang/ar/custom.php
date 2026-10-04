@@ -69,6 +69,7 @@ return [
         'night_audit_blocker_resolved' => 'تم حل معوّق التدقيق الليلي.',
         'night_audit_closed'           => 'تم إغلاق تاريخ العمل.',
         'exchange_rate_recorded'       => 'تم حفظ سعر الصرف.',
+        'loyalty_settings_updated'     => 'تم تحديث إعدادات برنامج الولاء.',
     ],
     'errors'     => [
         'server_error'           => 'حدث خطأ ما.',

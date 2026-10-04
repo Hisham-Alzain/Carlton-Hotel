@@ -69,6 +69,7 @@ return [
         'night_audit_blocker_resolved' => 'Gece denetimi engeli çözüldü.',
         'night_audit_closed'           => 'İş günü kapatıldı.',
         'exchange_rate_recorded'       => 'Döviz kuru kaydedildi.',
+        'loyalty_settings_updated'     => 'Sadakat programı ayarları güncellendi.',
     ],
     'errors'     => [
         'server_error'           => 'Bir hata oluştu.',

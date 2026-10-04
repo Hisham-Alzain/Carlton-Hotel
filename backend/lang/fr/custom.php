@@ -69,6 +69,7 @@ return [
         'night_audit_blocker_resolved' => 'Point bloquant de l\'audit de nuit résolu.',
         'night_audit_closed'           => 'Date d\'exploitation clôturée.',
         'exchange_rate_recorded'       => 'Taux de change enregistré.',
+        'loyalty_settings_updated'     => 'Paramètres du programme de fidélité mis à jour.',
     ],
     'errors'     => [
         'server_error'           => 'Une erreur est survenue.',

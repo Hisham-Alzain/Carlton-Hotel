@@ -26,7 +26,13 @@ class PermissionsGroupedTest extends TestCase
                     ->assertStatus(200)->assertJson(['success' => true]);
 
         $groups = $res->json('data');
-        $this->assertCount(13, $groups);
+        // Phase 10 (Q7): +1 group (`loyalty`).
+        $this->assertCount(14, $groups);
+
+        // Phase 10 (Q7): the `loyalty` group is view, manage and adjust.
+        $loyaltyGroup = collect($groups)->firstWhere('module', 'loyalty');
+        $this->assertNotNull($loyaltyGroup, 'loyalty group exists');
+        $this->assertSame(['loyalty.adjust', 'loyalty.manage', 'loyalty.view'], collect($loyaltyGroup['permissions'])->sort()->values()->all());
 
         // Phase 9 (D-15): the `night_audit` group is the attest/close verb only.
         $nightAuditGroup = collect($groups)->firstWhere('module', 'night_audit');

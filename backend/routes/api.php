@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\FolioController as AdminFolioController;
 use App\Http\Controllers\Api\ConversationController as ApiConversationController;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
+use App\Http\Controllers\Admin\LoyaltySettingController;
 use App\Http\Controllers\Admin\NightAuditController;
 use App\Http\Controllers\Admin\OperationsQueueController;
 use App\Http\Controllers\Admin\ReportController;
@@ -920,5 +921,20 @@ Route::middleware('auth:users')->prefix('support-tickets')->group(function () {
 
     Route::middleware('permission:tickets.assign')->group(function () {
         Route::patch('/{ticket}/assign', [SupportTicketController::class, 'assign']);
+    });
+});
+
+// ──────────────────────────────────────────────────────────────────────
+// Phase 10 — Loyalty (staff). Q7: loyalty.view reads, loyalty.manage writes
+// settings and (later) rewards, loyalty.adjust is the manual award/deduct.
+// Later plans add rewards, guests, adjustments and reports to this block.
+// ──────────────────────────────────────────────────────────────────────
+Route::middleware('auth:users')->prefix('cms/loyalty')->group(function () {
+    Route::middleware('permission:loyalty.view|loyalty.manage')->group(function () {
+        Route::get('/settings', [LoyaltySettingController::class, 'show']);
+    });
+
+    Route::middleware('permission:loyalty.manage')->group(function () {
+        Route::put('/settings', [LoyaltySettingController::class, 'update']);
     });
 });

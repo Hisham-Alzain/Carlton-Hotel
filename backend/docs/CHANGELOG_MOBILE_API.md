@@ -20,6 +20,38 @@ nine commits (`2fd294f` → `5d254a7`).
 
 ---
 
+## 2026-10-05 — Phase 10 — Loyalty Points Program
+
+**No breaking changes.** Every route, field, error code and notification type below is new or optional; existing app builds keep working untouched. Full contract: `API_GUIDE_MOBILE.md` → *Module: Loyalty*.
+
+**Added** (all guest token; staff token answers 401)
+
+- `GET /api/loyalty/account` — `available_points`, `expiring_soon_points`, `expiring_soon_window_days`, `next_expiry_at`, `lifetime_earned_points`, `lifetime_redeemed_points`, `program{earning, points_discount, rewards}`, `redeem_value_usd`, `min_redeem_points`, `max_redeem_percent`. No tier fields exist.
+- `GET /api/loyalty/ledger` — paginated, newest first; `type` ∈ `earn|redeem|expire|adjust|clawback|refund`, `source` ∈ `stay|service|manual|refund`; signed `points`; filters `type`, `source`, `occurred_at`, `points`. Staff notes (`reason`, `performed_by`) are never included.
+- `GET /api/loyalty/rewards` — the active rewards catalogue (AR/EN maps); works before the hotel configures the program.
+- `POST /api/loyalty/rewards/{uuid}/redeem` — spends points FIFO (earliest expiry first) and issues a voucher. `Idempotency-Key` required; `201` first time, `200` replay with the same voucher, `409 idempotency_conflict` for the same key on a different reward; 30 requests/min.
+- `GET /api/loyalty/vouchers` — the guest's own vouchers (`active|used|expired|void`), filters `status`, `type`, `points_spent`.
+- `GET /api/loyalty/preview` — prices a booking with `loyalty_points` or `voucher_code` without writing anything: quote, discount, `net_total_usd`, `max_points`, `points_earnable_estimate`; 30 requests/min.
+
+**Changed (non-breaking)**
+
+- `POST /api/reservations` accepts optional `loyalty_points` (integer) or `voucher_code` (string), never both. The `Idempotency-Key` header is required **only** when one of them is sent; a retry with the same key and body answers `200` with the same reservation, a different body `409 idempotency_conflict`. `total_usd` is net of the loyalty discount and equals the preview. A booking without loyalty fields behaves exactly as before.
+- `ReservationResource` gains an additive `loyalty` block on `POST /reservations`, `GET /reservations` and `GET /reservations/{uuid}`: `null`, or `{points_redeemed, points_discount_usd, voucher{code,type}|null, voucher_discount_usd, upgrade_requested, status}`. `upgrade_requested: true` marks a room-upgrade voucher that staff fulfil at the desk.
+- `DELETE /api/reservations/{uuid}` additionally refunds spent points, restores a used voucher and takes back earned points (never below zero). Response unchanged (`204`).
+
+**New error codes** (all 422): `loyalty_program_inactive`, `loyalty_insufficient_points`, `loyalty_below_minimum`, `loyalty_over_cap`, `loyalty_voucher_invalid`, `loyalty_reward_unavailable`, `loyalty_adjustment_invalid` (staff side), `loyalty_discount_conflict`. Details are under `context`. A missing `Idempotency-Key` on a loyalty booking or a redeem is the ordinary `422 validation_failed` with `errors.idempotency_key` — there is no separate code.
+
+**New notification type:** `loyalty_points_expiring` — one push per guest per day-run before points expire, `data: {points, expires_at}`, localized from `preferred_locale`.
+
+**Flutter actions**
+
+- a) Replace the mock loyalty repository with the six routes; map `type`/`source` per the guide's mapping table (mock `earned|redeemed|expired` → `earn|redeem|expire` plus `adjust|clawback|refund`; mock `dining|spa|other` → `service`).
+- b) Remove tier UI and `staysCount`/`memberId`: the API provides no tiers, no stay count and no member id.
+- c) Use `program` to show or hide "pay with points"; send `loyalty_points`/`voucher_code` only after a successful `GET /loyalty/preview`, with a fresh `Idempotency-Key` that you reuse on retries.
+- d) Handle the new error codes by `error_code`, and open the Loyalty screen from the `loyalty_points_expiring` push.
+
+---
+
 ## 2026-10-04 — Phase 9.1 — Guest account & app support
 
 All changes are additive.

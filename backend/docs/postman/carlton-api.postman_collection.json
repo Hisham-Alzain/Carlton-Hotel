@@ -10338,6 +10338,553 @@
                     "response": []
                 }
             ]
+        },
+        {
+            "name": "Loyalty (Phase 10)",
+            "description": "Loyalty points program. Guest requests use {{guest_token}} (Ahmad); staff requests use {{staff_token}} (super admin passes every gate). The program is OFF until Staff > Settings > Update has been sent once (earn_rate for earning; redeem_value_usd + max_redeem_percent for paying with points). Rewards work without settings. Requests that send an Idempotency-Key generate a fresh {{$guid}} per send; to demo a safe retry, disable the pre-request line and resend (200 replay, same result). Run order for a full demo: Staff > Settings update, Staff > Create reward, Staff > Award points to Ahmad, then the Guest folder top to bottom.",
+            "item": [
+                {
+                    "name": "Guest",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const day = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);",
+                                    "pm.collectionVariables.set('loyalty_check_in', day(30));",
+                                    "pm.collectionVariables.set('loyalty_check_out', day(32));"
+                                ]
+                            }
+                        }
+                    ],
+                    "item": [
+                        {
+                            "name": "[Guest] Account (balance, expiring soon, program switches)",
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{guest_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {"raw": "{{base_url}}/loyalty/account", "host": ["{{base_url}}"], "path": ["loyalty", "account"]},
+                                "description": "Guest token. available_points counts only unexpired points; program{earning, points_discount, rewards} says which features the hotel has switched on. No tier fields exist. An unconfigured program still answers 200 (rates null)."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Guest] Ledger (newest first)",
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{guest_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {
+                                    "raw": "{{base_url}}/loyalty/ledger?per_page=15",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["loyalty", "ledger"],
+                                    "query": [
+                                        {"key": "per_page", "value": "15"},
+                                        {"key": "type", "value": "earn", "disabled": true},
+                                        {"key": "source", "value": "stay", "disabled": true},
+                                        {"key": "points[gte]", "value": "1", "disabled": true}
+                                    ]
+                                },
+                                "description": "type = earn|redeem|expire|adjust|clawback|refund; source = stay|service|manual|refund; points is signed. Filters type, source, occurred_at[gte|lte], points[gte|lte] (integer or 422). reason and performed_by are staff-only and never appear here."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Guest] Rewards catalogue (captures loyalty_reward_uuid)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (pm.response.code === 200) {",
+                                            "    const items = pm.response.json().data.items || [];",
+                                            "    if (items.length) { pm.collectionVariables.set('loyalty_reward_uuid', items[0].uuid); }",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{guest_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {"raw": "{{base_url}}/loyalty/rewards", "host": ["{{base_url}}"], "path": ["loyalty", "rewards"]},
+                                "description": "Active rewards only, sort_order then creation. name/description are whole {en, ar, ...} maps. Works before the program is configured. The test script saves the first reward uuid."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Guest] Redeem reward -> voucher (Idempotency-Key; captures loyalty_voucher_code)",
+                            "event": [
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "// One fresh key per send. To demo a safe retry, disable this line and resend: the second call answers 200 with the same voucher.",
+                                            "pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                            "    pm.collectionVariables.set('loyalty_voucher_code', pm.response.json().data.code);",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{guest_token}}", "type": "string"}]},
+                                "header": [
+                                    {"key": "Accept", "value": "application/json"},
+                                    {"key": "Idempotency-Key", "value": "{{idempotency_key}}"}
+                                ],
+                                "url": {"raw": "{{base_url}}/loyalty/rewards/{{loyalty_reward_uuid}}/redeem", "host": ["{{base_url}}"], "path": ["loyalty", "rewards", "{{loyalty_reward_uuid}}", "redeem"]},
+                                "description": "Idempotency-Key is REQUIRED (missing -> 422 validation_failed, errors.idempotency_key). 201 first time; 200 replay with the same voucher; the same key for a different reward -> 409 idempotency_conflict. Not enough points -> 422 loyalty_insufficient_points {available_points, requested_points}. Inactive reward -> 422 loyalty_reward_unavailable; unknown/deleted -> 404. Throttle 30/min. No body."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Guest] My vouchers",
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{guest_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {
+                                    "raw": "{{base_url}}/loyalty/vouchers",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["loyalty", "vouchers"],
+                                    "query": [
+                                        {"key": "status", "value": "active", "disabled": true},
+                                        {"key": "type", "value": "discount_voucher", "disabled": true}
+                                    ]
+                                },
+                                "description": "Own vouchers only, newest first. status = active|used|expired|void; type = discount_voucher|free_night|room_upgrade. After use: status used, used_at set, reservation{uuid, booking_code}. Cancelling the booking makes it active again."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Guest] Preview booking with points",
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{guest_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {
+                                    "raw": "{{base_url}}/loyalty/preview?room_type_uuid={{room_type_uuid}}&check_in={{loyalty_check_in}}&check_out={{loyalty_check_out}}&loyalty_points=500",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["loyalty", "preview"],
+                                    "query": [
+                                        {"key": "room_type_uuid", "value": "{{room_type_uuid}}"},
+                                        {"key": "check_in", "value": "{{loyalty_check_in}}"},
+                                        {"key": "check_out", "value": "{{loyalty_check_out}}"},
+                                        {"key": "loyalty_points", "value": "500"}
+                                    ]
+                                },
+                                "description": "Read-only; writes nothing. Same inputs as POST /reservations. net_total_usd is exactly what the booking will carry. Errors in order: loyalty_discount_conflict, loyalty_program_inactive {capability}, loyalty_below_minimum {min_redeem_points}, loyalty_over_cap {max_points}, loyalty_insufficient_points {available_points, requested_points}. Throttle 30/min."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Guest] Preview booking with a voucher",
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{guest_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {
+                                    "raw": "{{base_url}}/loyalty/preview?room_type_uuid={{room_type_uuid}}&check_in={{loyalty_check_in}}&check_out={{loyalty_check_out}}&voucher_code={{loyalty_voucher_code}}",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["loyalty", "preview"],
+                                    "query": [
+                                        {"key": "room_type_uuid", "value": "{{room_type_uuid}}"},
+                                        {"key": "check_in", "value": "{{loyalty_check_in}}"},
+                                        {"key": "check_out", "value": "{{loyalty_check_out}}"},
+                                        {"key": "voucher_code", "value": "{{loyalty_voucher_code}}"}
+                                    ]
+                                },
+                                "description": "Send points OR a voucher, never both (422 loyalty_discount_conflict). Unknown, foreign, used, void and expired codes all answer the same 422 loyalty_voucher_invalid. A room_upgrade voucher takes 0.00 off and sets loyalty.upgrade_requested (staff upgrade the room at the desk)."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Guest] Book with points (Idempotency-Key; captures loyalty_reservation_uuid)",
+                            "event": [
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "// One fresh key per send. To demo a safe retry, disable this line and resend: the second call answers 200 with the same reservation.",
+                                            "pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                            "    pm.collectionVariables.set('loyalty_reservation_uuid', pm.response.json().data.uuid);",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{guest_token}}", "type": "string"}]},
+                                "header": [
+                                    {"key": "Accept", "value": "application/json"},
+                                    {"key": "Content-Type", "value": "application/json"},
+                                    {"key": "Idempotency-Key", "value": "{{idempotency_key}}"}
+                                ],
+                                "url": {"raw": "{{base_url}}/reservations", "host": ["{{base_url}}"], "path": ["reservations"]},
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"room_type_uuid\": \"{{room_type_uuid}}\",\n    \"check_in\": \"{{loyalty_check_in}}\",\n    \"check_out\": \"{{loyalty_check_out}}\",\n    \"payment_method\": \"on_arrival\",\n    \"loyalty_points\": 500\n}",
+                                    "options": {"raw": {"language": "json"}}
+                                },
+                                "description": "Idempotency-Key is required ONLY when loyalty_points or voucher_code is sent. 201 with total_usd already net and the loyalty block {points_redeemed, points_discount_usd, voucher, voucher_discount_usd, upgrade_requested, status}. Retry with the same key + body -> 200, same reservation; same key + different body -> 409 idempotency_conflict. Never send a discount or total: they are ignored. A refusal (loyalty_* 422, no_availability 409) writes nothing."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Guest] Book with a voucher (Idempotency-Key)",
+                            "event": [
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{guest_token}}", "type": "string"}]},
+                                "header": [
+                                    {"key": "Accept", "value": "application/json"},
+                                    {"key": "Content-Type", "value": "application/json"},
+                                    {"key": "Idempotency-Key", "value": "{{idempotency_key}}"}
+                                ],
+                                "url": {"raw": "{{base_url}}/reservations", "host": ["{{base_url}}"], "path": ["reservations"]},
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"room_type_uuid\": \"{{room_type_uuid}}\",\n    \"check_in\": \"{{loyalty_check_in}}\",\n    \"check_out\": \"{{loyalty_check_out}}\",\n    \"payment_method\": \"on_arrival\",\n    \"voucher_code\": \"{{loyalty_voucher_code}}\"\n}",
+                                    "options": {"raw": {"language": "json"}}
+                                },
+                                "description": "Marks the voucher used and links it to the new reservation. Points and a voucher together -> 422 loyalty_discount_conflict."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Guest] Cancel the loyalty booking (reverses points and voucher)",
+                            "request": {
+                                "method": "DELETE",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{guest_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {"raw": "{{base_url}}/reservations/{{loyalty_reservation_uuid}}", "host": ["{{base_url}}"], "path": ["reservations", "{{loyalty_reservation_uuid}}"]},
+                                "description": "204. Refunds spent points (refund ledger row), restores a used voucher to active, and claws back points earned from the stay's folio (never below zero). A second cancel is 422 reservation_state and changes nothing."
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Staff",
+                    "item": [
+                        {
+                            "name": "[Admin] Settings: get (loyalty.view or loyalty.manage)",
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {"raw": "{{base_url}}/cms/loyalty/settings", "host": ["{{base_url}}"], "path": ["cms", "loyalty", "settings"]},
+                                "description": "No settings row is seeded: until the first save the rates are null, expiry_months 24, expiry_warning_days 30, program {earning:false, points_discount:false, rewards:true}."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Settings: update (loyalty.manage)",
+                            "request": {
+                                "method": "PUT",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [
+                                    {"key": "Accept", "value": "application/json"},
+                                    {"key": "Content-Type", "value": "application/json"}
+                                ],
+                                "url": {"raw": "{{base_url}}/cms/loyalty/settings", "host": ["{{base_url}}"], "path": ["cms", "loyalty", "settings"]},
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"earn_rate\": \"1.0000\",\n    \"redeem_value_usd\": \"0.0100\",\n    \"expiry_months\": 24,\n    \"expiry_warning_days\": 30,\n    \"min_redeem_points\": 100,\n    \"max_redeem_percent\": \"50.00\"\n}",
+                                    "options": {"raw": {"language": "json"}}
+                                },
+                                "description": "Present-key semantics: only the keys sent change; an explicit null clears a nullable value (earn_rate, redeem_value_usd, min_redeem_points, max_redeem_percent); expiry_months and expiry_warning_days cannot be null; an empty body is a 200 that changes nothing. Earning needs earn_rate > 0; paying with points needs redeem_value_usd > 0 AND max_redeem_percent set (an unset cap is never 100%). Audited."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Rewards: list",
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {
+                                    "raw": "{{base_url}}/cms/loyalty/rewards?per_page=15",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["cms", "loyalty", "rewards"],
+                                    "query": [
+                                        {"key": "per_page", "value": "15"},
+                                        {"key": "type", "value": "discount_voucher", "disabled": true},
+                                        {"key": "is_active", "value": "true", "disabled": true},
+                                        {"key": "search", "value": "night", "disabled": true}
+                                    ]
+                                },
+                                "description": "loyalty.view or loyalty.manage. Includes inactive rewards. Filters: type (eq|in), is_active, search (name, every locale); sort = sort_order|points_cost|created_at|updated_at."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Rewards: create (captures loyalty_staff_reward_uuid)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (pm.response.code === 201) {",
+                                            "    pm.collectionVariables.set('loyalty_staff_reward_uuid', pm.response.json().data.uuid);",
+                                            "    pm.collectionVariables.set('loyalty_reward_uuid', pm.response.json().data.uuid);",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [
+                                    {"key": "Accept", "value": "application/json"},
+                                    {"key": "Content-Type", "value": "application/json"}
+                                ],
+                                "url": {"raw": "{{base_url}}/cms/loyalty/rewards", "host": ["{{base_url}}"], "path": ["cms", "loyalty", "rewards"]},
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": {\"en\": \"25 USD off\", \"ar\": \"خصم 25 دولارًا\"},\n    \"description\": {\"en\": \"Applies to one booking\", \"ar\": \"ينطبق على حجز واحد\"},\n    \"type\": \"discount_voucher\",\n    \"points_cost\": 2500,\n    \"discount_usd\": \"25.00\",\n    \"voucher_valid_days\": 90,\n    \"is_active\": true,\n    \"sort_order\": 1\n}",
+                                    "options": {"raw": {"language": "json"}}
+                                },
+                                "description": "loyalty.manage. name needs en and ar (max 150); type = discount_voucher|free_night|room_upgrade; discount_usd is required for discount_voucher and rejected (422) for the other two types; points_cost 1..100000000; voucher_valid_days 1..730. 201. The test script saves the uuid (also as loyalty_reward_uuid so the Guest folder redeems it)."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Rewards: show",
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {"raw": "{{base_url}}/cms/loyalty/rewards/{{loyalty_staff_reward_uuid}}", "host": ["{{base_url}}"], "path": ["cms", "loyalty", "rewards", "{{loyalty_staff_reward_uuid}}"]},
+                                "description": "loyalty.view or loyalty.manage."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Rewards: update",
+                            "request": {
+                                "method": "PUT",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [
+                                    {"key": "Accept", "value": "application/json"},
+                                    {"key": "Content-Type", "value": "application/json"}
+                                ],
+                                "url": {"raw": "{{base_url}}/cms/loyalty/rewards/{{loyalty_staff_reward_uuid}}", "host": ["{{base_url}}"], "path": ["cms", "loyalty", "rewards", "{{loyalty_staff_reward_uuid}}"]},
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"points_cost\": 2000\n}",
+                                    "options": {"raw": {"language": "json"}}
+                                },
+                                "description": "loyalty.manage. Partial update; name locales merge. Switching type needs the matching discount_usd (null for free_night/room_upgrade, a value for discount_voucher). Vouchers already issued keep their snapshot."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Rewards: delete (soft, 204)",
+                            "request": {
+                                "method": "DELETE",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {"raw": "{{base_url}}/cms/loyalty/rewards/{{loyalty_staff_reward_uuid}}", "host": ["{{base_url}}"], "path": ["cms", "loyalty", "rewards", "{{loyalty_staff_reward_uuid}}"]},
+                                "description": "loyalty.manage. Soft delete; 204 with an empty body. The reward leaves the guest catalogue at once; issued vouchers stay usable."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Rewards: recycle bin (cms.restore or cms.purge)",
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {"raw": "{{base_url}}/cms/loyalty/rewards/trashed", "host": ["{{base_url}}"], "path": ["cms", "loyalty", "rewards", "trashed"]},
+                                "description": "The bin uses the CMS bin gates, not loyalty.manage: loyalty.manage alone gets 403."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Rewards: restore (cms.restore)",
+                            "request": {
+                                "method": "POST",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {"raw": "{{base_url}}/cms/loyalty/rewards/{{loyalty_staff_reward_uuid}}/restore", "host": ["{{base_url}}"], "path": ["cms", "loyalty", "rewards", "{{loyalty_staff_reward_uuid}}", "restore"]},
+                                "description": "cms.restore. 200 with the reward."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] ⚠️ Rewards: force delete (cms.purge, permanent)",
+                            "request": {
+                                "method": "DELETE",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {"raw": "{{base_url}}/cms/loyalty/rewards/{{loyalty_staff_reward_uuid}}/force", "host": ["{{base_url}}"], "path": ["cms", "loyalty", "rewards", "{{loyalty_staff_reward_uuid}}", "force"]},
+                                "description": "cms.purge. Destructive: removes the reward permanently (204). Vouchers keep their snapshot and stay usable."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Guest balance (loyalty.view)",
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {"raw": "{{base_url}}/cms/loyalty/guests/{{guest_uuid}}", "host": ["{{base_url}}"], "path": ["cms", "loyalty", "guests", "{{guest_uuid}}"]},
+                                "description": "loyalty.view. Same shape as the guest's own account plus guest{uuid, name}. 404 for an unknown guest uuid."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Guest ledger (loyalty.view; includes reason and performed_by)",
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {
+                                    "raw": "{{base_url}}/cms/loyalty/guests/{{guest_uuid}}/ledger",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["cms", "loyalty", "guests", "{{guest_uuid}}", "ledger"],
+                                    "query": [
+                                        {"key": "type", "value": "adjust", "disabled": true},
+                                        {"key": "points[gte]", "value": "1", "disabled": true}
+                                    ]
+                                },
+                                "description": "loyalty.view. Staff see reason and performed_by{uuid, name}; guests never do. Filters type, source, occurred_at, points."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Award points to a guest (loyalty.adjust, Idempotency-Key)",
+                            "event": [
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "// One fresh key per send. To demo a safe retry, disable this line and resend: the second call answers 200 with the same ledger row.",
+                                            "pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [
+                                    {"key": "Accept", "value": "application/json"},
+                                    {"key": "Content-Type", "value": "application/json"},
+                                    {"key": "Idempotency-Key", "value": "{{idempotency_key}}"}
+                                ],
+                                "url": {"raw": "{{base_url}}/cms/loyalty/guests/{{guest_uuid}}/adjustments", "host": ["{{base_url}}"], "path": ["cms", "loyalty", "guests", "{{guest_uuid}}", "adjustments"]},
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"points\": 20000,\n    \"reason\": \"Service recovery after noisy room\"\n}",
+                                    "options": {"raw": {"language": "json"}}
+                                },
+                                "description": "loyalty.adjust (the holder also needs loyalty.view to read the balance). Idempotency-Key required (max 64); missing -> 422 validation_failed errors.idempotency_key. points is a signed integer; 0 or beyond 1000000 -> 422 loyalty_adjustment_invalid {max_adjust_points}; reason 3..500 chars. 201 first time; replay (same key, body AND staff member) -> 200 same row; different body or another staff member -> 409 idempotency_conflict."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Deduct points from a guest (loyalty.adjust, Idempotency-Key)",
+                            "event": [
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [
+                                    {"key": "Accept", "value": "application/json"},
+                                    {"key": "Content-Type", "value": "application/json"},
+                                    {"key": "Idempotency-Key", "value": "{{idempotency_key}}"}
+                                ],
+                                "url": {"raw": "{{base_url}}/cms/loyalty/guests/{{guest_uuid}}/adjustments", "host": ["{{base_url}}"], "path": ["cms", "loyalty", "guests", "{{guest_uuid}}", "adjustments"]},
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"points\": -1000,\n    \"reason\": \"Duplicate award reversed\"\n}",
+                                    "options": {"raw": {"language": "json"}}
+                                },
+                                "description": "A deduction consumes the guest's unexpired batches first-expiring-first and never touches an expired one. More than the balance -> 422 loyalty_insufficient_points {available_points, requested_points} and nothing is written."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "[Admin] Report (loyalty.view)",
+                            "request": {
+                                "method": "GET",
+                                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{staff_token}}", "type": "string"}]},
+                                "header": [{"key": "Accept", "value": "application/json"}],
+                                "url": {
+                                    "raw": "{{base_url}}/cms/loyalty/reports",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["cms", "loyalty", "reports"],
+                                    "query": [
+                                        {"key": "date_from", "value": "2026-10-01", "disabled": true},
+                                        {"key": "date_to", "value": "2026-10-31", "disabled": true}
+                                    ]
+                                },
+                                "description": "loyalty.view. date_from and date_to are sent together or not at all (default both = hotel today), strict Y-m-d, date_to >= date_from, at most 366 days (422 validation_failed, loyalty_report_period_too_long). issued_points = earn + positive adjustments; refunds are NEVER counted as issued (refunded_points is separate). outstanding_points and liability_usd are point in time (now), not as of date_to; liability_usd is null while redeem_value_usd is unset or zero."
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
         }
+    ],
+    "variable": [
+        {"key": "loyalty_reward_uuid", "value": ""},
+        {"key": "loyalty_staff_reward_uuid", "value": ""},
+        {"key": "loyalty_voucher_code", "value": ""},
+        {"key": "loyalty_reservation_uuid", "value": ""},
+        {"key": "loyalty_check_in", "value": ""},
+        {"key": "loyalty_check_out", "value": ""}
     ]
 }

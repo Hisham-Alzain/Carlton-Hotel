@@ -137,7 +137,7 @@ After login, the `permissions` array in the user object is the source of truth f
 
 A `super_admin` account bypasses all permission checks on the server.
 
-**Full permission catalog** (13 modules, 30 permissions): `reservations.view|create|cancel`, `folios.view|settle|post|dispute`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `events.view|manage|deposit`, `pricing.edit`, `reports.view`, `night_audit.manage`, `staff.manage`, `guests.view|edit`, `housekeeping.view|assign|update`.
+**Full permission catalog** (14 modules, 33 permissions): `reservations.view|create|cancel`, `folios.view|settle|post|dispute`, `cms.view|edit|restore|purge`, `rooms.status`, `service_requests.view|assign|update`, `tickets.view|assign|respond`, `events.view|manage|deposit`, `pricing.edit`, `reports.view`, `night_audit.manage`, `staff.manage`, `guests.view|edit`, `housekeeping.view|assign|update`, `loyalty.view|manage|adjust`.
 
 ### `cms.view` is enforced — gate read-only navigation on it
 
@@ -192,6 +192,8 @@ Since Phase 8 the catalogue is 12 modules / 29 permissions: the new `events` gro
 Since Phase 9 the catalogue is 13 modules / 30 permissions: the new `night_audit` group adds `night_audit.manage`, and `reports.view` is now enforced (see *Module: Night audit* and *Module: Reports*). **No role preset holds `reports.view` or `night_audit.manage`** — assign them per account through the existing permission-assignment endpoint (`POST /staff/{uuid}/permissions`). Suggested accounts: a night manager gets `reports.view` + `night_audit.manage`; a night auditor without revenue access gets `night_audit.manage` only. The super admin passes everything.
 
 Since Phase 9.1 `pricing.edit` is enforced by the exchange-rate routes (see *Module: Exchange rates*). It is still in **no** role preset — grant it per account through `POST /staff/{uuid}/permissions`; the catalogue stays 13 modules / 30 permissions.
+
+Since Phase 10 the catalogue is 14 modules / 33 permissions: the new `loyalty` group adds `loyalty.view`, `loyalty.manage` and `loyalty.adjust` (`GET /permissions` returns 14 groups). **No role preset holds any `loyalty.*` permission** and none of the seven presets changed — assign them per account through `POST /staff/{uuid}/permissions`. `loyalty.adjust` is deliberately separate from `loyalty.manage`: changing a guest's balance is a money-like action, so program configuration and catalogue upkeep (`manage`) never imply it. Do **not** grant it to a preset-wide role. Suggested accounts: a loyalty manager gets `loyalty.view` + `loyalty.manage`; a front-office supervisor gets `loyalty.view` + `loyalty.adjust`. **An adjuster must also hold `loyalty.view`** — the adjustment answer is a ledger row, but the balance and ledger the adjustment is made against are read through the `loyalty.view` routes (`loyalty.adjust` alone opens only the one POST). See *Module: Loyalty program*.
 
 ---
 
@@ -532,7 +534,7 @@ At least one of `grant` or `revoke` must be non-empty. The two arrays must not o
 ]
 ```
 
-13 modules: `reservations`, `folios`, `cms`, `rooms`, `service_requests`, `tickets`, `events`, `pricing`, `reports`, `night_audit`, `guests`, `staff`, `housekeeping`.
+14 modules: `reservations`, `folios`, `cms`, `rooms`, `service_requests`, `tickets`, `events`, `pricing`, `reports`, `night_audit`, `guests`, `staff`, `housekeeping`, `loyalty`.
 
 ---
 
@@ -2359,6 +2361,286 @@ A currency with no rate yet has `rate`, `updated_at`, `note` and `set_by` all `n
 
 ---
 
+## Module: Loyalty program (`loyalty.view` · `loyalty.manage` · `loyalty.adjust`)
+
+Phase 10. Guests earn integer points when a folio is settled, spend them on catalogue rewards (which become vouchers) or on part of a booking, and points expire on a rolling basis. Staff configure the program, run the rewards catalogue, read any guest's balance, adjust it with an audited reason, and report on it. The guest side is in `API_GUIDE_MOBILE.md` (*Module: Loyalty*).
+
+How the program works, in the terms the screens need:
+
+- **Earning.** Credited **once, when the folio settles** (all three settlement paths). Points are integers, rounded **half up** on the net spend of each of two buckets — `stay` (reservation lines) and `service` (service-booking, service-request and manual lines; credits reduce the bucket they reverse). Amounts paid with points or a voucher do not earn. A cancelled reservation earns nothing. There is **no backfill**: folios settled before launch earn nothing, and there is no pending balance.
+- **Expiry.** Rolling and per earn batch, spent **first-expiring-first (FIFO)**. A batch is gone at its `expires_at` instant even before the nightly sweep writes the `expire` ledger row. Default 24 months (`expiry_months`); a changed value applies to points credited afterwards — existing batches keep their stored expiry.
+- **Three independent capabilities.** `program.earning` is true when `earn_rate > 0`. `program.points_discount` (paying part of a booking with points) is true when `redeem_value_usd > 0` **and** `max_redeem_percent` is set. `program.rewards` is always true — the catalogue needs no settings. An unset or zero value always means **off**; an unset `max_redeem_percent` is **never** read as 100%.
+- **No tiers.** One flat balance per guest. There are no tier fields anywhere.
+
+### Routes and gates
+
+Every route is `auth:users` + a `permission:` gate (the super admin passes everything).
+
+| Method + path | Gate |
+|---|---|
+| `GET /cms/loyalty/settings` | `loyalty.view` or `loyalty.manage` |
+| `PUT /cms/loyalty/settings` | `loyalty.manage` |
+| `GET /cms/loyalty/rewards`, `GET /cms/loyalty/rewards/{uuid}` | `loyalty.view` or `loyalty.manage` |
+| `POST /cms/loyalty/rewards`, `PUT /cms/loyalty/rewards/{uuid}`, `DELETE /cms/loyalty/rewards/{uuid}` | `loyalty.manage` |
+| `GET /cms/loyalty/rewards/trashed` | `cms.restore` or `cms.purge` |
+| `POST /cms/loyalty/rewards/{uuid}/restore` | `cms.restore` |
+| `DELETE /cms/loyalty/rewards/{uuid}/force` | `cms.purge` |
+| `GET /cms/loyalty/guests/{guest_uuid}` and `…/ledger` | `loyalty.view` |
+| `POST /cms/loyalty/guests/{guest_uuid}/adjustments` | `loyalty.adjust` |
+| `GET /cms/loyalty/reports` | `loyalty.view` |
+
+The reward recycle bin reuses the CMS bin gates documented above (*`cms.restore` and `cms.purge`*), so `loyalty.manage` alone gets `403` on the three bin routes. `loyalty.adjust` is **not** implied by `loyalty.manage`, and an adjuster also needs `loyalty.view` to see the balance being adjusted. A guest token gets `401` on every route here.
+
+### GET /api/cms/loyalty/settings
+
+**Who can call:** `loyalty.view` or `loyalty.manage`. There is no seeded settings row — until staff save once, the rates are `null`, `expiry_months` is `24`, `expiry_warning_days` is `30`, and the read writes nothing.
+
+```json
+{
+  "success": true,
+  "message": "Success.",
+  "data": {
+    "earn_rate": "1.0000",
+    "redeem_value_usd": "0.0100",
+    "expiry_months": 24,
+    "expiry_warning_days": 30,
+    "min_redeem_points": 100,
+    "max_redeem_percent": "50.00",
+    "program": { "earning": true, "points_discount": true, "rewards": true },
+    "updated_at": "2026-10-05T12:10:25+00:00"
+  }
+}
+```
+
+Unconfigured: `earn_rate`, `redeem_value_usd`, `min_redeem_points`, `max_redeem_percent` and `updated_at` are `null`, `program` is `{ "earning": false, "points_discount": false, "rewards": true }`. Rates are decimal **strings**; counts are integers.
+
+### PUT /api/cms/loyalty/settings
+
+**Who can call:** `loyalty.manage`. **Present-key semantics:** only the keys you send are applied. An **absent** key never changes or clears a value; an **explicit `null`** clears a nullable value; an empty body is a `200` that changes nothing. Send only what the form changed.
+
+| Field | Meaning | Rules |
+|---|---|---|
+| `earn_rate` | Points per 1 USD of net spend | Nullable; decimal up to 4 places; `0`–`9999.9999`. `null` or `0` switches earning off |
+| `redeem_value_usd` | USD value of 1 point | Nullable; up to 4 places; `0`–`999999.9999` |
+| `expiry_months` | Life of a batch | Integer `1`–`120`; **not nullable** |
+| `expiry_warning_days` | How many days before expiry the guest is warned (and the account's "expiring soon" window) | Integer `1`–`365`; **not nullable** |
+| `min_redeem_points` | Smallest free-form points redemption on a booking | Nullable; integer `1`–`100000000`. `null` means 1. Does not apply to catalogue rewards |
+| `max_redeem_percent` | Largest share of a booking payable with points | Nullable; up to 2 places; `0.01`–`100`. `null` switches the points discount off |
+
+**Response:** `200`, message `"Loyalty settings updated."`, `data` is the object above. Out-of-range values answer `422 validation_failed` keyed by field. Settings are read fresh on every request — there is no cache and nothing is mirrored into `site_settings`. Every save is audited (activity log with old and new values, `updated_by`).
+
+### Rewards catalogue
+
+A reward is what a guest spends points on; redeeming it creates a voucher. Same list conventions as the other CMS modules (`page`, `per_page`, `sort` ∈ `sort_order|points_cost|created_at|updated_at`, `type` filter with `eq`/`in`; search matches the name in every locale).
+
+```json
+{
+  "uuid": "7c2838e5-12a1-4597-ab1c-8d353daf840d",
+  "name": { "en": "25 USD off", "ar": "خصم 25 دولارًا" },
+  "description": { "en": "Applies to one booking", "ar": "ينطبق على حجز واحد" },
+  "type": "discount_voucher",
+  "type_label": "Discount voucher",
+  "points_cost": 2500,
+  "discount_usd": "25.00",
+  "voucher_valid_days": 90,
+  "is_active": true,
+  "sort_order": 1,
+  "created_at": "2026-10-05T12:10:25.000000Z",
+  "updated_at": "2026-10-05T12:10:25.000000Z",
+  "deleted_at": null
+}
+```
+
+`name` and `description` are whole locale maps. `description` is `null` when empty.
+
+| Field | Create | Update (`PUT`, partial) |
+|---|---|---|
+| `name.en`, `name.ar` | required, max 150 each (other locales optional) | optional; merged per locale |
+| `description.{locale}` | optional, max 1000 | optional |
+| `type` | required: `discount_voucher` \| `free_night` \| `room_upgrade` | optional |
+| `points_cost` | required, integer `1`–`100000000` | optional |
+| `discount_usd` | **required for `discount_voucher`**, rejected (`422`) for the other two types; `0.01`–`99999.99` | judged against the effective type: switching to a non-voucher type while a discount is stored needs `"discount_usd": null`; switching to `discount_voucher` needs a discount |
+| `voucher_valid_days` | required, integer `1`–`730` | optional |
+| `is_active` | optional boolean | optional |
+| `sort_order` | optional integer ≥ 0 | optional |
+
+- `POST` answers `201`, `PUT` answers `200`, both with the reward object.
+- `DELETE /cms/loyalty/rewards/{uuid}` is a **soft delete** and answers `204` with an **empty body** (no envelope), like every other bin-backed CMS delete. A deleted reward disappears from the guest catalogue at once.
+- The bin: `GET …/trashed` (paginated, `deleted_at` set), `POST …/{uuid}/restore` (`200`, the reward), `DELETE …/{uuid}/force` (`204`). Retention purge removes expired bin rows like the other modules.
+- **Editing a reward never changes vouchers already issued** — a voucher keeps a snapshot of its type, name and value. Force-deleting a reward keeps every voucher usable.
+- A reward with `is_active: false` is hidden from guests; a guest who redeems one anyway gets `422 loyalty_reward_unavailable`.
+
+### Voucher semantics (what a reward is worth at booking)
+
+| Type | Worth |
+|---|---|
+| `discount_voucher` | `discount_usd`, capped at the booking total. |
+| `free_night` | One night at the booking's daily rate, capped at the total. |
+| `room_upgrade` | **0.00 off** — the voucher is consumed and the reservation shows `loyalty.upgrade_requested: true`. **Staff perform the upgrade** by assigning a better room (`assign-room` / the available-rooms flow); the system does not move the guest by itself. |
+
+Voucher lifecycle: `active` → `used` (applied to a booking) → back to `active` if that booking is cancelled (the original `expires_at` is kept; if it has already passed, the voucher gets a grace period of `config('loyalty.restored_voucher_grace_days')` = 30 hotel-local days). `active` → `expired` by the nightly sweep; `void` exists as a status but no endpoint produces it today. A voucher expires at the **end of its last hotel-local day**.
+
+### GET /api/cms/loyalty/guests/{guest_uuid} — `loyalty.view`
+
+A guest's balance, same shape as the guest's own `GET /loyalty/account` plus the guest's identity (`404 not_found` for an unknown uuid):
+
+```json
+{
+  "available_points": 5000,
+  "expiring_soon_points": 0,
+  "expiring_soon_window_days": 30,
+  "next_expiry_at": "2028-10-05T20:59:59+00:00",
+  "lifetime_earned_points": 5000,
+  "lifetime_redeemed_points": 0,
+  "program": { "earning": true, "points_discount": true, "rewards": true },
+  "redeem_value_usd": "0.0100",
+  "min_redeem_points": 100,
+  "max_redeem_percent": "50.00",
+  "guest": { "uuid": "5f88951f-9b31-43e4-9bd8-12d2153b26f4", "name": "Ahmad Khalil" }
+}
+```
+
+- `available_points` counts only active batches with `expires_at` in the future. `expiring_soon_points` / `next_expiry_at` look `expiring_soon_window_days` (= `expiry_warning_days`) ahead.
+- **Lifetime definitions:** `lifetime_earned_points` = earned + positive adjustments − clawbacks; `lifetime_redeemed_points` = redeemed − refunded; both floored at 0. Expiry and negative adjustments count toward neither.
+
+### GET /api/cms/loyalty/guests/{guest_uuid}/ledger — `loyalty.view`
+
+Paginated, newest first (`occurred_at`, id as tie-break). Filters: `type` (`eq`/`in`), `source` (`eq`/`in`), `occurred_at` (`gte`/`lte`), `points` (`gte`/`lte`, integer — `?points[gte]=abc` is a `422`). `sort=occurred_at` with `sort_dir`.
+
+```json
+{
+  "uuid": "6e685a51-c569-44dc-92ca-348a8f1728c3",
+  "type": "adjust",
+  "label": "Manual adjustment",
+  "source": "manual",
+  "source_label": "Staff adjustment",
+  "points": 20000,
+  "shortfall_points": 0,
+  "discount_usd": null,
+  "occurred_at": "2026-10-05T12:11:21+00:00",
+  "expires_at": "2028-10-05T20:59:59+00:00",
+  "reservation": null,
+  "folio": null,
+  "voucher": null,
+  "reason": "Service recovery after noisy room",
+  "performed_by": { "uuid": "a4c461eb-6d48-4d53-86ec-b91e8ca20aeb", "name": "Lisette Johnston" }
+}
+```
+
+| Field | Notes |
+|---|---|
+| `type` | `earn` \| `redeem` \| `expire` \| `adjust` \| `clawback` \| `refund`. `label` is localized. |
+| `source` | `stay` \| `service` \| `manual` \| `refund`, or `null` (redeem, expire, clawback rows have no source). `source_label` is localized. |
+| `points` | **Signed**: positive credits, negative debits. |
+| `shortfall_points` | Only on `clawback`: points that should have been taken back but had already been spent (the balance is floored at zero and a cancel is never blocked). `0` elsewhere. |
+| `discount_usd` | Set on a `redeem` row written by a booking paid with points; otherwise `null`. |
+| `expires_at` | Expiry of the batch this row **created** (earn, positive adjust, refund into a fresh batch); `null` for rows that created no batch. |
+| `reservation`, `folio`, `voucher` | `{uuid, booking_code}`, `{uuid}`, `{uuid, code}` or `null`. |
+| `reason`, `performed_by` | **Staff only** — never sent to the guest. `reason` is the free text of a manual adjustment; `performed_by` is `{uuid, name}`. |
+
+The ledger is append-only: nothing is edited or deleted, a mistake is corrected by a new `adjust` row.
+
+### POST /api/cms/loyalty/guests/{guest_uuid}/adjustments — `loyalty.adjust`
+
+Award or deduct points by hand. **Headers:** `Idempotency-Key` (required, max 64). **Body:**
+
+| Field | Rules |
+|---|---|
+| `points` | Required signed integer; positive awards, negative deducts. `0` and anything above `config('loyalty.max_adjust_points')` (1 000 000) in either direction → `422 loyalty_adjustment_invalid` with `context: { "max_adjust_points": 1000000 }` |
+| `reason` | Required string, 3–500 characters; stored on the ledger row and the new batch |
+
+```json
+{ "points": 20000, "reason": "Service recovery after noisy room" }
+```
+
+**Response** — `201` the first time, message `"Loyalty points adjusted."`, `data` is the staff ledger row above (`type: "adjust"`, `source: "manual"`, `performed_by` = the caller). An award creates a `manual` batch with the program's normal expiry; a deduction consumes the guest's unexpired batches FIFO and never touches an expired one.
+
+- **Replay:** the same key with the same `points`, `reason` and **the same staff member** answers `200` with the same ledger row and writes nothing. The same key with a different body — **or from a different staff member** — answers `409 idempotency_conflict`. The key is scoped per guest, so reusing a key for another guest is a separate write.
+- **Missing or blank key:** `422 validation_failed` with `errors.idempotency_key` — the shared shape the folio payment and event deposit routes use. There is **no** top-level `idempotency_key_required` error code.
+- **Over-deduction:** `422 loyalty_insufficient_points`, `context: { "available_points": 5000, "requested_points": 999999 }`, nothing written.
+- Every fresh adjustment is also written to the activity log (`loyalty.points_adjusted`, on the guest); a replay logs nothing.
+- `403` for a token without `loyalty.adjust` — including a `loyalty.view` + `loyalty.manage` holder.
+
+### GET /api/cms/loyalty/reports?date_from=&date_to= — `loyalty.view`
+
+**Query:** `date_from` and `date_to` are sent together or not at all; strict `Y-m-d`; `date_to >= date_from`; at most **366 days** inclusive (`custom.validation.loyalty_report_period_too_long`, key `loyalty_report_period_too_long`, answered as `422 validation_failed` keyed `date_to`). Default for both is the hotel's today. The period is hotel-local and half-open in UTC, like the other reports.
+
+```json
+{
+  "period": { "date_from": "2026-10-05", "date_to": "2026-10-05", "timezone": "Asia/Damascus" },
+  "issued_points": 20000,
+  "redeemed_points": 0,
+  "expired_points": 0,
+  "refunded_points": 0,
+  "clawed_back_points": 0,
+  "adjusted_out_points": 1000,
+  "outstanding_points": 19000,
+  "liability_usd": "190.00"
+}
+```
+
+Metric definitions (all integers except `liability_usd`):
+
+- **`issued_points`** — earn credits **plus positive manual adjustments** in the period. **Refunds are never counted as issued** — a cancelled booking's returned points appear only in `refunded_points`.
+- **`redeemed_points`** — points spent (catalogue redemptions and booking redemptions). Not netted against refunds.
+- **`expired_points`** — points removed by the expiry sweep.
+- **`refunded_points`** — points returned to guests by cancellations.
+- **`clawed_back_points`** — earned points actually taken back by cancellations. Points the guest had already spent cannot be taken back; that remainder is the `shortfall_points` on the clawback ledger row and is not counted here.
+- **`adjusted_out_points`** — negative manual adjustments, as a positive number.
+- **`outstanding_points`** and **`liability_usd`** — **point in time, not windowed**: they describe *now* (active batches with a future expiry), whatever `date_to` is. A report for last month does not give last month's closing balance.
+- **`liability_usd`** — `outstanding_points × redeem_value_usd`, half-up to cents, 2-decimal string. It is **`null` while `redeem_value_usd` is unset or zero** (nothing to value the points at); with a value set and no outstanding points it is `"0.00"`.
+
+### The reservation `loyalty` block
+
+Every reservation payload produced by the reservation service — the dashboard's `GET /cms/reservations` and `GET /cms/reservations/{uuid}` as well as the guest app — carries a `loyalty` key: `null` when nothing was applied. Payloads that do not load the relation omit the key, so treat a missing key like `null`.
+
+```json
+"loyalty": {
+  "points_redeemed": 5000,
+  "points_discount_usd": "50.00",
+  "voucher": null,
+  "voucher_discount_usd": "0.00",
+  "upgrade_requested": false,
+  "status": "applied"
+}
+```
+
+`voucher` is `{ "code": "LOY-…", "type": "discount_voucher|free_night|room_upgrade" }` or `null`. `status` is `applied`, or `reversed` after the booking was cancelled (the points were refunded / the voucher restored). `total_usd` on the reservation is already **net** of the loyalty discount. A booking carries **points or one voucher, never both** (`422 loyalty_discount_conflict`). **`upgrade_requested: true`** means the guest redeemed a room-upgrade voucher: front desk should upgrade the room through the normal room assignment. Bookings made by staff (`POST /cms/reservations`) and the public OTP booking never carry loyalty.
+
+### Scheduled jobs and the expiry push
+
+Two commands run daily in the hotel timezone and need `php artisan schedule:run` running every minute: `loyalty:expire-points` at 01:00 (writes `expire` rows, flips expired vouchers; safe to re-run) and `loyalty:notify-expiring` at 09:00 (one push per guest per run covering every batch inside the warning window, each batch warned once; a failed push is retried the next run and makes the command exit non-zero). The push uses the notification type `loyalty_points_expiring`, is localized from the guest's `preferred_locale`, and carries `data: { "points": 1200, "expires_at": "…" }` (`expires_at` is the earliest expiry among the warned batches; the body text shows it as a hotel-local date).
+
+### Error codes (this module)
+
+All loyalty codes are `422` except `idempotency_conflict`.
+
+| Code | Context | Meaning |
+|---|---|---|
+| `loyalty_program_inactive` | `{ capability }` (`earning` \| `points_discount`) | The capability needs a rate or cap that staff have not set |
+| `loyalty_insufficient_points` | `{ available_points, requested_points }` | Not enough unexpired points |
+| `loyalty_below_minimum` | `{ min_redeem_points }` | Free-form points under the minimum |
+| `loyalty_over_cap` | `{ max_points }` | More points than `max_redeem_percent` of the booking allows |
+| `loyalty_voucher_invalid` | none | Unknown, someone else's, used, void or expired voucher — deliberately indistinguishable |
+| `loyalty_reward_unavailable` | none | The reward is inactive (a deleted or unknown reward is `404`) |
+| `loyalty_adjustment_invalid` | `{ max_adjust_points }` | Zero or over-limit manual adjustment |
+| `loyalty_discount_conflict` | none | Points and a voucher on the same booking |
+| `idempotency_conflict` | `{ idempotency_key }` | `409` — key reused with a different request (or by a different staff member on an adjustment) |
+| `reservation_state` | — | `422`, cancelling a reservation that is no longer cancellable |
+| `no_availability` | — | `409`, the booking lost the last room; no points are spent |
+
+Error details are always under `context`. A missing `Idempotency-Key` is `validation_failed`, not a code of its own.
+
+### Not provided
+
+Tiers, a pending balance, backfill of folios settled before launch, a folio-refund endpoint (the clawback logic exists and is unit-tested but only reservation cancellation triggers it today), points on staff-created or public OTP bookings, and exports. **Known limitation:** deleting a guest account (`DELETE /auth/guest/me`) does not yet forfeit the guest's loyalty balance — scheduled as a follow-up.
+
+### Dashboard handoff (Phase 10)
+
+Gate the Loyalty navigation item on `loyalty.view` or `loyalty.manage`; show the settings form on `loyalty.manage`, the guest balance/ledger/report screens on `loyalty.view`, the "adjust points" button on `loyalty.adjust` **and** `loyalty.view`, and the rewards trash on `cms.restore` / `cms.purge`. Until staff save the settings once, earning and points-at-booking are off — show that state from `program` rather than assuming defaults.
+
+---
+
 ## Error codes quick reference
 
 | Code | HTTP | Meaning |
@@ -2415,6 +2697,14 @@ A currency with no rate yet has `rate`, `updated_at`, `note` and `set_by` all `n
 | `exchange_rate_large_change` | 422 | New exchange rate differs from the current one by more than 50% either way and `confirm_large_change` is not `true`; `context: { currency, current_rate, proposed_rate, change_percent }` |
 | `guest_account_deleted` | 422 | Note or preferences write, or a front-desk booking (`POST /cms/reservations` with `guest_uuid`), on a guest whose account was deleted |
 | `guest_account_deletion_blocked` | 422 | Guest-app only (`DELETE /auth/guest/me` blocked); not returned by dashboard routes |
+| `loyalty_program_inactive` | 422 | A loyalty capability was used while its setting is unset; `context: { capability }` (`earning` \| `points_discount`) |
+| `loyalty_insufficient_points` | 422 | Not enough unexpired points (manual deduction, redeem or booking); `context: { available_points, requested_points }` |
+| `loyalty_below_minimum` | 422 | Free-form points under `min_redeem_points`; `context: { min_redeem_points }` |
+| `loyalty_over_cap` | 422 | More points than `max_redeem_percent` of the booking allows; `context: { max_points }` |
+| `loyalty_voucher_invalid` | 422 | Unknown, foreign, used, void or expired voucher code (indistinguishable on purpose); no context |
+| `loyalty_reward_unavailable` | 422 | Redeem of an inactive reward |
+| `loyalty_adjustment_invalid` | 422 | Manual adjustment of zero or beyond `max_adjust_points`; `context: { max_adjust_points }` |
+| `loyalty_discount_conflict` | 422 | Points and a voucher sent on the same booking |
 
 ---
 

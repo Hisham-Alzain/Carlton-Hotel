@@ -66,6 +66,7 @@ class LoyaltyAdjustTest extends TestCase
             ->assertJsonPath('data.type', 'adjust')
             ->assertJsonPath('data.source', 'manual')
             ->assertJsonPath('data.points', 500)
+            ->assertJsonPath('data.shortfall_points', 0)
             ->assertJsonPath('data.reason', 'Goodwill for noise complaint')
             ->assertJsonPath('data.performed_by.uuid', $actor->uuid)
             ->assertJsonMissingPath('data.id');

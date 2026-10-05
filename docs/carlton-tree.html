@@ -363,7 +363,13 @@ var TREE = {
    {"name":"reviews","api":true,"dash":"na","mob":true,
     "ep":["GET /public/reviews/{type}/{uuid}","POST /reviews/{type}/{uuid}"]},
    {"name":"review moderation","api":true,"dash":false,"mob":"na",
-    "ep":["GET /cms/reviews","GET /cms/reviews/{review}","PATCH /cms/reviews/{review}/publish"]}
+    "ep":["GET /cms/reviews","GET /cms/reviews/{review}","PATCH /cms/reviews/{review}/publish"]},
+   {"name":"loyalty — guest","api":true,"dash":"na","mob":"mock","meta":"points on settlement · FIFO expiry · rewards → vouchers · points at booking · app screen is a mock with tiers the API does not have",
+    "note":"Integer points earned once per settled folio, spent first-expiring-first. Redeem and booking need an Idempotency-Key. Contract strings and the Flutter mapping are in API_GUIDE_MOBILE.md (Module: Loyalty). Push type loyalty_points_expiring.",
+    "ep":["GET /api/loyalty/account","GET /api/loyalty/ledger","GET /api/loyalty/rewards","POST /api/loyalty/rewards/{reward}/redeem","GET /api/loyalty/vouchers","GET /api/loyalty/preview","POST /api/reservations (loyalty_points | voucher_code)"]},
+   {"name":"loyalty program — staff","api":true,"dash":false,"mob":"na","meta":"loyalty.view · loyalty.manage · loyalty.adjust (assigned per account, no preset) · no dashboard screen",
+    "note":"Settings (present-key PUT; earning and points-at-booking stay off until set), rewards catalogue with recycle bin (cms.restore / cms.purge), guest balance and ledger, audited manual adjustments (Idempotency-Key, reason), reports (issued / redeemed / expired / refunded, point-in-time outstanding and liability).",
+    "ep":["GET/PUT /api/cms/loyalty/settings","GET/POST /api/cms/loyalty/rewards","GET/PUT/DELETE /api/cms/loyalty/rewards/{reward}","GET /api/cms/loyalty/rewards/trashed","POST /api/cms/loyalty/rewards/{reward}/restore","DELETE /api/cms/loyalty/rewards/{reward}/force","GET /api/cms/loyalty/guests/{guest}","GET /api/cms/loyalty/guests/{guest}/ledger","POST /api/cms/loyalty/guests/{guest}/adjustments","GET /api/cms/loyalty/reports"]}
   ]},
   {"name":"Events","kind":"section","api":true,"dash":"mock","mob":"na","children":[
    {"name":"event spaces CMS","api":true,"dash":false,"mob":"na","ep":["/cms/event-spaces (11 routes)"]},

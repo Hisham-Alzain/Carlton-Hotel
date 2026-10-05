@@ -26,7 +26,8 @@ class LoyaltyLedgerEntryResource extends BaseResource
             'source' => $this->source?->value,
             'source_label' => $this->source?->label(),
             'points' => $this->points,
-            'shortfall_points' => $this->shortfall_points,
+            // The column defaults to 0, but a row just created in this request has not been re-read, so cast.
+            'shortfall_points' => (int) $this->shortfall_points,
             'discount_usd' => $this->discount_usd,
             'occurred_at' => $this->occurred_at->toIso8601String(),
             // Only a credit created a batch with an expiry; an `expire` row points at the batch it closed.

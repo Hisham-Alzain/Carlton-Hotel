@@ -93,7 +93,7 @@ Both gates reject with `error_code: no_active_reservation` (403) when unmet — 
 
 ## Endpoint index
 
-Every endpoint the app can reach — 64 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
+Every endpoint the app can reach — 70 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
 
 | Tier | Method | Path | Section |
 |---|---|---|---|
@@ -156,6 +156,12 @@ Every endpoint the app can reach — 64 in total. Tier column: **P** public (no 
 | S | GET | `/folio` | [Folio](#module-folio--express-checkout) |
 | S | POST | `/folio/approve` | [Folio](#module-folio--express-checkout) |
 | S | PATCH | `/folio/items/{item}/dispute` | [Folio](#module-folio--express-checkout) |
+| G | GET | `/loyalty/account` | [Loyalty](#module-loyalty) |
+| G | GET | `/loyalty/ledger` | [Loyalty](#module-loyalty) |
+| G | GET | `/loyalty/rewards` | [Loyalty](#module-loyalty) |
+| G | POST | `/loyalty/rewards/{uuid}/redeem` | [Loyalty](#module-loyalty) |
+| G | GET | `/loyalty/vouchers` | [Loyalty](#module-loyalty) |
+| G | GET | `/loyalty/preview` | [Loyalty](#module-loyalty) |
 | G | POST | `/device-tokens` | [Notifications & Chat](#module-notifications--chat-tier-2--any-guest-token) |
 | G | GET | `/conversations` | [Notifications & Chat](#module-notifications--chat-tier-2--any-guest-token) |
 | G | POST | `/conversations` | [Notifications & Chat](#module-notifications--chat-tier-2--any-guest-token) |
@@ -747,17 +753,26 @@ Review shape: `{ uuid, rating, comment, is_verified_stay, created_at, author: { 
 | `check_out` | date | ✅ | After `check_in` |
 | `payment_method` | string | ✅ | `cash` or `on_arrival` |
 | `promo_code` | string | optional | |
+| `loyalty_points` | integer | optional | Phase 10. Pay part of the booking with points: `1`–`100000000`. Needs the `Idempotency-Key` header and cannot be combined with `voucher_code`. See [Module: Loyalty](#module-loyalty) |
+| `voucher_code` | string | optional | Phase 10. A voucher the guest owns (`LOY-…`), case and spaces ignored; max 16 characters. Needs the `Idempotency-Key` header and cannot be combined with `loyalty_points` |
+
+**Header `Idempotency-Key`** (max 64) is **required only when `loyalty_points` or `voucher_code` is sent** (`422 validation_failed` with `errors.idempotency_key` otherwise). A booking without loyalty fields ignores the header. Never send a discount or total — the server prices the booking itself.
 
 **Response `data`** (HTTP 201) — a Reservation object, status starts at `pending`:
 ```json
 {
   "uuid": "...", "booking_code": "CARL-XXXXXXXX", "status": "pending",
   "check_in": "2026-07-20", "check_out": "2026-07-22", "nights": 2,
-  "source": "direct", "payment_method": "cash", "total_usd": "270.00", "hold_expires_at": null
+  "source": "direct", "payment_method": "cash", "total_usd": "270.00", "hold_expires_at": null,
+  "loyalty": null
 }
 ```
 
-**Failure `error_code`s:** `no_availability` (409), `invalid_promo` (422), `unauthorized` (401), `validation_failed` (422).
+`total_usd` is **net** of any promo and loyalty discount. `loyalty` (Phase 10, additive) is `null` for a booking that used no points or voucher, otherwise `{ "points_redeemed": 5000, "points_discount_usd": "50.00", "voucher": null, "voucher_discount_usd": "0.00", "upgrade_requested": false, "status": "applied" }` — `voucher` is `{ "code", "type" }` or `null`; `status` becomes `reversed` after the booking is cancelled. The same block is on `GET /reservations` and `GET /reservations/{uuid}`.
+
+**Replay:** retrying with the same `Idempotency-Key` and the same inputs answers **`200`** with the same reservation and spends nothing twice (even if the last room has meanwhile been taken or the voucher is already marked used). The same key with any different input answers `409 idempotency_conflict`.
+
+**Failure `error_code`s:** `no_availability` (409 — nothing is spent), `invalid_promo` (422), `unauthorized` (401), `validation_failed` (422), and the loyalty codes `loyalty_insufficient_points`, `loyalty_below_minimum`, `loyalty_over_cap`, `loyalty_voucher_invalid`, `loyalty_discount_conflict`, `loyalty_program_inactive` (all 422, see [Module: Loyalty](#module-loyalty)). A refusal writes nothing: no reservation, no spent points, no used voucher.
 
 ---
 
@@ -780,6 +795,8 @@ Review shape: `{ uuid, rating, comment, is_verified_stay, created_at, author: { 
 **Cancellable from:** `pending_verification`, `pending`, `confirmed`. Anything past that (`checked_in`+) → `reservation_state` (422).
 
 **Response:** HTTP 204, `data: null`.
+
+**Loyalty (Phase 10):** a cancellation undoes every loyalty effect once, in the same transaction — points spent on the booking are refunded (a `refund` ledger row; back into the original batch if it is still valid, otherwise into a new batch with a full term), a used voucher becomes `active` again, and any points earned from this stay's folio are taken back (never below a zero balance). Cancelling twice is `422 reservation_state` and changes nothing.
 
 **Failure `error_code`s:** `not_found` (404, not yours), `reservation_state` (422, too late to cancel).
 
@@ -1193,6 +1210,230 @@ The folio is reconciled on every call until it's `settled`, after which it's fro
 
 ---
 
+## Module: Loyalty
+
+Phase 10. Every route below is tier **G** (any guest token); a staff token or no token answers `401`. Nothing here takes a guest id — the guest is always the token's owner. All changes are additive; there is no breaking change.
+
+**How it works**
+
+- A guest earns **integer points once, when a folio is settled** (rounded half up on net spend, one stay amount and one service amount). Points expire on a rolling basis per earn batch and are spent **first-expiring-first (FIFO)** — the batch that expires earliest is used up first.
+- Points buy **rewards** (a catalogue of vouchers) or pay **part of a booking** directly. Both need the program to be configured by the hotel; `program` in the account tells you which parts are on.
+- **There are no tiers.** The mock's tier ladder has no API: no tier name, next tier, progress or member id exists.
+- Everything is USD. `Accept-Language` localizes `message`, `label`, `source_label` and `type_label`; reward and voucher names are whole `{en, ar, …}` maps.
+
+### GET /api/loyalty/account
+
+**Purpose:** The balance screen.
+
+```json
+{
+  "success": true,
+  "message": "Success.",
+  "data": {
+    "available_points": 12000,
+    "expiring_soon_points": 0,
+    "expiring_soon_window_days": 30,
+    "next_expiry_at": "2028-10-05T20:59:59+00:00",
+    "lifetime_earned_points": 20000,
+    "lifetime_redeemed_points": 7000,
+    "program": { "earning": true, "points_discount": true, "rewards": true },
+    "redeem_value_usd": "0.0100",
+    "min_redeem_points": 100,
+    "max_redeem_percent": "50.00"
+  }
+}
+```
+
+| Field | Notes |
+|---|---|
+| `available_points` | Spendable now: active batches whose expiry is still in the future. A batch that expired a moment ago is excluded even before the nightly job runs. `0` for a guest with no points. |
+| `expiring_soon_points`, `expiring_soon_window_days` | Points expiring within the window (the hotel's warning period, default 30 days). |
+| `next_expiry_at` | When the next batch expires, ISO 8601 UTC; `null` when there is no balance. |
+| `lifetime_earned_points` | Earned + positive staff adjustments − clawbacks, floored at 0. |
+| `lifetime_redeemed_points` | Redeemed − refunded (cancelled bookings), floored at 0. Expiry counts toward neither. |
+| `program` | Three **independent** switches: `earning` (hotel set an earn rate), `points_discount` (hotel set a point value **and** a booking cap — paying part of a booking with points), `rewards` (always `true`). Hide a feature whose switch is `false`. |
+| `redeem_value_usd` | USD value of one point (decimal string) or `null` when not set. |
+| `min_redeem_points` | Smallest free-form points payment on a booking; `1` when the hotel set none. Does **not** apply to catalogue rewards. |
+| `max_redeem_percent` | Largest share of a booking payable with points (`"50.00"` = 50%) or `null` when points payment is off. It is never treated as 100%. |
+
+An unconfigured program still answers `200`: `program` is `{ "earning": false, "points_discount": false, "rewards": true }` and `redeem_value_usd` / `max_redeem_percent` are `null`.
+
+### GET /api/loyalty/ledger
+
+**Purpose:** The points history. Paginated (`data.items` + `data.meta`), newest first. Query: `type` (`eq`/`in`), `source` (`eq`/`in`), `occurred_at` (`gte`/`lte`), `points` (`gte`/`lte`, must be an integer — `?points[gte]=abc` is `422 validation_failed`), `per_page`.
+
+```json
+{
+  "uuid": "cd327c8d-f4db-4350-a58d-0a4abecc4828",
+  "type": "redeem",
+  "label": "Points redeemed",
+  "source": null,
+  "source_label": null,
+  "points": -5000,
+  "shortfall_points": 0,
+  "discount_usd": "50.00",
+  "occurred_at": "2026-10-05T12:11:21+00:00",
+  "expires_at": null,
+  "reservation": { "uuid": "e9a80460-3be2-4cee-ba06-f58944d335d0", "booking_code": "CARL-QKSK8WZA" },
+  "folio": null,
+  "voucher": null
+}
+```
+
+**Contract strings** (stable — branch on these, never on `label`):
+
+| Field | Values |
+|---|---|
+| `type` | `earn` \| `redeem` \| `expire` \| `adjust` \| `clawback` \| `refund` |
+| `source` | `stay` \| `service` \| `manual` \| `refund`, or `null` (redeem / expire / clawback rows have no source) |
+
+- `points` is **signed**: credits positive (`earn`, positive `adjust`, `refund`), debits negative (`redeem`, `expire`, `clawback`, negative `adjust`).
+- `reservation.booking_code` ties a row to a stay or booking; it is `null` for manual adjustments and catalogue redemptions. `voucher` is set on a catalogue redemption.
+- `expires_at` is the expiry of the batch **this row created** (earn, positive adjust, a refund that needed a fresh batch); `null` otherwise.
+- `shortfall_points` is non-zero only on a `clawback` row, when a cancelled stay's earned points had already been spent.
+- Staff notes — the adjustment `reason` and who made it — are **never** sent to guests.
+
+### GET /api/loyalty/rewards
+
+**Purpose:** The catalogue. Paginated; only active rewards, ordered by `sort_order` then creation. Works even before the hotel configures the program.
+
+```json
+{
+  "uuid": "7c2838e5-12a1-4597-ab1c-8d353daf840d",
+  "name": { "en": "25 USD off", "ar": "خصم 25 دولارًا" },
+  "description": { "en": "Applies to one booking", "ar": "ينطبق على حجز واحد" },
+  "type": "discount_voucher",
+  "type_label": "Discount voucher",
+  "points_cost": 2000,
+  "discount_usd": "25.00",
+  "voucher_valid_days": 90,
+  "is_active": true,
+  "sort_order": 1,
+  "created_at": "2026-10-05T12:10:25.000000Z",
+  "updated_at": "2026-10-05T12:10:25.000000Z",
+  "deleted_at": null
+}
+```
+
+`type` is `discount_voucher` \| `free_night` \| `room_upgrade`. `discount_usd` is set for `discount_voucher` only (`null` for the other two). `description` may be `null`.
+
+### POST /api/loyalty/rewards/{uuid}/redeem
+
+**Purpose:** Spend points on a reward and receive a voucher.
+
+**Headers:** `Idempotency-Key` (required, max 64; generate one UUID per tap and reuse it for retries). **Body:** none. **Throttle:** 30 requests per minute.
+
+**Response `data`** — HTTP **201** the first time (message `"Reward redeemed. Your voucher is ready."`):
+```json
+{
+  "uuid": "1f42ad1a-965c-4527-9111-6395e8bb90ac",
+  "code": "LOY-T9B13P8W",
+  "type": "discount_voucher",
+  "type_label": "Discount voucher",
+  "reward_name": { "en": "25 USD off", "ar": "خصم 25 دولارًا" },
+  "value_usd": "25.00",
+  "points_spent": 2000,
+  "status": "active",
+  "expires_at": "2027-01-03T20:59:59+00:00",
+  "used_at": null,
+  "reservation": null
+}
+```
+
+- **Replay:** the same key for the same reward answers **`200`** with the **same voucher** and spends nothing more. The same key for a **different reward** answers **`409 idempotency_conflict`**. A missing or blank key is `422 validation_failed` with `errors.idempotency_key`.
+- Points are taken FIFO in one transaction; the voucher snapshots the reward's type, name and value, so later catalogue edits never change a voucher you hold. `value_usd` is `null` for `free_night` and `room_upgrade`.
+- The voucher expires at the **end of the hotel's local day**, `voucher_valid_days` days from today.
+- A catalogue redemption ignores the booking minimum and cap and needs no program settings.
+- **Failure `error_code`s:** `loyalty_insufficient_points` (422, `context: { available_points, requested_points }`), `loyalty_reward_unavailable` (422, the reward was deactivated), `not_found` (404, unknown or deleted reward), `idempotency_conflict` (409), `validation_failed` (422), `too_many_requests` (429).
+
+### GET /api/loyalty/vouchers
+
+**Purpose:** The guest's own vouchers, newest first, paginated. Query: `status` (`eq`/`in`), `type` (`eq`/`in`), `points_spent` (`gte`/`lte`, integer), `sort` ∈ `created_at|expires_at`. Item shape = the redeem response above; after use, `status` is `used`, `used_at` is set and `reservation` is `{ "uuid", "booking_code" }`.
+
+**Voucher lifecycle:** `active` → `used` when applied to a booking → **back to `active`** when that booking is cancelled (the original expiry is kept; if it has passed, the voucher gets a short grace period). `active` → `expired` after `expires_at` (swept nightly). `void` is a reserved status that nothing produces today; treat any status you don't know as not usable.
+
+**What a voucher is worth on a booking:** `discount_voucher` takes `value_usd` off (never more than the booking total); `free_night` takes off one night at the booking's daily rate (capped at the total); `room_upgrade` takes **0.00** off — the reservation shows `loyalty.upgrade_requested: true` and **staff perform the upgrade** at the desk. A booking can use **one voucher, or points, never both**.
+
+### GET /api/loyalty/preview
+
+**Purpose:** Price a booking with points or a voucher **before** committing. Call it as the guest edits the points field; it changes nothing.
+
+**Query** (the same inputs as the booking): `room_type_uuid`, `check_in` (today or later), `check_out`, optional `promo_code`, and at most one of `loyalty_points` (integer 1–100000000) or `voucher_code`. **Throttle:** 30 requests per minute. Any other key (a discount, a total) is ignored.
+
+```json
+{
+  "success": true,
+  "message": "Success.",
+  "data": {
+    "quote": { "nights": 2, "daily_rate_usd": "150.00", "subtotal_usd": "300.00", "promo_discount_usd": "0.00", "total_usd": "300.00" },
+    "loyalty": { "points_redeemed": 5000, "points_discount_usd": "50.00", "voucher": null, "voucher_discount_usd": "0.00", "upgrade_requested": false },
+    "net_total_usd": "250.00",
+    "available_points": 17000,
+    "max_points": 15000,
+    "points_earnable_estimate": 250,
+    "program": { "earning": true, "points_discount": true, "rewards": true }
+  }
+}
+```
+
+| Field | Notes |
+|---|---|
+| `quote` | The ordinary price quote (after any promo). The points cap is measured against `quote.total_usd`. |
+| `loyalty` | What the sent points / voucher would take off; `voucher` is `{ code, type }` or `null`. All zero/`null` when neither was sent. |
+| `net_total_usd` | The total the booking will actually carry; never below `0.00`. **`POST /reservations` with the same inputs produces exactly this total.** |
+| `max_points` | The most points the guest can use on this booking: the smaller of their balance and what the cap allows. `null` when `program.points_discount` is `false`. |
+| `points_earnable_estimate` | Points the stay would earn on `net_total_usd`; `null` when `program.earning` is `false`. Points paid for with points or a voucher do not earn. |
+
+**Failure `error_code`s** (checked in this order): `loyalty_discount_conflict` (points and voucher together), `loyalty_program_inactive` (`context.capability: "points_discount"` — points sent while paying with points is off), `loyalty_below_minimum` (`context: { min_redeem_points }`), `loyalty_over_cap` (`context: { max_points }` — limited by the cap, not the balance), `loyalty_insufficient_points` (`context: { available_points, requested_points }`), `loyalty_voucher_invalid` (no context — unknown, someone else's, used, void and expired are deliberately indistinguishable), `validation_failed`.
+
+### Booking with points or a voucher
+
+1. `GET /loyalty/preview` with the booking inputs (and the points or voucher the guest chose) to show the discount and the net total.
+2. `POST /reservations` with the **same inputs** plus `loyalty_points` **or** `voucher_code` and a fresh `Idempotency-Key` (see [POST /api/reservations](#post-apireservations)). The response carries `total_usd` (= the preview's `net_total_usd`) and the `loyalty` block.
+3. If the request times out, retry with the **same key and same body**: you get `200` and the same reservation, never a second charge of points. A different body under the same key is `409 idempotency_conflict`.
+4. Cancelling the booking (`DELETE /reservations/{uuid}`) refunds the points / restores the voucher. Check `GET /loyalty/account` afterwards.
+
+Bookings made through the website or by staff never apply loyalty.
+
+### Notification: points about to expire
+
+The hotel runs a daily job that warns a guest once per batch before it expires. You receive one push per run (all batches in the window combined): type `loyalty_points_expiring`, title "Your points expire soon", body "1200 points expire on 2027-01-03. Use them before they go." (localized from the guest's `preferred_locale`), with `data: { "points": 1200, "expires_at": "2027-01-03T20:59:59+00:00" }` — `expires_at` is the earliest expiry among the warned batches; the date in the body text is the hotel-local date. `data` carries only those two keys. Open the Loyalty screen on tap.
+
+### Error codes (this module)
+
+| `error_code` | HTTP | When | `context` |
+|---|---|---|---|
+| `loyalty_program_inactive` | 422 | Points sent while the hotel has not set a point value and cap | `{ capability }` |
+| `loyalty_insufficient_points` | 422 | Not enough unexpired points (redeem, preview, booking) | `{ available_points, requested_points }` |
+| `loyalty_below_minimum` | 422 | Fewer points than `min_redeem_points` | `{ min_redeem_points }` |
+| `loyalty_over_cap` | 422 | More points than `max_redeem_percent` of the booking allows | `{ max_points }` |
+| `loyalty_voucher_invalid` | 422 | Bad / foreign / used / void / expired code | none |
+| `loyalty_reward_unavailable` | 422 | Reward deactivated | none |
+| `loyalty_adjustment_invalid` | 422 | Staff-side only (zero or over-limit adjustment); the app does not receive it | `{ max_adjust_points }` |
+| `loyalty_discount_conflict` | 422 | Points and a voucher on one booking | none |
+
+Plus the reused `idempotency_conflict` (409), `validation_failed` (422), `no_availability` (409) and `reservation_state` (422). The eight `loyalty_*` codes are stable contracts. Error details are always under `context`.
+
+### Flutter mapping note (replacing the mock in `loyalty.dart`)
+
+The mock's shapes do not map one to one; use this table when swapping the repository:
+
+| Mock (`loyalty.dart` / `loyalty_controller.dart`) | API |
+|---|---|
+| `balance` | `available_points` |
+| `earnedTotal` / `redeemedTotal` | `lifetime_earned_points` / `lifetime_redeemed_points` |
+| `tierLabel`, `nextTierLabel`, `pointsToNextTier`, `tierProgress`, `memberId` | **Not provided.** There are no tier fields (no tiers exist); drop the tier card or hide it. `memberId` has no equivalent either. |
+| `staysCount` | **Not provided.** Do not compute it from the ledger; remove the stat or source it elsewhere (e.g. `GET /stays/past`). |
+| `LoyaltyEntryKind.earned` / `redeemed` / `expired` | `type` `earn` / `redeem` / `expire` — plus three kinds the mock lacks: `adjust` (staff correction, either sign), `clawback` (points taken back after a cancelled stay) and `refund` (points returned after a cancelled booking). Style by the sign of `points` for anything unknown. |
+| `LoyaltyEntrySource.stay` | `source: stay` |
+| `LoyaltyEntrySource.dining` / `spa` / `other` | **Collapse to `service`.** The API does not say which service earned the points. `manual` (staff adjustment) and `refund` are new. |
+| `title` | `label` (localized) |
+| `bookingRef` | `reservation.booking_code`; **optional** — `null` on manual adjustments and catalogue redemptions |
+| `date` | `occurred_at` |
+| `points` | `points` (already signed; the mock stored an unsigned amount plus a kind) |
+
+---
+
 ## Module: Notifications & Chat (tier-2 — any guest token)
 
 ### POST /api/device-tokens
@@ -1215,7 +1456,7 @@ One ongoing support conversation with staff per guest — no thread management n
 
 Live delivery mirrors to Firestore (`chats` collection, one doc per message keyed by `uuid`, filter by `conversation_uuid`) — subscribe there for real-time updates instead of polling; MySQL via the endpoints above remains the source of truth for history/pagination.
 
-**Push triggers already wired:** a welcome notification on first-ever device registration, a "room ready" push when staff check you in (and again if you are moved to another room during your stay), and, since Phase 4, a "check-in approved" push (`notifications.check_in_approved`: title "Your check-in is approved", body "Your digital key is ready in the app.") when staff approve the pre-arrival check-in — **the push never contains the key code**, only the notice that one is ready; fetch `GET /api/stays/active` or `/status` for the actual value. Order-status and ticket-reply pushes land once P10's operations queue grows a status-change action (not yet built) and P11 ships the chatbot.
+**Push triggers already wired:** a loyalty expiry warning (`loyalty_points_expiring`, Phase 10 — see [Module: Loyalty](#module-loyalty)), a welcome notification on first-ever device registration, a "room ready" push when staff check you in (and again if you are moved to another room during your stay), and, since Phase 4, a "check-in approved" push (`notifications.check_in_approved`: title "Your check-in is approved", body "Your digital key is ready in the app.") when staff approve the pre-arrival check-in — **the push never contains the key code**, only the notice that one is ready; fetch `GET /api/stays/active` or `/status` for the actual value. Order-status and ticket-reply pushes land once P10's operations queue grows a status-change action (not yet built) and P11 ships the chatbot.
 
 ---
 

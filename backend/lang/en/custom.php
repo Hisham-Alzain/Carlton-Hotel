@@ -268,4 +268,21 @@ return [
         'rate'       => 'rate',
         'confirm_large_change' => 'large-change confirmation',
     ],
+    // Phase 10 (Q16): ledger entry type and source display names; the API values themselves never translate.
+    'loyalty' => [
+        'entry_types' => [
+            'earn'     => 'Points earned',
+            'redeem'   => 'Points redeemed',
+            'expire'   => 'Points expired',
+            'adjust'   => 'Manual adjustment',
+            'clawback' => 'Points reversed',
+            'refund'   => 'Points refunded',
+        ],
+        'sources' => [
+            'stay'     => 'Room stay',
+            'service'  => 'Services & dining',
+            'manual'   => 'Staff adjustment',
+            'refund'   => 'Refund',
+        ],
+    ],
 ];

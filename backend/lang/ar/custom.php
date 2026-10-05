@@ -268,4 +268,21 @@ return [
         'rate'       => 'السعر',
         'confirm_large_change' => 'تأكيد التغيير الكبير',
     ],
+    // Phase 10 (Q16): ledger entry type and source display names; the API values themselves never translate.
+    'loyalty' => [
+        'entry_types' => [
+            'earn'     => 'نقاط مكتسبة',
+            'redeem'   => 'نقاط مستبدلة',
+            'expire'   => 'نقاط منتهية الصلاحية',
+            'adjust'   => 'تعديل يدوي',
+            'clawback' => 'نقاط ملغاة',
+            'refund'   => 'نقاط معادة',
+        ],
+        'sources' => [
+            'stay'     => 'إقامة في الفندق',
+            'service'  => 'الخدمات والمطاعم',
+            'manual'   => 'تعديل من الموظفين',
+            'refund'   => 'استرداد',
+        ],
+    ],
 ];

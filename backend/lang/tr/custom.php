@@ -268,4 +268,21 @@ return [
         'rate'       => 'kur',
         'confirm_large_change' => 'büyük değişiklik onayı',
     ],
+    // Phase 10 (Q16): ledger entry type and source display names; the API values themselves never translate.
+    'loyalty' => [
+        'entry_types' => [
+            'earn'     => 'Kazanılan puanlar',
+            'redeem'   => 'Kullanılan puanlar',
+            'expire'   => 'Süresi dolan puanlar',
+            'adjust'   => 'Manuel düzenleme',
+            'clawback' => 'Geri alınan puanlar',
+            'refund'   => 'İade edilen puanlar',
+        ],
+        'sources' => [
+            'stay'     => 'Oda konaklaması',
+            'service'  => 'Hizmetler ve yemek',
+            'manual'   => 'Personel düzenlemesi',
+            'refund'   => 'İade',
+        ],
+    ],
 ];

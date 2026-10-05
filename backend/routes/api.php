@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\FolioController as AdminFolioController;
 use App\Http\Controllers\Api\ConversationController as ApiConversationController;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
+use App\Http\Controllers\Admin\LoyaltyGuestController;
 use App\Http\Controllers\Admin\LoyaltySettingController;
 use App\Http\Controllers\Admin\NightAuditController;
 use App\Http\Controllers\Admin\OperationsQueueController;
@@ -66,6 +67,7 @@ use App\Http\Controllers\Admin\RoomTypeController as AdminRoomTypeController;
 use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
 use App\Http\Controllers\Api\AvailabilityController;
 use App\Http\Controllers\Api\DiningVenueController as ApiDiningVenueController;
+use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\EventSpaceController as ApiEventSpaceController;
 use App\Http\Controllers\Api\FacilityController as ApiFacilityController;
@@ -614,6 +616,12 @@ Route::middleware('auth:guests')->prefix('reservations')->group(function () {
     Route::delete('/{reservation}',  [ReservationController::class, 'cancel']);
 });
 
+// Phase 10 guest loyalty; later plans add rewards, vouchers, preview.
+// No id in the URL: the guest is always the token's own.
+Route::middleware('auth:guests')->prefix('loyalty')->group(function () {
+    Route::get('/account', [LoyaltyController::class, 'account']);
+    Route::get('/ledger',  [LoyaltyController::class, 'ledger']);
+});
 // ──────────────────────────────────────────────────────────────────────
 // ──────────────────────────────────────────────────────────────────────
 // P4 — Reservations: Admin management (per-action permissions)
@@ -932,6 +940,11 @@ Route::middleware('auth:users')->prefix('support-tickets')->group(function () {
 Route::middleware('auth:users')->prefix('cms/loyalty')->group(function () {
     Route::middleware('permission:loyalty.view|loyalty.manage')->group(function () {
         Route::get('/settings', [LoyaltySettingController::class, 'show']);
+    });
+
+    Route::middleware('permission:loyalty.view')->group(function () {
+        Route::get('/guests/{guest}',        [LoyaltyGuestController::class, 'show']);
+        Route::get('/guests/{guest}/ledger', [LoyaltyGuestController::class, 'ledger']);
     });
 
     Route::middleware('permission:loyalty.manage')->group(function () {

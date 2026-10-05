@@ -18,4 +18,10 @@ enum LoyaltyEntryType: string
     case ADJUST = 'adjust';
     case CLAWBACK = 'clawback';
     case REFUND = 'refund';
+
+    /** Localized display name (`custom.loyalty.entry_types.<value>`); the value itself never translates. */
+    public function label(): string
+    {
+        return __('custom.loyalty.entry_types.'.$this->value);
+    }
 }

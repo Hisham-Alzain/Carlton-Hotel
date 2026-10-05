@@ -16,4 +16,10 @@ enum LoyaltyBatchSource: string
     case SERVICE = 'service';
     case MANUAL = 'manual';
     case REFUND = 'refund';
+
+    /** Localized display name (`custom.loyalty.sources.<value>`); the value itself never translates. */
+    public function label(): string
+    {
+        return __('custom.loyalty.sources.'.$this->value);
+    }
 }

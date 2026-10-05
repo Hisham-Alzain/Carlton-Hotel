@@ -71,6 +71,7 @@ return [
         'exchange_rate_recorded'       => 'تم حفظ سعر الصرف.',
         'loyalty_settings_updated'     => 'تم تحديث إعدادات برنامج الولاء.',
         'loyalty_points_adjusted'      => 'تم تعديل نقاط الولاء.',
+        'loyalty_reward_redeemed'      => 'تم استبدال المكافأة. قسيمتك جاهزة.',
     ],
     'errors'     => [
         'server_error'           => 'حدث خطأ ما.',

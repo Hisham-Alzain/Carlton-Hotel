@@ -71,6 +71,7 @@ return [
         'exchange_rate_recorded'       => 'Tipo de cambio guardado.',
         'loyalty_settings_updated'     => 'Configuración del programa de fidelidad actualizada.',
         'loyalty_points_adjusted'      => 'Puntos de fidelidad ajustados.',
+        'loyalty_reward_redeemed'      => 'Recompensa canjeada. Su cupón está listo.',
     ],
     'errors'     => [
         'server_error'           => 'Se ha producido un error.',

@@ -71,6 +71,7 @@ return [
         'exchange_rate_recorded'       => 'Döviz kuru kaydedildi.',
         'loyalty_settings_updated'     => 'Sadakat programı ayarları güncellendi.',
         'loyalty_points_adjusted'      => 'Sadakat puanları düzenlendi.',
+        'loyalty_reward_redeemed'      => 'Ödül kullanıldı. Kuponunuz hazır.',
     ],
     'errors'     => [
         'server_error'           => 'Bir hata oluştu.',

@@ -624,12 +624,14 @@ Route::middleware('auth:guests')->prefix('reservations')->group(function () {
     Route::delete('/{reservation}',  [ReservationController::class, 'cancel']);
 });
 
-// Phase 10 guest loyalty; later plans add vouchers, preview.
-// No id in the URL: the guest is always the token's own.
+// Phase 10 guest loyalty; later plans add preview.
+// No guest id in the URL: the guest is always the token's own.
 Route::middleware('auth:guests')->prefix('loyalty')->group(function () {
-    Route::get('/account', [LoyaltyController::class, 'account']);
-    Route::get('/ledger',  [LoyaltyController::class, 'ledger']);
-    Route::get('/rewards', [ApiLoyaltyRewardController::class, 'index']);
+    Route::get('/account',  [LoyaltyController::class, 'account']);
+    Route::get('/ledger',   [LoyaltyController::class, 'ledger']);
+    Route::get('/rewards',  [ApiLoyaltyRewardController::class, 'index']);
+    Route::post('/rewards/{reward}/redeem', [ApiLoyaltyRewardController::class, 'redeem'])->middleware('throttle:30,1');
+    Route::get('/vouchers', [LoyaltyController::class, 'vouchers']);
 });
 // ──────────────────────────────────────────────────────────────────────
 // ──────────────────────────────────────────────────────────────────────

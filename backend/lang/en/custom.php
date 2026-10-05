@@ -71,6 +71,7 @@ return [
         'exchange_rate_recorded'       => 'Exchange rate saved.',
         'loyalty_settings_updated'     => 'Loyalty settings updated.',
         'loyalty_points_adjusted'      => 'Loyalty points adjusted.',
+        'loyalty_reward_redeemed'      => 'Reward redeemed. Your voucher is ready.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',

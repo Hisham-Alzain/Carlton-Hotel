@@ -2,7 +2,6 @@ import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/services/settings_service.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class CustomChatTextField extends StatelessWidget {
@@ -68,14 +67,10 @@ class CustomChatTextField extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: onMicTap,
-                child: SvgPicture.asset(
-                  'assets/icons/mic.svg',
-                  width: 20,
-                  height: 20,
-                  colorFilter: const ColorFilter.mode(
-                    AppColors.mediumGrey,
-                    BlendMode.srcIn,
-                  ),
+                child: Icon(
+                  Icons.mic_none,
+                  size: 20,
+                  color: AppColors.mediumGrey,
                 ),
               ),
               GestureDetector(
@@ -91,14 +86,10 @@ class CustomChatTextField extends StatelessWidget {
                         ? AppColors.lagoonTeal
                         : AppColors.silverGrey,
                   ),
-                  child: SvgPicture.asset(
-                    'assets/icons/send_arrow.svg',
-                    width: 20,
-                    height: 20,
-                    colorFilter: const ColorFilter.mode(
-                      Colors.white,
-                      BlendMode.srcIn,
-                    ),
+                  child: Icon(
+                    Icons.arrow_upward,
+                    size: 20,
+                    color: Colors.white,
                   ),
                 ),
               ),

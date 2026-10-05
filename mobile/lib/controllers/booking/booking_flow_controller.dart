@@ -1,5 +1,6 @@
 import 'package:carlton/constants/error_codes.dart';
 import 'package:carlton/extensions/price_extension.dart';
+import 'package:carlton/extensions/date_extension.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/controllers/main/main_controller.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
@@ -20,6 +21,8 @@ import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/middleware_service.dart';
 import 'package:carlton/views/book/room_details_sheet.dart';
 import 'package:dio/dio.dart';
+import 'package:carlton/customWidgets/custom_dialogs.dart';
+import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -246,7 +249,27 @@ class BookingFlowController extends GetxController
     rangeEnd.value = null;
   }
 
+  /// A reservation needs a guest account, so a signed-out guest is stopped at
+  /// the first step of the flow — not after choosing a room, add-ons, details
+  /// and a card only to be refused at Confirm.
+  bool _requireAccount() {
+    if (MiddlewareService.find.isAuthenticated) return true;
+    // Asked, not redirected: the guest chooses to leave for sign-in, and
+    // Cancel keeps them where they were.
+    CustomDialogs.showConfirmationDialog(
+      title: AppTranslations.signInToBookTitle,
+      message: AppTranslations.signInToBook,
+      icon: Icons.person_outline,
+      accentColor: AppColors.primary,
+      confirmationText: AppTranslations.signInButtonLabel,
+      cancellationText: AppTranslations.cancel,
+      onPressed: () => Get.toNamed(Routes.signIn),
+    );
+    return false;
+  }
+
   Future<void> searchRooms() async {
+    if (!_requireAccount()) return;
     if (!hasDates) {
       CustomSnackbars.showInfo(message: AppTranslations.selectYourDatesFirst);
       return;
@@ -294,7 +317,7 @@ class BookingFlowController extends GetxController
       showErrorDialog: false,
       cancelToken: cancelToken,
     );
-    if (res.statusCode != 200 || res.data == null) return null;
+    if (!res.hasData) return null;
     final pageRooms = res.data!
         .whereType<Map<String, dynamic>>()
         .map(RoomType.fromJson)
@@ -338,7 +361,7 @@ class BookingFlowController extends GetxController
     if (isClosed) return;
     final counts = <String, int>{};
     for (final (index, res) in responses.indexed) {
-      if (res.statusCode != 200 || res.data == null) continue;
+      if (!res.hasData) continue;
       final count = (res.data!['rooms_available'] as num?)?.toInt();
       // `available` is the boolean form of the same answer; prefer the count so
       // the card can say how many are left.
@@ -386,7 +409,7 @@ class BookingFlowController extends GetxController
     );
     if (isClosed) return;
     openingRoom.value = false;
-    if (res.statusCode == 200 && res.data != null) {
+    if (res.hasData) {
       openRoomDetailsScreen(
         RoomOption.fromRoomType(RoomType.fromJson(res.data!)),
       );
@@ -400,6 +423,7 @@ class BookingFlowController extends GetxController
   /// Resets first (like every booking entry) so a prior attempt's guest/card/
   /// add-on data never carries over.
   void beginBookingWithRoom(RoomOption room) {
+    if (!_requireAccount()) return;
     // "Plan Your Stay" is the Book tab in the Main shell (no standalone route),
     // so pop back to the shell and switch to it (index 2). The switch itself
     // resets the draft, so the room is set only after it — setting it first
@@ -485,7 +509,7 @@ class BookingFlowController extends GetxController
     required String iconPath,
     required String Function(Map<String, dynamic> json) subtitle,
   }) {
-    if (response.statusCode != 200 || response.data == null) return const [];
+    if (!response.hasData) return const [];
     return response.data!
         .whereType<Map<String, dynamic>>()
         .where((json) => json['is_active'] as bool? ?? true)
@@ -540,7 +564,7 @@ class BookingFlowController extends GetxController
         data: {
           'bookable_type': addOn.bookableType,
           'bookable_uuid': addOn.id,
-          'scheduled_at': scheduled.toIso8601String(),
+          'scheduled_at': scheduled.toApiDateTime(),
         },
         showErrorDialog: false,
       );
@@ -575,7 +599,31 @@ class BookingFlowController extends GetxController
       .where((addOn) => selectedAddOnIds.contains(addOn.id))
       .fold(0, (sum, addOn) => sum + addOn.price);
 
-  void continueFromAddOns() => Get.toNamed(Routes.guestDetails);
+  void continueFromAddOns() {
+    _prefillGuestFromProfile();
+    Get.toNamed(Routes.guestDetails);
+  }
+
+  /// A signed-in guest's name, email and phone are already on their profile —
+  /// fill them in rather than make them type it again. Only empty fields are
+  /// filled, so going back and forward never overwrites what they edited.
+  void _prefillGuestFromProfile() {
+    final guest = MiddlewareService.find.guest.value;
+    if (guest == null) return;
+    void fill(TextEditingController field, String? value) {
+      if (field.text.trim().isEmpty && (value ?? '').isNotEmpty) {
+        field.text = value!;
+      }
+    }
+
+    fill(firstNameCtrl, guest.firstName);
+    fill(lastNameCtrl, guest.lastName);
+    fill(emailCtrl, guest.email);
+    final storedPhone = guest.phone ?? '';
+    if (storedPhone.isNotEmpty && phone.nationalNumber.isEmpty) {
+      phone.prefill(storedPhone, isoCountry: guest.phoneCountry);
+    }
+  }
 
   // ── Step 4 — Guest Details ───────────────────────────────────────────────
   final guestFormKey = GlobalKey<FormState>();
@@ -647,7 +695,7 @@ class BookingFlowController extends GetxController
     );
     if (isClosed) return;
     quoteLoading.value = false;
-    if (res.statusCode == 200 && res.data != null) {
+    if (res.hasData) {
       quote.value = Quote.fromJson(res.data!);
       promoError.value = null;
     } else if (res.error?.errorCode == ErrorCodes.invalidPromo) {
@@ -706,13 +754,9 @@ class BookingFlowController extends GetxController
 
   Future<void> confirmBooking() async {
     if (isConfirming.value) return;
-    // A one-step reservation needs a guest token (tier-2). A guest browsing
-    // without an account gets sent to sign-in rather than a bare 401 failure.
-    if (!MiddlewareService.find.isAuthenticated) {
-      CustomSnackbars.showInfo(message: AppTranslations.signInToBook);
-      Get.toNamed(Routes.signIn);
-      return;
-    }
+    // Already enforced at the start of the flow; kept for a session that
+    // expired while the guest was filling it in.
+    if (!_requireAccount()) return;
     final apiMethod = paymentApiValue;
     if (apiMethod == null) {
       CustomSnackbars.showInfo(message: AppTranslations.cardWalletUnavailable);
@@ -812,6 +856,10 @@ class BookingFlowController extends GetxController
     Clipboard.setData(ClipboardData(text: code));
     CustomSnackbars.showSuccess(message: AppTranslations.copied);
   }
+
+  /// Close on the confirmation screen — back to the shell. Going back one
+  /// page would land on Review for a booking already made.
+  void closeConfirmation() => Get.until((r) => r.isFirst);
 
   /// "View My Stays" from the confirmation screen — back to the shell on the
   /// Stays tab.

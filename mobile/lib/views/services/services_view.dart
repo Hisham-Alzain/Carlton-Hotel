@@ -9,6 +9,7 @@ import 'package:carlton/enums/enums.dart';
 import 'package:carlton/routes/routes.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -133,7 +134,7 @@ class _ActiveStayServices extends StatelessWidget {
               if (controller.loadingMore.value)
                 const Padding(
                   padding: EdgeInsets.all(10),
-                  child: CircularProgressIndicator(),
+                  child: SpinningIconIndicator(size: 28),
                 ),
             ],
           ),
@@ -198,7 +199,9 @@ class _GuestBrowse extends StatelessWidget {
       primaryLabel: AppTranslations.signInButtonLabel,
       onPrimary: () => Get.toNamed(Routes.signIn),
       secondaryLabel: AppTranslations.createAccountLink,
-      onSecondary: () => Get.toNamed(Routes.createProfile),
+      // Phone + OTP first: the account exists only once the code is verified,
+      // and the name form after it needs that session's token.
+      onSecondary: () => Get.toNamed(Routes.phoneEntry),
     );
   }
 }

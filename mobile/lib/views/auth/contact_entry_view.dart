@@ -34,28 +34,7 @@ class ContactEntryView extends GetView<ContactEntryController> {
                     CustomValidation().validateRequiredField(enteredEmail) ??
                     CustomValidation().validateEmail(enteredEmail),
               ),
-              Row(
-                spacing: 10,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  CustomCountryCodePicker(phoneField: controller.phone),
-                  Flexible(
-                    child: CustomTextField(
-                      controller: controller.phone.controller,
-                      inputFormatters: [controller.phone.formatter],
-                      textInputType: TextInputType.phone,
-                      textDirection: TextDirection.ltr,
-                      captionLabel: AppTranslations.phoneNumber,
-                      hintText: AppTranslations.phoneNumberHint,
-                      validator: (enteredPhoneNumber) =>
-                          CustomValidation().validatePhoneNumber(
-                            enteredPhoneNumber,
-                            dialCode: controller.phone.dialCode,
-                          ),
-                    ),
-                  ),
-                ],
-              ),
+              CustomPhoneField(phoneField: controller.phone),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Obx(

@@ -1,3 +1,5 @@
+import 'package:carlton/theme/theme.dart';
+import 'package:carlton/theme/app_shadows.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_image.dart';
@@ -51,13 +53,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.black06,
-            blurRadius: 12,
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: const [AppShadows.card],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -98,8 +94,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
                   ),
                   Text(
                     '${widget.dateRange} · ${AppTranslations.nightsCount(widget.nights)}',
-                    style: textStyle.labelMedium?.copyWith(
-                      fontFamily: 'DM Sans',
+                    style: textStyle.dmLabelMedium?.copyWith(
                       color: AppColors.white73,
                     ),
                   ),
@@ -150,8 +145,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
                         ),
                         Text(
                           AppTranslations.includesTaxesAndFees,
-                          style: textStyle.labelSmall?.copyWith(
-                            fontFamily: 'DM Sans',
+                          style: textStyle.dmLabelSmall?.copyWith(
                             color: AppColors.primary,
                           ),
                         ),
@@ -189,10 +183,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
           text: _expanded
               ? AppTranslations.hidePriceDetails
               : AppTranslations.viewPriceDetails,
-          textStyle: textStyle.labelSmall?.copyWith(
-            fontFamily: 'DM Sans',
-            color: AppColors.primary,
-          ),
+          textStyle: textStyle.dmLabelSmall?.copyWith(color: AppColors.primary),
           icon: _expanded ? Icons.arrow_drop_up : Icons.arrow_drop_down,
           iconColor: AppColors.primary,
           spacing: 10,

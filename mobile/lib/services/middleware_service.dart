@@ -4,7 +4,6 @@ import 'package:carlton/enums/enums.dart';
 import 'package:carlton/models/guest.dart';
 import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/get_storage_service.dart';
-import 'package:carlton/services/settings_service.dart';
 import 'package:get/get.dart';
 
 /// Single source of truth for the guest session — the bearer token plus the
@@ -76,7 +75,7 @@ class MiddlewareService extends GetxService {
       path: '/auth/guest/me',
       showErrorDialog: false,
     );
-    if (response.statusCode == 200 && response.data != null) {
+    if (response.hasData) {
       _setGuest(Guest.fromJson(response.data!));
       middlewareCase = MiddlewareCases.validToken;
     } else if (response.statusCode == 401) {
@@ -86,8 +85,9 @@ class MiddlewareService extends GetxService {
     }
   }
 
-  /// The only place a token is written — from OTP verify on success. Mirrors
-  /// the guest's `preferred_locale` into the app on first sign-in.
+  /// The only place a token is written — from OTP verify on success. Signing
+  /// in never changes the app language: the guest's device choice stands, and
+  /// the profile's `preferred_locale` is only written to (SettingsService).
   Future<void> saveSession({
     required String token,
     required Guest guest,
@@ -95,7 +95,6 @@ class MiddlewareService extends GetxService {
     await StorageService.setString(StorageKeys.token, token);
     _setGuest(guest);
     middlewareCase = MiddlewareCases.validToken;
-    await SettingsService.find.setLocaleFromCode(guest.preferredLocale);
   }
 
   /// Merge a fresh guest (e.g. after a profile edit) into the session.

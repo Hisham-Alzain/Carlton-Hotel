@@ -1,3 +1,5 @@
+import 'package:carlton/customWidgets/custom_text_field.dart';
+import 'package:carlton/customWidgets/custom_validation.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:country_code_picker/country_code_picker.dart';
@@ -50,6 +52,34 @@ class PhoneFieldState {
   String get nationalNumber => controller.text.startsWith(dialCode)
       ? controller.text.substring(dialCode.length).trim()
       : controller.text.trim();
+
+  /// Fills the field with a stored E.164 number (`+963940001031`). [isoCountry]
+  /// (`SY`) picks the flag; without it the dial code is matched from the
+  /// number's own prefix. Marks the field initialised so the picker mounting
+  /// afterwards does not reset it to the default country.
+  void prefill(String e164, {String? isoCountry}) {
+    final code =
+        (isoCountry == null
+            ? null
+            : CountryCode.tryFromCountryCode(isoCountry.toUpperCase())) ??
+        _codeForNumber(e164);
+    if (code?.dialCode == null || !e164.startsWith(code!.dialCode!)) return;
+    _initialised = true;
+    countryCode = code.code ?? kDefaultCountryCode;
+    dialCode = code.dialCode!;
+    _setText(e164);
+  }
+
+  /// Longest dial code that prefixes [e164] — `+1` and `+1242` both exist, and
+  /// only the longer one is right for a Bahamas number.
+  static CountryCode? _codeForNumber(String e164) {
+    for (var len = 5; len >= 2; len--) {
+      if (e164.length <= len) continue;
+      final code = CountryCode.tryFromDialCode(e164.substring(0, len));
+      if (code != null) return code;
+    }
+    return null;
+  }
 
   /// Back to the app default, for controller-level `reset()` — a fresh booking
   /// shouldn't inherit the last one's country.
@@ -229,5 +259,53 @@ class CustomCountryCodePicker extends StatelessWidget {
         .map((country) => country['code'] as String)
         .where((code) => code != excludedCode)
         .toList();
+  }
+}
+
+/// The country picker beside its phone number field — the one phone input
+/// every form uses, so the formatter, direction and validation stay the same
+/// everywhere.
+class CustomPhoneField extends StatelessWidget {
+  final PhoneFieldState phoneField;
+  final String? captionLabel;
+  final Color? fillColor;
+  final Color? labelColor;
+  final CrossAxisAlignment crossAxisAlignment;
+
+  const CustomPhoneField({
+    required this.phoneField,
+    this.captionLabel,
+    this.fillColor,
+    this.labelColor,
+    this.crossAxisAlignment = CrossAxisAlignment.center,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      spacing: 10,
+      crossAxisAlignment: crossAxisAlignment,
+      children: [
+        CustomCountryCodePicker(phoneField: phoneField, fillColor: fillColor),
+        Expanded(
+          child: CustomTextField(
+            controller: phoneField.controller,
+            inputFormatters: [phoneField.formatter],
+            textInputType: TextInputType.phone,
+            textDirection: TextDirection.ltr,
+            captionLabel: captionLabel ?? AppTranslations.phoneNumber,
+            labelColor: labelColor,
+            hintText: AppTranslations.phoneNumberHint,
+            fillColor: fillColor,
+            validator: (enteredPhoneNumber) =>
+                CustomValidation().validatePhoneNumber(
+                  enteredPhoneNumber,
+                  dialCode: phoneField.dialCode,
+                ),
+          ),
+        ),
+      ],
+    );
   }
 }

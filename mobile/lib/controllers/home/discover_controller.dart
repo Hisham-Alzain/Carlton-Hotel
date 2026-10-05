@@ -111,7 +111,7 @@ class DiscoverController extends GetxController
       showErrorDialog: false,
       cancelToken: cancelToken,
     );
-    if (res.statusCode != 200 || res.data == null) return null;
+    if (!res.hasData) return null;
     final rows = res.data!.whereType<Map<String, dynamic>>();
     final List<Object> mapped = switch (section) {
       DiscoverSection.rooms =>

@@ -1,3 +1,5 @@
+import 'package:carlton/theme/theme.dart';
+import 'package:carlton/theme/app_shadows.dart';
 import 'package:carlton/components/check_in/digital_key_button.dart';
 import 'package:carlton/controllers/check_in/check_in_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
@@ -100,8 +102,7 @@ class RoomKeyTab extends GetView<CheckInController> {
                                   Expanded(
                                     child: Text(
                                       reservation.suiteName,
-                                      style: textStyle.titleSmall?.copyWith(
-                                        fontFamily: 'DM Sans',
+                                      style: textStyle.dmTitleSmall?.copyWith(
                                         color: AppColors.inkBlack,
                                       ),
                                     ),
@@ -110,8 +111,7 @@ class RoomKeyTab extends GetView<CheckInController> {
                                   // on the same baseline row.
                                   Text(
                                     reservation.stayRangeLabel,
-                                    style: textStyle.labelMedium?.copyWith(
-                                      fontFamily: 'DM Sans',
+                                    style: textStyle.dmLabelMedium?.copyWith(
                                       color: AppColors.inkBlack,
                                     ),
                                   ),
@@ -123,8 +123,7 @@ class RoomKeyTab extends GetView<CheckInController> {
                                 children: [
                                   Text(
                                     reservation.roomNumber,
-                                    style: textStyle.headlineMedium?.copyWith(
-                                      fontFamily: 'DM Sans',
+                                    style: textStyle.dmHeadlineMedium?.copyWith(
                                       color: AppColors.inkBlack,
                                     ),
                                   ),
@@ -160,13 +159,7 @@ class RoomKeyTab extends GetView<CheckInController> {
                   backgroundColor: AppColors.white,
                   radius: 14,
                   padding: const EdgeInsets.all(15),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: AppColors.pebbleGrey32,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
+                  boxShadow: const [AppShadows.banner],
                   child: Row(
                     spacing: 15,
                     children: [

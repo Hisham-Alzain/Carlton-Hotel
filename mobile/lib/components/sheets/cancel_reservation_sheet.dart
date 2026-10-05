@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/custom_info_banner.dart';
 import 'package:carlton/models/booking_models.dart';
@@ -50,8 +51,7 @@ class CancelReservationSheet extends StatelessWidget {
         ),
         Text.rich(
           TextSpan(
-            style: textStyle.labelMedium?.copyWith(
-              fontFamily: 'DM Sans',
+            style: textStyle.dmLabelMedium?.copyWith(
               color: AppColors.steelGrey,
             ),
             children: [

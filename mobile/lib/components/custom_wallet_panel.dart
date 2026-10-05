@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -75,8 +76,7 @@ class CustomWalletPanel extends StatelessWidget {
                 Text(
                   subtitle,
                   textAlign: TextAlign.center,
-                  style: textStyle.labelMedium?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelMedium?.copyWith(
                     color: AppColors.white73,
                   ),
                 ),
@@ -99,21 +99,16 @@ class CustomWalletPanel extends StatelessWidget {
                           shape: BoxShape.circle,
                           border: Border.all(color: AppColors.successGreen),
                         ),
-                        child: SvgPicture.asset(
-                          'assets/icons/check.svg',
-                          width: 10,
-                          height: 10,
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.successGreen,
-                            BlendMode.srcIn,
-                          ),
+                        child: Icon(
+                          Icons.check,
+                          size: 10,
+                          color: AppColors.successGreen,
                         ),
                       ),
                       Flexible(
                         child: Text(
                           bulletLine,
-                          style: textStyle.labelMedium?.copyWith(
-                            fontFamily: 'DM Sans',
+                          style: textStyle.dmLabelMedium?.copyWith(
                             color: AppColors.inkBlack,
                           ),
                         ),
@@ -128,8 +123,7 @@ class CustomWalletPanel extends StatelessWidget {
                   radius: 8,
                   child: Text(
                     footerNote,
-                    style: textStyle.labelSmall?.copyWith(
-                      fontFamily: 'DM Sans',
+                    style: textStyle.dmLabelSmall?.copyWith(
                       color: AppColors.dimGrey,
                     ),
                   ),

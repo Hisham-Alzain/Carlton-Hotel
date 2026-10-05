@@ -1,3 +1,5 @@
+import 'package:carlton/theme/theme.dart';
+import 'package:carlton/components/booking_step_header.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
@@ -25,26 +27,14 @@ class BookingConfirmedView extends StatelessWidget {
     final email = controller.emailCtrl.text.trim();
     final room = controller.selectedRoom.value;
 
-    final bodyStyle = textStyle.labelMedium?.copyWith(
-      fontFamily: 'DM Sans',
+    final bodyStyle = textStyle.dmLabelMedium?.copyWith(
       color: AppColors.graphite,
     );
 
     return CustomScaffold(
-      appBar: AppBar(
-        title: Text(AppTranslations.bookingConfirmed),
-        actions: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.whisperGrey,
-            ),
-            child: IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.close, color: AppColors.inkBlack),
-            ),
-          ),
-        ],
+      appBar: BookingStepAppBar(
+        title: AppTranslations.bookingConfirmed,
+        onClose: controller.closeConfirmation,
       ),
       body: Column(
         children: [
@@ -124,15 +114,13 @@ class BookingConfirmedView extends StatelessWidget {
                           ),
                         Text(
                           room?.name ?? '',
-                          style: textStyle.labelLarge?.copyWith(
-                            fontFamily: 'DM Sans',
+                          style: textStyle.dmLabelLarge?.copyWith(
                             color: AppColors.slateGrey,
                           ),
                         ),
                         Text(
                           controller.dateRange,
-                          style: textStyle.labelMedium?.copyWith(
-                            fontFamily: 'DM Sans',
+                          style: textStyle.dmLabelMedium?.copyWith(
                             color: AppColors.slateGrey,
                           ),
                         ),
@@ -145,8 +133,7 @@ class BookingConfirmedView extends StatelessWidget {
                             children: [
                               Text(
                                 AppTranslations.confirmationCode,
-                                style: textStyle.labelSmall?.copyWith(
-                                  fontFamily: 'DM Sans',
+                                style: textStyle.dmLabelSmall?.copyWith(
                                   color: AppColors.walnutGold,
                                 ),
                               ),

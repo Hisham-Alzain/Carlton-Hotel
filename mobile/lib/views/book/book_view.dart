@@ -1,3 +1,5 @@
+import 'package:carlton/theme/theme.dart';
+import 'package:carlton/components/booking_step_header.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
@@ -9,7 +11,6 @@ import 'package:carlton/extensions/date_extension.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 /// Book tab — the date/guest planning editor. The surrounding `MainView` shell
 /// supplies the app bar and bottom nav; the draft is reset each time the tab is
@@ -39,17 +40,7 @@ class BookView extends StatelessWidget {
                 color: AppColors.inkBlack,
               ),
             ),
-            AnimatedSmoothIndicator(
-              activeIndex: 0,
-              count: 6,
-              effect: SlideEffect(
-                dotHeight: 5,
-                dotWidth: 50,
-                spacing: 20,
-                activeDotColor: AppColors.primary,
-                dotColor: AppColors.iceBlue,
-              ),
-            ),
+            BookingStepIndicator(step: 0),
 
             Obx(() => _dates(controller)),
 
@@ -134,8 +125,7 @@ class BookView extends StatelessWidget {
               Flexible(
                 child: Text(
                   controller.dateSummary,
-                  style: textStyle.labelMedium?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelMedium?.copyWith(
                     color: AppColors.inkBlack,
                   ),
                 ),

@@ -1,3 +1,5 @@
+import 'package:carlton/theme/theme.dart';
+import 'package:carlton/theme/app_shadows.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -68,13 +70,7 @@ class CustomInfoBanner extends StatelessWidget {
         color: tone.backgroundColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.white48, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.pebbleGrey32,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: [AppShadows.banner],
       ),
       child: Row(
         spacing: 10,
@@ -86,8 +82,7 @@ class CustomInfoBanner extends StatelessWidget {
           Flexible(
             child: Text(
               message,
-              style: textStyle.labelMedium?.copyWith(
-                fontFamily: 'DM Sans',
+              style: textStyle.dmLabelMedium?.copyWith(
                 color: AppColors.inkBlack,
               ),
             ),

@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'dart:io';
 import 'package:carlton/components/chat/custom_agent_header.dart';
 import 'package:carlton/components/chat/custom_chat_bubble.dart';
@@ -10,6 +11,7 @@ import 'package:carlton/customWidgets/custom_segmented_button.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/segement_item.dart';
 import 'package:carlton/theme/app_colors.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -212,9 +214,7 @@ class _CustomerServiceTab extends StatelessWidget {
 
   Widget _thread(AiConciergeController controller) {
     if (controller.loadingThread.value) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      );
+      return const Center(child: LogoLoadingIndicator(size: 50));
     }
     if (controller.threadError.value) {
       return _ThreadError(onRetry: controller.refreshThread);
@@ -406,37 +406,39 @@ class _QuickReplies extends StatelessWidget {
     final replies = AiConciergeController.quickReplies;
     if (replies.isEmpty) return const SizedBox.shrink();
 
-    return SizedBox(
-      height: 34,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: replies.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, i) => Material(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(30),
-          child: InkWell(
-            onTap: () => controller.quickReply(replies[i]),
-            borderRadius: BorderRadius.circular(30),
-            child: PillContainer(
-              height: 34,
-              backgroundColor: AppColors.white,
-              radius: 30,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              border: Border.all(color: AppColors.black10),
-              child: Center(
-                widthFactor: 1,
-                child: Text(
-                  replies[i],
-                  style: textStyle.labelMedium?.copyWith(
-                    fontFamily: 'DM Sans',
-                    color: AppColors.inkBlack,
+    // A handful of fixed chips: a Row with `spacing` inside a horizontal
+    // scroller instead of ListView.separated with SizedBox separators.
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        spacing: 8,
+        children: [
+          for (final reply in replies)
+            Material(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(30),
+              child: InkWell(
+                onTap: () => controller.quickReply(reply),
+                borderRadius: BorderRadius.circular(30),
+                child: PillContainer(
+                  height: 34,
+                  backgroundColor: AppColors.white,
+                  radius: 30,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  border: Border.all(color: AppColors.black10),
+                  child: Center(
+                    widthFactor: 1,
+                    child: Text(
+                      reply,
+                      style: textStyle.dmLabelMedium?.copyWith(
+                        color: AppColors.inkBlack,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ),
+        ],
       ),
     );
   }

@@ -39,7 +39,7 @@ class LegalController extends GetxController {
     if (isClosed) return;
     final loaded = <InfoPage>[];
     for (final res in responses) {
-      if (res.statusCode == 200 && res.data != null) {
+      if (res.hasData) {
         loaded.add(InfoPage.fromJson(res.data!));
       }
     }

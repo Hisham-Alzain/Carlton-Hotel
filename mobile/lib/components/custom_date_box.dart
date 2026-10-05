@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -36,8 +37,7 @@ class CustomDateBox extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: textStyle.labelSmall?.copyWith(
-              fontFamily: 'DM Sans',
+            style: textStyle.dmLabelSmall?.copyWith(
               color: AppColors.antiqueGold,
             ),
           ),

@@ -1,7 +1,9 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
 
 class CustomDateRangeCalendar extends StatelessWidget {
   final DateTime firstDay;
@@ -49,8 +51,7 @@ class CustomDateRangeCalendar extends StatelessWidget {
               ),
         child: Text(
           day,
-          style: textStyle.labelMedium?.copyWith(
-            fontFamily: 'DM Sans',
+          style: textStyle.dmLabelMedium?.copyWith(
             fontWeight: weight,
             color: textColor,
           ),
@@ -96,23 +97,19 @@ class CustomDateRangeCalendar extends StatelessWidget {
           ),
         ),
         daysOfWeekStyle: DaysOfWeekStyle(
-          weekdayStyle: textStyle.labelSmall!.copyWith(
-            fontFamily: 'DM Sans',
+          weekdayStyle: textStyle.dmLabelSmall!.copyWith(
             color: AppColors.taupeBrown,
           ),
-          weekendStyle: textStyle.labelSmall!.copyWith(
-            fontFamily: 'DM Sans',
+          weekendStyle: textStyle.dmLabelSmall!.copyWith(
             color: AppColors.taupeBrown,
           ),
         ),
         calendarBuilders: CalendarBuilders<void>(
           dowBuilder: (context, day) {
-            const weekdayInitials = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
             return Center(
               child: Text(
-                weekdayInitials[day.weekday % 7],
-                style: textStyle.labelSmall?.copyWith(
-                  fontFamily: 'DM Sans',
+                DateFormat.EEEEE().format(day),
+                style: textStyle.dmLabelSmall?.copyWith(
                   color: AppColors.taupeBrown,
                 ),
               ),

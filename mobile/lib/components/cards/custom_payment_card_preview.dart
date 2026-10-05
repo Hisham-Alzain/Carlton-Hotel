@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -73,8 +74,7 @@ class CustomPaymentCardPreview extends StatelessWidget {
                 const Spacer(),
                 Text(
                   _displayNumber,
-                  style: textStyle.titleMedium?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmTitleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.white90,
                   ),
@@ -122,10 +122,7 @@ class CustomPaymentCardPreview extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: textStyle.labelSmall?.copyWith(
-            fontFamily: 'DM Sans',
-            color: AppColors.white50,
-          ),
+          style: textStyle.dmLabelSmall?.copyWith(color: AppColors.white50),
         ),
         Text(
           value,

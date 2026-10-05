@@ -45,7 +45,7 @@ class SignInController extends GetxController {
     if (isClosed) return;
     isSubmitting.value = false;
 
-    if (response.statusCode != 200 || response.data == null) return;
+    if (!response.hasData) return;
 
     final identifier =
         response.data!['identifier'] as String? ??

@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import '../../../models/api/api_exception.dart';
 import '../../../constants/error_codes.dart';
+import 'package:carlton/l10n/app_translations.dart';
 
 /// Centralizes UI feedback for API calls: loading dialogs, progress dialogs,
 /// success dialogs, and error dialogs mapped from [ApiException].
@@ -105,7 +106,9 @@ class ApiDialogHandler {
 
       case ErrorCodes.tooManyRequests:
         // Append the retry window when the server sent one.
-        final wait = e.retryAfter != null ? ' (${e.retryAfter}s)' : '';
+        final wait = e.retryAfter != null
+            ? ' (${AppTranslations.retryAfterSeconds(e.retryAfter!)})'
+            : '';
         return '${e.message}$wait';
 
       // Everything else — including `unauthorized` on a pre-auth endpoint (a

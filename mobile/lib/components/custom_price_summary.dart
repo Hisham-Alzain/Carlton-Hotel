@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -39,8 +40,7 @@ class CustomPriceSummaryRow extends StatelessWidget {
             fontWeight: FontWeight.w600,
             color: titleColor ?? AppColors.inkBlack,
           )
-        : textStyle.labelMedium?.copyWith(
-            fontFamily: 'DM Sans',
+        : textStyle.dmLabelMedium?.copyWith(
             color: titleColor ?? AppColors.slateGrey,
           );
 
@@ -49,8 +49,7 @@ class CustomPriceSummaryRow extends StatelessWidget {
             fontWeight: FontWeight.w700,
             color: valueColor ?? AppColors.primary,
           )
-        : textStyle.labelLarge?.copyWith(
-            fontFamily: 'DM Sans',
+        : textStyle.dmLabelLarge?.copyWith(
             fontWeight: FontWeight.w500,
             color: valueColor ?? AppColors.inkBlack,
           );

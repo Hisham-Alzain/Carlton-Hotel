@@ -105,7 +105,7 @@ class ServicesController extends GetxController
       showErrorDialog: false,
     );
     if (isClosed) return;
-    if (res.statusCode != 200 || res.data == null) return;
+    if (!res.hasData) return;
     catalog.value = res.data!
         .whereType<Map<String, dynamic>>()
         .map(ServiceCatalogItem.fromJson)
@@ -126,7 +126,7 @@ class ServicesController extends GetxController
       showErrorDialog: false,
       cancelToken: cancelToken,
     );
-    if (res.statusCode != 200 || res.data == null) return null;
+    if (!res.hasData) return null;
     return (
       items: ServiceRequest.listFromJson(res.data!),
       pagination: res.meta ?? Pagination(),
@@ -144,7 +144,7 @@ class ServicesController extends GetxController
     if (!res.ok || res.data == null) return;
     final s = ActiveStay.fromJson(res.data!);
     room.value = (s.roomNumber != null && s.roomNumber!.isNotEmpty)
-        ? 'Room ${s.roomNumber}'
+        ? AppTranslations.stayRoomNumber(s.roomNumber!)
         : s.roomName.value;
     stayRoomName.value = s.roomName.value;
     nightsRemaining.value = s.nightsRemaining;
@@ -313,7 +313,7 @@ class ServicesController extends GetxController
       showErrorDialog: false,
     );
     if (isClosed) return;
-    if (res.statusCode != 200) {
+    if (!res.ok) {
       dndEnabled.value = previous;
       final message = res.error?.errorCode == ErrorCodes.noActiveReservation
           ? AppTranslations.dndNeedsCheckIn

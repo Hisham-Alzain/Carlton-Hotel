@@ -60,7 +60,7 @@ class ExperienceController extends GetxController {
       showErrorDialog: false,
     );
     if (isClosed) return;
-    if (res.statusCode == 200 && res.data != null) {
+    if (res.hasData) {
       final experience = Experience.fromJson(res.data!);
       about.value = experience.description.value;
       priceUsd.value = experience.priceUsd;

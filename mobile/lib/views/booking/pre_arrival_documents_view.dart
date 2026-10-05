@@ -37,41 +37,43 @@ class PreArrivalDocumentsView extends GetView<PreArrivalDocumentsController> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  CustomInfoBanner(
-                    message: AppTranslations.preArrivalIntro,
-                    tone: InfoBannerTone.info,
-                  ),
-                  const SizedBox(height: 16),
-                  if (controller.docs.isEmpty)
-                    _EmptyState()
-                  else
-                    for (var i = 0; i < controller.docs.length; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _DocumentRow(
-                          document: controller.docs[i],
-                          onTypeChanged: (type) => controller.setType(i, type),
-                          onRemove: () => controller.removeDoc(i),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 12,
+                    children: [
+                      CustomInfoBanner(
+                        message: AppTranslations.preArrivalIntro,
+                        tone: InfoBannerTone.info,
+                      ),
+                      if (controller.docs.isEmpty)
+                        _EmptyState()
+                      else
+                        for (var i = 0; i < controller.docs.length; i++)
+                          _DocumentRow(
+                            document: controller.docs[i],
+                            onTypeChanged: (type) =>
+                                controller.setType(i, type),
+                            onRemove: () => controller.removeDoc(i),
+                          ),
+                      OutlinedButton.icon(
+                        onPressed: controller.pickDocuments,
+                        icon: const Icon(Icons.add, color: AppColors.primary),
+                        label: Text(
+                          AppTranslations.addDocument,
+                          style: Get.textTheme.labelLarge?.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.black10),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: controller.pickDocuments,
-                    icon: const Icon(Icons.add, color: AppColors.primary),
-                    label: Text(
-                      AppTranslations.addDocument,
-                      style: Get.textTheme.labelLarge?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.black10),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -100,26 +102,32 @@ class _EmptyState extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
+        spacing: 16,
         children: [
           const Icon(
             Icons.badge_outlined,
             size: 56,
             color: AppColors.antiqueGold,
           ),
-          const SizedBox(height: 16),
-          Text(
-            AppTranslations.preArrivalEmptyTitle,
-            textAlign: TextAlign.center,
-            style: textStyle.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.inkBlack,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            AppTranslations.preArrivalEmptySubtitle,
-            textAlign: TextAlign.center,
-            style: textStyle.labelMedium?.copyWith(color: AppColors.dimGrey),
+          Column(
+            spacing: 8,
+            children: [
+              Text(
+                AppTranslations.preArrivalEmptyTitle,
+                textAlign: TextAlign.center,
+                style: textStyle.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.inkBlack,
+                ),
+              ),
+              Text(
+                AppTranslations.preArrivalEmptySubtitle,
+                textAlign: TextAlign.center,
+                style: textStyle.labelMedium?.copyWith(
+                  color: AppColors.dimGrey,
+                ),
+              ),
+            ],
           ),
         ],
       ),

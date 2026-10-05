@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/components/check_in/arrival_time_sheet.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
@@ -61,114 +62,132 @@ class PreArrivalStaySection extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 16,
                 children: [
-                  Row(
-                    spacing: 6,
-                    children: [
-                      _StatusChip(
-                        label: AppTranslations.roomChip(reservation.roomNumber),
-                        background: AppColors.antiqueGold,
-                      ),
-                      _StatusChip(
-                        label: AppTranslations.preCheckInAvailable,
-                        background: AppColors.harborTeal,
-                        showLiveDot: true,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    reservation.suiteName,
-                    style: Get.textTheme.titleMedium?.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.white,
-                    ),
-                  ),
-                  Text(
-                    reservation.stayRangeLabel,
-                    style: Get.textTheme.bodySmall?.copyWith(
-                      fontFamily: 'DM Sans',
-                      color: AppColors.white.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 8,
                     children: [
-                      Expanded(
-                        child: _ReservationDetailTile(
-                          label: AppTranslations.checkInLabel,
-                          value: reservation.checkInDate,
-                          hint: reservation.checkInTime,
-                        ),
-                      ),
-                      Expanded(
-                        child: _ReservationDetailTile(
-                          label: AppTranslations.checkOutLabel,
-                          value: reservation.checkOutDate,
-                          hint: reservation.checkOutTime,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    spacing: 8,
-                    children: [
-                      Expanded(
-                        child: _ReservationDetailTile(
-                          label: AppTranslations.roomLabel,
-                          value: AppTranslations.suiteNumber(
-                            reservation.roomNumber,
+                      Row(
+                        spacing: 6,
+                        children: [
+                          _StatusChip(
+                            label: AppTranslations.roomChip(
+                              reservation.roomNumber,
+                            ),
+                            background: AppColors.antiqueGold,
                           ),
-                          hint: reservation.suiteName,
-                        ),
+                          _StatusChip(
+                            label: AppTranslations.preCheckInAvailable,
+                            background: AppColors.harborTeal,
+                            showLiveDot: true,
+                          ),
+                        ],
                       ),
-                      Expanded(
-                        child: _ReservationDetailTile(
-                          label: AppTranslations.bookingRefLabel,
-                          value: reservation.bookingRef,
-                          hint: AppTranslations.confirmedStatus,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            reservation.suiteName,
+                            style: Get.textTheme.titleMedium?.copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.white,
+                            ),
+                          ),
+                          Text(
+                            reservation.stayRangeLabel,
+                            style: Get.textTheme.dmBodySmall?.copyWith(
+                              color: AppColors.white.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  Row(
+                  Column(
+                    spacing: 8,
                     children: [
-                      Text(
-                        AppTranslations.preArrivalProgress,
-                        style: Get.textTheme.bodySmall?.copyWith(
-                          fontSize: 11,
-                          fontFamily: 'DM Sans',
-                          color: AppColors.white,
-                        ),
+                      Row(
+                        spacing: 8,
+                        children: [
+                          Expanded(
+                            child: _ReservationDetailTile(
+                              label: AppTranslations.checkInLabel,
+                              value: reservation.checkInDate,
+                              hint: reservation.checkInTime,
+                            ),
+                          ),
+                          Expanded(
+                            child: _ReservationDetailTile(
+                              label: AppTranslations.checkOutLabel,
+                              value: reservation.checkOutDate,
+                              hint: reservation.checkOutTime,
+                            ),
+                          ),
+                        ],
                       ),
-                      const Spacer(),
-                      Text(
-                        AppTranslations.completeFraction(
-                          service.completedCount,
-                          service.totalSteps,
-                        ),
-                        style: Get.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.sandGold,
+                      Row(
+                        spacing: 8,
+                        children: [
+                          Expanded(
+                            child: _ReservationDetailTile(
+                              label: AppTranslations.roomLabel,
+                              value: AppTranslations.suiteNumber(
+                                reservation.roomNumber,
+                              ),
+                              hint: reservation.suiteName,
+                            ),
+                          ),
+                          Expanded(
+                            child: _ReservationDetailTile(
+                              label: AppTranslations.bookingRefLabel,
+                              value: reservation.bookingRef,
+                              hint: AppTranslations.confirmedStatus,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Column(
+                    spacing: 5,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            AppTranslations.preArrivalProgress,
+                            style: Get.textTheme.dmBodySmall?.copyWith(
+                              fontSize: 11,
+                              color: AppColors.white,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            AppTranslations.completeFraction(
+                              service.completedCount,
+                              service.totalSteps,
+                            ),
+                            style: Get.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.sandGold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: service.progress,
+                          minHeight: 3,
+                          color: AppColors.antiqueGold,
+                          backgroundColor: AppColors.white.withValues(
+                            alpha: 0.15,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 5),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: LinearProgressIndicator(
-                      value: service.progress,
-                      minHeight: 3,
-                      color: AppColors.antiqueGold,
-                      backgroundColor: AppColors.white.withValues(alpha: 0.15),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
                   CustomFilledButton(
                     height: 48,
                     width: double.infinity,
@@ -178,8 +197,7 @@ class PreArrivalStaySection extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    textStyle: Get.textTheme.labelLarge?.copyWith(
-                      fontFamily: 'DM Sans',
+                    textStyle: Get.textTheme.dmLabelLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                     child: Text(AppTranslations.checkInNow),
@@ -303,6 +321,7 @@ class _ReservationDetailTile extends StatelessWidget {
       radius: 10,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 2,
         children: [
           Text(
             label.toUpperCase(),
@@ -312,7 +331,6 @@ class _ReservationDetailTile extends StatelessWidget {
               color: AppColors.white.withValues(alpha: 0.97),
             ),
           ),
-          const SizedBox(height: 2),
           Text(
             value,
             style: Get.textTheme.titleSmall?.copyWith(
@@ -326,9 +344,8 @@ class _ReservationDetailTile extends StatelessWidget {
               hint,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Get.textTheme.bodySmall?.copyWith(
+              style: Get.textTheme.dmBodySmall?.copyWith(
                 fontSize: 9,
-                fontFamily: 'DM Sans',
                 color: AppColors.white.withValues(alpha: 0.94),
               ),
             ),
@@ -472,9 +489,8 @@ class _ChecklistItemRow extends StatelessWidget {
                   ),
                   Text(
                     subtitle,
-                    style: Get.textTheme.bodySmall?.copyWith(
+                    style: Get.textTheme.dmBodySmall?.copyWith(
                       fontSize: 11,
-                      fontFamily: 'DM Sans',
                       color: AppColors.ashBrown,
                     ),
                   ),
@@ -575,10 +591,7 @@ class AirportTransferSection extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
             ),
-            textStyle: Get.textTheme.labelLarge?.copyWith(
-              fontSize: 13,
-              fontFamily: 'DM Sans',
-            ),
+            textStyle: Get.textTheme.dmLabelLarge?.copyWith(fontSize: 13),
             child: Text(AppTranslations.requestAirportTransfer),
           ),
         ],

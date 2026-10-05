@@ -309,6 +309,8 @@ class CustomDialogs {
     VoidCallback? onPressed,
     dynamic icon,
     Color? accentColor,
+    String? confirmationText,
+    String? cancellationText,
   }) {
     _showDialog(
       type: type ?? AppDialogType.confirmation,
@@ -318,8 +320,8 @@ class CustomDialogs {
       accentColor: accentColor,
       onConfirm: onPressed,
       onCancel: () {},
-      confirmationText: AppTranslations.yes,
-      cancellationText: AppTranslations.no,
+      confirmationText: confirmationText ?? AppTranslations.yes,
+      cancellationText: cancellationText ?? AppTranslations.no,
     );
   }
 

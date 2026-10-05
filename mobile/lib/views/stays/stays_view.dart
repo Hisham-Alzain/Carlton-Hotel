@@ -6,6 +6,9 @@ import 'package:carlton/controllers/stays/stays_controller.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
 import 'package:carlton/components/custom_info_banner.dart';
 import 'package:carlton/theme/app_colors.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
+import 'package:carlton/routes/routes.dart';
+import 'package:carlton/services/middleware_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -21,6 +24,26 @@ class StaysView extends StatelessWidget {
     // tab instead of all three.
     final controller = Get.find<StaysController>();
 
+    // A browsing guest has no stays to list — ask them to sign in rather than
+    // showing three tabs of refused requests as connection errors. Reads only
+    // the session, so signing in swaps it for the tabs.
+    return Obx(
+      () => MiddlewareService.find.isAuthenticated
+          ? _tabs(controller)
+          : CustomEmptyPlaceholder(
+              iconPath: 'assets/images/ring.png',
+              iconWidth: 90,
+              iconHeight: 65,
+              title: AppTranslations.staysSignInPromptTitle,
+              primaryLabel: AppTranslations.signInButtonLabel,
+              onPrimary: () => Get.toNamed(Routes.signIn),
+              secondaryLabel: AppTranslations.createAccountLink,
+              onSecondary: () => Get.toNamed(Routes.phoneEntry),
+            ),
+    );
+  }
+
+  Widget _tabs(StaysController controller) {
     return Column(
       children: [
         TabBar(
@@ -166,7 +189,7 @@ class _PastTab extends StatelessWidget {
           if (index >= controller.items.length) {
             return const Padding(
               padding: EdgeInsets.all(16),
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(child: SpinningIconIndicator(size: 28)),
             );
           }
           final stay = controller.items[index];
@@ -186,7 +209,7 @@ class _Loading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      const Center(child: CircularProgressIndicator());
+      const Center(child: LogoLoadingIndicator(size: 50));
 }
 
 class _Retry extends StatelessWidget {
@@ -202,16 +225,10 @@ class _Retry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomEmptyPlaceholder(
-      iconWidget: const Icon(
-        Icons.cloud_off_outlined,
-        size: 50,
-        color: AppColors.primary,
-      ),
+    return CustomEmptyPlaceholder.loadFailed(
       title: title,
       subtitle: subtitle,
-      primaryLabel: AppTranslations.retry,
-      onPrimary: onRetry,
+      onRetry: onRetry,
     );
   }
 }

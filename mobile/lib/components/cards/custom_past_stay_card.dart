@@ -1,3 +1,4 @@
+import 'package:carlton/theme/theme.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
@@ -56,8 +57,7 @@ class CustomPastStayCard extends StatelessWidget {
 
                       Text(
                         stay.dateRangeLabel ?? '',
-                        style: textStyle.labelMedium?.copyWith(
-                          fontFamily: 'DM Sans',
+                        style: textStyle.dmLabelMedium?.copyWith(
                           color: AppColors.taupeBrown,
                         ),
                       ),
@@ -68,8 +68,7 @@ class CustomPastStayCard extends StatelessWidget {
                   backgroundColor: AppColors.successGreen07,
                   child: Text(
                     AppTranslations.completedCaps,
-                    style: textStyle.labelSmall?.copyWith(
-                      fontFamily: 'DM Sans',
+                    style: textStyle.dmLabelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.forestGreen,
                     ),
@@ -83,8 +82,7 @@ class CustomPastStayCard extends StatelessWidget {
               children: [
                 Text(
                   AppTranslations.totalCharged,
-                  style: textStyle.labelLarge?.copyWith(
-                    fontFamily: 'DM Sans',
+                  style: textStyle.dmLabelLarge?.copyWith(
                     color: AppColors.taupeBrown,
                   ),
                 ),

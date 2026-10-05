@@ -5,7 +5,7 @@ milestone_name: milestone
 current_phase: 10
 current_phase_name: Loyalty Points Program
 status: executing
-stopped_at: Completed 10-08-PLAN.md
+stopped_at: Completed 10-09-PLAN.md
 last_updated: "2026-10-05T00:00:00.000Z"
 last_activity: 2026-10-04
 last_activity_desc: Phase 10 execution started
@@ -13,7 +13,7 @@ progress:
   total_phases: 11
   completed_phases: 5
   total_plans: 98
-  completed_plans: 70
+  completed_plans: 71
 ---
 
 # Project State
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 10 (Loyalty Points Program) — EXECUTING
-Plan: 9 of 15
+Plan: 10 of 15
 Status: Ready to execute
-Last activity: 2026-10-05 — Completed 10-08 (rewards CRUD with recycle bin, guest catalog)
+Last activity: 2026-10-05 — Completed 10-09 (reward redeem into voucher, my vouchers)
 
 Progress: [███████░░░] 70%
 
@@ -66,6 +66,7 @@ Progress: [███████░░░] 70%
 | Phase 10 P06 | resumed | 2 tasks | 16 files |
 | Phase 10 P07 | 25min | 2 tasks | 13 files |
 | Phase 10 P08 | 25min | 2 tasks | 15 files |
+| Phase 10 P09 | 25min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,7 @@ Recent decisions affecting current work:
 - [Phase 10-06]: Lifetime earned/redeemed are net (earn + positive adjust - clawback; redeem - refund), floored at 0, from one grouped query; account runs 3 queries and a ledger page 7 regardless of size; reason/performed_by emitted for staff callers only; staff guest view gated loyalty.view alone (adjusters must also hold it)
 - [Phase 10-07]: Manual adjust is one action under the guest lock (guest -> batches); zero and over-cap points are the domain error loyalty_adjustment_invalid (not a field rule); ledger key adjust:{guest_id}:{client_key} with actor in the replay payload (another desk = 409); loyalty.adjust is the last seeded loyalty permission to be route-enforced, so CmsAccessControlTest::$notYetBuilt is back to []
 - [Phase 10-08]: Rewards bin routes sit inside the existing cms.restore/cms.purge groups (a loyalty.manage-only token gets 403 on the bin); the discount_usd/type pairing is judged in an after() hook on the effective post-update values; the guest catalog is `indexPublic` (active, non-trashed, sort_order then id) and needs no program settings; DELETE answers 204 like every other bin-backed CRUD
+- [Phase 10-09]: Redeem is one action under the guest lock (guest -> batches) keyed `redeem:reward:{guest_id}:{client_key}`; the reward is re-read inside the write so a stale bound model cannot redeem a just-deactivated reward; voucher expiry is hotel-local end of day (Q13); a missing key answers the shared validation_failed shape (errors.idempotency_key), insufficient-points details sit under `context`; LoyaltyLedger is final, so atomicity is tested through a LoyaltyLedgerEntry::creating listener
 
 ### Pending Todos
 
@@ -134,5 +136,5 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-10-05T00:00:00.000Z
-Stopped at: Completed 10-08-PLAN.md
+Stopped at: Completed 10-09-PLAN.md
 Resume file: None

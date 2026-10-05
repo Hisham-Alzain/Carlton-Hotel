@@ -34,7 +34,7 @@ use App\Models\User;
 
 class ReservationService
 {
-    protected array $with = ['rooms.roomType', 'rooms.room', 'guest', 'promoCode'];
+    protected array $with = ['rooms.roomType', 'rooms.room', 'guest', 'promoCode', 'loyaltyApplication.voucher'];
 
     public function __construct(
         private readonly CreateReservationAction  $create,

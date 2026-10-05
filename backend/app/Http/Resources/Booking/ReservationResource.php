@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Booking;
 
 use App\Base\BaseResource;
+use App\Enums\LoyaltyRewardType;
 use App\Http\Resources\GuestResource;
 use App\Models\User;
 
@@ -37,6 +38,18 @@ class ReservationResource extends BaseResource
             'rooms'          => ReservationRoomResource::collection($this->whenLoaded('rooms')),
             'guest'          => new GuestResource($this->whenLoaded('guest')),
             'promo_code'     => $this->whenLoaded('promoCode', fn () => $this->promoCode?->code),
+            // Phase 10 (Q16, Q12): what loyalty took off this booking; null when nothing was applied.
+            'loyalty'        => $this->whenLoaded('loyaltyApplication', fn () => $this->loyaltyApplication ? [
+                'points_redeemed'      => $this->loyaltyApplication->points_redeemed,
+                'points_discount_usd'  => $this->loyaltyApplication->points_discount_usd,
+                'voucher'              => $this->loyaltyApplication->relationLoaded('voucher') && $this->loyaltyApplication->voucher
+                    ? ['code' => $this->loyaltyApplication->voucher->code, 'type' => $this->loyaltyApplication->voucher->type->value]
+                    : null,
+                'voucher_discount_usd' => $this->loyaltyApplication->voucher_discount_usd,
+                'upgrade_requested'    => $this->loyaltyApplication->relationLoaded('voucher')
+                    && $this->loyaltyApplication->voucher?->type === LoyaltyRewardType::ROOM_UPGRADE,
+                'status'               => $this->loyaltyApplication->status->value,
+            ] : null),
             // Only the check-out response loads the folio (D-14).
             // Phase 5 (D-12): open_disputes_count only when the service counted it (no query here).
             'folio'          => $this->whenLoaded('folio', fn () => $this->folio ? array_merge([

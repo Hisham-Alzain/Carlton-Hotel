@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 10
 current_phase_name: Loyalty Points Program
 status: executing
-stopped_at: Completed 10-11-PLAN.md
-last_updated: "2026-10-05T11:25:04.873Z"
+stopped_at: Completed 10-12-PLAN.md
+last_updated: "2026-10-05T11:41:21.000Z"
 last_activity: 2026-10-05
-last_activity_desc: Completed 10-11 (booking with loyalty points or a voucher, idempotent and atomic)
+last_activity_desc: Completed 10-12 (cancel reversals: refund points, restore voucher, claw back earnings; folio-refund seam)
 progress:
   total_phases: 11
   completed_phases: 5
   total_plans: 98
-  completed_plans: 73
+  completed_plans: 74
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 10 (Loyalty Points Program) — EXECUTING
-Plan: 12 of 15
+Plan: 13 of 15
 Status: Ready to execute
-Last activity: 2026-10-05 — Completed 10-11 (POST /reservations with loyalty_points or voucher_code, Idempotency-Key replay)
+Last activity: 2026-10-05 — Completed 10-12 (cancelling a reservation reverses loyalty effects; ReverseLoyaltyForFolioAction seam)
 
-Progress: [███████░░░] 74%
+Progress: [███████░░░] 75%
 
 ## Performance Metrics
 
@@ -69,6 +69,7 @@ Progress: [███████░░░] 74%
 | Phase 10 P09 | 25min | 2 tasks | 15 files |
 | Phase 10 P10 | 25min | 2 tasks | 9 files |
 | Phase 10 P11 | 45min | 2 tasks | 7 files |
+| Phase 10 P12 | 40min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,7 @@ Recent decisions affecting current work:
 - [Phase 10-08]: Rewards bin routes sit inside the existing cms.restore/cms.purge groups (a loyalty.manage-only token gets 403 on the bin); the discount_usd/type pairing is judged in an after() hook on the effective post-update values; the guest catalog is `indexPublic` (active, non-trashed, sort_order then id) and needs no program settings; DELETE answers 204 like every other bin-backed CRUD
 - [Phase 10-09]: Redeem is one action under the guest lock (guest -> batches) keyed `redeem:reward:{guest_id}:{client_key}`; the reward is re-read inside the write so a stale bound model cannot redeem a just-deactivated reward; voucher expiry is hotel-local end of day (Q13); a missing key answers the shared validation_failed shape (errors.idempotency_key), insufficient-points details sit under `context`; LoyaltyLedger is final, so atomicity is tested through a LoyaltyLedgerEntry::creating listener
 - [Phase ?]: [Phase 10-11]: Booking replay compares stored facts (room type, dates, payment method, promo id, points, voucher code) under the room_type then guest locks and answers 200 before the availability check; the guest lock is taken only when loyalty fields are sent; total_usd is written net at create; staff and OTP bookings never carry loyalty keys
+- [Phase 10-12]: Cancel re-checks status under the reservation row lock and reverses in the same transaction (reservation -> folio -> guest -> application/batches/voucher); refund and voucher restore come before the folio clawback; clawback floors at zero and logs loyalty.clawback_shortfall only for entries written by that call; ReverseLoyaltyForFolioAction is the unit-tested seam for the future folio refund flow; a plain cancel now costs a pinned 7 queries
 
 ### Pending Todos
 
@@ -138,6 +140,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-05T11:25:04.861Z
-Stopped at: Completed 10-11-PLAN.md
+Last session: 2026-10-05T11:41:21.000Z
+Stopped at: Completed 10-12-PLAN.md
 Resume file: None

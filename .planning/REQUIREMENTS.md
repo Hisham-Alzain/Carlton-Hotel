@@ -112,7 +112,7 @@ All routes are under `/api` (the code has no `/v1` segment — `bootstrap/app.ph
 - [x] **LOY-15**: A guest can preview points earnable and the discount for a prospective booking without side effects
 - [x] **LOY-16**: A guest can pay part of a booking with points (free-form) subject to the minimum and the max-% cap, or apply one voucher; the discount reduces the reservation total, is atomic with reservation creation and idempotent via `Idempotency-Key` (replay returns the same reservation)
 - [x] **LOY-17**: Cancelling a reservation refunds spent points, restores a used voucher and claws back points earned from its settled folio, idempotently, never producing a negative balance
-- [ ] **LOY-18**: A callable, tested folio-refund reversal exists for the future refund flow
+- [x] **LOY-18**: A callable, tested folio-refund reversal exists for the future refund flow
 - [ ] **LOY-19**: Staff can report points issued (earn + positive adjust), redeemed, expired, refunded, clawed back, adjusted out and outstanding points over a period
 - [x] **LOY-20**: New `loyalty.*` permissions are seeded, enforced by route middleware and shown in the permission picker; no preset changes
 - [x] **LOY-21**: Every new string exists in all five locale files; every new route has happy / 401 / 403 / 422 tests; docs, Postman and the tree are updated

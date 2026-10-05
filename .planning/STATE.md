@@ -5,7 +5,7 @@ milestone_name: milestone
 current_phase: 10
 current_phase_name: Loyalty Points Program
 status: executing
-stopped_at: Completed 10-07-PLAN.md
+stopped_at: Completed 10-08-PLAN.md
 last_updated: "2026-10-05T00:00:00.000Z"
 last_activity: 2026-10-04
 last_activity_desc: Phase 10 execution started
@@ -13,7 +13,7 @@ progress:
   total_phases: 11
   completed_phases: 5
   total_plans: 98
-  completed_plans: 69
+  completed_plans: 70
 ---
 
 # Project State
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 10 (Loyalty Points Program) — EXECUTING
-Plan: 8 of 15
+Plan: 9 of 15
 Status: Ready to execute
-Last activity: 2026-10-05 — Completed 10-07 (manual adjust, loyalty.adjust enforced)
+Last activity: 2026-10-05 — Completed 10-08 (rewards CRUD with recycle bin, guest catalog)
 
 Progress: [███████░░░] 70%
 
@@ -65,6 +65,7 @@ Progress: [███████░░░] 70%
 | Phase 10 P05 | 40min | 2 tasks | 5 files |
 | Phase 10 P06 | resumed | 2 tasks | 16 files |
 | Phase 10 P07 | 25min | 2 tasks | 13 files |
+| Phase 10 P08 | 25min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,7 @@ Recent decisions affecting current work:
 - [Phase 10-05]: Earn runs inline in the folio-locked settle transaction at all three settlement statements; only UniqueConstraintViolationException is caught, so any other failure rolls the settlement back
 - [Phase 10-06]: Lifetime earned/redeemed are net (earn + positive adjust - clawback; redeem - refund), floored at 0, from one grouped query; account runs 3 queries and a ledger page 7 regardless of size; reason/performed_by emitted for staff callers only; staff guest view gated loyalty.view alone (adjusters must also hold it)
 - [Phase 10-07]: Manual adjust is one action under the guest lock (guest -> batches); zero and over-cap points are the domain error loyalty_adjustment_invalid (not a field rule); ledger key adjust:{guest_id}:{client_key} with actor in the replay payload (another desk = 409); loyalty.adjust is the last seeded loyalty permission to be route-enforced, so CmsAccessControlTest::$notYetBuilt is back to []
+- [Phase 10-08]: Rewards bin routes sit inside the existing cms.restore/cms.purge groups (a loyalty.manage-only token gets 403 on the bin); the discount_usd/type pairing is judged in an after() hook on the effective post-update values; the guest catalog is `indexPublic` (active, non-trashed, sort_order then id) and needs no program settings; DELETE answers 204 like every other bin-backed CRUD
 
 ### Pending Todos
 
@@ -132,5 +134,5 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-10-05T00:00:00.000Z
-Stopped at: Completed 10-07-PLAN.md
+Stopped at: Completed 10-08-PLAN.md
 Resume file: None

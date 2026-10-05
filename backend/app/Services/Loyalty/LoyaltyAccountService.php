@@ -3,6 +3,7 @@
 namespace App\Services\Loyalty;
 
 use App\Actions\Loyalty\AdjustLoyaltyPointsAction;
+use App\Actions\Loyalty\PreviewLoyaltyAction;
 use App\Base\BaseService;
 use App\Enums\LoyaltyEntryType;
 use App\Filters\LoyaltyLedgerFilter;
@@ -36,7 +37,20 @@ class LoyaltyAccountService extends BaseService
     public function __construct(
         private readonly LoyaltyLedger $points,
         private readonly AdjustLoyaltyPointsAction $adjustPoints,
+        private readonly PreviewLoyaltyAction $previewBooking,
     ) {}
+
+    /**
+     * What a prospective booking costs with points or a voucher (LOY-15). Pure
+     * read: no write, no lock.
+     *
+     * @param  array<string, mixed>  $data  the validated preview query
+     * @return array{data: array<string, mixed>, code: int}
+     */
+    public function preview(Guest $guest, array $data): array
+    {
+        return $this->previewBooking->handle($guest, $data);
+    }
 
     /**
      * Staff award (positive) or deduct (negative) points, once per

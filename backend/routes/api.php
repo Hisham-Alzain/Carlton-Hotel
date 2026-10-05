@@ -624,7 +624,7 @@ Route::middleware('auth:guests')->prefix('reservations')->group(function () {
     Route::delete('/{reservation}',  [ReservationController::class, 'cancel']);
 });
 
-// Phase 10 guest loyalty; later plans add preview.
+// Phase 10 guest loyalty: account, ledger, rewards, redeem, vouchers, preview.
 // No guest id in the URL: the guest is always the token's own.
 Route::middleware('auth:guests')->prefix('loyalty')->group(function () {
     Route::get('/account',  [LoyaltyController::class, 'account']);
@@ -632,6 +632,8 @@ Route::middleware('auth:guests')->prefix('loyalty')->group(function () {
     Route::get('/rewards',  [ApiLoyaltyRewardController::class, 'index']);
     Route::post('/rewards/{reward}/redeem', [ApiLoyaltyRewardController::class, 'redeem'])->middleware('throttle:30,1');
     Route::get('/vouchers', [LoyaltyController::class, 'vouchers']);
+    // Throttled to limit voucher-code probing (Q25).
+    Route::get('/preview',  [LoyaltyController::class, 'preview'])->middleware('throttle:30,1');
 });
 // ──────────────────────────────────────────────────────────────────────
 // ──────────────────────────────────────────────────────────────────────

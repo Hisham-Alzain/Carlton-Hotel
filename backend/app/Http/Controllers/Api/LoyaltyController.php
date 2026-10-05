@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Base\BaseController;
+use App\Http\Requests\Loyalty\LoyaltyPreviewRequest;
 use App\Http\Resources\Loyalty\LoyaltyAccountResource;
 use App\Http\Resources\Loyalty\LoyaltyLedgerEntryResource;
+use App\Http\Resources\Loyalty\LoyaltyPreviewResource;
 use App\Http\Resources\Loyalty\LoyaltyVoucherResource;
 use App\Services\Loyalty\LoyaltyAccountService;
 use App\Services\Loyalty\LoyaltyVoucherService;
@@ -34,6 +36,14 @@ class LoyaltyController extends BaseController
         $result = $this->service->ledger(auth('guests')->user(), $this->indexParams($request), $this->perPageParam($request));
 
         return $this->paginatedSuccess($result['data'], LoyaltyLedgerEntryResource::class, $request);
+    }
+
+    /** What a booking would cost with points or a voucher; writes nothing (LOY-15). */
+    public function preview(LoyaltyPreviewRequest $request): JsonResponse
+    {
+        $result = $this->service->preview(auth('guests')->user(), $request->validated());
+
+        return $this->success(new LoyaltyPreviewResource($result['data']), 'custom.messages.success', $result['code'], $request);
     }
 
     /** The caller's own vouchers, newest first (LOY-14). */

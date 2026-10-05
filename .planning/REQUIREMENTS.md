@@ -103,8 +103,8 @@ All routes are under `/api` (the code has no `/v1` segment — `bootstrap/app.ph
 - [x] **LOY-06**: A guest sees available points, points expiring soon, and a paginated ledger (earn / redeem / expire / adjust / clawback / refund) tied to bookings
 - [x] **LOY-07**: Staff can view any guest's balance and ledger
 - [x] **LOY-08**: Each earn batch expires after the configured months (hotel-local end of day); points are consumed FIFO; expired points are never spendable even before the sweep runs
-- [ ] **LOY-09**: A daily job expires batches and writes expire ledger entries idempotently
-- [ ] **LOY-10**: A guest is notified once per batch N days before expiry through the existing notification system, in the guest's language
+- [x] **LOY-09**: A daily job expires batches and writes expire ledger entries idempotently
+- [x] **LOY-10**: A guest is notified once per batch N days before expiry through the existing notification system, in the guest's language
 - [x] **LOY-11**: Staff manage a rewards catalog (AR/EN name and description, points cost, type discount voucher / free night / room upgrade) with a recycle bin
 - [x] **LOY-12**: A guest can browse active rewards
 - [x] **LOY-13**: A guest redeems a reward into a voucher (code, status, expiry); the redeem is idempotent and transactional and spends points FIFO

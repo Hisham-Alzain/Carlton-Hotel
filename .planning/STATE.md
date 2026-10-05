@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 10
 current_phase_name: Loyalty Points Program
 status: executing
-stopped_at: Completed 10-12-PLAN.md
-last_updated: "2026-10-05T11:41:21.000Z"
+stopped_at: Completed 10-13-PLAN.md
+last_updated: "2026-10-05T12:10:00.000Z"
 last_activity: 2026-10-05
-last_activity_desc: Completed 10-12 (cancel reversals: refund points, restore voucher, claw back earnings; folio-refund seam)
+last_activity_desc: Completed 10-13 (daily loyalty expiry sweep and once-per-batch expiry warning, scheduled 01:00 and 09:00 hotel time)
 progress:
   total_phases: 11
   completed_phases: 5
   total_plans: 98
-  completed_plans: 74
+  completed_plans: 75
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 10 (Loyalty Points Program) — EXECUTING
-Plan: 13 of 15
+Plan: 14 of 15
 Status: Ready to execute
-Last activity: 2026-10-05 — Completed 10-12 (cancelling a reservation reverses loyalty effects; ReverseLoyaltyForFolioAction seam)
+Last activity: 2026-10-05 — Completed 10-13 (loyalty:expire-points and loyalty:notify-expiring, scheduled daily)
 
-Progress: [███████░░░] 75%
+Progress: [████████░░] 77%
 
 ## Performance Metrics
 
@@ -70,6 +70,7 @@ Progress: [███████░░░] 75%
 | Phase 10 P10 | 25min | 2 tasks | 9 files |
 | Phase 10 P11 | 45min | 2 tasks | 7 files |
 | Phase 10 P12 | 40min | 2 tasks | 5 files |
+| Phase 10 P13 | 40min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -107,6 +108,7 @@ Recent decisions affecting current work:
 - [Phase 10-09]: Redeem is one action under the guest lock (guest -> batches) keyed `redeem:reward:{guest_id}:{client_key}`; the reward is re-read inside the write so a stale bound model cannot redeem a just-deactivated reward; voucher expiry is hotel-local end of day (Q13); a missing key answers the shared validation_failed shape (errors.idempotency_key), insufficient-points details sit under `context`; LoyaltyLedger is final, so atomicity is tested through a LoyaltyLedgerEntry::creating listener
 - [Phase ?]: [Phase 10-11]: Booking replay compares stored facts (room type, dates, payment method, promo id, points, voucher code) under the room_type then guest locks and answers 200 before the availability check; the guest lock is taken only when loyalty fields are sent; total_usd is written net at create; staff and OTP bookings never carry loyalty keys
 - [Phase 10-12]: Cancel re-checks status under the reservation row lock and reverses in the same transaction (reservation -> folio -> guest -> application/batches/voucher); refund and voucher restore come before the folio clawback; clawback floors at zero and logs loyalty.clawback_shortfall only for entries written by that call; ReverseLoyaltyForFolioAction is the unit-tested seam for the future folio refund flow; a plain cancel now costs a pinned 7 queries
+- [Phase 10-13]: Expiry sweep is bookkeeping per batch (guest lock, then LoyaltyLedger::expire re-read FOR UPDATE) plus a locked per-voucher flip; the warning is one transaction per guest (row, push, markers) so a push failure rolls back and retries, one guest's failure never stops the others and makes the command exit non-zero; both commands run daily (01:00 and 09:00) in hotel time, withoutOverlapping
 
 ### Pending Todos
 
@@ -140,6 +142,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-05T11:41:21.000Z
-Stopped at: Completed 10-12-PLAN.md
+Last session: 2026-10-05T12:10:00.000Z
+Stopped at: Completed 10-13-PLAN.md
 Resume file: None

@@ -99,7 +99,7 @@ All routes are under `/api` (the code has no `/v1` segment — `bootstrap/app.ph
 - [x] **LOY-02**: With no rates configured the program is inactive (no earning, redemption refused); no rates are seeded
 - [x] **LOY-03**: Settling a folio credits integer points (round half up) on room-stay spend and on services/F&B spend, once, atomically with settlement, under every settlement path, never on a cancelled reservation
 - [x] **LOY-04**: Earning is idempotent: a retried or concurrent settlement never double-credits; guests with no account and unconfigured programs earn nothing; no historical backfill
-- [ ] **LOY-05**: Staff can award or deduct points manually with a mandatory reason, idempotently and audited; a deduction can never exceed the available balance
+- [x] **LOY-05**: Staff can award or deduct points manually with a mandatory reason, idempotently and audited; a deduction can never exceed the available balance
 - [x] **LOY-06**: A guest sees available points, points expiring soon, and a paginated ledger (earn / redeem / expire / adjust / clawback / refund) tied to bookings
 - [x] **LOY-07**: Staff can view any guest's balance and ledger
 - [x] **LOY-08**: Each earn batch expires after the configured months (hotel-local end of day); points are consumed FIFO; expired points are never spendable even before the sweep runs
@@ -114,7 +114,7 @@ All routes are under `/api` (the code has no `/v1` segment — `bootstrap/app.ph
 - [x] **LOY-17**: Cancelling a reservation refunds spent points, restores a used voucher and claws back points earned from its settled folio, idempotently, never producing a negative balance
 - [ ] **LOY-18**: A callable, tested folio-refund reversal exists for the future refund flow
 - [ ] **LOY-19**: Staff can report points issued (earn + positive adjust), redeemed, expired, refunded, clawed back, adjusted out and outstanding points over a period
-- [ ] **LOY-20**: New `loyalty.*` permissions are seeded, enforced by route middleware and shown in the permission picker; no preset changes
+- [x] **LOY-20**: New `loyalty.*` permissions are seeded, enforced by route middleware and shown in the permission picker; no preset changes
 - [x] **LOY-21**: Every new string exists in all five locale files; every new route has happy / 401 / 403 / 422 tests; docs, Postman and the tree are updated
 - [x] **LOY-22**: With `redeem_value_usd` or `max_redeem_percent` unset, points-to-discount is refused (`loyalty_program_inactive`); an unset cap never behaves as 100%, and catalog redemption stays available
 

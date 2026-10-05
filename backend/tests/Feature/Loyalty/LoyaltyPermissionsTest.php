@@ -89,6 +89,35 @@ class LoyaltyPermissionsTest extends TestCase
             ->assertJsonPath('success', true);
     }
 
+    private function reportsAs(string $token): TestResponse
+    {
+        $this->app['auth']->forgetGuards();
+
+        return $this->withToken($token)->getJson('/api/cms/loyalty/reports');
+    }
+
+    public function test_the_loyalty_report_is_403_for_every_preset_and_for_reports_view_or_manage_only(): void
+    {
+        foreach (['reception', 'kitchen', 'housekeeping', 'concierge', 'events', 'content_editor', 'content_manager'] as $role) {
+            $this->reportsAs($this->presetToken($role))
+                ->assertStatus(403)
+                ->assertJsonPath('error_code', 'forbidden');
+        }
+
+        // The revenue report permission does not open the loyalty report (Q7, T-10-55).
+        $this->reportsAs($this->staffToken('reports.view'))->assertStatus(403);
+        // loyalty.manage alone is not enough: the report is a loyalty.view read.
+        $this->reportsAs($this->staffToken('loyalty.manage'))->assertStatus(403);
+        $this->reportsAs($this->staffToken('loyalty.adjust'))->assertStatus(403);
+
+        $this->reportsAs($this->staffToken('loyalty.view'))
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $superAdmin = User::factory()->superAdmin()->create();
+        $this->reportsAs($superAdmin->createToken('t')->plainTextToken)->assertStatus(200);
+    }
+
     public function test_every_staff_loyalty_route_is_behind_auth_users_and_a_loyalty_or_bin_permission(): void
     {
         $allowed = ['loyalty.view', 'loyalty.manage', 'loyalty.adjust', 'cms.restore', 'cms.purge'];

@@ -237,6 +237,7 @@ return [
         'report_period_too_long' => 'Rapor dönemi en fazla 31 gün olabilir.',
         'accepted'               => ':attribute kabul edilmelidir.',
         'loyalty_discount_usd_voucher_only' => 'İndirim tutarına yalnızca indirim kuponu ödüllerinde izin verilir.',
+        'loyalty_report_period_too_long' => 'Rapor dönemi 366 günden uzun olamaz.',
     ],
     'event_checklist' => [
         'contract'  => 'Sözleşme imzalandı',

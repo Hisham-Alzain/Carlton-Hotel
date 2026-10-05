@@ -237,6 +237,7 @@ return [
         'report_period_too_long' => 'يجب ألا تتجاوز فترة التقرير 31 يومًا.',
         'accepted'               => 'يجب قبول :attribute.',
         'loyalty_discount_usd_voucher_only' => 'مبلغ الخصم مسموح فقط لمكافأة قسيمة الخصم.',
+        'loyalty_report_period_too_long' => 'لا يمكن أن تتجاوز فترة التقرير 366 يومًا.',
     ],
     'event_checklist' => [
         'contract'  => 'تم توقيع العقد',

@@ -238,6 +238,7 @@ return [
         'report_period_too_long' => 'The report period may span at most 31 days.',
         'accepted'               => 'The :attribute field must be accepted.',
         'loyalty_discount_usd_voucher_only' => 'A discount amount is only allowed for a discount voucher reward.',
+        'loyalty_report_period_too_long' => 'The report period cannot be longer than 366 days.',
     ],
     'event_checklist' => [
         'contract'  => 'Contract signed',

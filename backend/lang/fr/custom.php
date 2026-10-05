@@ -237,6 +237,7 @@ return [
         'report_period_too_long' => 'La période du rapport ne peut pas dépasser 31 jours.',
         'accepted'               => 'Le champ :attribute doit être accepté.',
         'loyalty_discount_usd_voucher_only' => 'Un montant de remise n\'est autorisé que pour une récompense de type bon de réduction.',
+        'loyalty_report_period_too_long' => 'La période du rapport ne peut pas dépasser 366 jours.',
     ],
     'event_checklist' => [
         'contract'  => 'Contrat signé',

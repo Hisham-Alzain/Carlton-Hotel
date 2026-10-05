@@ -237,6 +237,7 @@ return [
         'report_period_too_long' => 'El período del informe no puede abarcar más de 31 días.',
         'accepted'               => 'El campo :attribute debe ser aceptado.',
         'loyalty_discount_usd_voucher_only' => 'Un importe de descuento solo se permite en una recompensa de tipo cupón de descuento.',
+        'loyalty_report_period_too_long' => 'El período del informe no puede superar los 366 días.',
     ],
     'event_checklist' => [
         'contract'  => 'Contrato firmado',

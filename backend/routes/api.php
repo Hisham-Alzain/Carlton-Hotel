@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\ConversationController as ApiConversationController
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
 use App\Http\Controllers\Admin\LoyaltyGuestController;
+use App\Http\Controllers\Admin\LoyaltyReportController;
 use App\Http\Controllers\Admin\LoyaltyRewardController as AdminLoyaltyRewardController;
 use App\Http\Controllers\Admin\LoyaltySettingController;
 use App\Http\Controllers\Admin\NightAuditController;
@@ -960,6 +961,7 @@ Route::middleware('auth:users')->prefix('cms/loyalty')->group(function () {
     Route::middleware('permission:loyalty.view')->group(function () {
         Route::get('/guests/{guest}',        [LoyaltyGuestController::class, 'show']);
         Route::get('/guests/{guest}/ledger', [LoyaltyGuestController::class, 'ledger']);
+        Route::get('/reports',               [LoyaltyReportController::class, 'index']);
     });
 
     Route::middleware('permission:loyalty.manage')->group(function () {

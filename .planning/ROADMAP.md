@@ -405,7 +405,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8. Events & Dining | 10/10 | Complete | 2026-10-03 (3886416) |
 | 9. Night Audit & Reports | 10/10 | Complete | 2026-10-04 |
 | 9.1. Guest Account & App Support (INSERTED) | 9/9 | Complete | 2026-10-04 (uncommitted) |
-| 10. Loyalty Points Program | 10/15 | In Progress|  |
+| 10. Loyalty Points Program | 11/15 | In Progress|  |
 
 ### Phase 10: Loyalty Points Program
 
@@ -422,7 +422,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
   6. Contract gate: happy / 401 / 403 / 422 per route, 5 locales, docs/Postman/tree updated, Flutter/React teams notified of the contract strings and error codes.
 
 **Research**: Done (`10-RESEARCH.md`); rulings in `10-DISCUSSION-LOG.md`.
-**Plans:** 10/15 plans executed
+**Plans:** 11/15 plans executed
 
 Plans:
 
@@ -436,7 +436,7 @@ Plans:
 - [x] 10-08-PLAN.md — Rewards CRUD with recycle bin, guest catalog (LOY-11, LOY-12)
 - [x] 10-09-PLAN.md — Redeem into voucher, my vouchers (LOY-13, LOY-14, LOY-22)
 - [x] 10-10-PLAN.md — `PriceLoyaltyRedemptionAction` and `GET /loyalty/preview` (LOY-15, LOY-16, LOY-22)
-- [ ] 10-11-PLAN.md — Booking with points or voucher, idempotent replay (LOY-16)
+- [x] 10-11-PLAN.md — Booking with points or voucher, idempotent replay (LOY-16)
 - [ ] 10-12-PLAN.md — Cancel reversals and folio-refund seam (LOY-17, LOY-18)
 - [ ] 10-13-PLAN.md — Daily expiry and expiry-warning jobs (LOY-08, LOY-09, LOY-10)
 - [ ] 10-14-PLAN.md — Loyalty reports (LOY-19, LOY-20)

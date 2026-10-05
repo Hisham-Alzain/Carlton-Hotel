@@ -70,6 +70,7 @@ return [
         'night_audit_closed'           => 'Business date closed.',
         'exchange_rate_recorded'       => 'Exchange rate saved.',
         'loyalty_settings_updated'     => 'Loyalty settings updated.',
+        'loyalty_points_adjusted'      => 'Loyalty points adjusted.',
     ],
     'errors'     => [
         'server_error'           => 'Something went wrong.',

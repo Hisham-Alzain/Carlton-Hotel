@@ -2,11 +2,13 @@
 
 namespace App\Services\Loyalty;
 
+use App\Actions\Loyalty\AdjustLoyaltyPointsAction;
 use App\Base\BaseService;
 use App\Enums\LoyaltyEntryType;
 use App\Filters\LoyaltyLedgerFilter;
 use App\Models\Guest;
 use App\Models\LoyaltyLedgerEntry;
+use App\Models\User;
 use App\Support\LoyaltyLedger;
 use App\Support\LoyaltyProgram;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +33,28 @@ class LoyaltyAccountService extends BaseService
         'performer:id,uuid,name',
     ];
 
-    public function __construct(private readonly LoyaltyLedger $points) {}
+    public function __construct(
+        private readonly LoyaltyLedger $points,
+        private readonly AdjustLoyaltyPointsAction $adjustPoints,
+    ) {}
+
+    /**
+     * Staff award (positive) or deduct (negative) points, once per
+     * `idempotency_key` (LOY-05, Q20).
+     *
+     * @param  array{points: int, reason: string, idempotency_key: string}  $data
+     * @return array{data: LoyaltyLedgerEntry, code: int}
+     */
+    public function adjust(Guest $guest, array $data, User $actor): array
+    {
+        return $this->adjustPoints->handle(
+            $guest,
+            (int) $data['points'],
+            (string) $data['reason'],
+            $actor,
+            (string) $data['idempotency_key'],
+        );
+    }
 
     /**
      * Balance, expiry horizon, lifetime figures and the program values, in

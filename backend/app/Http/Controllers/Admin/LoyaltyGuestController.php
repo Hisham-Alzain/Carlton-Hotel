@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Base\BaseController;
+use App\Http\Requests\Loyalty\AdjustLoyaltyPointsRequest;
 use App\Http\Resources\Loyalty\LoyaltyAccountResource;
 use App\Http\Resources\Loyalty\LoyaltyLedgerEntryResource;
 use App\Models\Guest;
@@ -30,5 +31,12 @@ class LoyaltyGuestController extends BaseController
         $result = $this->service->ledger($guest, $this->indexParams($request), $this->perPageParam($request));
 
         return $this->paginatedSuccess($result['data'], LoyaltyLedgerEntryResource::class, $request);
+    }
+
+    public function adjust(AdjustLoyaltyPointsRequest $request, Guest $guest): JsonResponse
+    {
+        $result = $this->service->adjust($guest, $request->validated(), $request->user());
+
+        return $this->success(new LoyaltyLedgerEntryResource($result['data']), 'custom.messages.loyalty_points_adjusted', $result['code'], $request);
     }
 }

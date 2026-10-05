@@ -950,4 +950,8 @@ Route::middleware('auth:users')->prefix('cms/loyalty')->group(function () {
     Route::middleware('permission:loyalty.manage')->group(function () {
         Route::put('/settings', [LoyaltySettingController::class, 'update']);
     });
+
+    Route::middleware('permission:loyalty.adjust')->group(function () {
+        Route::post('/guests/{guest}/adjustments', [LoyaltyGuestController::class, 'adjust']);
+    });
 });

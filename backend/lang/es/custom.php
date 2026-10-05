@@ -171,6 +171,10 @@ return [
             'title' => 'Tu check-in ha sido aprobado',
             'body'  => 'Tu llave digital está lista en la app.',
         ],
+        'loyalty_points_expiring' => [
+            'title' => 'Tus puntos vencen pronto',
+            'body'  => ':points puntos vencen el :date. Úsalos antes de que se pierdan.',
+        ],
     ],
     'receipt'    => [
         'title'          => 'Recibo de la estancia',

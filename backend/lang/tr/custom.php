@@ -171,6 +171,10 @@ return [
             'title' => 'Girişiniz onaylandı',
             'body'  => 'Dijital anahtarınız uygulamada hazır.',
         ],
+        'loyalty_points_expiring' => [
+            'title' => 'Puanlarınızın süresi yakında doluyor',
+            'body'  => ':points puanın süresi :date tarihinde doluyor. Süresi dolmadan kullanın.',
+        ],
     ],
     'receipt'    => [
         'title'          => 'Konaklama Makbuzu',

@@ -171,6 +171,10 @@ return [
             'title' => 'Votre enregistrement est approuvé',
             'body'  => "Votre clé numérique est prête dans l'application.",
         ],
+        'loyalty_points_expiring' => [
+            'title' => 'Vos points expirent bientôt',
+            'body'  => ':points points expirent le :date. Utilisez-les avant qu\'ils ne disparaissent.',
+        ],
     ],
     'receipt'    => [
         'title'          => 'Reçu de séjour',

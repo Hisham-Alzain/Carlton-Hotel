@@ -171,6 +171,11 @@ return [
             'title' => 'Your check-in is approved',
             'body'  => 'Your digital key is ready in the app.',
         ],
+        // Phase 10 (LOY-10): sent once per batch, N days before loyalty points expire.
+        'loyalty_points_expiring' => [
+            'title' => 'Your points expire soon',
+            'body'  => ':points points expire on :date. Use them before they go.',
+        ],
     ],
     'receipt'    => [
         'title'          => 'Stay Receipt',

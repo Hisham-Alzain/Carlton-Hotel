@@ -20,3 +20,12 @@ Schedule::command('stays:expire-digital-keys')->everyFifteenMinutes()->withoutOv
 // hundreds of file unlinks on a big clear-out. `withoutOverlapping()` stops a
 // slow run being joined by the next night's.
 Schedule::command('cms:purge-bin')->dailyAt('03:15')->withoutOverlapping();
+
+// Phase 10 (LOY-09): the daily expiry sweep is bookkeeping only (expired points
+// are already unspendable via `expires_at > now()`), so a quiet 01:00 hotel time
+// suffices. Hotel timezone so "daily" matches the hotel's calendar day.
+Schedule::command('loyalty:expire-points')->dailyAt('01:00')->timezone(config('hotel.timezone'))->withoutOverlapping();
+
+// Phase 10 (LOY-10): warn each guest once per batch, N days before expiry. 09:00
+// hotel time so the push lands in waking hours; the per-batch marker keeps it once.
+Schedule::command('loyalty:notify-expiring')->dailyAt('09:00')->timezone(config('hotel.timezone'))->withoutOverlapping();

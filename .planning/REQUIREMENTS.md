@@ -100,8 +100,8 @@ All routes are under `/api` (the code has no `/v1` segment — `bootstrap/app.ph
 - [x] **LOY-03**: Settling a folio credits integer points (round half up) on room-stay spend and on services/F&B spend, once, atomically with settlement, under every settlement path, never on a cancelled reservation
 - [x] **LOY-04**: Earning is idempotent: a retried or concurrent settlement never double-credits; guests with no account and unconfigured programs earn nothing; no historical backfill
 - [ ] **LOY-05**: Staff can award or deduct points manually with a mandatory reason, idempotently and audited; a deduction can never exceed the available balance
-- [ ] **LOY-06**: A guest sees available points, points expiring soon, and a paginated ledger (earn / redeem / expire / adjust / clawback / refund) tied to bookings
-- [ ] **LOY-07**: Staff can view any guest's balance and ledger
+- [x] **LOY-06**: A guest sees available points, points expiring soon, and a paginated ledger (earn / redeem / expire / adjust / clawback / refund) tied to bookings
+- [x] **LOY-07**: Staff can view any guest's balance and ledger
 - [x] **LOY-08**: Each earn batch expires after the configured months (hotel-local end of day); points are consumed FIFO; expired points are never spendable even before the sweep runs
 - [ ] **LOY-09**: A daily job expires batches and writes expire ledger entries idempotently
 - [ ] **LOY-10**: A guest is notified once per batch N days before expiry through the existing notification system, in the guest's language

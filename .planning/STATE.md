@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 10
 current_phase_name: Loyalty Points Program
 status: executing
-stopped_at: Completed 10-14-PLAN.md
-last_updated: "2026-10-05T13:00:00.000Z"
+stopped_at: Completed 10-15-PLAN.md
+last_updated: "2026-10-05T15:00:00.000Z"
 last_activity: 2026-10-05
-last_activity_desc: Completed 10-14 (GET /cms/loyalty/reports: per-type points over a hotel-local period plus outstanding points and USD liability, loyalty.view only)
+last_activity_desc: Completed 10-15 (dashboard + mobile guides, changelog, Postman Loyalty folder, tree nodes, phase gate, LOY coverage summary); Phase 10 awaiting verification
 progress:
   total_phases: 11
   completed_phases: 5
   total_plans: 98
-  completed_plans: 76
+  completed_plans: 77
 ---
 
 # Project State
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 
 Phase: 10 (Loyalty Points Program) — EXECUTING
 Plan: 15 of 15
-Status: Ready to execute
-Last activity: 2026-10-05 — Completed 10-14 (GET /api/cms/loyalty/reports, loyalty.view)
+Status: All 15 plans executed; awaiting phase verification (open follow-up: account-deletion loyalty forfeit has no plan)
+Last activity: 2026-10-05 — Completed 10-15 (guides, Postman, tree, phase gate, coverage summary)
 
-Progress: [████████░░] 77%
+Progress: [████████░░] 79%
 
 ## Performance Metrics
 
@@ -72,6 +72,7 @@ Progress: [████████░░] 77%
 | Phase 10 P12 | 40min | 2 tasks | 5 files |
 | Phase 10 P13 | 40min | 2 tasks | 13 files |
 | Phase 10 P14 | 30min | 2 tasks | 12 files |
+| Phase 10 P15 | 60min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,7 @@ Recent decisions affecting current work:
 - [Phase 10-12]: Cancel re-checks status under the reservation row lock and reverses in the same transaction (reservation -> folio -> guest -> application/batches/voucher); refund and voucher restore come before the folio clawback; clawback floors at zero and logs loyalty.clawback_shortfall only for entries written by that call; ReverseLoyaltyForFolioAction is the unit-tested seam for the future folio refund flow; a plain cancel now costs a pinned 7 queries
 - [Phase 10-13]: Expiry sweep is bookkeeping per batch (guest lock, then LoyaltyLedger::expire re-read FOR UPDATE) plus a locked per-voucher flip; the warning is one transaction per guest (row, push, markers) so a push failure rolls back and retries, one guest's failure never stops the others and makes the command exit non-zero; both commands run daily (01:00 and 09:00) in hotel time, withoutOverlapping
 - [Phase 10-14]: The loyalty report is a plain LoyaltyReportService (no Phase 9 symbol, loyalty.view not reports.view) over the half-open HotelClock::dayWindow range of occurred_at, max 366 days; refunds are their own line, never issued; outstanding_points and liability_usd are point in time (active batches with expires_at > now) and liability is null while the redeem value is unset; the query count is pinned at 3
+- [Phase 10-15]: Docs are written from captured real responses (a temporary dump test, deleted); a missing Idempotency-Key is documented as the shared validation_failed shape (no top-level code); loyalty.view is documented as required for adjusters; the adjust 201 now returns shortfall_points 0 like its replay (resource int cast); the tree gets two leaf nodes (api:true 92 -> 94 as text); the account-deletion loyalty forfeit hook from Phase 9.1 is NOT implemented and is recorded as an open follow-up
 
 ### Pending Todos
 
@@ -144,6 +146,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-05T13:00:00.000Z
-Stopped at: Completed 10-14-PLAN.md
+Last session: 2026-10-05T15:00:00.000Z
+Stopped at: Completed 10-15-PLAN.md
 Resume file: None

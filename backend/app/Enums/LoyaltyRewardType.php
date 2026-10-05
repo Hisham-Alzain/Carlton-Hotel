@@ -15,4 +15,10 @@ enum LoyaltyRewardType: string
     case DISCOUNT_VOUCHER = 'discount_voucher';
     case FREE_NIGHT = 'free_night';
     case ROOM_UPGRADE = 'room_upgrade';
+
+    /** Display name in the request locale; the API value itself never translates. */
+    public function label(): string
+    {
+        return __('custom.loyalty.reward_types.'.$this->value);
+    }
 }

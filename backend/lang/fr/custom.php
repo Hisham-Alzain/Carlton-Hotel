@@ -231,6 +231,7 @@ return [
         'prohibits'            => 'Le champ :attribute ne peut pas être utilisé avec :other.',
         'report_period_too_long' => 'La période du rapport ne peut pas dépasser 31 jours.',
         'accepted'               => 'Le champ :attribute doit être accepté.',
+        'loyalty_discount_usd_voucher_only' => 'Un montant de remise n\'est autorisé que pour une récompense de type bon de réduction.',
     ],
     'event_checklist' => [
         'contract'  => 'Contrat signé',
@@ -284,6 +285,11 @@ return [
             'service'  => 'Services et restauration',
             'manual'   => 'Ajustement par le personnel',
             'refund'   => 'Remboursement',
+        ],
+        'reward_types' => [
+            'discount_voucher' => 'Bon de réduction',
+            'free_night'       => 'Nuit gratuite',
+            'room_upgrade'     => 'Surclassement de chambre',
         ],
     ],
 ];

@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\ConversationController as ApiConversationController
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Admin\DiningVenueController as AdminDiningVenueController;
 use App\Http\Controllers\Admin\LoyaltyGuestController;
+use App\Http\Controllers\Admin\LoyaltyRewardController as AdminLoyaltyRewardController;
 use App\Http\Controllers\Admin\LoyaltySettingController;
 use App\Http\Controllers\Admin\NightAuditController;
 use App\Http\Controllers\Admin\OperationsQueueController;
@@ -68,6 +69,7 @@ use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialControll
 use App\Http\Controllers\Api\AvailabilityController;
 use App\Http\Controllers\Api\DiningVenueController as ApiDiningVenueController;
 use App\Http\Controllers\Api\LoyaltyController;
+use App\Http\Controllers\Api\LoyaltyRewardController as ApiLoyaltyRewardController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\EventSpaceController as ApiEventSpaceController;
 use App\Http\Controllers\Api\FacilityController as ApiFacilityController;
@@ -259,7 +261,10 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
     // return and belongs to `content_manager`. The bin listing admits either,
     // since it is only useful to someone who can act on a row in it.
     //
-    // 17 of the 18 soft-deletable models are here. `SiteSetting` is not: it has
+    // 18 of the 19 soft-deletable models are here (the loyalty rewards catalog
+    // joined in Phase 10, behind the same cms.restore / cms.purge gates rather
+    // than loyalty.manage, so a program manager cannot empty the bin).
+    // `SiteSetting` is not: it has
     // no per-row delete route at all (settings are one atomic bulk PUT through
     // `UpsertSiteSettingsAction`), so nothing an API client can do puts a
     // setting in the bin and the three verbs would address an empty set.
@@ -281,6 +286,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::get('/journal-posts/trashed',      [AdminJournalPostController::class, 'trashed']);
         Route::get('/menu-categories/trashed',    [MenuCategoryController::class, 'trashed']);
         Route::get('/menu-items/trashed',         [MenuItemController::class, 'trashed']);
+        Route::get('/loyalty/rewards/trashed',    [AdminLoyaltyRewardController::class, 'trashed']);
     });
 
     Route::middleware('permission:cms.restore')->group(function () {
@@ -301,6 +307,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::post('/journal-posts/{journalPost}/restore',        [AdminJournalPostController::class, 'restore'])->withTrashed();
         Route::post('/menu-categories/{menuCategory}/restore',     [MenuCategoryController::class, 'restore'])->withTrashed();
         Route::post('/menu-items/{menuItem}/restore',              [MenuItemController::class, 'restore'])->withTrashed();
+        Route::post('/loyalty/rewards/{reward}/restore',           [AdminLoyaltyRewardController::class, 'restore'])->withTrashed();
     });
 
     Route::middleware('permission:cms.purge')->group(function () {
@@ -321,6 +328,7 @@ Route::middleware('auth:users')->prefix('cms')->group(function () {
         Route::delete('/journal-posts/{journalPost}/force',        [AdminJournalPostController::class, 'forceDestroy'])->withTrashed();
         Route::delete('/menu-categories/{menuCategory}/force',     [MenuCategoryController::class, 'forceDestroy'])->withTrashed();
         Route::delete('/menu-items/{menuItem}/force',              [MenuItemController::class, 'forceDestroy'])->withTrashed();
+        Route::delete('/loyalty/rewards/{reward}/force',           [AdminLoyaltyRewardController::class, 'forceDestroy'])->withTrashed();
     });
 
     // ── Reads (cms.view, or cms.edit which implies it) ────────────────
@@ -616,11 +624,12 @@ Route::middleware('auth:guests')->prefix('reservations')->group(function () {
     Route::delete('/{reservation}',  [ReservationController::class, 'cancel']);
 });
 
-// Phase 10 guest loyalty; later plans add rewards, vouchers, preview.
+// Phase 10 guest loyalty; later plans add vouchers, preview.
 // No id in the URL: the guest is always the token's own.
 Route::middleware('auth:guests')->prefix('loyalty')->group(function () {
     Route::get('/account', [LoyaltyController::class, 'account']);
     Route::get('/ledger',  [LoyaltyController::class, 'ledger']);
+    Route::get('/rewards', [ApiLoyaltyRewardController::class, 'index']);
 });
 // ──────────────────────────────────────────────────────────────────────
 // ──────────────────────────────────────────────────────────────────────
@@ -940,6 +949,8 @@ Route::middleware('auth:users')->prefix('support-tickets')->group(function () {
 Route::middleware('auth:users')->prefix('cms/loyalty')->group(function () {
     Route::middleware('permission:loyalty.view|loyalty.manage')->group(function () {
         Route::get('/settings', [LoyaltySettingController::class, 'show']);
+        Route::get('/rewards',          [AdminLoyaltyRewardController::class, 'index']);
+        Route::get('/rewards/{reward}', [AdminLoyaltyRewardController::class, 'show']);
     });
 
     Route::middleware('permission:loyalty.view')->group(function () {
@@ -949,6 +960,9 @@ Route::middleware('auth:users')->prefix('cms/loyalty')->group(function () {
 
     Route::middleware('permission:loyalty.manage')->group(function () {
         Route::put('/settings', [LoyaltySettingController::class, 'update']);
+        Route::post  ('/rewards',          [AdminLoyaltyRewardController::class, 'store']);
+        Route::put   ('/rewards/{reward}', [AdminLoyaltyRewardController::class, 'update']);
+        Route::delete('/rewards/{reward}', [AdminLoyaltyRewardController::class, 'destroy']);
     });
 
     Route::middleware('permission:loyalty.adjust')->group(function () {

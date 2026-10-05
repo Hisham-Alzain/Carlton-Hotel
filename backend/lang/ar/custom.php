@@ -231,6 +231,7 @@ return [
         'prohibits'            => 'لا يمكن استخدام الحقل :attribute مع :other.',
         'report_period_too_long' => 'يجب ألا تتجاوز فترة التقرير 31 يومًا.',
         'accepted'               => 'يجب قبول :attribute.',
+        'loyalty_discount_usd_voucher_only' => 'مبلغ الخصم مسموح فقط لمكافأة قسيمة الخصم.',
     ],
     'event_checklist' => [
         'contract'  => 'تم توقيع العقد',
@@ -284,6 +285,11 @@ return [
             'service'  => 'الخدمات والمطاعم',
             'manual'   => 'تعديل من الموظفين',
             'refund'   => 'استرداد',
+        ],
+        'reward_types' => [
+            'discount_voucher' => 'قسيمة خصم',
+            'free_night'       => 'ليلة مجانية',
+            'room_upgrade'     => 'ترقية الغرفة',
         ],
     ],
 ];

@@ -231,6 +231,7 @@ return [
         'prohibits'            => 'The :attribute field cannot be used together with :other.',
         'report_period_too_long' => 'The report period may span at most 31 days.',
         'accepted'               => 'The :attribute field must be accepted.',
+        'loyalty_discount_usd_voucher_only' => 'A discount amount is only allowed for a discount voucher reward.',
     ],
     'event_checklist' => [
         'contract'  => 'Contract signed',
@@ -284,6 +285,11 @@ return [
             'service'  => 'Services & dining',
             'manual'   => 'Staff adjustment',
             'refund'   => 'Refund',
+        ],
+        'reward_types' => [
+            'discount_voucher' => 'Discount voucher',
+            'free_night'       => 'Free night',
+            'room_upgrade'     => 'Room upgrade',
         ],
     ],
 ];

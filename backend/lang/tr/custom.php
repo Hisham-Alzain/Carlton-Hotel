@@ -231,6 +231,7 @@ return [
         'prohibits'            => ':attribute alanı :other ile birlikte kullanılamaz.',
         'report_period_too_long' => 'Rapor dönemi en fazla 31 gün olabilir.',
         'accepted'               => ':attribute kabul edilmelidir.',
+        'loyalty_discount_usd_voucher_only' => 'İndirim tutarına yalnızca indirim kuponu ödüllerinde izin verilir.',
     ],
     'event_checklist' => [
         'contract'  => 'Sözleşme imzalandı',
@@ -284,6 +285,11 @@ return [
             'service'  => 'Hizmetler ve yemek',
             'manual'   => 'Personel düzenlemesi',
             'refund'   => 'İade',
+        ],
+        'reward_types' => [
+            'discount_voucher' => 'İndirim kuponu',
+            'free_night'       => 'Ücretsiz gece',
+            'room_upgrade'     => 'Oda yükseltme',
         ],
     ],
 ];

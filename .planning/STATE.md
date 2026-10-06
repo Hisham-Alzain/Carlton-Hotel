@@ -32,6 +32,8 @@ Plan: 15 of 15
 Status: All 15 plans executed; awaiting phase verification (open follow-up: account-deletion loyalty forfeit has no plan)
 Last activity: 2026-10-05 — Completed 10-15 (guides, Postman, tree, phase gate, coverage summary)
 
+Phase 9.1 (Guest Account & App Support): 9/9 plans complete, uncommitted (see `.planning/phases/09.1-guest-account-support/SUMMARY.md`). No new permission: the catalogue is still 30/13, so Phase 10's permission baseline is unchanged. Phase 10 hook from 9.1: account deletion must forfeit the loyalty balance (DeleteGuestAccountAction).
+
 Progress: [████████░░] 79%
 
 ## Performance Metrics

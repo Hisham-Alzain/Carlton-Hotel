@@ -117,6 +117,7 @@ All routes are under `/api` (the code has no `/v1` segment — `bootstrap/app.ph
 - [x] **LOY-20**: New `loyalty.*` permissions are seeded, enforced by route middleware and shown in the permission picker; no preset changes
 - [x] **LOY-21**: Every new string exists in all five locale files; every new route has happy / 401 / 403 / 422 tests; docs, Postman and the tree are updated
 - [x] **LOY-22**: With `redeem_value_usd` or `max_redeem_percent` unset, points-to-discount is refused (`loyalty_program_inactive`); an unset cap never behaves as 100%, and catalog redemption stays available
+- [ ] **LOY-23**: When a guest deletes their account, every active points batch is forfeited (expire entries) and every unspent voucher is closed in the same transaction, idempotently and without a negative balance; a deleted guest gets no expiry warning and no staff adjustment, reports exclude the forfeited points, and the deletion audit entry carries counts only (no PII)
 
 ### Documentation & Contract
 
@@ -209,13 +210,36 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOCALE-01 | Phase 9.1 | Complete |
 | FX-01 | Phase 9.1 | Complete |
 | FX-02 | Phase 9.1 | Complete |
+| LOY-01 | Phase 10 | Complete |
+| LOY-02 | Phase 10 | Complete |
+| LOY-03 | Phase 10 | Complete |
+| LOY-04 | Phase 10 | Complete |
+| LOY-05 | Phase 10 | Complete |
+| LOY-06 | Phase 10 | Complete |
+| LOY-07 | Phase 10 | Complete |
+| LOY-08 | Phase 10 | Complete |
+| LOY-09 | Phase 10 | Complete |
+| LOY-10 | Phase 10 | Complete |
+| LOY-11 | Phase 10 | Complete |
+| LOY-12 | Phase 10 | Complete |
+| LOY-13 | Phase 10 | Complete |
+| LOY-14 | Phase 10 | Complete |
+| LOY-15 | Phase 10 | Complete |
+| LOY-16 | Phase 10 | Complete |
+| LOY-17 | Phase 10 | Complete |
+| LOY-18 | Phase 10 | Complete |
+| LOY-19 | Phase 10 | Complete |
+| LOY-20 | Phase 10 | Complete |
+| LOY-21 | Phase 10 | Complete |
+| LOY-22 | Phase 10 | Complete |
+| LOY-23 | Phase 10 (gap closure) | Pending |
 
 **Coverage:**
 
-- v1 requirements: 80 total (AUDIT-04 added 2026-10-04 as Phase 9 scope completion; LOY-01..22 added 2026-10-04 for Phase 10; GACC-01..03, LOCALE-01, FX-01..02 added 2026-10-04 for inserted Phase 9.1)
-- Mapped to phases: 80
+- v1 requirements: 81 total (AUDIT-04 added 2026-10-04 as Phase 9 scope completion; LOY-01..22 added 2026-10-04 for Phase 10; LOY-23 added 2026-10-05 to close the Phase 10 verification gap; GACC-01..03, LOCALE-01, FX-01..02 added 2026-10-04 for inserted Phase 9.1)
+- Mapped to phases: 81
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-25*
-*Last updated: 2026-10-04 — Phase 9.1 inserted: GACC-01..03, LOCALE-01, FX-01..02 added (LOY-01..LOY-22 added earlier the same day for Phase 10)*
+*Last updated: 2026-10-05 — LOY-23 added (Phase 10 gap closure: forfeit loyalty balance on guest account deletion); LOY-01..22 rows added to Traceability. Earlier: 2026-10-04 Phase 9.1 inserted: GACC-01..03, LOCALE-01, FX-01..02 added (LOY-01..LOY-22 added earlier the same day for Phase 10)*

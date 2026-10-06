@@ -411,7 +411,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 **Goal**: Guests earn integer points once per settled folio, see a FIFO-expiring balance and ledger, redeem catalog rewards into vouchers and pay part of a booking with points; cancellations undo every loyalty effect without ever producing a negative balance. Staff configure the six program values, manage the catalog, adjust points with an audited reason and report issued/redeemed/expired points.
 **Depends on**: Phase 3 (`HotelClock`), Phase 4 (`NotificationService::pushToGuest`), Phase 5 (settle/payment actions, `IdempotentWrite`, `FolioLedger`). Ordered after Phase 9 only because both edit the permission catalogue, `routes/api.php`, five lang files and docs (soft dependency; execute after the Phase 9 commit and re-read permission counts at execution). Executes after Phase 9.1 (INSERTED). 9.1 adds no permission, so the baseline is still 30/13. Phase 10 must add one thing: when a guest account is deleted (9.1 `DeleteGuestAccountAction`), the loyalty balance is forfeited (expire entries), and the deletion activity counts stay PII-free.
-**Requirements**: LOY-01 .. LOY-22
+**Requirements**: LOY-01 .. LOY-23
 **Success Criteria** (what must be TRUE):
 
   1. Every settlement path (`SettleFolioAction` x2, `RecordFolioPaymentAction` auto-settle) credits half-up points per `stay`/`service` bucket inside the folio-locked transaction, exactly once, never for cancelled reservations, and nothing when `earn_rate` is unset.
@@ -422,22 +422,73 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
   6. Contract gate: happy / 401 / 403 / 422 per route, 5 locales, docs/Postman/tree updated, Flutter/React teams notified of the contract strings and error codes.
 
 **Research**: Done (`10-RESEARCH.md`); rulings in `10-DISCUSSION-LOG.md`.
-**Plans:** 15/15 plans executed
+**Plans:** 15/17 plans executed (2 gap-closure plans for LOY-23)
 
 Plans:
+**Wave 1**
 
 - [x] 10-01-PLAN.md — Foundation: Phase 9 committed check, 7 tables, 6 enums, `config/loyalty.php`, models, factories, `BuildsLoyaltyFixtures` (LOY-02, LOY-04, LOY-08, LOY-17)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [x] 10-02-PLAN.md — `LoyaltyMath`, `LoyaltyProgram`, 8 exceptions, error keys in 5 locales (LOY-02, LOY-08, LOY-21, LOY-22)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [x] 10-03-PLAN.md — `LoyaltyLedger`: FIFO spend, refund, clawback, expire (LOY-08, LOY-13, LOY-17)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [x] 10-04-PLAN.md — Settings API, 3 `loyalty.*` permissions, count re-pins (LOY-01, LOY-02, LOY-20, LOY-21, LOY-22)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [x] 10-05-PLAN.md — Earn wired into the 3 settlement sites (LOY-02, LOY-03, LOY-04)
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
 - [x] 10-06-PLAN.md — Guest account and ledger, staff guest view (LOY-06, LOY-07, LOY-08)
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
 - [x] 10-07-PLAN.md — Manual adjust (LOY-05, LOY-20)
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
 - [x] 10-08-PLAN.md — Rewards CRUD with recycle bin, guest catalog (LOY-11, LOY-12)
+
+**Wave 9** *(blocked on Wave 8 completion)*
+
 - [x] 10-09-PLAN.md — Redeem into voucher, my vouchers (LOY-13, LOY-14, LOY-22)
+
+**Wave 10** *(blocked on Wave 9 completion)*
+
 - [x] 10-10-PLAN.md — `PriceLoyaltyRedemptionAction` and `GET /loyalty/preview` (LOY-15, LOY-16, LOY-22)
+
+**Wave 11** *(blocked on Wave 10 completion)*
+
 - [x] 10-11-PLAN.md — Booking with points or voucher, idempotent replay (LOY-16)
+
+**Wave 12** *(blocked on Wave 11 completion)*
+
 - [x] 10-12-PLAN.md — Cancel reversals and folio-refund seam (LOY-17, LOY-18)
+
+**Wave 13** *(blocked on Wave 12 completion)*
+
 - [x] 10-13-PLAN.md — Daily expiry and expiry-warning jobs (LOY-08, LOY-09, LOY-10)
+
+**Wave 14** *(blocked on Wave 13 completion)*
+
 - [x] 10-14-PLAN.md — Loyalty reports (LOY-19, LOY-20)
+
+**Wave 15** *(blocked on Wave 14 completion)*
+
 - [x] 10-15-PLAN.md — Guides, Postman, tree, phase gate, SUMMARY (LOY-01, LOY-21)
+
+**Wave 16** *(blocked on Wave 15 completion)*
+
+- [ ] 10-16-PLAN.md — Gap: forfeit loyalty balance and close vouchers on account deletion, re-forfeit on later reversal (LOY-23, LOY-09, LOY-17)
+
+**Wave 17** *(blocked on Wave 16 completion)*
+
+- [ ] 10-17-PLAN.md — Gap: deleted-guest guards for expiry warning, staff adjust and report; guides and changelog; phase gate (LOY-23, LOY-05, LOY-10, LOY-19)

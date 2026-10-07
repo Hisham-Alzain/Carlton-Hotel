@@ -95,6 +95,7 @@ return [
         'cannot_self_deactivate' => 'No puede desactivar su propia cuenta.',
         'unknown_permission'       => 'Uno o más permisos no son válidos.',
         'no_availability'          => 'No hay habitaciones disponibles para las fechas seleccionadas.',
+        'occupancy_exceeded'       => 'Este tipo de habitación admite como máximo :max huéspedes.',
         'room_already_assigned'    => 'Esta habitación ya está asignada para fechas que se solapan.',
         'invalid_promo'            => 'El código promocional no es válido o ha caducado.',
         'reservation_state'        => 'Esta acción no está permitida en el estado actual de la reserva.',

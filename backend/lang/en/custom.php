@@ -95,6 +95,7 @@ return [
         'cannot_self_deactivate' => 'You cannot deactivate your own account.',
         'unknown_permission'       => 'One or more permissions are invalid.',
         'no_availability'          => 'No rooms available for the selected dates.',
+        'occupancy_exceeded'       => 'This room type sleeps at most :max guests.',
         'room_already_assigned'    => 'This room is already assigned for the overlapping dates.',
         'invalid_promo'            => 'The promo code is invalid or has expired.',
         'reservation_state'        => 'This action is not allowed in the current reservation state.',

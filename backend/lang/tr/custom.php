@@ -95,6 +95,7 @@ return [
         'cannot_self_deactivate' => 'Kendi hesabınızı devre dışı bırakamazsınız.',
         'unknown_permission'       => 'Bir veya daha fazla izin geçersiz.',
         'no_availability'          => 'Seçilen tarihler için uygun oda yok.',
+        'occupancy_exceeded'       => 'Bu oda tipi en fazla :max misafir alabilir.',
         'room_already_assigned'    => 'Bu oda, çakışan tarihler için zaten atanmış.',
         'invalid_promo'            => 'Promosyon kodu geçersiz veya süresi dolmuş.',
         'reservation_state'        => 'Bu işlem, rezervasyonun mevcut durumunda yapılamaz.',

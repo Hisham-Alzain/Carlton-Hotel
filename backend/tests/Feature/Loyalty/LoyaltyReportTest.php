@@ -340,4 +340,37 @@ class LoyaltyReportTest extends TestCase
         // Pinned: settings row, one grouped ledger aggregate, one outstanding sum.
         $this->assertSame(3, $full);
     }
+
+    // ------------------------------------------------------------------ LOY-23: deleted accounts
+
+    public function test_outstanding_and_liability_leave_out_a_deleted_account(): void
+    {
+        $this->configureLoyalty(['redeem_value_usd' => '0.0100']);
+        $this->grantPoints(Guest::factory()->create(), 300, now()->addMonths(3));
+        // Residue (G-10): an account deleted before the forfeit shipped still holds a live batch.
+        $this->grantPoints(Guest::factory()->deleted()->create(), 700, now()->addMonths(3));
+
+        $this->report(['date_from' => '2027-03-01', 'date_to' => '2027-03-31'])
+            ->assertOk()
+            ->assertJsonPath('data.outstanding_points', 300)
+            ->assertJsonPath('data.liability_usd', '3.00');
+    }
+
+    public function test_the_query_budget_is_unchanged_with_a_deleted_account_present(): void
+    {
+        $this->configureLoyalty(['redeem_value_usd' => '0.0100']);
+        $this->grantPoints(Guest::factory()->create(), 300, now()->addMonths(3));
+        $this->grantPoints(Guest::factory()->deleted()->create(), 700, now()->addMonths(3));
+
+        $queries = $this->countDomainQueries(function (): void {
+            $data = app(LoyaltyReportService::class)->report('2027-03-01', '2027-03-31')['data'];
+            $this->assertSame(300, $data['outstanding_points']);
+            (new LoyaltyReportResource($data))->resolve(Request::create('/'));
+        });
+
+        // Same pin as test_the_query_budget_is_fixed_and_does_not_grow_with_the_ledger:
+        // 3 = settings row, one grouped ledger aggregate, one outstanding sum
+        // (the deleted-account filter compiles into that same single statement).
+        $this->assertSame(3, $queries);
+    }
 }

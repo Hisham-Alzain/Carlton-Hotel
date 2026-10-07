@@ -269,7 +269,10 @@ class DeleteGuestAccountActionTest extends TestCase
         $this->assertSame($this->guest->id, (int) $entry->subject_id);
         $this->assertSame(Guest::class, $entry->causer_type);
         $this->assertSame($this->guest->id, (int) $entry->causer_id);
-        $this->assertSame(['retained' => ['reservations' => 2, 'documents' => 1]], json_decode($entry->properties, true));
+        $this->assertSame([
+            'retained' => ['reservations' => 2, 'documents' => 1],
+            'loyalty' => ['forfeited_points' => 0, 'expired_batches' => 0, 'closed_vouchers' => 0],
+        ], json_decode($entry->properties, true));
     }
 
     public function test_the_scrub_itself_logs_nothing_but_the_one_entry(): void

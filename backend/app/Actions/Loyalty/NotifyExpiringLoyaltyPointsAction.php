@@ -2,6 +2,7 @@
 
 namespace App\Actions\Loyalty;
 
+use App\Enums\GuestAccountStatus;
 use App\Enums\LoyaltyBatchStatus;
 use App\Enums\NotificationType;
 use App\Models\Guest;
@@ -27,6 +28,10 @@ use Throwable;
  * guest (at-least-once delivery, no duplicates thanks to the marker).
  *
  * The payload carries only the point total and the earliest expiry instant.
+ *
+ * Deleted accounts (9.1) are never warned (LOY-23): their balance is forfeited
+ * at deletion (10-16), and this is the guard for any residue or for an account
+ * deleted between the guest list and the guest lock.
  */
 class NotifyExpiringLoyaltyPointsAction
 {
@@ -59,10 +64,11 @@ class NotifyExpiringLoyaltyPointsAction
         return ['data' => ['guests_notified' => $notified, 'failures' => $failures], 'code' => 200];
     }
 
-    /** Unwarned, still-spendable batches that expire after `$now` and on or before `$horizon`. */
+    /** Unwarned, still-spendable batches of live accounts that expire after `$now` and on or before `$horizon`. */
     private function window(CarbonInterface $now, CarbonInterface $horizon): Builder
     {
         return LoyaltyEarnBatch::query()
+            ->whereDoesntHave('guest', fn (Builder $guest) => $guest->where('account_status', GuestAccountStatus::DELETED->value))
             ->where('status', LoyaltyBatchStatus::ACTIVE->value)
             ->whereNull('expiry_warned_at')
             ->where('points_remaining', '>', 0)
@@ -75,7 +81,7 @@ class NotifyExpiringLoyaltyPointsAction
     {
         return DB::transaction(function () use ($guestId, $now, $horizon): bool {
             $guest = Guest::query()->whereKey($guestId)->lockForUpdate()->first();
-            if ($guest === null) {
+            if ($guest === null || $guest->isDeleted()) {
                 return false;
             }
 

@@ -34,6 +34,10 @@ use App\Models\User;
 
 class ReservationService
 {
+    private const PER_PAGE = 15;
+
+    private const MAX_PER_PAGE = 100;
+
     protected array $with = ['rooms.roomType', 'rooms.room', 'guest', 'promoCode', 'loyaltyApplication.voucher'];
 
     public function __construct(
@@ -135,13 +139,26 @@ class ReservationService
         return ['data' => $reservation, 'code' => 200];
     }
 
-    public function index(Guest $guest): array
+    public function index(Guest $guest, ?int $perPage = null): array
     {
         $data = Reservation::where('guest_id', $guest->id)
             ->with($this->with)
             ->orderByDesc('created_at')
-            ->paginate(15);
+            ->paginate($this->resolvePerPage($perPage));
         return ['data' => $data, 'code' => 200];
+    }
+
+    /**
+     * Default 15, ceiling 100; null, zero or negative falls back to the default.
+     * Mirrors BaseService::resolvePerPage() because this service is not a BaseService.
+     */
+    private function resolvePerPage(?int $perPage): int
+    {
+        if ($perPage === null || $perPage < 1) {
+            return self::PER_PAGE;
+        }
+
+        return min($perPage, self::MAX_PER_PAGE);
     }
 
     /**

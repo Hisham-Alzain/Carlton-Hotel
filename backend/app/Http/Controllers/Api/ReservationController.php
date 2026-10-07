@@ -36,7 +36,7 @@ class ReservationController extends BaseController
     public function index(Request $request): JsonResponse
     {
         return $this->paginatedSuccess(
-            $this->service->index(auth('guests')->user())['data'],
+            $this->service->index($request->user('guests'), $this->perPageParam($request))['data'],
             ReservationResource::class,
             $request
         );

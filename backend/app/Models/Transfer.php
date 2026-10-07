@@ -13,11 +13,11 @@ class Transfer extends Model
 {
     use HasFactory, HasUuid, HasTranslations, LogsActivity;
 
-    protected $translatable = ['name'];
+    protected $translatable = ['name', 'description'];
 
-    protected $fillable = ['name', 'price_usd', 'is_active'];
+    protected $fillable = ['name', 'description', 'price_usd', 'max_passengers', 'is_active'];
 
-    protected $casts = ['is_active' => 'boolean', 'price_usd' => 'decimal:2'];
+    protected $casts = ['is_active' => 'boolean', 'price_usd' => 'decimal:2', 'max_passengers' => 'integer'];
 
     public function bookings(): MorphMany { return $this->morphMany(ServiceBooking::class, 'bookable'); }
 }

@@ -13,7 +13,9 @@ class TransferFactory extends Factory
     {
         return [
             'name'      => ['en' => 'Airport Transfer', 'ar' => 'نقل المطار'],
+            'description' => ['en' => 'Private car to or from the airport.', 'ar' => 'سيارة خاصة من وإلى المطار.'],
             'price_usd' => $this->faker->randomFloat(2, 15, 80),
+            'max_passengers' => 3,
             'is_active' => true,
         ];
     }

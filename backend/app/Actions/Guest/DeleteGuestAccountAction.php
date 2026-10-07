@@ -2,6 +2,7 @@
 
 namespace App\Actions\Guest;
 
+use App\Actions\Loyalty\ForfeitLoyaltyBalanceAction;
 use App\Enums\ConversationStatus;
 use App\Enums\FolioStatus;
 use App\Enums\GuestAccountStatus;
@@ -39,10 +40,17 @@ use Throwable;
  * rows are redacted and one `guest.account_deleted` entry is written (D-08).
  * File deletion and the Firestore re-mirror run after commit and are
  * best-effort (R-4).
+ *
+ * Phase 10 gap (LOY-23): the same transaction forfeits the loyalty balance as
+ * `expire` entries and closes every active voucher, via
+ * ForfeitLoyaltyBalanceAction; the audit entry carries the counts only. The
+ * already-deleted early return keeps a repeat call a no-op.
  */
 class DeleteGuestAccountAction
 {
     use FileTrait, MirrorsToFirestore;
+
+    public function __construct(private readonly ForfeitLoyaltyBalanceAction $forfeitLoyalty) {}
 
     /** Guest columns cleared on erasure (D-08). */
     private const PII_COLUMNS = [
@@ -63,8 +71,9 @@ class DeleteGuestAccountAction
     {
         $files = [];
         $redacted = [];
+        $loyalty = ['forfeited_points' => 0, 'expired_batches' => 0, 'closed_vouchers' => 0];
 
-        DB::transaction(function () use ($guest, &$files, &$redacted): void {
+        DB::transaction(function () use ($guest, &$files, &$redacted, &$loyalty): void {
             $locked = Guest::whereKey($guest->id)->lockForUpdate()->first();
 
             if ($locked === null || $locked->isDeleted()) {
@@ -76,7 +85,11 @@ class DeleteGuestAccountAction
             $identifiers = array_values(array_filter([$locked->phone, $locked->email]));
             $reservations = $locked->reservations()->pluck('id')->all();
 
-            activity()->withoutLogging(function () use ($locked, $identifiers, &$files, &$redacted): void {
+            activity()->withoutLogging(function () use ($locked, $identifiers, &$files, &$redacted, &$loyalty): void {
+                // First, after assertDeletable (a blocked deletion forfeits nothing): the batch and voucher
+                // locks follow the guest lock before any other write (guest -> batches -> vouchers), and
+                // model logging is off, so the voucher changes add no activity row (D-08: one entry).
+                $loyalty = $this->forfeitLoyalty->handle($locked)['data'];
                 $this->scrubIdentity($locked);
                 $this->revokeAccess($locked);
                 $this->purgePersonal($locked, $identifiers);
@@ -93,10 +106,13 @@ class DeleteGuestAccountAction
                 ->performedOn($locked)
                 ->causedBy($locked)
                 ->event('account_deleted')
-                ->withProperties(['retained' => [
-                    'reservations' => count($reservations),
-                    'documents' => GuestDocument::where('guest_id', $locked->id)->count(),
-                ]])
+                ->withProperties([
+                    'retained' => [
+                        'reservations' => count($reservations),
+                        'documents' => GuestDocument::where('guest_id', $locked->id)->count(),
+                    ],
+                    'loyalty' => $loyalty,
+                ])
                 ->log('guest.account_deleted');
 
             DB::afterCommit(fn () => $this->afterCommit($files, $redacted));

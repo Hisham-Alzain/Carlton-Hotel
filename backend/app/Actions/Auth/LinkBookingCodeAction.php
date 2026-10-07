@@ -3,7 +3,7 @@ namespace App\Actions\Auth;
 
 use App\Enums\OtpChannel;
 use App\Enums\OtpPurpose;
-use App\Exceptions\NotFoundException;
+use App\Exceptions\BookingLinkFailedException;
 use App\Models\Reservation;
 
 class LinkBookingCodeAction
@@ -29,14 +29,14 @@ class LinkBookingCodeAction
 
         if (! $reservation) {
             // Generic — do NOT reveal whether the code exists
-            throw new NotFoundException(__('custom.errors.booking_link_failed'));
+            throw new BookingLinkFailedException(__('custom.errors.booking_link_failed'));
         }
 
         // Issue OTP to the reservation's contact — prefer direct fields, fall back to guest
         $identifier = $reservation->phone
             ?? $reservation->guest?->email
             ?? $reservation->guest?->phone
-            ?? throw new NotFoundException(__('custom.errors.booking_link_failed'));
+            ?? throw new BookingLinkFailedException(__('custom.errors.booking_link_failed'));
         $channel = str_starts_with($identifier, '+') ? OtpChannel::SMS : OtpChannel::EMAIL;
 
         $this->requestOtp->handle($identifier, $channel, OtpPurpose::BOOKING_LINK);

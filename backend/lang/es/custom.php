@@ -89,7 +89,6 @@ return [
         'account_inactive'       => 'Esta cuenta ha sido desactivada.',
         'identity_required'      => 'Indique un número de teléfono o una dirección de correo electrónico.',
         'booking_link_failed'        => 'No se han podido verificar los datos de la reserva.',
-        'booking_link_unavailable'   => 'La vinculación de reservas aún no está disponible.',
         'escalation_blocked'     => 'No puede conceder un permiso que usted no posee.',
         'superadmin_immutable'   => 'Las cuentas de superadministrador no se pueden modificar.',
         'cannot_self_deactivate' => 'No puede desactivar su propia cuenta.',

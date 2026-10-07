@@ -89,7 +89,6 @@ return [
         'account_inactive'       => 'This account has been deactivated.',
         'identity_required'      => 'Please provide a phone number or email address.',
         'booking_link_failed'        => 'The booking details could not be verified.',
-        'booking_link_unavailable'   => 'Booking linking is not available yet.',
         'escalation_blocked'     => 'You cannot grant a permission you do not hold.',
         'superadmin_immutable'   => 'Super admin accounts cannot be modified.',
         'cannot_self_deactivate' => 'You cannot deactivate your own account.',

@@ -89,7 +89,6 @@ return [
         'account_inactive'       => 'Bu hesap devre dışı bırakıldı.',
         'identity_required'      => 'Lütfen bir telefon numarası veya e-posta adresi girin.',
         'booking_link_failed'        => 'Rezervasyon bilgileri doğrulanamadı.',
-        'booking_link_unavailable'   => 'Rezervasyon eşleştirme henüz kullanılamıyor.',
         'escalation_blocked'     => 'Sahip olmadığınız bir izni veremezsiniz.',
         'superadmin_immutable'   => 'Süper yönetici hesapları değiştirilemez.',
         'cannot_self_deactivate' => 'Kendi hesabınızı devre dışı bırakamazsınız.',

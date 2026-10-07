@@ -62,6 +62,24 @@ class ReservationPartySizeTest extends TestCase
             ->postJson('/api/reservations', $this->body($extra));
     }
 
+    /** @return array<string, mixed> */
+    private function staffBody(array $extra = []): array
+    {
+        return array_merge($this->body(), [
+            'first_name' => 'Nour',
+            'last_name' => 'Haddad',
+            'phone' => '+963955123456',
+        ], $extra);
+    }
+
+    private function staffBook(array $extra = [], string ...$permissions): TestResponse
+    {
+        $this->app['auth']->forgetGuards();
+
+        return $this->withToken($this->staffToken(...$permissions))
+            ->postJson('/api/cms/reservations', $this->staffBody($extra));
+    }
+
     public function test_omitted_party_size_defaults_to_one_adult_no_children(): void
     {
         $res = $this->book()->assertCreated()
@@ -174,5 +192,61 @@ class ReservationPartySizeTest extends TestCase
             ->assertJsonPath('data.uuid', $first->json('data.uuid'));
 
         $this->assertSame(1, Reservation::count());
+    }
+
+    // ---- staff: POST /api/cms/reservations ----
+
+    public function test_staff_can_record_party_size(): void
+    {
+        $uuid = $this->staffBook(['adults' => 2, 'children' => 1], 'reservations.create')
+            ->assertCreated()
+            ->assertJsonPath('data.adults', 2)
+            ->assertJsonPath('data.children', 1)
+            ->json('data.uuid');
+
+        $this->assertDatabaseHas('reservations', ['uuid' => $uuid, 'adults' => 2, 'children' => 1]);
+
+        $this->app['auth']->forgetGuards();
+        $this->withToken($this->staffToken('reservations.view'))->getJson("/api/cms/reservations/{$uuid}")
+            ->assertOk()
+            ->assertJsonPath('data.adults', 2)
+            ->assertJsonPath('data.children', 1);
+    }
+
+    public function test_staff_omitting_party_size_gets_the_default(): void
+    {
+        $this->staffBook([], 'reservations.create')->assertCreated()
+            ->assertJsonPath('data.adults', 1)
+            ->assertJsonPath('data.children', 0);
+    }
+
+    public function test_staff_party_over_max_occupancy_is_refused(): void
+    {
+        $this->staffBook(['adults' => 2, 'children' => 2], 'reservations.create')
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'occupancy_exceeded')
+            ->assertJsonPath('context.max_occupancy', 3)
+            ->assertJsonPath('context.requested', 4);
+
+        $this->assertSame(0, Reservation::count());
+    }
+
+    public function test_staff_invalid_party_size_fails_validation(): void
+    {
+        $this->staffBook(['adults' => 0], 'reservations.create')
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'validation_failed')
+            ->assertJsonValidationErrors(['adults'], 'errors');
+    }
+
+    public function test_staff_without_the_permission_is_forbidden(): void
+    {
+        $this->staffBook(['adults' => 2], 'reservations.view')->assertStatus(403);
+        $this->assertSame(0, Reservation::count());
+    }
+
+    public function test_staff_booking_without_a_token_is_unauthorised(): void
+    {
+        $this->postJson('/api/cms/reservations', $this->staffBody(['adults' => 2]))->assertStatus(401);
     }
 }

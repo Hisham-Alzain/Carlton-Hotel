@@ -178,6 +178,8 @@ class ReservationService
             'check_out'      => $data['check_out'],
             'payment_method' => $data['payment_method'],
             'promo_code'     => $data['promo_code'] ?? null,
+            'adults'         => $data['adults'] ?? null,
+            'children'       => $data['children'] ?? null,
             'status'         => isset($data['status'])
                 ? ReservationStatus::from($data['status'])
                 : ReservationStatus::CONFIRMED,

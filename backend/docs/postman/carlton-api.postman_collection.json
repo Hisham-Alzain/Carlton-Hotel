@@ -1646,7 +1646,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"room_type_uuid\": \"{{room_type_uuid}}\",\n    \"check_in\": \"2026-08-11\",\n    \"check_out\": \"2026-08-13\",\n    \"payment_method\": \"on_arrival\"\n}",
+                            "raw": "{\n    \"room_type_uuid\": \"{{room_type_uuid}}\",\n    \"check_in\": \"2026-08-11\",\n    \"check_out\": \"2026-08-13\",\n    \"payment_method\": \"on_arrival\",\n    \"adults\": 2,\n    \"children\": 0\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -1773,7 +1773,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"first_name\": \"Nour\",\n  \"last_name\": \"Haddad\",\n  \"phone\": \"+963955123456\",\n  \"room_type_uuid\": \"{{room_type_uuid}}\",\n  \"check_in\": \"2026-09-05\",\n  \"check_out\": \"2026-09-08\",\n  \"payment_method\": \"on_arrival\"\n}"
+                            "raw": "{\n  \"first_name\": \"Nour\",\n  \"last_name\": \"Haddad\",\n  \"phone\": \"+963955123456\",\n  \"room_type_uuid\": \"{{room_type_uuid}}\",\n  \"check_in\": \"2026-09-05\",\n  \"check_out\": \"2026-09-08\",\n  \"payment_method\": \"on_arrival\",\n  \"adults\": 2,\n  \"children\": 0\n}"
                         },
                         "url": {
                             "raw": "{{base_url}}/cms/reservations",
@@ -3563,7 +3563,7 @@
                                 },
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n    \"name\": {\n        \"en\": \"Van Transfer\",\n        \"ar\": \"Van Transfer\"\n    },\n    \"price_usd\": 45,\n    \"is_active\": true\n}",
+                                    "raw": "{\n    \"name\": {\n        \"en\": \"Van Transfer\",\n        \"ar\": \"Van Transfer\"\n    },\n    \"description\": {\n        \"en\": \"Private van, up to 4 passengers\",\n        \"ar\": \"سيارة خاصة تتسع لأربعة ركاب\"\n    },\n    \"max_passengers\": 4,\n    \"price_usd\": 45,\n    \"is_active\": true\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -3648,7 +3648,7 @@
                                 },
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n    \"price_usd\": 50\n}",
+                                    "raw": "{\n    \"description\": {\n        \"en\": \"Private van, up to 4 passengers\",\n        \"ar\": \"سيارة خاصة تتسع لأربعة ركاب\"\n    },\n    \"max_passengers\": 4,\n    \"price_usd\": 50\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"

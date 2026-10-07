@@ -256,8 +256,8 @@ var TREE = {
     "ep":["GET /front-desk/room-board","PATCH /cms/rooms/{room}/status"]}
   ]},
   {"name":"Reservations","kind":"section","api":true,"dash":"mock","mob":true,"children":[
-   {"name":"guest booking flow","api":true,"dash":"na","mob":"partial","meta":"add-ons · guest details · party size dropped",
-    "ep":["POST /reservations {room_type_uuid, check_in, check_out, payment_method, promo_code?}"]},
+   {"name":"guest booking flow","api":true,"dash":"na","mob":"partial","meta":"add-ons · guest details · party size: API ready (adults/children), app not wired",
+    "ep":["POST /reservations {room_type_uuid, check_in, check_out, payment_method, adults?, children?, promo_code?}"]},
    {"name":"quote · promo code","api":true,"dash":"na","mob":true,"ep":["GET /public/quote"]},
    {"name":"cancel my reservation","api":true,"dash":"na","mob":true,"ep":["DELETE /reservations/{uuid}"]},
    {"name":"my reservations list","api":true,"dash":"na","mob":false,"meta":"app uses /stays/* instead",

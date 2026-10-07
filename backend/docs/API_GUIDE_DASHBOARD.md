@@ -594,7 +594,7 @@ Route binding is by **`uuid`** everywhere under `/cms/*`, never by slug or numer
 
 `/cms/media` sits under the same gates but is **not** a content type, so it is absent from the table above: it is the media library (`GET` / `POST` / `PATCH` / `DELETE`, no `show`, nothing translatable but `alt_text`). See **The media library** below.
 
-P7 service catalog, identical gates, full `apiResource` each (`PUT` **or** `PATCH`, full payload required on update, `en`/`ar` only): `/cms/spa-services`, `/cms/pool-cabanas`, `/cms/transfers`, `/cms/restaurant-tables`, `/cms/service-categories`, `/cms/service-items`. Only `/cms/menu-items` in that group takes media.
+P7 service catalog, identical gates, full `apiResource` each (`PUT` **or** `PATCH`, full payload required on update, `en`/`ar` only): `/cms/spa-services`, `/cms/pool-cabanas`, `/cms/transfers` (also optional `description.en/ar` and `max_passengers`), `/cms/restaurant-tables`, `/cms/service-categories`, `/cms/service-items`. Only `/cms/menu-items` in that group takes media.
 
 Response shapes are identical to the public read shapes — the same Resource class serves both admin and public routes, so only the row *selection* differs. `store` returns HTTP 201, `destroy` returns HTTP 204 with `data: null`.
 
@@ -667,7 +667,7 @@ On the CMS content modules `is_active` and `sort_order` are validated as bare `[
 
 **Room type** — `name` `{loc}` req (max 255), `description` `{loc}` req, `amenities` (optional array of `{ uuid (must exist), is_highlight (bool), sort_order (int ≥0) }`), `view_type` (nullable: `city|garden|pool|courtyard|mountain|interior`), `bed_types` (nullable array of `king|queen|double|twin|single|extra`), `base_occupancy` + `max_occupancy` (required on create, int 1–20, `max_occupancy >= base_occupancy`), `size_sqm` (nullable numeric ≥1), `base_price_usd` (required numeric ≥0), `cancellation_hours` (int 0–8760), `is_active`, `sort_order`.
 `amenities` is a pivot **sync**: send the array to replace the whole set, omit the key to leave it untouched, send `[]`/`null` to detach all; a `uuid` that does not resolve is skipped silently, and a row's `sort_order` defaults to its array index. Read side returns `amenities` as amenity objects plus `highlights` (the `is_highlight` subset) — **not** an array of strings.
-*Known gap:* `UpdateRoomTypeRequest` drops `gte:base_occupancy`, so a `PUT` will accept `max_occupancy` below `base_occupancy`. Validate client-side.
+`PUT /cms/room-types/{uuid}` enforces `max_occupancy >= base_occupancy` against the effective values (the sent value, or the stored one when a field is omitted); a violation is `422` on `max_occupancy`. Since 2026-10-07 `max_occupancy` also caps `adults + children` on every booking (`occupancy_exceeded`, see `POST /cms/reservations`).
 
 **Room** — `room_type_uuid` (**not** `room_type_id` — required on create, must exist), `number` (required on create, max 10, unique), `floor` (nullable int 0–200), `status` (`available|dirty|maintenance`, accepted on create only), `is_active`. No `sort_order`. `PUT /cms/rooms/{uuid}` ignores a `status` key — no error, no change; change status with `PATCH /cms/rooms/{uuid}/status` (see below). The nested `room_type` in the response omits `images`/`banner`/`amenities`/`highlights` — those relations are not eager-loaded through the nesting.
 
@@ -906,13 +906,14 @@ Empty values mean no filter; unknown query parameters are ignored. Example: `?st
   "uuid": "...", "booking_code": "CARL-XXXXXXXX", "status": "confirmed",
   "check_in": "2026-07-20", "check_out": "2026-07-22", "nights": 2,
   "source": "direct", "payment_method": "cash", "total_usd": "270.00", "hold_expires_at": null,
+  "adults": 2, "children": 1,
   "checked_in_at": null, "checked_out_at": null, "check_out_mode": null,
   "rooms": [ { "room_type": { "...room type..." }, "room_uuid": "...", "room_number": "801", "price_usd": "270.00" } ],
   "guest": { "uuid": "...", "name": "...", "phone": "...", "email": "..." },
   "promo_code": null, "notes": "VIP, late arrival"
 }
 ```
-`notes` is returned to staff only; guest routes never include it. `check_out_mode` (Phase 6, D-20) is also staff-only: `none`, `staff_force` or `guest_express`, recording how the check-out folio gate was passed; `null` for a stay not yet checked out and for stays checked out before this column existed.
+`adults` / `children` (party size) are on the reservation detail and on every list row. Bookings made before 2026-10-07 read `1` / `0`, because the value was never collected. `notes` is returned to staff only; guest routes never include it. `check_out_mode` (Phase 6, D-20) is also staff-only: `none`, `staff_force` or `guest_express`, recording how the check-out folio gate was passed; `null` for a stay not yet checked out and for stays checked out before this column existed.
 
 The nested `guest` object (here and on `GET /cms/reservations` rows) also carries the guest's `preferences` — `{ bed_type, pillow_type, floor_preference, other, updated_at }` (Phase 4, D-09), the same object `PATCH /guests/{uuid}/preferences` returns. The reservation payload never carries the digital key or any key column.
 
@@ -948,6 +949,8 @@ New arrival — name plus **at least one** of `phone` / `email`:
 | `first_name`, `last_name` | required without `guest_uuid` | |
 | `phone`, `email` | at least one without `guest_uuid` | Phone is normalised to E.164. An existing guest matching the phone (then email) is reused rather than duplicated. |
 | `room_type_uuid`, `check_in`, `check_out`, `payment_method` | yes | `check_in` cannot be in the past; `check_out` must be after it. |
+| `adults` | no | Party size, integer 1–20, default 1. `adults + children` must not exceed the room type's `max_occupancy`. |
+| `children` | no | Integer 0–20, default 0. |
 | `promo_code` | no | Applied and its usage counter incremented, same as the guest flow. |
 | `status` | no | `confirmed` (default) or `pending` — use `pending` for a phone booking still awaiting a deposit. |
 | `source` | no | `walk_in` (default) or `direct`. |
@@ -958,7 +961,7 @@ A guest created through this endpoint has **no verified contact** — they never
 
 **Response:** HTTP 201, the reservation in the shape shown under `GET /cms/reservations/{uuid}`.
 
-**Failure `error_code`s:** `no_availability` (409, no free room of that type for the dates), `validation_failed` (422 — including `identity` when neither `guest_uuid` nor a phone/email was sent), `not_found` (404, unknown `guest_uuid`).
+**Failure `error_code`s:** `no_availability` (409, no free room of that type for the dates), `occupancy_exceeded` (422, `context {max_occupancy, requested}`: `adults + children` is over the room type's `max_occupancy`; nothing is written), `validation_failed` (422 — including `identity` when neither `guest_uuid` nor a phone/email was sent), `not_found` (404, unknown `guest_uuid`).
 
 ### POST /cms/reservations/{uuid}/confirm — `reservations.create`
 
@@ -1287,7 +1290,7 @@ Standard `apiResource` CRUD (index/store/show/update/destroy) for the **8** book
 | Spa services | `/cms/spa-services` | `name.en/ar` (required), `duration_minutes` (required int ≥1), `price_usd` (required ≥0), `is_active` |
 | Restaurant tables | `/cms/restaurant-tables` | `dining_venue_uuid` (optional, must exist), `table_number` (required, max 50), `capacity` (required int ≥1), `is_active` — **not translatable, no `name`** |
 | Pool cabanas | `/cms/pool-cabanas` | `name.en/ar` (required), `capacity` (required int ≥1), `price_usd` (required ≥0), `is_active` |
-| Transfers | `/cms/transfers` | `name.en/ar` (required), `price_usd` (required ≥0), `is_active` — no capacity/duration |
+| Transfers | `/cms/transfers` | `name.en/ar` (required), `description.en/ar` (optional, max 2000 each), `price_usd` (required ≥0), `max_passengers` (optional integer 1–100), `is_active`. Responses carry `description` (locale map or `null`) and `max_passengers` (integer or `null`). The CMS transfer form should add the two fields. |
 | Service categories | `/cms/service-categories` | `code` (required, max 50, unique), `name.en/ar` (required), `description.en/ar` (optional), `kind` (required — `ServiceCategoryKind`), `department` (required when `kind` is `catalog` or `direct` — `Department`), `link_target` (required when `kind` is `link`, max 30), `icon` (optional, max 50), `is_active`, `sort_order` |
 | Service items | `/cms/service-items` | `service_category_uuid` (required, must exist), `name.en/ar` (required), `description.en/ar` (optional), `expected_minutes` (optional int 1–10080), `price_usd` (optional ≥0), `is_default`, `is_active`, `sort_order` |
 | Menu categories | `/cms/menu-categories` | `dining_venue_uuid` (**required**, must exist), `slug` (**required**, max 64 — auto-derived from `name.en` when omitted), `name.en/ar` (required), `sort_order` (optional int ≥0), `is_active` |
@@ -1494,6 +1497,8 @@ Guest↔staff messaging. `tickets.view` reads, `tickets.respond` replies (both s
 - `GET /api/cms/conversations` — all conversations, most recent first (`tickets.view`).
 - `GET /api/cms/conversations/{uuid}/messages` — paginated history, oldest first (`tickets.view`).
 - `POST /api/cms/conversations/{uuid}/messages` — reply; body `{ "body"?: string, "attachment"?: file }` (`tickets.respond`). Claims the conversation (sets `assigned_user_id` to the replying staff member) on the first staff reply if unassigned.
+
+Every message payload (staff history and staff send, as on the guest side) carries `conversation_uuid` next to `uuid`, `sender_type`, `body`, `attachment_url` and `created_at`, so a message can be routed without the list around it.
 
 Mirrors to Firestore the same way as the guest side (see `API_GUIDE_MOBILE.md`) — subscribe for live updates.
 

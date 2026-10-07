@@ -20,6 +20,18 @@ nine commits (`2fd294f` → `5d254a7`).
 
 ---
 
+## 2026-10-07 — Phase 10 (gap) — Loyalty forfeit on account deletion
+
+**No breaking changes.** No route, field, error code or notification type changes.
+
+- `DELETE /api/auth/guest/me` now also forfeits the loyalty balance and closes unused vouchers. This cannot be undone. The response is unchanged.
+- Signing in again with the same phone or email gives a new account with zero points; the old balance is not carried over.
+- Flutter: before the delete confirmation, warn the guest using `available_points` (`GET /api/loyalty/account`) and the active voucher count (`GET /api/loyalty/vouchers?status=active`).
+- A deleted account receives no `loyalty_points_expiring` push.
+- Voucher status `void` now appears for vouchers closed by an account deletion.
+
+---
+
 ## 2026-10-07 — Quick 261007-it6 — Mobile app requests
 
 **The contract change is additive; the Flutter and React teams were notified.** Every new field and query parameter is optional, no field was renamed or removed, and HTTP statuses are unchanged. One error code is corrected to what the docs always promised (see Changed).

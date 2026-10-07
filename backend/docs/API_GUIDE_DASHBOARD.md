@@ -2483,7 +2483,7 @@ A reward is what a guest spends points on; redeeming it creates a voucher. Same 
 | `free_night` | One night at the booking's daily rate, capped at the total. |
 | `room_upgrade` | **0.00 off** — the voucher is consumed and the reservation shows `loyalty.upgrade_requested: true`. **Staff perform the upgrade** by assigning a better room (`assign-room` / the available-rooms flow); the system does not move the guest by itself. |
 
-Voucher lifecycle: `active` → `used` (applied to a booking) → back to `active` if that booking is cancelled (the original `expires_at` is kept; if it has already passed, the voucher gets a grace period of `config('loyalty.restored_voucher_grace_days')` = 30 hotel-local days). `active` → `expired` by the nightly sweep; `void` exists as a status but no endpoint produces it today. A voucher expires at the **end of its last hotel-local day**.
+Voucher lifecycle: `active` → `used` (applied to a booking) → back to `active` if that booking is cancelled (the original `expires_at` is kept; if it has already passed, the voucher gets a grace period of `config('loyalty.restored_voucher_grace_days')` = 30 hotel-local days). `active` → `expired` by the nightly sweep; `active` → `void` when the guest deletes their account (a voucher already past its expiry becomes `expired` instead). A voucher expires at the **end of its last hotel-local day**.
 
 ### GET /api/cms/loyalty/guests/{guest_uuid} — `loyalty.view`
 
@@ -2507,6 +2507,7 @@ A guest's balance, same shape as the guest's own `GET /loyalty/account` plus the
 
 - `available_points` counts only active batches with `expires_at` in the future. `expiring_soon_points` / `next_expiry_at` look `expiring_soon_window_days` (= `expiry_warning_days`) ahead.
 - **Lifetime definitions:** `lifetime_earned_points` = earned + positive adjustments − clawbacks; `lifetime_redeemed_points` = redeemed − refunded; both floored at 0. Expiry and negative adjustments count toward neither.
+- **Deleted guest:** still `200` (the account row is kept for accounting, as on `GET /guests/{guest_uuid}`), with `guest.name: null` (identity scrubbed), `available_points: 0` and the ledger showing the forfeit `expire` rows. Read `account_status` from `GET /guests/{guest_uuid}`; the loyalty view has no status field.
 
 ### GET /api/cms/loyalty/guests/{guest_uuid}/ledger — `loyalty.view`
 
@@ -2563,6 +2564,7 @@ Award or deduct points by hand. **Headers:** `Idempotency-Key` (required, max 64
 - **Replay:** the same key with the same `points`, `reason` and **the same staff member** answers `200` with the same ledger row and writes nothing. The same key with a different body — **or from a different staff member** — answers `409 idempotency_conflict`. The key is scoped per guest, so reusing a key for another guest is a separate write.
 - **Missing or blank key:** `422 validation_failed` with `errors.idempotency_key` — the shared shape the folio payment and event deposit routes use. There is **no** top-level `idempotency_key_required` error code.
 - **Over-deduction:** `422 loyalty_insufficient_points`, `context: { "available_points": 5000, "requested_points": 999999 }`, nothing written.
+- **Deleted guest:** `422 guest_account_deleted` ("This guest account has been deleted."), nothing written. It is checked before the replay lookup, so resending an old key after the deletion is also `422`.
 - Every fresh adjustment is also written to the activity log (`loyalty.points_adjusted`, on the guest); a replay logs nothing.
 - `403` for a token without `loyalty.adjust` — including a `loyalty.view` + `loyalty.manage` holder.
 
@@ -2588,12 +2590,13 @@ Metric definitions (all integers except `liability_usd`):
 
 - **`issued_points`** — earn credits **plus positive manual adjustments** in the period. **Refunds are never counted as issued** — a cancelled booking's returned points appear only in `refunded_points`.
 - **`redeemed_points`** — points spent (catalogue redemptions and booking redemptions). Not netted against refunds.
-- **`expired_points`** — points removed by the expiry sweep.
+- **`expired_points`** — points removed by the expiry sweep, plus points forfeited when a guest deleted their account.
 - **`refunded_points`** — points returned to guests by cancellations.
 - **`clawed_back_points`** — earned points actually taken back by cancellations. Points the guest had already spent cannot be taken back; that remainder is the `shortfall_points` on the clawback ledger row and is not counted here.
 - **`adjusted_out_points`** — negative manual adjustments, as a positive number.
-- **`outstanding_points`** and **`liability_usd`** — **point in time, not windowed**: they describe *now* (active batches with a future expiry), whatever `date_to` is. A report for last month does not give last month's closing balance.
+- **`outstanding_points`** and **`liability_usd`** — **point in time, not windowed**: they describe *now* (active batches with a future expiry), whatever `date_to` is. A report for last month does not give last month's closing balance. Both exclude deleted accounts.
 - **`liability_usd`** — `outstanding_points × redeem_value_usd`, half-up to cents, 2-decimal string. It is **`null` while `redeem_value_usd` is unset or zero** (nothing to value the points at); with a value set and no outstanding points it is `"0.00"`.
+- **Leftover points on deleted accounts:** accounts deleted before this release may still hold points until `loyalty:forfeit-deleted` has run. Those points were counted in `issued_points` when they were issued but are left out of `outstanding_points` and `liability_usd`, so `outstanding_points` will not equal issued − redeemed − expired over the life of the program. After the command runs they appear in `expired_points` on the day it ran.
 
 ### The reservation `loyalty` block
 
@@ -2614,7 +2617,9 @@ Every reservation payload produced by the reservation service — the dashboard'
 
 ### Scheduled jobs and the expiry push
 
-Two commands run daily in the hotel timezone and need `php artisan schedule:run` running every minute: `loyalty:expire-points` at 01:00 (writes `expire` rows, flips expired vouchers; safe to re-run) and `loyalty:notify-expiring` at 09:00 (one push per guest per run covering every batch inside the warning window, each batch warned once; a failed push is retried the next run and makes the command exit non-zero). The push uses the notification type `loyalty_points_expiring`, is localized from the guest's `preferred_locale`, and carries `data: { "points": 1200, "expires_at": "…" }` (`expires_at` is the earliest expiry among the warned batches; the body text shows it as a hotel-local date).
+Two commands run daily in the hotel timezone and need `php artisan schedule:run` running every minute: `loyalty:expire-points` at 01:00 (writes `expire` rows, flips expired vouchers; safe to re-run) and `loyalty:notify-expiring` at 09:00 (one push per guest per run covering every batch inside the warning window, each batch warned once; a failed push is retried the next run and makes the command exit non-zero). The push uses the notification type `loyalty_points_expiring`, is localized from the guest's `preferred_locale`, and carries `data: { "points": 1200, "expires_at": "…" }` (`expires_at` is the earliest expiry among the warned batches; the body text shows it as a hotel-local date). A deleted account never gets this push.
+
+`loyalty:forfeit-deleted` is not scheduled. Run it once after deploying this release to forfeit points and close vouchers still held by accounts deleted before it; it prints the totals and is safe to re-run.
 
 ### Error codes (this module)
 
@@ -2630,6 +2635,7 @@ All loyalty codes are `422` except `idempotency_conflict`.
 | `loyalty_reward_unavailable` | none | The reward is inactive (a deleted or unknown reward is `404`) |
 | `loyalty_adjustment_invalid` | `{ max_adjust_points }` | Zero or over-limit manual adjustment |
 | `loyalty_discount_conflict` | none | Points and a voucher on the same booking |
+| `guest_account_deleted` | none | Adjustment on a guest whose account was deleted |
 | `idempotency_conflict` | `{ idempotency_key }` | `409` — key reused with a different request (or by a different staff member on an adjustment) |
 | `reservation_state` | — | `422`, cancelling a reservation that is no longer cancellable |
 | `no_availability` | — | `409`, the booking lost the last room; no points are spent |
@@ -2638,11 +2644,13 @@ Error details are always under `context`. A missing `Idempotency-Key` is `valida
 
 ### Not provided
 
-Tiers, a pending balance, backfill of folios settled before launch, a folio-refund endpoint (the clawback logic exists and is unit-tested but only reservation cancellation triggers it today), points on staff-created or public OTP bookings, and exports. **Known limitation:** deleting a guest account (`DELETE /auth/guest/me`) does not yet forfeit the guest's loyalty balance — scheduled as a follow-up.
+Tiers, a pending balance, backfill of folios settled before launch, a folio-refund endpoint (the clawback logic exists and is unit-tested but only reservation cancellation triggers it today), points on staff-created or public OTP bookings, and exports.
+
+**Account deletion (LOY-23):** when a guest deletes their account (`DELETE /auth/guest/me`) the whole balance is forfeited in the same transaction, one `expire` ledger row per batch (visible in the staff ledger), and unused vouchers close (`void`, or `expired` when already past their expiry). A deleted guest gets no expiry warning; adjustments answer `422 guest_account_deleted`; the report's outstanding points and liability leave the account out; a folio settled later for that guest earns nothing. If staff later cancel an old booking of that guest, points or a voucher the cancellation gives back are forfeited again.
 
 ### Dashboard handoff (Phase 10)
 
-Gate the Loyalty navigation item on `loyalty.view` or `loyalty.manage`; show the settings form on `loyalty.manage`, the guest balance/ledger/report screens on `loyalty.view`, the "adjust points" button on `loyalty.adjust` **and** `loyalty.view`, and the rewards trash on `cms.restore` / `cms.purge`. Until staff save the settings once, earning and points-at-booking are off — show that state from `program` rather than assuming defaults.
+Gate the Loyalty navigation item on `loyalty.view` or `loyalty.manage`; show the settings form on `loyalty.manage`, the guest balance/ledger/report screens on `loyalty.view`, the "adjust points" button on `loyalty.adjust` **and** `loyalty.view`, and the rewards trash on `cms.restore` / `cms.purge`. Until staff save the settings once, earning and points-at-booking are off — show that state from `program` rather than assuming defaults. Hide or disable "adjust points" for a guest whose `account_status` is `deleted` (from `GET /guests/{guest_uuid}`).
 
 ---
 
@@ -2700,7 +2708,7 @@ Gate the Loyalty navigation item on `loyalty.view` or `loyalty.manage`; show the
 | `night_audit_item_resolved` | 422 | Check/blocker already terminal; `context: { item, status }` |
 | `night_audit_not_ready` | 422 | Close with pending checks or open blockers; `context: { checks_pending, blockers_open }` |
 | `exchange_rate_large_change` | 422 | New exchange rate differs from the current one by more than 50% either way and `confirm_large_change` is not `true`; `context: { currency, current_rate, proposed_rate, change_percent }` |
-| `guest_account_deleted` | 422 | Note or preferences write, or a front-desk booking (`POST /cms/reservations` with `guest_uuid`), on a guest whose account was deleted |
+| `guest_account_deleted` | 422 | Note or preferences write, or a front-desk booking (`POST /cms/reservations` with `guest_uuid`), on a guest whose account was deleted, or a loyalty adjustment (`POST /cms/loyalty/guests/{guest_uuid}/adjustments`) |
 | `guest_account_deletion_blocked` | 422 | Guest-app only (`DELETE /auth/guest/me` blocked); not returned by dashboard routes |
 | `loyalty_program_inactive` | 422 | A loyalty capability was used while its setting is unset; `context: { capability }` (`earning` \| `points_discount`) |
 | `loyalty_insufficient_points` | 422 | Not enough unexpired points (manual deduction, redeem or booking); `context: { available_points, requested_points }` |

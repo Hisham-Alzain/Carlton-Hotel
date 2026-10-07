@@ -455,6 +455,8 @@ Send only the fields you are changing — omitted fields are left alone.
 
 **Response** (HTTP 200): `{ "success": true, "message": "Your account has been deleted.", "data": null, "request_id": "..." }`. All of the guest's tokens on every device are revoked, so a second call (or any later call with the same token) is `401`.
 
+**Loyalty:** deleting the account forfeits every loyalty point and closes every unused voucher (status `void`, or `expired` if it was already past its expiry). This cannot be undone. Before the confirm step the app should read `GET /api/loyalty/account` (`available_points`) and `GET /api/loyalty/vouchers?status=active`, and when either is non-empty show a warning with the point total and voucher count. The response is unchanged.
+
 **Blocked** — 422 `guest_account_deletion_blocked`, message (en): "Your account can't be deleted while you have an active stay, an open bill or an upcoming booking. Please contact the front desk."
 ```json
 {
@@ -479,7 +481,7 @@ Send only the fields you are changing — omitted fields are left alone.
 **What happens**
 - **Erased:** name, first/last name, phone, email, verification timestamps, preferences; all sign-in tokens, device push tokens, in-app notifications, staff notes and OTP codes; chat conversations are closed and the guest's own messages' text and attachments removed; ID documents except those of completed (checked-out) stays; the phone copy on reservations.
 - **Kept (legal/accounting):** reservations (booking code, last name), folios, payments, refunds, disputes, service bookings/requests, tickets, event inquiries, reviews (shown without a name), ID registration documents of checked-out stays.
-- **Re-registration:** signing in again with the same phone/email creates a **new** account (new `uuid`). Old stays are not visible to it and cannot be re-linked.
+- **Re-registration:** signing in again with the same phone/email creates a **new** account (new `uuid`). Old stays are not visible to it and cannot be re-linked. The new account starts with zero points; the old balance is not carried over.
 
 **App guidance:** show a confirmation dialog explaining what is deleted vs kept, then call. On 200, clear the token and local data and go to sign-in. On 422 `guest_account_deletion_blocked`, show the front-desk message and the `booking_codes`.
 
@@ -1415,7 +1417,7 @@ An unconfigured program still answers `200`: `program` is `{ "earning": false, "
 
 **Purpose:** The guest's own vouchers, newest first, paginated. Query: `status` (`eq`/`in`), `type` (`eq`/`in`), `points_spent` (`gte`/`lte`, integer), `sort` ∈ `created_at|expires_at`. Item shape = the redeem response above; after use, `status` is `used`, `used_at` is set and `reservation` is `{ "uuid", "booking_code" }`.
 
-**Voucher lifecycle:** `active` → `used` when applied to a booking → **back to `active`** when that booking is cancelled (the original expiry is kept; if it has passed, the voucher gets a short grace period). `active` → `expired` after `expires_at` (swept nightly). `void` is a reserved status that nothing produces today; treat any status you don't know as not usable.
+**Voucher lifecycle:** `active` → `used` when applied to a booking → **back to `active`** when that booking is cancelled (the original expiry is kept; if it has passed, the voucher gets a short grace period). `active` → `expired` after `expires_at` (swept nightly). `void` means the voucher was closed because the account was deleted; treat any status you don't know as not usable.
 
 **What a voucher is worth on a booking:** `discount_voucher` takes `value_usd` off (never more than the booking total); `free_night` takes off one night at the booking's daily rate (capped at the total); `room_upgrade` takes **0.00** off — the reservation shows `loyalty.upgrade_requested: true` and **staff perform the upgrade** at the desk. A booking can use **one voucher, or points, never both**.
 

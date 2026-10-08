@@ -8,7 +8,8 @@ enum ChatSender { agent, user }
 /// Keeps the view-facing trio ([sender]/[text]/[time]) the Figma bubble reads,
 /// and adds the wire fields the API carries ([uuid]/[attachmentUrl]/[createdAt]).
 /// The message shape carries only `sender_type` — no staff name/avatar — so the
-/// agent identity in the header stays demo (see [ChatSender.agent]).
+/// header shows the hotel's name from `GET /public/settings` (see
+/// [ChatSender.agent]).
 class ChatMessage {
   final String uuid;
   final ChatSender sender;
@@ -30,7 +31,7 @@ class ChatMessage {
     required this.createdAt,
   });
 
-  static DateFormat get _clock => DateFormat('h:mm a');
+  static DateFormat get _clock => DateFormat.jm();
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     final created =

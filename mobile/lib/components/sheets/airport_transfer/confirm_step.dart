@@ -19,48 +19,53 @@ class _ConfirmStep extends GetView<AirportTransferController> {
           padding: const EdgeInsets.all(17),
           decoration: _card(AppColors.whisperGrey, radius: 14, blur: 1),
           child: Column(
+            spacing: 12,
             children: [
-              for (final (label, value) in [
-                (AppTranslations.pickup, AppTranslations.pickupValue),
-                (AppTranslations.destination, AppTranslations.destinationValue),
-                (AppTranslations.flightLabel, controller.flightNumberLabel),
-                (AppTranslations.dateAndTime, controller.dateTimeLabel),
-                (AppTranslations.terminal, controller.terminalLabel),
-                (AppTranslations.passengers, controller.passengersLabel),
-              ])
-                _SummaryRow(label, value),
-              if (selected != null)
-                _SummaryRow(
-                  AppTranslations.vehicle,
-                  selected.name.value,
-                  image: AirportTransferController.vehicleImage(selected),
-                ),
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        AppTranslations.total,
-                        style: textStyle.labelLarge?.copyWith(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.inkBlack,
-                        ),
+              Column(
+                children: [
+                  for (final (label, value) in [
+                    (AppTranslations.pickup, AppTranslations.pickupValue),
+                    (
+                      AppTranslations.destination,
+                      AppTranslations.destinationValue,
+                    ),
+                    (AppTranslations.flightLabel, controller.flightNumberLabel),
+                    (AppTranslations.dateAndTime, controller.dateTimeLabel),
+                    (AppTranslations.terminal, controller.terminalLabel),
+                    (AppTranslations.passengers, controller.passengersLabel),
+                  ])
+                    _SummaryRow(label, value),
+                  if (selected != null)
+                    _SummaryRow(
+                      AppTranslations.vehicle,
+                      selected.name.value,
+                      image: AirportTransferController.vehicleImage(selected),
+                    ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      AppTranslations.total,
+                      style: textStyle.labelLarge?.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.inkBlack,
                       ),
                     ),
-                    Text(
-                      selected == null
-                          ? ''
-                          : MoneyFormat.usdString(selected.priceUsd),
-                      style: textStyle.titleLarge?.copyWith(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.lagoonTeal,
-                      ),
+                  ),
+                  Text(
+                    selected == null
+                        ? ''
+                        : MoneyFormat.usdString(selected.priceUsd),
+                    style: textStyle.titleLarge?.copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.lagoonTeal,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),

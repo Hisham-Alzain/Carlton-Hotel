@@ -161,7 +161,7 @@ class DiscoverView extends GetView<DiscoverController> {
         : AppTranslations.validUntil(_shortDate.format(until));
   }
 
-  static DateFormat get _shortDate => DateFormat('MMM d');
+  static DateFormat get _shortDate => DateFormat.MMMd();
 }
 
 /// Experience category chips. Tapping the selected chip clears it (see
@@ -187,21 +187,23 @@ class _CategoryChips extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         children: [
-          for (final category in categories)
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 10),
-              child: ChoiceChip(
-                label: Text(category),
-                selected: selected == category,
-                onSelected: (_) => onSelected(category),
-                selectedColor: AppColors.primary,
-                labelStyle: Get.textTheme.labelMedium?.copyWith(
-                  color: selected == category
-                      ? AppColors.white
-                      : AppColors.inkBlack,
+          Row(
+            spacing: 10,
+            children: [
+              for (final category in categories)
+                ChoiceChip(
+                  label: Text(category),
+                  selected: selected == category,
+                  onSelected: (_) => onSelected(category),
+                  selectedColor: AppColors.primary,
+                  labelStyle: Get.textTheme.labelMedium?.copyWith(
+                    color: selected == category
+                        ? AppColors.white
+                        : AppColors.inkBlack,
+                  ),
                 ),
-              ),
-            ),
+            ],
+          ),
         ],
       ),
     );

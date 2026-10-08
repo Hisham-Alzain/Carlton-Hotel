@@ -177,7 +177,7 @@ class RoomDetailsContent extends StatelessWidget {
       backgroundColor: AppColors.pearlCream65,
       border: Border.all(color: Colors.white),
       child: RowTextComponent(
-        leading: _iconBadge(highlight.iconPath),
+        leading: _iconBadge(highlight),
         text: highlight.label,
         textStyle: _tileTextStyle(textStyle),
         spacing: 10,
@@ -188,34 +188,32 @@ class RoomDetailsContent extends StatelessWidget {
 
   /// The icon wrapped in a light rounded-square badge, shared by both the
   /// Highlights and Amenities tiles. Reuses [PillContainer] for the box.
-  Widget _iconBadge(String iconPath) => PillContainer(
+  Widget _iconBadge(IconLabel item) => PillContainer(
     padding: const EdgeInsetsGeometry.all(5),
     radius: 8,
     backgroundColor: AppColors.cream,
-    child: SvgPicture.asset(
-      iconPath,
-      height: 15,
-      width: 15,
-      colorFilter: const ColorFilter.mode(
-        AppColors.antiqueGold,
-        BlendMode.srcIn,
-      ),
-    ),
+    child: _glyph(item),
   );
 
-  Widget _circleIconBadge(String iconPath) => Container(
+  Widget _circleIconBadge(IconLabel item) => Container(
     padding: const EdgeInsetsGeometry.all(5),
     decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.cream),
-    child: SvgPicture.asset(
-      iconPath,
-      height: 15,
-      width: 15,
-      colorFilter: const ColorFilter.mode(
-        AppColors.antiqueGold,
-        BlendMode.srcIn,
-      ),
-    ),
+    child: _glyph(item),
   );
+
+  /// The gold 15px glyph: the Material icon when the amenity has one, else
+  /// the bundled SVG.
+  Widget _glyph(IconLabel item) => item.iconData != null
+      ? Icon(item.iconData, size: 15, color: AppColors.antiqueGold)
+      : SvgPicture.asset(
+          item.iconPath,
+          height: 15,
+          width: 15,
+          colorFilter: const ColorFilter.mode(
+            AppColors.antiqueGold,
+            BlendMode.srcIn,
+          ),
+        );
 
   //check spacing between tiles
   Widget _amenityTile(IconLabel amenity) {
@@ -223,7 +221,7 @@ class RoomDetailsContent extends StatelessWidget {
     return SizedBox(
       height: _tileHeight,
       child: RowTextComponent(
-        leading: _circleIconBadge(amenity.iconPath),
+        leading: _circleIconBadge(amenity),
         text: amenity.label,
         textStyle: _tileTextStyle(textStyle),
         spacing: 10,

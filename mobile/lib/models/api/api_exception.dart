@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../constants/error_codes.dart';
 import '../../l10n/app_translations.dart';
 
@@ -89,11 +91,9 @@ class ApiException implements Exception {
     final byCode = switch (errorCode) {
       ErrorCodes.tooManyRequests => AppTranslations.tooManyRequests,
       ErrorCodes.serviceUnavailable => AppTranslations.serviceUnavailable,
-      ErrorCodes.serverError ||
-      ErrorCodes.databaseError => AppTranslations.serverError,
+      ErrorCodes.serverError => AppTranslations.serverError,
       ErrorCodes.forbidden => AppTranslations.forbiddenRequest,
-      ErrorCodes.notFound ||
-      ErrorCodes.routeNotFound => AppTranslations.resourceNotFound,
+      ErrorCodes.notFound => AppTranslations.resourceNotFound,
       ErrorCodes.requestTimeout => AppTranslations.requestTimeout,
       ErrorCodes.noInternetConnection =>
         AppTranslations.checkInternetConnection,
@@ -165,6 +165,24 @@ class ApiException implements Exception {
       message: message,
       errorCode: errorCode,
       requestId: requestId,
+    );
+  }
+
+  /// The [ApiException] the ErrorInterceptor attached to a failed request,
+  /// or a generic one if it is missing — so a raw [DioException] never
+  /// escapes to a caller that, by contract, is not catching anything.
+  factory ApiException.fromDio(DioException e) {
+    if (e.error is ApiException) return e.error as ApiException;
+    // A caller's cancel that ended its wait on a shared GET never went through
+    // the ErrorInterceptor, so it is mapped the same way here.
+    if (e.type == DioExceptionType.cancel) {
+      return ApiException.client(errorCode: ErrorCodes.cancelled, message: '');
+    }
+    final status = e.response?.statusCode ?? 0;
+    return ApiException.client(
+      errorCode: ErrorCodes.unknown,
+      message: ApiException.defaultMessage(ErrorCodes.unknown, status),
+      statusCode: status,
     );
   }
 

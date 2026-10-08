@@ -73,19 +73,17 @@ class AccountView extends GetView<AccountController> {
                 CustomListRow(
                   iconAsset: 'assets/icons/acc_notifications.svg',
                   title: AppTranslations.notifications,
-                  onTap: () =>
-                      controller.comingSoon(AppTranslations.notifications),
+                  onTap: controller.openNotifications,
                 ),
                 CustomListRow(
                   iconAsset: 'assets/icons/acc_payments.svg',
                   title: AppTranslations.savedPayments,
-                  onTap: () =>
-                      controller.comingSoon(AppTranslations.savedPayments),
+                  onTap: controller.openSavedPayments,
                 ),
                 CustomListRow(
                   iconAsset: 'assets/icons/acc_security.svg',
                   title: AppTranslations.security,
-                  onTap: () => controller.comingSoon(AppTranslations.security),
+                  onTap: controller.openSecurity,
                 ),
               ],
             ),
@@ -122,6 +120,19 @@ class AccountView extends GetView<AccountController> {
                 icon: Icons.logout,
                 iconSize: 18,
                 spacing: 6,
+              ),
+            ),
+            Obx(
+              () => TextButton(
+                onPressed: controller.deleting.value
+                    ? null
+                    : controller.confirmDeleteAccount,
+                child: Text(
+                  AppTranslations.deleteAccount,
+                  style: textStyle.labelLarge?.copyWith(
+                    color: AppColors.brickRed,
+                  ),
+                ),
               ),
             ),
           ],

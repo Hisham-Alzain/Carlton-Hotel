@@ -1,3 +1,4 @@
+import 'package:carlton/controllers/account/loyalty_controller.dart';
 import 'package:carlton/controllers/home/home_controller.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/sheets/cancel_reservation_sheet.dart';
@@ -11,18 +12,27 @@ import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/mixins/paginated_controller_mixin.dart';
 import 'package:carlton/models/booking_models.dart';
-import 'package:carlton/models/folio.dart';
 import 'package:carlton/models/pagination.dart';
+import 'package:carlton/models/loyalty.dart';
 import 'package:carlton/models/receipt.dart';
+import 'package:carlton/models/reservation.dart';
 import 'package:carlton/models/stay.dart';
 import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/middleware_service.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+
+part 'stays_cancel.dart';
+
+part 'stays_receipt.dart';
+
+part 'stays_mapping.dart';
 
 /// Owns the My Stays tabs (Active / Upcoming / Past) and the receipt + cancel
 /// flows, wired to the real Stays/Folio API. Active is a single nullable fetch,
@@ -48,9 +58,9 @@ class StaysController extends GetxController
   // ── Past uses the mixin's Rx items / loading / hasError + scrollController ──
 
   // Reused label formatters (money via [usd]).
-  static DateFormat get _fullDate => DateFormat('MMM d, yyyy');
-  static DateFormat get _shortDate => DateFormat('MMM d');
-  static DateFormat get _time => DateFormat('h:mm a');
+  static DateFormat get _fullDate => DateFormat.yMMMd();
+  static DateFormat get _shortDate => DateFormat.MMMd();
+  static DateFormat get _time => DateFormat.jm();
 
   @override
   void onInit() {
@@ -124,9 +134,32 @@ class StaysController extends GetxController
     );
     if (isClosed || res.isCancelled) return;
     if (res.hasData) {
-      upcoming.value = UpcomingStay.listFromJson(
-        res.data,
-      ).map(_upcomingToStay).toList();
+      final stays = UpcomingStay.listFromJson(res.data);
+      // `/stays/upcoming` has no `loyalty` block, so each booking's own
+      // reservation (`GET /reservations/{uuid}`) says what it was paid with.
+      // Per booking rather than the paged list (fixed at 15, newest first),
+      // so an older upcoming stay never loses its note. A failure only drops
+      // that note.
+      final bookings = await Future.wait(
+        stays.map(
+          (s) => _api.get<Map<String, dynamic>>(
+            path: '/reservations/${s.uuid}',
+            showErrorDialog: false,
+            cancelToken: _cancel,
+          ),
+        ),
+      );
+      if (isClosed) return;
+      final rewards = <String, ReservationLoyalty>{
+        for (final b in bookings)
+          if (b.hasData)
+            if (Reservation.fromJson(b.data!) case final r
+                when r.loyalty != null)
+              r.uuid: r.loyalty!,
+      };
+      upcoming.value = stays
+          .map((s) => _upcomingToStay(s, rewards[s.uuid]))
+          .toList();
     } else {
       upcomingError.value = true;
     }
@@ -160,93 +193,24 @@ class StaysController extends GetxController
   // DTO → view-model mapping (controller boundary; cards stay unchanged)
   // ══════════════════════════════════════════════════════════════════════════
 
-  Stay _activeToStay(ActiveStay s) {
-    final since = s.checkedInAt != null
-        ? _time.format(s.checkedInAt!)
-        : (s.checkIn != null ? _shortDate.format(s.checkIn!) : '');
-    return Stay(
-      id: s.uuid,
-      uuid: s.uuid,
-      roomName: s.roomName.value,
-      status: StayStatus.active,
-      subtitle: (s.roomNumber != null && s.roomNumber!.isNotEmpty)
-          ? AppTranslations.stayRoomNumber(s.roomNumber!)
-          : null,
-      checkedInSince: since,
-      nightsRemaining: s.nightsRemaining,
-      checkInLabel: s.checkIn != null ? _fullDate.format(s.checkIn!) : '',
-      checkOutLabel: s.checkOut != null ? _fullDate.format(s.checkOut!) : '',
-    );
-  }
-
-  Stay _upcomingToStay(UpcomingStay s) {
-    final total = double.tryParse(s.priceUsd) ?? 0;
-    final perNight = s.nights > 0 ? total / s.nights : total;
-    final days = s.checkIn?.difference(DateTime.now()).inDays;
-    return Stay(
-      id: s.uuid,
-      uuid: s.uuid,
-      roomName: s.roomName.value,
-      status: StayStatus.upcoming,
-      // The card force-unwraps subtitle/pricePerNight — never leave them null.
-      subtitle: [
-        // A guest-made booking stays `pending` until the hotel confirms it.
-        if (s.isAwaitingHotel) AppTranslations.awaitingConfirmation,
-        (s.roomNumber != null && s.roomNumber!.isNotEmpty)
-            ? '${AppTranslations.receiptHotelName} · '
-                  '${AppTranslations.stayRoomNumber('${s.roomNumber}')}'
-            : AppTranslations.receiptHotelName,
-      ].join(' · '),
-      imagePath: 'assets/images/stay_room.png',
-      checkInLabel: s.checkIn != null ? _fullDate.format(s.checkIn!) : '',
-      checkOutLabel: s.checkOut != null ? _fullDate.format(s.checkOut!) : '',
-      resCode: s.bookingCode,
-      pricePerNight: AppTranslations.perNight(usd(perNight.toString())),
-      isCancellable: s.isCancellable,
-      nextCheckInDays: (days != null && days > 0) ? days : null,
-    );
-  }
-
-  Stay _pastToStay(PastStay s) {
-    final range = (s.checkIn != null && s.checkOut != null)
-        ? '${_shortDate.format(s.checkIn!)} – '
-              '${_shortDate.format(s.checkOut!)} · '
-              '${AppTranslations.nightsCount(s.totalNights)}'
-        : AppTranslations.nightsCount(s.totalNights);
-    return Stay(
-      id: s.uuid,
-      uuid: s.uuid,
-      roomName: s.roomName.value,
-      status: StayStatus.past,
-      dateRangeLabel: range,
-      totalCharged: usd(s.totalChargeUsd),
-      resCode: s.bookingCode,
-      hasReceipt: s.hasReceipt,
-    );
-  }
-
-  ReceiptData _receiptToData(Stay stay, Receipt r) {
-    final dateLabel =
-        (r.reservation.checkIn != null && r.reservation.checkOut != null)
-        ? '${_shortDate.format(r.reservation.checkIn!)} – '
-              '${_shortDate.format(r.reservation.checkOut!)}'
-        : (stay.dateRangeLabel ?? '');
-    final balance = double.tryParse(r.balanceDueUsd) ?? 0;
-    final paymentInfo = balance > 0
-        ? AppTranslations.balanceDue(usd(r.balanceDueUsd))
-        : (r.payments.isNotEmpty
-              ? AppTranslations.paymentProcessed(r.payments.first.method)
-              : AppTranslations.settledAtFrontDesk);
-    return ReceiptData(
-      roomName: stay.roomName,
-      dateLabel: dateLabel,
-      resCode: r.reservation.bookingCode,
-      lines: r.items
-          .map((i) => (label: i.description, amount: usd(i.amountUsd)))
-          .toList(),
-      total: usd(r.folio.totalUsd),
-      paymentInfo: paymentInfo,
-    );
+  /// One line naming the rewards a booking used, or null for none. A room
+  /// upgrade keeps the total, so it names the upgrade rather than an amount.
+  static String? rewardsNote(ReservationLoyalty? rewards) {
+    if (rewards == null || rewards.isReversed) return null;
+    if (rewards.upgradeRequested) return AppTranslations.bookingRewardUpgrade;
+    if (rewards.hasPoints) {
+      return AppTranslations.bookingRewardPoints(
+        rewards.pointsRedeemed,
+        usd(rewards.pointsDiscountUsd),
+      );
+    }
+    if (rewards.hasVoucher) {
+      return AppTranslations.bookingRewardVoucher(
+        rewards.voucherCode!,
+        usd(rewards.voucherDiscountUsd),
+      );
+    }
+    return null;
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -272,126 +236,22 @@ class StaysController extends GetxController
   // Receipt
   // ══════════════════════════════════════════════════════════════════════════
 
-  Future<void> showReceipt(Stay stay) async {
-    if (!stay.hasReceipt) return;
-    final res = await _api.get<Map<String, dynamic>>(
-      path: '/stays/${stay.uuid}/receipt',
-      showLoading: true,
-      showErrorDialog: false,
-      cancelToken: _cancel,
-    );
-    if (isClosed || res.isCancelled) return;
-    if (!res.hasData) {
-      CustomSnackbars.showError(message: AppTranslations.receiptLoadFailed);
-      return;
-    }
-    final data = _receiptToData(stay, Receipt.fromJson(res.data!));
-    CustomBottomSheet.show<void>(
-      title: AppTranslations.receipt,
-      subtitle: '${stay.roomName} · ${data.dateLabel}',
-      child: ReceiptSheet(receipt: data),
-      actions: CustomFilledButton(
-        width: double.infinity,
-        backgroundColor: AppColors.lagoonTeal,
-        onPressed: () {
-          Get.back();
-          downloadReceiptPdf(stay);
-        },
-        child: Text(AppTranslations.downloadPdfReceipt),
-      ),
-    );
-  }
-
-  /// Streams the PDF to a temp file. `downloadFile` bypasses the envelope and
-  /// throws a raw [DioException], so it gets its own try/catch. Opening/sharing
-  /// the saved file is a follow-up (no viewer dependency in pubspec yet).
-  Future<void> downloadReceiptPdf(Stay stay) async {
-    try {
-      final dir = await getTemporaryDirectory();
-      final code = stay.resCode ?? '';
-      final fileTag = code.isNotEmpty ? code : stay.uuid;
-      final savePath = '${dir.path}/receipt-$fileTag.pdf';
-      await _api.downloadFile(
-        path: '/stays/${stay.uuid}/receipt/pdf',
-        savePath: savePath,
-        cancelToken: _cancel,
-      );
-      if (isClosed) return;
-      CustomSnackbars.showSuccess(
-        message: AppTranslations.receiptSaved(savePath),
-      );
-    } on DioException catch (_) {
-      if (isClosed) return;
-      CustomSnackbars.showError(message: AppTranslations.receiptDownloadFailed);
-    }
-  }
-
   // ══════════════════════════════════════════════════════════════════════════
   // Cancel
   // ══════════════════════════════════════════════════════════════════════════
 
-  void requestCancel(Stay stay) {
-    CustomBottomSheet.show<void>(
-      showClose: false,
-      heightFactor: 0.5,
-      child: CancelReservationSheet(stay: stay),
-      actions: Row(
-        spacing: 10,
-        children: [
-          Expanded(
-            child: CustomFilledButton(
-              width: double.infinity,
-              backgroundColor: AppColors.pearlCream,
-              foregroundColor: AppColors.inkBlack,
-              onPressed: () => Get.back(),
-              child: Text(AppTranslations.noKeep),
-            ),
-          ),
-          Expanded(
-            child: CustomFilledButton(
-              width: double.infinity,
-              backgroundColor: AppColors.brickRed,
-              onPressed: () {
-                Get.back();
-                _cancelReservation(stay);
-              },
-              child: Text(AppTranslations.yesCancel),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _cancelReservation(Stay stay) async {
-    final res = await _api.delete<dynamic>(
-      path: '/reservations/${stay.uuid}',
-      showErrorDialog: false,
-      cancelToken: _cancel,
-    );
-    if (isClosed || res.isCancelled) return;
-    if (res.ok || res.isNoContent) {
-      // RxList.removeWhere notifies on its own — no update() needed.
-      upcoming.removeWhere((s) => s.uuid == stay.uuid);
-      // Cancelling may drop the guest's has_booking entitlement — resync from
-      // the authoritative /me rather than guessing a flag flip.
-      await MiddlewareService.find.checkToken();
-      if (isClosed) return;
-      // Home may be showing this booking (pending card / pre-arrival hero).
-      if (Get.isRegistered<HomeController>()) {
-        Get.find<HomeController>().reloadBooking();
-      }
-      CustomSnackbars.showSuccess(
-        message: AppTranslations.reservationCancelled,
-      );
-    } else {
-      final code = res.error?.errorCode;
-      if (code == ErrorCodes.reservationState) {
-        CustomSnackbars.showWarning(message: cancelErrorMessage(code));
-      } else {
-        CustomSnackbars.showError(message: cancelErrorMessage(code));
-      }
+  /// Pure, for tests: the cancel message for a booking's reversed rewards.
+  static String cancelledMessage(ReservationLoyalty? rewards) {
+    if (rewards == null || !rewards.isReversed) {
+      return AppTranslations.reservationCancelled;
     }
+    if (rewards.hasPoints) {
+      return AppTranslations.cancelledPointsReturned(rewards.pointsRedeemed);
+    }
+    if (rewards.hasVoucher) {
+      return AppTranslations.cancelledVoucherRestored(rewards.voucherCode!);
+    }
+    return AppTranslations.reservationCancelled;
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -408,10 +268,13 @@ class StaysController extends GetxController
     message: AppTranslations.checkoutConfirmShort,
     icon: 'assets/icons/act_checkout.svg',
     accentColor: AppColors.primary,
-    onPressed: _confirmExpressCheckout,
+    onPressed: confirmExpressCheckout,
   );
 
-  Future<void> _confirmExpressCheckout() async {
+  /// `POST /folio/approve` — approves the bill and runs the real check-out.
+  /// The one copy of this call: Home's checkout button confirms with its own
+  /// wording, then lands here.
+  Future<void> confirmExpressCheckout() async {
     final res = await _api.post<Map<String, dynamic>>(
       path: '/folio/approve',
       showErrorDialog: false,
@@ -419,18 +282,26 @@ class StaysController extends GetxController
     );
     if (isClosed || res.isCancelled) return;
     if (res.ok) {
-      if (res.data != null) {
-        Folio.fromJson(res.data!); // parse the approved bill
-      }
       CustomSnackbars.showSuccess(message: AppTranslations.checkoutComplete);
-      // Stay is now checked_out — resync entitlements, then reload (→ null).
+      // Stay is now checked_out — resync entitlements (Home re-resolves from
+      // them), then reload the active tab (→ null) and the past list.
       await MiddlewareService.find.checkToken();
       if (isClosed) return;
       _loadActive();
-    } else if (res.error?.errorCode == ErrorCodes.noActiveReservation) {
-      CustomSnackbars.showInfo(message: AppTranslations.noActiveStayToCheckOut);
-    } else {
-      CustomSnackbars.showError(message: AppTranslations.checkoutFailed);
+      loadItems(_cancel);
+      return;
+    }
+    switch (res.error?.errorCode) {
+      case ErrorCodes.noActiveReservation:
+        CustomSnackbars.showInfo(
+          message: AppTranslations.noActiveStayToCheckOut,
+        );
+      // The guest's latest booking is not the checked-in stay; the desk has
+      // to check this one out.
+      case ErrorCodes.reservationState:
+        CustomSnackbars.showWarning(message: AppTranslations.checkoutAtDesk);
+      default:
+        CustomSnackbars.showError(message: AppTranslations.checkoutFailed);
     }
   }
 

@@ -9,9 +9,13 @@ class CustomPromoBox extends StatelessWidget {
   final TextEditingController promoCodeController;
   final VoidCallback onApply;
 
+  /// Why the last code was refused (`invalid_promo`), shown under the field.
+  final String? errorText;
+
   const CustomPromoBox({
     required this.promoCodeController,
     required this.onApply,
+    this.errorText,
     super.key,
   });
 
@@ -31,10 +35,7 @@ class CustomPromoBox extends StatelessWidget {
         children: [
           Text(
             AppTranslations.promoCode,
-            style: textStyle.labelMedium?.copyWith(
-              fontFamily: 'Plus Jakarta Sans',
-              color: AppColors.inkBlack,
-            ),
+            style: textStyle.labelMedium?.copyWith(color: AppColors.inkBlack),
           ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,6 +56,11 @@ class CustomPromoBox extends StatelessWidget {
               ),
             ],
           ),
+          if (errorText != null)
+            Text(
+              errorText!,
+              style: textStyle.labelSmall?.copyWith(color: AppColors.brickRed),
+            ),
         ],
       ),
     );

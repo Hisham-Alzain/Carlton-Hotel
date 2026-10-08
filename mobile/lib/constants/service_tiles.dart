@@ -43,7 +43,7 @@ abstract class ServiceTiles {
       title: AppTranslations.tileConcierge,
       code: 'concierge',
       subtitle: AppTranslations.subAlwaysAvailable,
-      imagePath: 'assets/images/tile_concierge.png',
+      imagePath: 'assets/images/ring.png',
       imageWidth: 65,
       imageHeight: 46,
       imageOpacity: 1,

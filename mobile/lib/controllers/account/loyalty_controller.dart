@@ -1,69 +1,82 @@
-import 'package:carlton/customWidgets/custom_snackbar.dart';
-import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/mixins/paginated_controller_mixin.dart';
 import 'package:carlton/models/loyalty.dart';
+import 'package:carlton/models/pagination.dart';
+import 'package:carlton/routes/routes.dart';
+import 'package:carlton/services/api/api_service.dart';
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
-/// Holds the rewards standing the Loyalty screen renders.
+/// The Loyalty screen: the points balance (`GET /loyalty/account`) and the
+/// ledger under it (`GET /loyalty/ledger`, paginated through the mixin).
 ///
-/// **The only screen in the app not backed by the API.** The backend exposes no
-/// loyalty routes at all — no points, tier or ledger tables, nothing under
-/// `routes/api.php` — so there is nothing to call. The figures below are
-/// hardcoded and shaped like the eventual payload, so wiring it up later
-/// replaces these two getters and nothing in the view.
-///
-/// Until those endpoints exist this screen shows invented numbers to the guest.
-/// That is a deliberate, known gap, recorded here rather than left to be
-/// discovered.
-class LoyaltyController extends GetxController {
-  LoyaltyAccount get account => const LoyaltyAccount(
-    memberId: 'CH-48219',
-    tierLabel: 'Gold Member',
-    nextTierLabel: 'Platinum',
-    balance: 2450,
-    earnedTotal: 3150,
-    redeemedTotal: 700,
-    staysCount: 6,
-    pointsToNextTier: 850,
-  );
+/// The two load independently, so a failing ledger does not blank the balance
+/// and the other way round. This is the one owner of both: the rewards and
+/// vouchers screens, a redeem, a cancelled booking and a push all refresh
+/// through [reloadAll] rather than keeping a second copy of the balance.
+class LoyaltyController extends GetxController
+    with PaginatedControllerMixin<LoyaltyLedgerEntry> {
+  final CancelToken _cancel = CancelToken();
 
-  /// Newest first — the ledger reads top-down like a statement.
-  List<LoyaltyTransaction> get transactions => [
-    LoyaltyTransaction(
-      title: 'Deluxe Sea View · 3 nights',
-      bookingRef: 'RES-48219',
-      date: DateTime(2026, 9, 12),
-      points: 620,
-      kind: LoyaltyEntryKind.earned,
-      source: LoyaltyEntrySource.stay,
-    ),
-    LoyaltyTransaction(
-      title: 'Spa credit redeemed',
-      bookingRef: 'RES-48219',
-      date: DateTime(2026, 9, 14),
-      points: 400,
-      kind: LoyaltyEntryKind.redeemed,
-      source: LoyaltyEntrySource.spa,
-    ),
-    LoyaltyTransaction(
-      title: 'Dining at Azure Restaurant',
-      bookingRef: 'RES-47660',
-      date: DateTime(2026, 8, 3),
-      points: 180,
-      kind: LoyaltyEntryKind.earned,
-      source: LoyaltyEntrySource.dining,
-    ),
-    LoyaltyTransaction(
-      title: 'Executive Suite · 2 nights',
-      bookingRef: 'RES-47660',
-      date: DateTime(2026, 8, 1),
-      points: 540,
-      kind: LoyaltyEntryKind.earned,
-      source: LoyaltyEntrySource.stay,
-    ),
-  ];
+  final Rxn<LoyaltyAccount> account = Rxn<LoyaltyAccount>();
+  final RxBool accountLoading = true.obs;
+  final RxBool accountError = false.obs;
 
-  /// Redemption needs the folio and the rate table, neither of which is wired
-  /// yet — same coming-soon fallback the Account rows use.
-  void redeemPoints() =>
-      CustomSnackbars.showInfo(message: AppTranslations.loyaltyRedeemSoon);
+  @override
+  void onInit() {
+    super.onInit();
+    initPagination(_cancel);
+    reloadAll();
+  }
+
+  @override
+  void onClose() {
+    _cancel.cancel();
+    // Chains into PaginatedControllerMixin.onClose → disposes scrollController.
+    super.onClose();
+  }
+
+  /// Refreshes the balance and the ledger. Named so it does not collide with
+  /// `GetxController.refresh`, which the framework calls to notify listeners.
+  Future<void> reloadAll() => Future.wait([loadAccount(), loadItems(_cancel)]);
+
+  Future<void> loadAccount() async {
+    accountLoading.value = true;
+    accountError.value = false;
+    final res = await ApiService.find.get<Map<String, dynamic>>(
+      path: '/loyalty/account',
+      showErrorDialog: false,
+      cancelToken: _cancel,
+    );
+    if (isClosed || res.isCancelled) return;
+    if (res.hasData) {
+      account.value = LoyaltyAccount.fromJson(res.data!);
+    } else if (account.value == null) {
+      accountError.value = true;
+    }
+    accountLoading.value = false;
+  }
+
+  @override
+  Future<({List<LoyaltyLedgerEntry> items, Pagination pagination})?> fetchPage(
+    int page,
+    CancelToken cancelToken,
+  ) async {
+    final res = await ApiService.find.get<List<dynamic>>(
+      path: '/loyalty/ledger',
+      queryParameters: {'page': page},
+      showErrorDialog: false,
+      cancelToken: cancelToken,
+    );
+    if (!res.hasData) return null;
+    return (
+      items: res.data!
+          .whereType<Map<String, dynamic>>()
+          .map(LoyaltyLedgerEntry.fromJson)
+          .toList(),
+      pagination: res.meta ?? Pagination(),
+    );
+  }
+
+  void openRewards() => Get.toNamed(Routes.loyaltyRewards);
+  void openVouchers() => Get.toNamed(Routes.loyaltyVouchers);
 }

@@ -1,77 +1,108 @@
-/// Which way a points entry moved the balance.
-///
-/// Kept as an enum rather than a signed int so the UI can style the sign, the
-/// icon and the copy from one switch — a bare negative number would leave each
-/// of those three deriving the same fact independently.
-enum LoyaltyEntryKind { earned, redeemed, expired }
+import 'package:carlton/models/localized.dart';
 
-/// What the entry was for, which is what the ledger row draws its glyph from.
-///
-/// Separate from [LoyaltyEntryKind] because the two answer different
-/// questions: kind decides the sign and the colour, source decides the
-/// picture. Collapsing them gave every earned row the same `+` circle, which
-/// told the guest nothing a signed amount wasn't already saying.
-enum LoyaltyEntrySource { stay, dining, spa, other }
+part 'loyalty_booking.dart';
 
-/// One line of the points ledger.
-///
-/// [bookingRef] is what ties a point movement back to the stay that produced
-/// it — the ledger is meaningless without it, which is why it is required
-/// rather than optional even for redemptions.
-class LoyaltyTransaction {
-  final String title;
-  final String bookingRef;
-  final DateTime date;
-  final int points;
-  final LoyaltyEntryKind kind;
-  final LoyaltyEntrySource source;
+part 'loyalty_rewards.dart';
 
-  const LoyaltyTransaction({
-    required this.title,
-    required this.bookingRef,
-    required this.date,
-    required this.points,
-    required this.kind,
-    this.source = LoyaltyEntrySource.other,
-  });
-}
+part 'loyalty_ledger.dart';
 
-/// The guest's rewards standing, as the Loyalty screen needs it.
-///
-/// [tierLabel] and [nextTierLabel] arrive as ready strings rather than an enum
-/// because the tier ladder is hotel configuration, not app logic — a new tier
-/// on the backend must not require a Dart enum case.
-class LoyaltyAccount {
-  final String memberId;
-  final String tierLabel;
-  final String? nextTierLabel;
-  final int balance;
-  final int earnedTotal;
-  final int redeemedTotal;
-  final int staysCount;
+/// Which parts of the points programme the hotel has switched on, from
+/// `GET /loyalty/account → program`. The three are independent: a hotel can
+/// sell rewards before it has set an earn rate, so each feature hides on its
+/// own switch and never assumes the others.
+class LoyaltyProgram {
+  /// The hotel set an earn rate, so settled stays credit points.
+  final bool earning;
 
-  /// Points still needed to reach [nextTierLabel]. Null on the top tier, which
-  /// is also the only state where [nextTierLabel] is null.
-  final int? pointsToNextTier;
+  /// The hotel set a point value and a booking cap, so part of a booking can be
+  /// paid with points.
+  final bool pointsDiscount;
 
-  const LoyaltyAccount({
-    required this.memberId,
-    required this.tierLabel,
-    required this.balance,
-    required this.earnedTotal,
-    required this.redeemedTotal,
-    required this.staysCount,
-    this.nextTierLabel,
-    this.pointsToNextTier,
+  /// The rewards catalogue. The API says `true` always.
+  final bool rewards;
+
+  const LoyaltyProgram({
+    this.earning = false,
+    this.pointsDiscount = false,
+    this.rewards = true,
   });
 
-  int get netChange => earnedTotal - redeemedTotal;
-
-  /// 0..1 progress toward [nextTierLabel]. The top tier reads as full rather
-  /// than empty — an unreachable bar at 0% looks like a loading failure.
-  double get tierProgress {
-    final remaining = pointsToNextTier;
-    if (remaining == null || remaining <= 0) return 1;
-    return earnedTotal / (earnedTotal + remaining);
+  factory LoyaltyProgram.fromJson(dynamic json) {
+    if (json is! Map) return const LoyaltyProgram();
+    return LoyaltyProgram(
+      earning: json['earning'] == true,
+      pointsDiscount: json['points_discount'] == true,
+      rewards: json['rewards'] != false,
+    );
   }
 }
+
+/// The guest's points standing (`GET /loyalty/account`).
+///
+/// There are no tiers, member id or stay count: the programme is a points
+/// balance, a ledger, rewards and vouchers, and nothing else is on the wire.
+class LoyaltyAccount {
+  /// Spendable now — batches whose expiry is still in the future.
+  final int availablePoints;
+
+  /// Points that lapse within [expiringSoonWindowDays].
+  final int expiringSoonPoints;
+  final int expiringSoonWindowDays;
+
+  /// When the next batch lapses, or null with no balance.
+  final DateTime? nextExpiryAt;
+
+  /// Earned plus positive adjustments minus clawbacks. Expiry is in neither
+  /// lifetime figure.
+  final int lifetimeEarnedPoints;
+  final int lifetimeRedeemedPoints;
+  final LoyaltyProgram program;
+
+  /// USD one point is worth, or null while the hotel has not set a value.
+  final double? redeemValueUsd;
+
+  /// The smallest free-form points payment on a booking.
+  final int minRedeemPoints;
+
+  /// The largest share of a booking payable in points (`50` = 50%), or null
+  /// when paying with points is off. Never read null as 100%.
+  final double? maxRedeemPercent;
+
+  const LoyaltyAccount({
+    this.availablePoints = 0,
+    this.expiringSoonPoints = 0,
+    this.expiringSoonWindowDays = 30,
+    this.nextExpiryAt,
+    this.lifetimeEarnedPoints = 0,
+    this.lifetimeRedeemedPoints = 0,
+    this.program = const LoyaltyProgram(),
+    this.redeemValueUsd,
+    this.minRedeemPoints = 1,
+    this.maxRedeemPercent,
+  });
+
+  factory LoyaltyAccount.fromJson(Map<String, dynamic> json) => LoyaltyAccount(
+    availablePoints: _int(json['available_points']),
+    expiringSoonPoints: _int(json['expiring_soon_points']),
+    expiringSoonWindowDays: _int(json['expiring_soon_window_days'], 30),
+    nextExpiryAt: _date(json['next_expiry_at']),
+    lifetimeEarnedPoints: _int(json['lifetime_earned_points']),
+    lifetimeRedeemedPoints: _int(json['lifetime_redeemed_points']),
+    program: LoyaltyProgram.fromJson(json['program']),
+    redeemValueUsd: double.tryParse('${json['redeem_value_usd'] ?? ''}'),
+    minRedeemPoints: _int(json['min_redeem_points'], 1),
+    maxRedeemPercent: double.tryParse('${json['max_redeem_percent'] ?? ''}'),
+  );
+
+  bool get hasExpiringPoints => expiringSoonPoints > 0 && nextExpiryAt != null;
+
+  /// What the balance is worth in USD, or null when points have no set value.
+  double? get balanceValueUsd =>
+      redeemValueUsd == null ? null : availablePoints * redeemValueUsd!;
+}
+
+int _int(dynamic value, [int fallback = 0]) =>
+    value is num ? value.toInt() : int.tryParse('$value') ?? fallback;
+
+DateTime? _date(dynamic value) =>
+    value is String ? DateTime.tryParse(value)?.toLocal() : null;

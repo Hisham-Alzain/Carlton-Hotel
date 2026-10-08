@@ -1,9 +1,14 @@
+import 'package:carlton/components/custom_info_banner.dart';
 import 'package:carlton/components/loyalty/loyalty_activity_section.dart';
 import 'package:carlton/components/loyalty/loyalty_earn_banner.dart';
+import 'package:carlton/components/loyalty/loyalty_page.dart';
 import 'package:carlton/components/loyalty/loyalty_points_card.dart';
 import 'package:carlton/components/loyalty/loyalty_stats_grid.dart';
 import 'package:carlton/controllers/account/loyalty_controller.dart';
-import 'package:carlton/customWidgets/custom_scaffold.dart';
+import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
+import 'package:carlton/extensions/date_extension.dart';
+import 'package:carlton/extensions/points_extension.dart';
 import 'package:carlton/extensions/text_style_extension.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -15,54 +20,112 @@ class LoyaltyView extends GetView<LoyaltyController> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScaffold(
-      // ivoryCream, not the theme's ghostWhite scaffold: every surface on this
-      // screen is warm (cream banner, gold hairlines, teal card), and a cool
-      // near-white behind them reads as a different screen showing through.
-      // The app bar has to be told the same thing — appBarTheme still carries
-      // ghostWhite, and the seam between the two is visible.
-      backgroundColor: AppColors.ivoryCream,
-      appBar: AppBar(
-        backgroundColor: AppColors.ivoryCream,
-        surfaceTintColor: AppColors.ivoryCream,
-        title: Text(
-          AppTranslations.loyaltyTitle,
-          style: Theme.of(
-            context,
-          ).appBarTheme.titleTextStyle?.copyWith(color: AppColors.primary),
-        ),
-        iconTheme: const IconThemeData(color: AppColors.primary),
-      ),
-      // SingleChildScrollView + Column rather than ListView: ListView has no
-      // `spacing:`. `stretch` is load-bearing — a Column centres its children,
-      // which would shrink the balance card, the stats grid and the CTA.
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        // Outer 28 sets the ledger and the CTA apart as their own blocks; the
-        // inner 20 is the tighter rhythm between balance, promise and totals,
-        // which read as one summary.
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 28,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 20,
-              children: [
-                LoyaltyPointsCard(account: controller.account),
-                const LoyaltyEarnBanner(),
-                LoyaltyStatsGrid(account: controller.account),
-              ],
+    return LoyaltyScaffold(
+      title: AppTranslations.loyaltyTitle,
+      body: Obx(() {
+        if (controller.accountLoading.value &&
+            controller.account.value == null) {
+          return const Center(child: LogoLoadingIndicator(size: 50));
+        }
+        final account = controller.account.value;
+        if (account == null) {
+          return CustomEmptyPlaceholder.loadFailed(
+            title: AppTranslations.loyaltyLoadFailed,
+            subtitle: AppTranslations.checkConnectionShort,
+            onRetry: controller.reloadAll,
+          );
+        }
+        // Pagination loads the next ledger page as this scroll nears its end;
+        // the ledger is inside one scroll view with the cards above it, so it
+        // listens through the mixin rather than owning a ScrollController.
+        return NotificationListener<ScrollNotification>(
+          onNotification: controller.onScrollNotification,
+          child: RefreshIndicator(
+            onRefresh: controller.reloadAll,
+            color: AppColors.primary,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              // Outer 28 sets the ledger and the actions apart as their own
+              // blocks; the inner 20 is the tighter rhythm between balance,
+              // promise and totals, which read as one summary. `stretch` is
+              // load-bearing — a Column centres its children, which would
+              // shrink the balance card, the stats grid and the actions.
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 28,
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 20,
+                    children: [
+                      LoyaltyPointsCard(account: account),
+                      if (account.hasExpiringPoints)
+                        CustomInfoBanner(
+                          tone: InfoBannerTone.warning,
+                          message: AppTranslations.loyaltyExpiring(
+                            points: account.expiringSoonPoints.formatPoints(),
+                            date: account.nextExpiryAt!.formatDatePicker(),
+                          ),
+                        ),
+                      if (account.program.earning) const LoyaltyEarnBanner(),
+                      LoyaltyStatsGrid(account: account),
+                    ],
+                  ),
+                  _Ledger(controller: controller),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 12,
+                    children: [
+                      _FoilButton(
+                        label: AppTranslations.loyaltyRedeem,
+                        onPressed: controller.openRewards,
+                      ),
+                      _OutlineButton(
+                        label: AppTranslations.loyaltyMyVouchers,
+                        onPressed: controller.openVouchers,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-
-            LoyaltyActivitySection(transactions: controller.transactions),
-
-            _RedeemButton(onPressed: controller.redeemPoints),
-          ],
-        ),
-      ),
+          ),
+        );
+      }),
     );
+  }
+}
+
+/// The ledger with its own loading and failed states: a ledger that failed
+/// must not blank the balance above it.
+class _Ledger extends StatelessWidget {
+  final LoyaltyController controller;
+
+  const _Ledger({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.loading.value && controller.items.isEmpty) {
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 32),
+          child: Center(child: LogoLoadingIndicator(size: 40)),
+        );
+      }
+      if (controller.hasError.value && controller.items.isEmpty) {
+        return CustomEmptyPlaceholder.loadFailed(
+          title: AppTranslations.loyaltyLoadFailed,
+          subtitle: AppTranslations.checkConnectionShort,
+          onRetry: controller.reloadAll,
+        );
+      }
+      return LoyaltyActivitySection(
+        entries: controller.items,
+        loadingMore: controller.loadingMore.value,
+      );
+    });
   }
 }
 
@@ -72,10 +135,11 @@ class LoyaltyView extends GetView<LoyaltyController> {
 /// only takes a flat [Color], and flattening this gradient into it would be
 /// exactly the "worse copy of the framework's styling API" this codebase
 /// avoids (see [CustomFilledButton]'s own call sites for the flat case).
-class _RedeemButton extends StatelessWidget {
+class _FoilButton extends StatelessWidget {
+  final String label;
   final VoidCallback onPressed;
 
-  const _RedeemButton({required this.onPressed});
+  const _FoilButton({required this.label, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +180,7 @@ class _RedeemButton extends StatelessWidget {
             // more considered button than wordmark-plus-icon.
             child: Center(
               child: Text(
-                AppTranslations.loyaltyRedeem.toUpperCase(),
+                label.toUpperCase(),
                 style: textStyle.labelLarge
                     ?.copyWith(
                       fontWeight: FontWeight.w700,
@@ -124,6 +188,43 @@ class _RedeemButton extends StatelessWidget {
                     )
                     .tracked(context, 1.2),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The quieter second action under the foil one.
+class _OutlineButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onPressed;
+
+  const _OutlineButton({required this.label, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          height: 48,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.antiqueGold56),
+          ),
+          child: Text(
+            label,
+            style: textStyle.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
             ),
           ),
         ),

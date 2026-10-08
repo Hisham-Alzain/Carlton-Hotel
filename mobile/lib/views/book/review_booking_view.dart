@@ -1,3 +1,4 @@
+import 'package:carlton/components/booking_loyalty_panel.dart';
 import 'package:carlton/theme/theme.dart';
 import 'package:carlton/components/booking_step_header.dart';
 import 'package:carlton/l10n/app_translations.dart';
@@ -49,6 +50,22 @@ class ReviewBookingView extends StatelessWidget {
                 ),
                 child: BookingPriceBreakdown(summary: controller.priceSummary),
               ),
+
+              Obx(() {
+                final account = controller.loyaltyAccount.value;
+                if (account == null) return const SizedBox.shrink();
+                return BookingLoyaltyPanel(
+                  account: account,
+                  mode: controller.loyaltyMode.value,
+                  pointsController: controller.pointsCtrl,
+                  voucherController: controller.voucherCtrl,
+                  preview: controller.loyaltyPreview.value,
+                  error: controller.loyaltyError.value,
+                  pricing: controller.loyaltyPricing.value,
+                  onModeChanged: controller.setLoyaltyMode,
+                  onInputChanged: controller.onLoyaltyInputChanged,
+                );
+              }),
 
               Container(
                 padding: const EdgeInsets.all(14),

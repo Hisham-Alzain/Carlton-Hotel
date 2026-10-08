@@ -18,8 +18,13 @@ import 'package:carlton/views/discover/discover_view.dart';
 import 'package:carlton/views/home/ai_concierge_view.dart';
 import 'package:carlton/views/main/main_view.dart';
 import 'package:carlton/views/auth/sign_in_view.dart';
+import 'package:carlton/views/account/loyalty_rewards_view.dart';
 import 'package:carlton/views/account/loyalty_view.dart';
+import 'package:carlton/views/account/loyalty_vouchers_view.dart';
 import 'package:carlton/views/account/legal_view.dart';
+import 'package:carlton/views/account/notifications_view.dart';
+import 'package:carlton/views/account/saved_payments_view.dart';
+import 'package:carlton/views/account/security_view.dart';
 import 'package:carlton/views/account/preferences_view.dart';
 import 'package:carlton/views/account/profile_view.dart';
 import 'package:carlton/views/account/support_view.dart';
@@ -48,8 +53,13 @@ abstract class Routes {
   static const serviceCategory = '/services/category';
   static const preferences = '/account/preferences';
   static const loyalty = '/account/loyalty';
+  static const loyaltyRewards = '/account/loyalty/rewards';
+  static const loyaltyVouchers = '/account/loyalty/vouchers';
   static const support = '/account/support';
   static const legal = '/account/legal';
+  static const notifications = '/account/notifications';
+  static const savedPayments = '/account/saved-payments';
+  static const security = '/account/security';
   static const folio = '/stays/bill';
   static const restaurantDetail = '/dining/restaurant';
 
@@ -143,6 +153,16 @@ abstract class Pages {
       binding: LoyaltyBinding(),
     ),
     GetPage(
+      name: Routes.loyaltyRewards,
+      page: () => const LoyaltyRewardsView(),
+      binding: LoyaltyRewardsBinding(),
+    ),
+    GetPage(
+      name: Routes.loyaltyVouchers,
+      page: () => const LoyaltyVouchersView(),
+      binding: LoyaltyVouchersBinding(),
+    ),
+    GetPage(
       name: Routes.folio,
       page: () => const FolioView(),
       binding: FolioBinding(),
@@ -162,6 +182,9 @@ abstract class Pages {
       page: () => const LegalView(),
       binding: LegalBinding(),
     ),
+    GetPage(name: Routes.notifications, page: () => const NotificationsView()),
+    GetPage(name: Routes.savedPayments, page: () => const SavedPaymentsView()),
+    GetPage(name: Routes.security, page: () => const SecurityView()),
     GetPage(
       name: Routes.experienceDetail,
       page: () => const ExperienceDetailView(),

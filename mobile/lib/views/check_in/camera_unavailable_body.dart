@@ -1,5 +1,5 @@
 import 'package:carlton/controllers/check_in/scan_id_controller.dart';
-import 'package:carlton/customWidgets/custom_containers.dart';
+import 'package:carlton/components/check_in/scan_status_header.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -19,22 +19,11 @@ class CameraUnavailableBody extends GetView<ScanIdController> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 20,
         children: [
-          const Center(
-            child: CustomIconChip.circle(
-              size: 50,
-              backgroundColor: AppColors.primary08,
-              child: Icon(
-                Icons.no_photography_outlined,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-          Text(
-            AppTranslations.cameraUnavailable,
-            textAlign: TextAlign.center,
-            style: Get.textTheme.headlineSmall?.copyWith(
-              color: AppColors.primary,
-            ),
+          ScanStatusHeader(
+            icon: Icons.no_photography_outlined,
+            iconColor: AppColors.primary,
+            chipColor: AppColors.primary08,
+            title: AppTranslations.cameraUnavailable,
           ),
           Obx(
             () => Text(

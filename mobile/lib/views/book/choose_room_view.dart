@@ -1,7 +1,6 @@
-import 'package:carlton/theme/theme.dart';
+import 'package:carlton/components/stay_summary_bar.dart';
 import 'package:carlton/components/booking_step_header.dart';
 import 'package:carlton/l10n/app_translations.dart';
-import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/components/cards/custom_room_result_card.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
@@ -24,7 +23,6 @@ class ChooseRoomView extends StatelessWidget {
         onClose: Get.back,
       ),
       body: Obx(() {
-        final TextTheme textStyle = Get.textTheme;
         return CustomScrollView(
           // The pagination mixin's controller: nearing the bottom loads the
           // next page of room types.
@@ -37,29 +35,10 @@ class ChooseRoomView extends StatelessWidget {
                   spacing: 10,
                   children: [
                     BookingStepIndicator(step: 1),
-                    PillContainer(
-                      padding: const EdgeInsets.all(10),
+                    StaySummaryBar(
+                      dateSummary: controller.dateSummary,
+                      guestSummary: controller.guestSummary,
                       backgroundColor: AppColors.pearlCream,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              controller.dateSummary,
-                              style: textStyle.dmLabelMedium?.copyWith(
-                                color: AppColors.inkBlack,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            controller.guestSummary,
-                            style: textStyle.labelMedium?.copyWith(
-                              fontFamily: 'Plus Jakarta Sans',
-                              color: AppColors.walnutGold,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ],
                 ),

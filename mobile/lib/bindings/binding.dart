@@ -1,6 +1,8 @@
 import 'package:carlton/controllers/services/airport_transfer_controller.dart';
 import 'package:carlton/controllers/account/account_controller.dart';
 import 'package:carlton/controllers/account/loyalty_controller.dart';
+import 'package:carlton/controllers/account/loyalty_rewards_controller.dart';
+import 'package:carlton/controllers/account/loyalty_vouchers_controller.dart';
 import 'package:carlton/controllers/account/legal_controller.dart';
 import 'package:carlton/controllers/account/preferences_controller.dart';
 import 'package:carlton/controllers/account/profile_controller.dart';
@@ -68,6 +70,24 @@ class LoyaltyBinding implements Bindings {
   }
 }
 
+/// The rewards screen reads the balance from [LoyaltyController], so it is
+/// bound here too: a no-op while the Loyalty screen below it is still open,
+/// and the owner when a deep link lands on rewards directly.
+class LoyaltyRewardsBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => LoyaltyController());
+    Get.lazyPut(() => LoyaltyRewardsController());
+  }
+}
+
+class LoyaltyVouchersBinding implements Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => LoyaltyVouchersController());
+  }
+}
+
 class PreferencesBinding implements Bindings {
   @override
   void dependencies() {
@@ -80,8 +100,8 @@ class RestaurantBinding implements Bindings {
   void dependencies() {
     Get.lazyPut(() => RestaurantController());
     // Reviews tab switched off for now (see RestaurantDetailView).
-    // // Reviews tab (autoLoad) — target derived from the route argument; a demo
-    // // venue (empty uuid) skips the fetch and renders the empty state. Read the
+    // // Reviews tab (autoLoad) — target derived from the route argument; a
+    // // venue with no uuid skips the fetch and renders the empty state. Read the
     // // argument now: the lazy factory runs at first Get.find, when a sheet or
     // // dialog on top may have made Get.arguments something else.
     // final venue = Get.arguments;
@@ -98,8 +118,8 @@ class RoomDetailsBinding implements Bindings {
   @override
   void dependencies() {
     // Room Details only submits reviews — the list is never rendered, so
-    // autoLoad is off. A demo room (empty uuid) can't be reviewed; the view
-    // hides the CTA in that case.
+    // autoLoad is off. A room with no uuid can't be reviewed; the view hides
+    // the CTA in that case.
     // Read the argument now, not in the factory: the controller is first
     // found from the review sheet, where Get.arguments is no longer the room —
     // the POST went to `/reviews/room_type/` with no uuid (404).

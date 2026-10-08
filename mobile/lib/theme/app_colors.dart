@@ -153,6 +153,7 @@ abstract class AppColors {
 
   // ── Red ──
   static const Color brickRed = Color(0xFFC0392B);
+  static const Color brickRed07 = Color(0x12C0392B); // @ 7%
   static const Color crimsonRed30 = Color(0x4DDC3C3C); // @ 30%
   static const Color crimsonRed10 = Color(0x19DC3C3C); // @ 10%
   static const Color crimsonRed08 = Color(0x14DC3C3C); // @ 8%

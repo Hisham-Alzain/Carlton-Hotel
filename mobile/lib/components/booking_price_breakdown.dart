@@ -44,25 +44,7 @@ class BookingPriceBreakdown extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    AppTranslations.total,
-                    style: textStyle.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.inkBlack,
-                    ),
-                  ),
-                  Text(
-                    AppTranslations.finalTotalForStay,
-                    style: textStyle.dmLabelSmall?.copyWith(
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
+              BookingTotalLabel(caption: AppTranslations.finalTotalForStay),
               Text(
                 summary.total,
                 style: textStyle.titleLarge?.copyWith(
@@ -74,6 +56,37 @@ class BookingPriceBreakdown extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// "Total" over a small teal caption ("Final total for your stay"), the
+/// left side of every booking total row.
+class BookingTotalLabel extends StatelessWidget {
+  final String caption;
+
+  const BookingTotalLabel({required this.caption, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textStyle = Get.textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          AppTranslations.total,
+          style: textStyle.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.inkBlack,
+          ),
+        ),
+        Text(
+          caption,
+          style: textStyle.dmLabelSmall?.copyWith(color: AppColors.primary),
+        ),
+      ],
     );
   }
 }

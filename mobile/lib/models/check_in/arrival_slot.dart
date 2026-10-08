@@ -28,6 +28,11 @@ enum ArrivalSlot {
 
   static ArrivalSlot fromHour(int hour) =>
       values.firstWhere((slot) => slot.hour == hour);
+
+  /// The slot for a server-sent hour, or null: the server accepts any HH:mm,
+  /// and most hours have no slot here.
+  static ArrivalSlot? tryFromHour(int? hour) =>
+      values.where((slot) => slot.hour == hour).firstOrNull;
 }
 
 /// The groups the arrival-time sheet renders its hours under. Ordered earliest

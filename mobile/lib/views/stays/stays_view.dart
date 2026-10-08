@@ -137,6 +137,7 @@ class _UpcomingTab extends StatelessWidget {
               CustomUpcomingStayCard(
                 stay: stay,
                 onCancel: () => controller.requestCancel(stay),
+                onCopyCode: () => controller.copyBookingCode(stay),
               ),
               if (stay.nextCheckInDays != null)
                 CustomInfoBanner(

@@ -1,11 +1,7 @@
-import 'package:carlton/customWidgets/custom_containers.dart';
-import 'package:carlton/customWidgets/custom_filled_button.dart';
-import 'package:carlton/customWidgets/custom_text_field.dart';
+import 'package:carlton/components/sheets/note_sheet_body.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/service_catalog_item.dart';
-import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 /// Confirm-a-request bottom sheet body for one [ServiceCatalogOption], shown
 /// via `ServicesController.openServiceRequest` -> `CustomBottomSheet.show`.
@@ -46,72 +42,22 @@ class _ServiceRequestSheetState extends State<ServiceRequestSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textStyle = Get.textTheme;
     final mins = widget.option.expectedMinutes;
     final stayLabel = widget.stayLabel;
+    final target = AppTranslations.requestFor(
+      stayLabel.isEmpty ? AppTranslations.requestTargetRoom : stayLabel,
+    );
+    final eta = mins != null
+        ? AppTranslations.teamWithinMinutes(AppTranslations.etaMinutes(mins))
+        : AppTranslations.teamShortly;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 10,
-      children: [
-        PillContainer(
-          padding: const EdgeInsets.all(12),
-          backgroundColor: AppColors.cream,
-          child: Row(
-            spacing: 10,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.info_outline),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: AppTranslations.requestFor(
-                          stayLabel.isEmpty
-                              ? AppTranslations.requestTargetRoom
-                              : stayLabel,
-                        ),
-                      ),
-                      TextSpan(
-                        text: mins != null
-                            ? AppTranslations.teamWithinMinutes(
-                                AppTranslations.etaMinutes(mins),
-                              )
-                            : AppTranslations.teamShortly,
-                      ),
-                    ],
-                  ),
-                  style: textStyle.labelMedium?.copyWith(
-                    color: AppColors.inkBlack,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Text(
-          AppTranslations.transferInstructions.toUpperCase(),
-          style: textStyle.labelSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppColors.dimGrey,
-          ),
-        ),
-        CustomTextField(
-          controller: _notesController,
-          textInputType: TextInputType.multiline,
-          maxLines: 3,
-          hintText: AppTranslations.requestNotesHint,
-          fillColor: AppColors.white,
-          borderColor: AppColors.linenGrey,
-        ),
-        CustomFilledButton(
-          width: double.infinity,
-          backgroundColor: AppColors.lagoonTeal,
-          onPressed: () => widget.onSubmit(_notesController.text),
-          child: Text(AppTranslations.sendRequest),
-        ),
-      ],
+    return NoteSheetBody(
+      info: '$target$eta',
+      label: AppTranslations.transferInstructions,
+      controller: _notesController,
+      hintText: AppTranslations.requestNotesHint,
+      buttonLabel: AppTranslations.sendRequest,
+      onSubmit: () => widget.onSubmit(_notesController.text),
     );
   }
 }

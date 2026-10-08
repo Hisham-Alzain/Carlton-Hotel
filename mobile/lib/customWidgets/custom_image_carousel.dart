@@ -80,16 +80,18 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
           ),
 
           if (hasMany) ...[
-            Positioned(
-              left: 14,
+            // Directional: in Arabic the carousel runs right-to-left, so
+            // "previous" sits on the right (its chevron flips with it).
+            PositionedDirectional(
+              start: 14,
               top: widget.height / 2 - 18,
               child: _arrow(
                 icon: Icons.chevron_left,
                 onTap: _controller.previousPage,
               ),
             ),
-            Positioned(
-              right: 14,
+            PositionedDirectional(
+              end: 14,
               top: widget.height / 2 - 18,
               child: _arrow(
                 icon: Icons.chevron_right,

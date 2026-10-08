@@ -171,7 +171,7 @@ Future<void> showArrivalTimeSheet() => showArrivalSlotPicker(
   openEndedHour: ArrivalSlot.afterTenPm.hour,
   initialHour: CheckInService.find.arrivalSlot.value?.hour,
   onConfirm: (hour) =>
-      CheckInService.find.markArrivalTime(ArrivalSlot.fromHour(hour)),
+      CheckInService.find.submitArrivalTime(ArrivalSlot.fromHour(hour)),
 );
 
 /// The arrival-hour picker itself, shared by check-in and the airport

@@ -225,7 +225,7 @@ class Themes {
         color: Colors.black,
       ),
       actionsIconTheme: const IconThemeData(color: AppColors.primary),
-      actionsPadding: const EdgeInsets.only(right: 10),
+      actionsPadding: const EdgeInsetsDirectional.only(end: 10),
     ),
 
     drawerTheme: DrawerThemeData(backgroundColor: Colors.white),

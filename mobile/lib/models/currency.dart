@@ -41,16 +41,14 @@ class Currency {
 
 /// USD → target multipliers.
 ///
-/// ⚠️ HAND-MAINTAINED AND INDICATIVE. The backend exposes no rate: every
-/// monetary column is `*_usd` and there is no `/exchange-rates` endpoint, so
-/// these are the only numbers available and they go stale. Prices in a
-/// non-base currency are therefore rendered with a `≈` so a guest is never
-/// shown a converted figure as if it were exact.
-///
-/// Replacing this with live rates is deliberately a one-method change: have
-/// something fetch the map and hand it to [ExchangeRates.override], then the
-/// rest of the app is already correct. Until that exists, update
-/// [_rates] and [asOf] together — a rate without a date is unauditable.
+/// Live rates come from `GET /public/exchange-rates` and are handed to
+/// [override] by `SettingsService.loadExchangeRates`. The hand-maintained table
+/// below is only the fallback: for a currency the hotel has not set a rate for
+/// yet, and while the first fetch is in flight or has failed. Every price is
+/// still paid in USD — a converted figure is display only — so a currency
+/// without a fresh live rate is rendered with a `≈` and the guest is never
+/// shown an estimate as if it were exact. Keep [_rates] and [asOf] updated
+/// together — a rate without a date is unauditable.
 abstract class ExchangeRates {
   /// The currency prices arrive in. Not configurable: it is what the API sends.
   static const String baseCode = 'usd';
@@ -66,14 +64,23 @@ abstract class ExchangeRates {
   };
 
   static Map<String, double>? _live;
+  static Set<String> _stale = const {};
 
-  /// Swap in rates from a real source once one exists. Pass null to fall back
-  /// to the hand-maintained table.
-  static void override(Map<String, double>? rates) => _live = rates;
+  /// Swap in the server's rates. [stale] names the currencies the server marked
+  /// out of date, which keep the `≈` marker. Pass null to fall back to the
+  /// hand-maintained table.
+  static void override(
+    Map<String, double>? rates, {
+    Set<String> stale = const {},
+  }) {
+    _live = rates;
+    _stale = stale;
+  }
 
-  /// True once [override] has supplied real rates — the `≈` marker and the
-  /// staleness caveat can be dropped at that point.
-  static bool get isLive => _live != null;
+  /// True when [code] has a fresh rate from the server — the `≈` marker can be
+  /// dropped for it.
+  static bool isLiveFor(String code) =>
+      (_live?.containsKey(code) ?? false) && !_stale.contains(code);
 
   /// Multiplier from the base currency to [code]. Unknown codes fall back to
   /// 1.0, which renders the base amount rather than a wrong one.

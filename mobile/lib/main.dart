@@ -28,8 +28,9 @@ Future<void> main() async {
   await StorageService.init();
   Get.put(SettingsService(), permanent: true);
   Get.put(ApiService(), permanent: true);
-  // await Get.put(NotificationService(), permanent: trugage).setu
-  // p();
+  // Fire and forget: the built-in rates cover the first frames.
+  SettingsService.find.loadExchangeRates();
+  // Get.put(NotificationService(), permanent: true); // runs setup() in onReady
   Get.put(MiddlewareService(), permanent: true);
   Get.put(PermissionService(), permanent: true);
   Get.put(BookingFlowController(), permanent: true);

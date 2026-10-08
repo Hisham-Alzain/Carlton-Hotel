@@ -50,7 +50,9 @@ abstract class MoneyFormat {
     // Only the base currency is an exact quote. Suppress the marker once real
     // rates are wired, since a live conversion is not an estimate.
     final needsMarker =
-        approximate && !currency.isBase && !ExchangeRates.isLive;
+        approximate &&
+        !currency.isBase &&
+        !ExchangeRates.isLiveFor(currency.value);
     return needsMarker ? '≈$text' : text;
   }
 

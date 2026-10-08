@@ -35,6 +35,7 @@
          records video through the camera plugin. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" tools:node="remove"/>
     <application
+        android:allowBackup="false"
         android:label="Carlton Hotel"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"

@@ -1,3 +1,4 @@
+import 'package:carlton/constants/error_codes.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/guest.dart';
@@ -11,13 +12,15 @@ import 'package:get/get.dart';
 /// Holds no copy of the guest: it reads [MiddlewareService.guest], which a save
 /// updates, so the page and the Account card change together.
 ///
-/// The phone is shown but not editable: it is the verified sign-in identity,
-/// and changing it needs an OTP round the profile endpoint does not do.
+/// The phone is editable too. The server refuses to overwrite a phone the
+/// guest already verified (`verified_contact_immutable`) until it offers an
+/// OTP change-number flow; that refusal is explained, not shown raw.
 class ProfileController extends GetxController {
   final formKey = GlobalKey<FormState>();
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final emailController = TextEditingController();
+  final phoneController = TextEditingController();
 
   final RxBool isEditing = false.obs;
   final RxBool isSaving = false.obs;
@@ -28,12 +31,16 @@ class ProfileController extends GetxController {
   /// signs in with the email — clearing it would lock them out.
   bool get emailRequired => (guest?.phone ?? '').isEmpty;
 
+  /// The mirror rule: with no email on file the phone is the only sign-in.
+  bool get phoneRequired => (guest?.email ?? '').isEmpty;
+
   /// Fills the fields from what is on file, then switches the rows to inputs.
   void startEditing() {
     final current = guest;
     firstNameController.text = current?.firstName ?? '';
     lastNameController.text = current?.lastName ?? '';
     emailController.text = current?.email ?? '';
+    phoneController.text = current?.phone ?? '';
     isEditing.value = true;
   }
 
@@ -52,10 +59,12 @@ class ProfileController extends GetxController {
     final firstName = firstNameController.text.trim();
     final lastName = lastNameController.text.trim();
     final email = emailController.text.trim();
+    final phone = phoneController.text.replaceAll(' ', '').trim();
     final changes = <String, dynamic>{
       if (firstName != (current.firstName ?? '')) 'first_name': firstName,
       if (lastName != (current.lastName ?? '')) 'last_name': lastName,
       if (email != (current.email ?? '')) 'email': email.isEmpty ? null : email,
+      if (phone != (current.phone ?? '')) 'phone': phone.isEmpty ? null : phone,
     };
     if (changes.isEmpty) {
       isEditing.value = false;
@@ -66,10 +75,23 @@ class ProfileController extends GetxController {
     final response = await ApiService.find.put<Map<String, dynamic>>(
       path: '/auth/guest/profile',
       data: changes,
+      showErrorDialog: false,
     );
     if (isClosed) return;
     isSaving.value = false;
-    if (!response.hasData) return;
+    if (!response.hasData) {
+      final error = response.error;
+      // A verified phone/email can only change through a code sent to the
+      // new contact, which the server does not offer yet.
+      if (error?.errorCode == ErrorCodes.verifiedContactImmutable) {
+        CustomSnackbars.showInfo(
+          message: AppTranslations.verifiedContactLocked,
+        );
+      } else if (error != null) {
+        ApiService.find.dialogs.showError(error);
+      }
+      return;
+    }
 
     // The profile response omits the /me-only entitlement flags — keep the
     // ones already on the session guest so an edit does not wipe them.
@@ -88,6 +110,7 @@ class ProfileController extends GetxController {
     firstNameController.dispose();
     lastNameController.dispose();
     emailController.dispose();
+    phoneController.dispose();
     super.onClose();
   }
 }

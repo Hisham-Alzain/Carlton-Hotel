@@ -6,6 +6,7 @@ import 'package:carlton/constants/app_assets.dart';
 import 'package:carlton/constants/error_codes.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/controllers/main/main_controller.dart';
+import 'package:carlton/controllers/stays/stays_controller.dart';
 import 'package:carlton/customWidgets/custom_dialogs.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -27,6 +28,10 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
+
+part 'home_navigation.dart';
+
+part 'home_booking.dart';
 
 /// Backs the homepage (Figma "homepage" 2089:861): the looping hero video plus
 /// the room / restaurant / experience listings and the hero-slider copy, all
@@ -85,16 +90,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   /// Home. Shared by sign-in, booking-code lookup and first profile completion
   /// so all three land on the state the server actually reports.
   static Future<void> restoreAndGoHome() async {
-    await MiddlewareService.find.checkToken();
+    await MiddlewareService.find.checkToken(reuseRecent: true);
     await goHome();
-  }
-
-  /// Opens the check-in flow. Available for the whole of
-  /// [HomeViewState.preCheckIn] — there is no arrival-time window: a guest with
-  /// a booking that is not yet checked in can always start check-in.
-  void startCheckIn() {
-    if (currentState != HomeViewState.preCheckIn) return;
-    Get.toNamed(Routes.checkIn);
   }
 
   /// The guest's active (checked-in) stay, or null when they have a booking but
@@ -139,17 +136,6 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  /// Jump to the Services tab (index 3) in the shell — where room-service
-  /// requests are actually made.
-  void goToServices() => Get.find<MainController>().changeTab(3);
-
-  void quickRequest() => goToServices();
-  void newRequest() => goToServices();
-  void openRequest(ServiceRequest request) => goToServices();
-  void openConcierge() => Get.toNamed(Routes.aiConcierge);
-  void openExperience(ExperienceItem experience) =>
-      Get.toNamed(Routes.discover, arguments: DiscoverSection.experiences);
-
   /// Express checkout: confirm, then `POST /folio/approve` (approves the bill
   /// and flips the stay to `checked_out`).
   void checkout() => CustomDialogs.showConfirmationDialog(
@@ -159,31 +145,10 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         '${AppTranslations.checkoutStatementNote}',
     icon: 'assets/icons/act_checkout.svg',
     accentColor: AppColors.primary,
-    onPressed: _confirmCheckout,
+    // StaysController owns the call (one copy of its error handling); its /me
+    // refresh trips this controller's entitlement worker, which reloads Home.
+    onPressed: () => Get.find<StaysController>().confirmExpressCheckout(),
   );
-
-  Future<void> _confirmCheckout() async {
-    final res = await ApiService.find.post<Map<String, dynamic>>(
-      path: '/folio/approve',
-      showErrorDialog: false,
-    );
-    if (isClosed) return;
-    if (res.ok) {
-      CustomSnackbars.showSuccess(message: AppTranslations.checkoutRequested);
-      // Stay is now checked_out — resync entitlements from /me.
-      await MiddlewareService.find.checkToken();
-    } else if (res.error?.errorCode == ErrorCodes.noActiveReservation) {
-      CustomSnackbars.showInfo(message: AppTranslations.noActiveStayToCheckOut);
-    } else {
-      CustomSnackbars.showError(message: AppTranslations.checkoutFailed);
-    }
-  }
-
-  /// Both bill entry points open the same statement screen, which refetches
-  /// `GET /folio` itself — the dashboard card keeps only the flattened
-  /// line/total pairs it renders, not the folio.
-  void openBill() => Get.toNamed(Routes.folio);
-  void fullStatement() => openBill();
 
   /// Loads the active-stay dashboard: `GET /stays/active` (the stay card) plus,
   /// once checked in, `GET /folio` (bill) and `GET /service-requests`. A booked-
@@ -208,22 +173,27 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   /// wizard — and two overlapping runs assign `currentReservation`,
   /// `activeStay` and the folio independently, so a slow first run could land
   /// its stale values on top of a fresh second one.
-  Future<void> refreshHome() {
+  ///
+  /// [reuseRecentSession] is for opening Home: the splash or sign-in that led
+  /// here has just read `/me`, so it is not read again.
+  Future<void> refreshHome({bool reuseRecentSession = false}) {
     final inFlight = _refreshInFlight;
     if (inFlight != null) return inFlight;
-    final run = _runRefreshHome().whenComplete(() => _refreshInFlight = null);
+    final run = _runRefreshHome(
+      reuseRecentSession,
+    ).whenComplete(() => _refreshInFlight = null);
     _refreshInFlight = run;
     return run;
   }
 
   Future<void>? _refreshInFlight;
 
-  Future<void> _runRefreshHome() async {
+  Future<void> _runRefreshHome(bool reuseRecentSession) async {
     contentError.value = false;
     // Entitlements first: the state Home renders is derived from them, and the
     // stay dashboard below reads them to decide what to fetch.
     if (MiddlewareService.find.isAuthenticated) {
-      await MiddlewareService.find.checkToken();
+      await MiddlewareService.find.checkToken(reuseRecent: reuseRecentSession);
       if (isClosed) return;
     }
     await Future.wait([_loadContent(), _loadActiveBooking()]);
@@ -236,101 +206,6 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   /// booking just made, one cancelled from the Stays tab).
   Future<void> reloadBooking() => _loadActiveBooking();
 
-  Future<void> _loadActiveBooking() async {
-    // Nothing to load while signed out — and hitting /stays/active without a
-    // token 401s, which ErrorInterceptor escalates to signOut() plus a redirect
-    // to Sign In. `showErrorDialog: false` silences the dialog, not the
-    // interceptor, so this guard is what keeps a browsing guest on Home.
-    if (!MiddlewareService.find.isAuthenticated) {
-      _clearActiveBooking();
-      bookingLoading.value = false;
-      return;
-    }
-
-    final activeRes = await ApiService.find.get<Map<String, dynamic>?>(
-      path: '/stays/active',
-      showErrorDialog: false,
-    );
-    if (isClosed) return;
-    if (activeRes.ok) {
-      activeStay.value = activeRes.data != null
-          ? _toStay(ActiveStay.fromJson(activeRes.data!))
-          : null;
-    }
-    // Not checked in: surface the upcoming reservation. A confirmed one drives
-    // the pre-arrival dashboard; a `pending` one (every guest-made booking
-    // until the hotel confirms it — the server does not count it toward
-    // has_booking) is still shown on the explore Home, so a guest who just
-    // booked sees their stay instead of an unchanged page.
-    if (activeStay.value == null) {
-      final upRes = await ApiService.find.get<List<dynamic>>(
-        path: '/stays/upcoming',
-        showErrorDialog: false,
-      );
-      if (isClosed) return;
-      if (upRes.hasData) {
-        final primary = UpcomingStay.primary(
-          UpcomingStay.listFromJson(upRes.data),
-        );
-        upcomingStay.value = primary == null ? null : _upcomingToStay(primary);
-        // Pending only when no upcoming booking is confirmed — a confirmed one
-        // behind an earlier pending one still opens check-in and transfers.
-        upcomingPending.value = primary?.isAwaitingHotel ?? false;
-        MiddlewareService.find.hasPendingBooking.value = upcomingPending.value;
-        // The pre-arrival hero reads the booking from CheckInService, which
-        // otherwise loads it only when the check-in wizard opens.
-        if (primary != null && Get.isRegistered<CheckInService>()) {
-          CheckInService.find.loadReservation();
-        }
-      }
-    } else {
-      upcomingStay.value = null;
-      upcomingPending.value = false;
-      MiddlewareService.find.hasPendingBooking.value = false;
-    }
-    if (MiddlewareService.find.isCheckedIn) {
-      final folioF = ApiService.find.get<Map<String, dynamic>>(
-        path: '/folio',
-        showErrorDialog: false,
-      );
-      final reqF = ApiService.find.get<List<dynamic>>(
-        path: '/service-requests',
-        showErrorDialog: false,
-      );
-      final folioRes = await folioF;
-      final reqRes = await reqF;
-      if (isClosed) return;
-      if (folioRes.hasData) {
-        final folio = Folio.fromJson(folioRes.data!);
-        billLines.assignAll(
-          folio.items.map((i) => (i.description, _usd(i.amountUsd))),
-        );
-        billTotal.value = _usd(folio.totalUsd);
-      }
-      if (reqRes.hasData) {
-        activeRequests.assignAll(ServiceRequest.listFromJson(reqRes.data!));
-      }
-    } else {
-      // Checked out (or never checked in): the bill and in-stay requests are
-      // no longer this guest's, so drop them rather than leaving them stale.
-      billLines.clear();
-      billTotal.value = _emptyBillTotal();
-      activeRequests.clear();
-    }
-    bookingLoading.value = false;
-  }
-
-  /// Drops every stay-scoped value, so a signed-out guest — or the next guest
-  /// to sign in on this device — never sees the previous one's cards.
-  void _clearActiveBooking() {
-    activeStay.value = null;
-    upcomingStay.value = null;
-    activeRequests.clear();
-    billLines.clear();
-    billTotal.value = _emptyBillTotal();
-    doNotDisturb.value = false;
-  }
-
   /// Identity of the currently-loaded dashboard. Changes exactly when a reload
   /// is warranted, which is narrower than "the guest object changed".
   String _entitlementKey() {
@@ -340,47 +215,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         '|${middleware.isCheckedIn}';
   }
 
-  Stay _toStay(ActiveStay s) => Stay(
-    id: s.uuid,
-    uuid: s.uuid,
-    roomName: s.roomName.value,
-    status: StayStatus.active,
-    subtitle: (s.roomNumber != null && s.roomNumber!.isNotEmpty)
-        ? AppTranslations.stayRoomNumber('${s.roomNumber}')
-        : null,
-    imagePath: 'assets/images/stay_room.png',
-    checkInLabel: s.checkIn != null ? _fullDate.format(s.checkIn!) : '',
-    checkOutLabel: s.checkOut != null ? _fullDate.format(s.checkOut!) : '',
-    nightsRemaining: s.nightsRemaining,
-  );
-
-  /// Maps an `/stays/upcoming` entry to the [Stay] the (pre-arrival) active-stay
-  /// card renders: a short "Room N" badge, the room name, the date range, and
-  /// the total nights shown in place of "nights left".
-  Stay _upcomingToStay(UpcomingStay s) {
-    final total = double.tryParse(s.priceUsd) ?? 0;
-    final perNight = s.nights > 0 ? total / s.nights : total;
-    return Stay(
-      id: s.uuid,
-      uuid: s.uuid,
-      roomName: s.roomName.value,
-      status: StayStatus.upcoming,
-      // CustomUpcomingStayCard (the pending-booking card) force-unwraps
-      // subtitle and pricePerNight, so neither may be left null.
-      subtitle: (s.roomNumber != null && s.roomNumber!.isNotEmpty)
-          ? AppTranslations.stayRoomNumber('${s.roomNumber}')
-          : AppTranslations.receiptHotelName,
-      imagePath: 'assets/images/stay_room.png',
-      checkInLabel: s.checkIn != null ? _fullDate.format(s.checkIn!) : '',
-      checkOutLabel: s.checkOut != null ? _fullDate.format(s.checkOut!) : '',
-      nightsRemaining: s.nights,
-      resCode: s.bookingCode,
-      pricePerNight: AppTranslations.perNight(_usd(perNight.toString())),
-      isCancellable: s.isCancellable,
-    );
-  }
-
-  static DateFormat get _fullDate => DateFormat('MMM d, yyyy');
+  static DateFormat get _fullDate => DateFormat.yMMMd();
 
   /// Folio amounts arrive as USD decimal strings. Routed through [MoneyFormat]
   /// so the bill follows the guest's currency choice — a bare `\$` prefix here
@@ -407,7 +242,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
-    refreshHome();
+    refreshHome(reuseRecentSession: true);
 
     // This controller outlives sign-in. The auth flow is launched from the
     // Services tab of this same Main shell, and _KeepAlive + `fenix: true` hold
@@ -434,23 +269,11 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     _pendingWorker = ever(MiddlewareService.find.hasPendingBooking, (pending) {
       if (pending && upcomingStay.value == null) _loadActiveBooking();
     });
-    // Prefer the bundled hotel promo clip; if it isn't in the bundle yet,
-    // fall back to the demo network clip; failing both, the hero keeps its
-    // poster image.
+    // The bundled hotel promo clip; if it fails, the hero keeps its poster
+    // image.
     videoController = VideoPlayerController.asset(AppAssets.heroVideoAssetPath);
     _start(videoController).catchError((Object e) {
-      log('Hero video: bundled asset unavailable ($e); trying network clip');
-      // If the controller was closed during the failed attempt, onClose has
-      // already disposed the player — creating the network one here would
-      // leak a muted looping video that nothing ever disposes.
-      if (isClosed) return;
-      videoController.dispose();
-      videoController = VideoPlayerController.networkUrl(
-        Uri.parse(AppAssets.heroVideoUrl),
-      );
-      _start(videoController).catchError((Object e) {
-        log('Hero video: network clip failed ($e); keeping poster image');
-      });
+      log('Hero video: bundled asset unavailable ($e); keeping poster image');
     });
   }
 
@@ -499,59 +322,28 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     _syncPlayback();
   }
 
-  /// Hero CTA: open the booking flow. "Plan Your Stay" is the Book tab of this
-  /// same shell rather than a standalone route, so this switches tab instead of
-  /// pushing — the same move `beginBookingWithRoom` makes.
-  void bookNow() => Get.find<MainController>().changeTab(2);
-
-  /// Secondary hero CTA: the rooms listing, which is what there is to explore.
-  void explore() =>
-      Get.toNamed(Routes.discover, arguments: DiscoverSection.rooms);
-
-  void openRestaurant(RestaurantItem restaurant) =>
-      Get.toNamed(Routes.restaurantDetail, arguments: restaurant);
-
-  /// Tapping a room card opens its full-screen details page, fetching the real
-  /// room-type detail (falling back to the local option if it has no uuid).
-  void openRoomDetails(RoomItem item) =>
-      Get.find<BookingFlowController>().openRoomListing(item.uuid);
-
-  /// "Discover All" opens the shared listing screen for a rail.
-  ///
-  /// Takes the section itself, not its on-screen title. It used to switch on the
-  /// English label, which silently stopped matching the moment those titles were
-  /// localized — and cannot be a `switch` pattern at all now that they are
-  /// `.tr` lookups rather than constants. A null [target] means "no listing
-  /// behind this rail yet", and only then is [sectionLabel] used, for the
-  /// coming-soon message.
-  void discoverAll(DiscoverSection? target, {String sectionLabel = ''}) {
-    if (target == null) {
-      CustomSnackbars.showInfo(
-        message: AppTranslations.sectionComingSoon(sectionLabel),
-      );
-      return;
-    }
-    Get.toNamed(Routes.discover, arguments: target);
-  }
-
   /// Loads the Home rails from the public content API (bounded first page each).
   /// Failures leave the rail empty rather than error — the hero still renders.
   Future<void> _loadContent() async {
     final results = await Future.wait([
       ApiService.find.get<List<dynamic>>(
         path: '/public/room-types',
+        queryParameters: {'per_page': 100},
         showErrorDialog: false,
       ),
       ApiService.find.get<List<dynamic>>(
         path: '/public/dining-venues',
+        queryParameters: {'per_page': 100},
         showErrorDialog: false,
       ),
       ApiService.find.get<List<dynamic>>(
         path: '/public/experiences',
+        queryParameters: {'per_page': 100},
         showErrorDialog: false,
       ),
       ApiService.find.get<List<dynamic>>(
         path: '/public/home-sliders',
+        queryParameters: {'per_page': 100},
         showErrorDialog: false,
       ),
     ]);

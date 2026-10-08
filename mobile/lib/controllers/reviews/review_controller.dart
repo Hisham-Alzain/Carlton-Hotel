@@ -35,7 +35,7 @@ class ReviewController extends GetxController
   void onInit() {
     super.onInit();
     initPagination(_cancelToken);
-    // A demo target (empty uuid) renders the empty state rather than calling
+    // A target with no uuid renders the empty state rather than calling
     // the API; the submit sheet path never loads the list at all.
     if (autoLoad && targetUuid.isNotEmpty) loadItems(_cancelToken);
   }

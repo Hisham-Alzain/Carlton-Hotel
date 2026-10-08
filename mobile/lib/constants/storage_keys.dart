@@ -13,6 +13,7 @@ abstract class StorageKeys {
   // those are owned by SettingsService under `language`/`currency` above.
   static const prefBed = 'pref_bed';
   static const prefPillow = 'pref_pillow';
+  static const prefFloor = 'pref_floor';
   static const prefMattress = 'pref_mattress';
   static const prefSmoking = 'pref_smoking';
   static const prefEarlyCheckIn = 'pref_early_check_in';

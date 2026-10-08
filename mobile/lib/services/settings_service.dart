@@ -88,16 +88,12 @@ class SettingsService extends GetxService {
     _saveToProfile(lang.local);
   }
 
-  /// Languages `PUT /auth/guest/profile` accepts as `preferred_locale`. The
-  /// app ships five; the server stores only these two, so a French, Turkish or
-  /// Spanish choice stays on this device only.
-  static const Set<String> _serverLocales = {'en', 'ar'};
-
-  /// Remembers a signed-in guest's language on their profile, so it follows
-  /// them to another device. Silent and best-effort: the language already
+  /// Remembers a signed-in guest's language on their profile
+  /// (`preferred_locale`, which the server accepts for all five app languages),
+  /// so it follows them to another device and the server writes push
+  /// notifications in it. Silent and best-effort: the language already
   /// switched locally, and nothing here may block that.
   void _saveToProfile(String code) {
-    if (!_serverLocales.contains(code)) return;
     if (!Get.isRegistered<MiddlewareService>() ||
         !MiddlewareService.find.isAuthenticated) {
       return;
@@ -111,6 +107,29 @@ class SettingsService extends GetxService {
   }
 
   bool get isArabic => locale.value.languageCode == 'ar';
+
+  /// Loads the hotel's USD rates (`GET /public/exchange-rates`) so converted
+  /// prices are live. Silent: a failed call, or a currency the hotel has not
+  /// set a rate for (`rate: null`), keeps the built-in table. Called once at
+  /// launch — the endpoint is cached for five minutes.
+  Future<void> loadExchangeRates() async {
+    final res = await ApiService.find.get<Map<String, dynamic>>(
+      path: '/public/exchange-rates',
+      showErrorDialog: false,
+    );
+    if (!res.hasData) return;
+    final rates = <String, double>{'usd': 1.0};
+    final stale = <String>{};
+    for (final row in res.data!['rates'] as List? ?? const []) {
+      if (row is! Map) continue;
+      final code = (row['currency'] as String?)?.toLowerCase();
+      final rate = double.tryParse('${row['rate'] ?? ''}');
+      if (code == null || rate == null || rate <= 0) continue;
+      rates[code] = rate;
+      if (row['is_stale'] == true) stale.add(code);
+    }
+    if (rates.length > 1) ExchangeRates.override(rates, stale: stale);
+  }
 
   /// -------- CURRENCY --------
 

@@ -59,6 +59,13 @@ class PreferencesView extends GetView<PreferencesController> {
                       onSelected: controller.choosePillow,
                     ),
                     CustomDropdownField(
+                      label: AppTranslations.floorLabel,
+                      value: controller.floorLabel,
+                      options: PreferenceOptions.floorOptions,
+                      selectedId: controller.floorId.value,
+                      onSelected: controller.chooseFloor,
+                    ),
+                    CustomDropdownField(
                       label: AppTranslations.mattressType,
                       value: controller.mattressLabel,
                       options: PreferenceOptions.mattressOptions,

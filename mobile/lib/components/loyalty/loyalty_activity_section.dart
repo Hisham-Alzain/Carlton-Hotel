@@ -2,6 +2,7 @@ import 'package:carlton/theme/theme.dart';
 import 'package:carlton/components/loyalty/loyalty_card_texture.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
+import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:carlton/extensions/date_extension.dart';
 import 'package:carlton/extensions/points_extension.dart';
 import 'package:carlton/extensions/text_style_extension.dart';
@@ -11,16 +12,23 @@ import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// The points ledger card: a header carrying the entry count, then one row per
-/// movement, or the empty placeholder when the guest has not earned yet.
+/// The points ledger card: a header, then one row per movement, or the empty
+/// placeholder when the guest has none yet.
 ///
-/// Each row names the reservation that moved the balance — the ledger's whole
-/// job is making the link between a stay and its points visible, so the
-/// booking reference is part of the row, not a detail screen behind it.
+/// Each row names the stay or booking that moved the balance when there is
+/// one, so a movement can be tied back to what caused it without a detail
+/// screen behind it.
 class LoyaltyActivitySection extends StatelessWidget {
-  final List<LoyaltyTransaction> transactions;
+  final List<LoyaltyLedgerEntry> entries;
 
-  const LoyaltyActivitySection({required this.transactions, super.key});
+  /// True while the next page is loading, shown as a spinner under the last row.
+  final bool loadingMore;
+
+  const LoyaltyActivitySection({
+    required this.entries,
+    this.loadingMore = false,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,32 +42,12 @@ class LoyaltyActivitySection extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(15, 15, 15, 14),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppTranslations.loyaltyActivity,
-                  style: textStyle.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-                PillContainer(
-                  backgroundColor: AppColors.antiqueGold09,
-                  radius: 20,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  child: Text(
-                    AppTranslations.loyaltyEntryCount(transactions.length),
-                    style: textStyle.dmLabelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.bronzeGold,
-                    ),
-                  ),
-                ),
-              ],
+            child: Text(
+              AppTranslations.loyaltyActivity,
+              style: textStyle.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
             ),
           ),
           const Divider(
@@ -68,16 +56,19 @@ class LoyaltyActivitySection extends StatelessWidget {
             color: AppColors.antiqueGold20,
           ),
 
-          if (transactions.isEmpty)
-            const SizedBox(height: 180, child: _EmptyActivity())
+          if (entries.isEmpty)
+            const SizedBox(height: 220, child: _EmptyActivity())
           else
             // The index only exists to suppress the rule above the first row,
             // so it stays inside the row rather than being interleaved here.
-            ...transactions.indexed.map(
-              (entry) => _ActivityRow(
-                transaction: entry.$2,
-                showDivider: entry.$1 > 0,
-              ),
+            ...entries.indexed.map(
+              (entry) =>
+                  _ActivityRow(entry: entry.$2, showDivider: entry.$1 > 0),
+            ),
+          if (loadingMore)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: SpinningIconIndicator(size: 28)),
             ),
         ],
       ),
@@ -108,18 +99,24 @@ class _EmptyActivity extends StatelessWidget {
 }
 
 class _ActivityRow extends StatelessWidget {
-  final LoyaltyTransaction transaction;
+  final LoyaltyLedgerEntry entry;
 
   /// Whether a rule is drawn above this row. False for the first row, where
   /// the card header already supplies one.
   final bool showDivider;
 
-  const _ActivityRow({required this.transaction, required this.showDivider});
+  const _ActivityRow({required this.entry, required this.showDivider});
 
   @override
   Widget build(BuildContext context) {
     final TextTheme textStyle = Get.textTheme;
-    final bool isCredit = transaction.kind == LoyaltyEntryKind.earned;
+    // The sign decides credit or debit: an `adjust` row can go either way.
+    final bool isCredit = entry.isCredit;
+    final date = entry.occurredAt?.formatDatePicker();
+    final subtitle = [
+      entry.bookingCode ?? entry.sourceLabel,
+      date,
+    ].whereType<String>().where((part) => part.isNotEmpty).join(' · ');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -160,25 +157,36 @@ class _ActivityRow extends StatelessWidget {
                   spacing: 4,
                   children: [
                     Text(
-                      transaction.title,
+                      entry.label,
                       style: textStyle.labelLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
                       ),
                     ),
-                    Text(
-                      '${transaction.bookingRef} · '
-                      '${transaction.date.formatDatePicker()}',
-                      style: textStyle.dmLabelSmall
-                          ?.copyWith(color: AppColors.taupeBrown)
-                          .tracked(context, 0.8),
-                    ),
+                    if (subtitle.isNotEmpty)
+                      Text(
+                        subtitle,
+                        style: textStyle.dmLabelSmall
+                            ?.copyWith(color: AppColors.taupeBrown)
+                            .tracked(context, 0.8),
+                      ),
+                    // A cancelled stay whose points were already spent: the
+                    // clawback took what was left, and this says why it is
+                    // less than the original earn.
+                    if (entry.shortfallPoints > 0)
+                      Text(
+                        AppTranslations.loyaltyShortfall(
+                          entry.shortfallPoints.formatPoints(),
+                        ),
+                        style: textStyle.dmLabelSmall?.copyWith(
+                          color: AppColors.brickRed,
+                        ),
+                      ),
                   ],
                 ),
               ),
               Text(
-                (isCredit ? transaction.points : -transaction.points)
-                    .formatSignedPoints(),
+                entry.points.formatSignedPoints(),
                 style: textStyle.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: isCredit ? AppColors.forestGreen : AppColors.brickRed,
@@ -191,17 +199,19 @@ class _ActivityRow extends StatelessWidget {
     );
   }
 
-  /// Expiry overrides the source glyph — that a batch lapsed is the salient
-  /// fact about the row, and the hourglass is the only glyph here that says
-  /// it. Everything else shows what the points were for.
-  IconData get _glyph => switch (transaction) {
-    LoyaltyTransaction(kind: LoyaltyEntryKind.expired) =>
-      Icons.hourglass_empty_rounded,
-    LoyaltyTransaction(source: LoyaltyEntrySource.stay) =>
-      Icons.king_bed_outlined,
-    LoyaltyTransaction(source: LoyaltyEntrySource.dining) =>
-      Icons.restaurant_outlined,
-    LoyaltyTransaction(source: LoyaltyEntrySource.spa) => Icons.spa_outlined,
-    _ => Icons.auto_awesome_outlined,
+  /// What the row shows: the kind of movement first (a lapse, a redemption, a
+  /// refund each have one glyph that says it), and for an earn, what the
+  /// points were for.
+  IconData get _glyph => switch (entry.type) {
+    LoyaltyEntryType.expire => Icons.hourglass_empty_rounded,
+    LoyaltyEntryType.redeem => Icons.card_giftcard_outlined,
+    LoyaltyEntryType.refund => Icons.replay_rounded,
+    LoyaltyEntryType.clawback => Icons.remove_circle_outline,
+    LoyaltyEntryType.adjust => Icons.tune_rounded,
+    _ => switch (entry.source) {
+      LoyaltyEntrySource.stay => Icons.king_bed_outlined,
+      LoyaltyEntrySource.service => Icons.room_service_outlined,
+      _ => Icons.auto_awesome_outlined,
+    },
   };
 }

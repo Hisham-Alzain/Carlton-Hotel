@@ -6,6 +6,7 @@ import 'package:carlton/controllers/home/ai_concierge_controller.dart';
 import 'package:carlton/components/custom_chat_text_field.dart';
 import 'package:carlton/components/custom_circle_icon_button.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
+import 'package:carlton/customWidgets/custom_empty_placeholder.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/customWidgets/custom_segmented_button.dart';
 import 'package:carlton/l10n/app_translations.dart';
@@ -14,6 +15,8 @@ import 'package:carlton/theme/app_colors.dart';
 import 'package:carlton/customWidgets/custom_indicators.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+part 'ai_concierge_widgets.dart';
 
 class AiConciergeView extends GetView<AiConciergeController> {
   const AiConciergeView({super.key});
@@ -136,44 +139,46 @@ class _AiTab extends StatelessWidget {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(10),
       child: Column(
-        spacing: 10,
+        spacing: 20,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Image.asset(
-              'assets/images/aimg.png',
-              width: 150,
-              fit: BoxFit.contain,
-            ),
+          Image.asset(
+            'assets/images/aimg.png',
+            width: 150,
+            fit: BoxFit.contain,
           ),
-          Text(
-            AppTranslations.howMayIAssist,
-            textAlign: TextAlign.center,
-            style: textStyle.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Text(
-            AppTranslations.helpDescription,
-            textAlign: TextAlign.center,
-            style: textStyle.labelMedium?.copyWith(
-              color: AppColors.ashGrey,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          Wrap(
+          Column(
             spacing: 10,
-            runSpacing: 10,
-            alignment: WrapAlignment.center,
-            children: AiConciergeController.suggestions
-                .map(
-                  (suggestion) => ActionChip(
-                    label: Text(suggestion),
-                    onPressed: () => Get.find<AiConciergeController>()
-                        .useSuggestion(suggestion),
-                  ),
-                )
-                .toList(),
+            children: [
+              Text(
+                AppTranslations.howMayIAssist,
+                textAlign: TextAlign.center,
+                style: textStyle.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                AppTranslations.helpDescription,
+                textAlign: TextAlign.center,
+                style: textStyle.labelMedium?.copyWith(
+                  color: AppColors.ashGrey,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                alignment: WrapAlignment.center,
+                children: AiConciergeController.suggestions
+                    .map(
+                      (suggestion) => ActionChip(
+                        label: Text(suggestion),
+                        onPressed: () => Get.find<AiConciergeController>()
+                            .useSuggestion(suggestion),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
           ),
         ],
       ),
@@ -216,229 +221,55 @@ class _CustomerServiceTab extends StatelessWidget {
     if (controller.loadingThread.value) {
       return const Center(child: LogoLoadingIndicator(size: 50));
     }
+    // No live mirror, so Retry is the recovery path.
     if (controller.threadError.value) {
-      return _ThreadError(onRetry: controller.refreshThread);
+      return CustomEmptyPlaceholder.loadFailed(
+        title: AppTranslations.loadMessagesFailed,
+        onRetry: controller.refreshThread,
+      );
     }
+    // Before the guest's first message (REST opens the conversation on the
+    // first send).
     if (controller.messages.isEmpty) {
-      return const _ThreadEmpty();
+      return CustomEmptyPlaceholder(
+        iconWidget: const Icon(
+          Icons.forum_outlined,
+          size: 48,
+          color: AppColors.silverGrey,
+        ),
+        title: AppTranslations.startConversation,
+        subtitle: AppTranslations.guestRelationsWillReply,
+        titleColor: AppColors.inkBlack,
+        subtitleColor: AppColors.ashGrey,
+      );
     }
+    // While an older page loads, a spinner sits above the oldest message.
+    final older = controller.loadingOlder.value ? 1 : 0;
     return RefreshIndicator(
       onRefresh: controller.refreshThread,
       child: ListView.builder(
         controller: controller.threadScrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: 6),
-        itemCount: controller.messages.length,
-        itemBuilder: (context, i) => Padding(
-          padding: EdgeInsets.only(
-            bottom: i == controller.messages.length - 1 ? 0 : 12,
-          ),
-          child: CustomChatBubble(
-            message: controller.messages[i],
-            agentInitial: controller.agentInitial,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Gentle empty state before the guest's first message (REST auto-opens the
-/// conversation on first send).
-class _ThreadEmpty extends StatelessWidget {
-  const _ThreadEmpty();
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme textStyle = Get.textTheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 10,
-          children: [
-            const Icon(
-              Icons.forum_outlined,
-              size: 48,
-              color: AppColors.silverGrey,
+        itemCount: controller.messages.length + older,
+        itemBuilder: (context, index) {
+          if (index < older) {
+            return const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Center(child: LogoLoadingIndicator(size: 28)),
+            );
+          }
+          final i = index - older;
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: i == controller.messages.length - 1 ? 0 : 12,
             ),
-            Text(
-              AppTranslations.startConversation,
-              textAlign: TextAlign.center,
-              style: textStyle.titleSmall?.copyWith(
-                color: AppColors.inkBlack,
-                fontWeight: FontWeight.w600,
-              ),
+            child: CustomChatBubble(
+              message: controller.messages[i],
+              agentInitial: controller.agentInitial,
             ),
-            Text(
-              AppTranslations.guestRelationsWillReply,
-              textAlign: TextAlign.center,
-              style: textStyle.labelMedium?.copyWith(color: AppColors.ashGrey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Thread load failed → a retry affordance (no live mirror, so this is the
-/// recovery path).
-class _ThreadError extends StatelessWidget {
-  final Future<void> Function() onRetry;
-
-  const _ThreadError({required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme textStyle = Get.textTheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 10,
-          children: [
-            const Icon(
-              Icons.wifi_off_rounded,
-              size: 48,
-              color: AppColors.silverGrey,
-            ),
-            Text(
-              AppTranslations.loadMessagesFailed,
-              textAlign: TextAlign.center,
-              style: textStyle.titleSmall?.copyWith(
-                color: AppColors.inkBlack,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            TextButton(onPressed: onRetry, child: Text(AppTranslations.retry)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Circular pick-image button shown left of the chat field.
-class _AttachmentButton extends StatelessWidget {
-  final VoidCallback? onTap;
-
-  const _AttachmentButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.whisperGrey,
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 48,
-          height: 48,
-          child: Icon(
-            Icons.add_photo_alternate_outlined,
-            size: 24,
-            color: onTap == null ? AppColors.silverGrey : AppColors.primary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Thumbnail + remove chip for the image awaiting send.
-class _AttachmentPreview extends StatelessWidget {
-  final File file;
-  final VoidCallback onRemove;
-
-  const _AttachmentPreview({required this.file, required this.onRemove});
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.file(file, width: 64, height: 64, fit: BoxFit.cover),
-          ),
-          Positioned(
-            top: -6,
-            right: -6,
-            child: GestureDetector(
-              onTap: onRemove,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.inkBlack,
-                ),
-                child: const Icon(
-                  Icons.close,
-                  size: 14,
-                  color: AppColors.white,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Quick-reply chips at the top of the Customer Service tab: white outlined
-/// pills with dark text (Figma).
-class _QuickReplies extends StatelessWidget {
-  final AiConciergeController controller;
-
-  const _QuickReplies({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme textStyle = Get.textTheme;
-
-    final replies = AiConciergeController.quickReplies;
-    if (replies.isEmpty) return const SizedBox.shrink();
-
-    // A handful of fixed chips: a Row with `spacing` inside a horizontal
-    // scroller instead of ListView.separated with SizedBox separators.
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        spacing: 8,
-        children: [
-          for (final reply in replies)
-            Material(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(30),
-              child: InkWell(
-                onTap: () => controller.quickReply(reply),
-                borderRadius: BorderRadius.circular(30),
-                child: PillContainer(
-                  height: 34,
-                  backgroundColor: AppColors.white,
-                  radius: 30,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  border: Border.all(color: AppColors.black10),
-                  child: Center(
-                    widthFactor: 1,
-                    child: Text(
-                      reply,
-                      style: textStyle.dmLabelMedium?.copyWith(
-                        color: AppColors.inkBlack,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
+          );
+        },
       ),
     );
   }

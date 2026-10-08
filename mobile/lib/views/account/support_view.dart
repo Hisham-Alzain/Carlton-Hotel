@@ -1,4 +1,4 @@
-import 'package:carlton/theme/theme.dart';
+import 'package:carlton/components/expandable_text_tile.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/components/account/custom_settings_section.dart';
 import 'package:carlton/controllers/account/support_controller.dart';
@@ -54,27 +54,29 @@ class SupportView extends GetView<SupportController> {
           controller: controller.scrollController,
           padding: const EdgeInsets.all(20),
           children: [
-            // Grouped by the category the CMS assigns, in first-seen order —
-            // the endpoint already sorts by `sort_order`, so that ordering is
-            // the hotel's own.
-            for (final group in _grouped(controller.items).entries)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 20),
-                child: CustomSettingsSection(
-                  title: group.key,
-                  children: [for (final faq in group.value) _FaqRow(faq: faq)],
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 20,
+              children: [
+                // Grouped by the category the CMS assigns, in first-seen
+                // order — the endpoint already sorts by `sort_order`, so that
+                // ordering is the hotel's own.
+                for (final group in _grouped(controller.items).entries)
+                  CustomSettingsSection(
+                    title: group.key,
+                    children: [
+                      for (final faq in group.value) _FaqRow(faq: faq),
+                    ],
+                  ),
+                if (controller.loadingMore.value)
+                  const Center(child: SpinningIconIndicator(size: 28)),
+                CustomFilledButton(
+                  width: double.infinity,
+                  height: 50,
+                  onPressed: controller.contactUs,
+                  child: Text(AppTranslations.stillNeedHelp),
                 ),
-              ),
-            if (controller.loadingMore.value)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 20),
-                child: Center(child: SpinningIconIndicator(size: 28)),
-              ),
-            CustomFilledButton(
-              width: double.infinity,
-              height: 50,
-              onPressed: controller.contactUs,
-              child: Text(AppTranslations.stillNeedHelp),
+              ],
             ),
           ],
         );
@@ -105,48 +107,16 @@ class _FaqRow extends GetView<SupportController> {
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textStyle = Get.textTheme;
-
-    return Obx(() {
-      final expanded = controller.isExpanded(faq.uuid);
-      return InkWell(
-        onTap: () => controller.toggle(faq.uuid),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Column(
-            spacing: 10,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                spacing: 10,
-                children: [
-                  Expanded(
-                    child: Text(
-                      faq.question.value,
-                      style: textStyle.titleSmall?.copyWith(
-                        color: AppColors.inkBlack,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    expanded
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.mediumGrey,
-                  ),
-                ],
-              ),
-              if (expanded)
-                Text(
-                  faq.answer.value,
-                  style: textStyle.dmBodySmall?.copyWith(
-                    color: AppColors.taupeBrown,
-                  ),
-                ),
-            ],
-          ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Obx(
+        () => ExpandableTextTile(
+          title: faq.question.value,
+          body: faq.answer.value,
+          expanded: controller.isExpanded(faq.uuid),
+          onToggle: () => controller.toggle(faq.uuid),
         ),
-      );
-    });
+      ),
+    );
   }
 }

@@ -77,7 +77,7 @@ class RoomDetailsView extends StatelessWidget {
                   onPressed: () => controller.beginBookingWithRoom(room),
                   child: Text(AppTranslations.selectThisRoom),
                 ),
-                // A demo room (no uuid) can't be reviewed — hide the CTA.
+                // A room with no uuid can't be reviewed — hide the CTA.
                 if (room.uuid.isNotEmpty)
                   CustomFilledButton(
                     width: double.infinity,

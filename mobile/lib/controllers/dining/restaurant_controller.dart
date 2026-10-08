@@ -1,5 +1,6 @@
 // import 'package:carlton/components/reviews/review_submit_sheet.dart';
 import 'package:carlton/constants/error_codes.dart';
+import 'package:carlton/constants/hotel_time.dart';
 // import 'package:carlton/controllers/reviews/review_controller.dart';
 // import 'package:carlton/customWidgets/custom_bottom_sheet.dart'; // needed by openReviewSheet
 import 'package:carlton/customWidgets/custom_snackbar.dart';
@@ -17,6 +18,10 @@ import 'package:carlton/services/middleware_service.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+part 'restaurant_reservation.dart';
 
 /// Drives one restaurant detail screen: the menu/info/reserve tabs, the menu
 /// category filter, the gallery, and the reservation form. The restaurant
@@ -172,33 +177,8 @@ class RestaurantController extends GetxController
     galleryIndex.value = index;
   }
 
-  void selectTimeSlot(String slot) {
-    timeSlot.value = slot;
-  }
-
-  void setGuests(int value) {
-    guests.value = value;
-  }
-
-  /// The picker's branding (cream surface, primary header, gold today ring)
-  /// comes from `Themes.theme`'s datePickerTheme — nothing to override here.
-  Future<void> pickDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: Get.context!,
-      // Clamp: the stored date can fall behind `now` if the screen is left open
-      // past midnight, which would trip the initialDate assertion.
-      initialDate: reserveDate.value.isBefore(now) ? now : reserveDate.value,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
-    );
-    if (picked != null) {
-      reserveDate.value = picked;
-    }
-  }
-
-  void downloadMenu() =>
-      CustomSnackbars.showInfo(message: AppTranslations.menuDownloadComingSoon);
+  /// Guards Download Full Menu against a second tap while the link loads.
+  final RxBool openingMenu = false.obs;
 
   // Reviews switched off for now (see RestaurantDetailView).
   // /// Opens the "Write a Review" sheet for this venue. Lives here rather than in
@@ -221,77 +201,6 @@ class RestaurantController extends GetxController
   // ),
   // );
   // }
-
-  /// Reserves a table (`POST /dining-venues/{uuid}/table-reservations`,
-  /// tier-3a). A demo venue (no uuid) just confirms locally; a guest with no
-  /// booking is prompted to book first. The backend picks the table — we send
-  /// only date/time/party size.
-  Future<void> confirmReservation() async {
-    // `time` is required and validated as `H:i` server-side, so an unset slot
-    // would come back as a 422 the guest cannot act on. Say what is missing.
-    if (timeSlot.value.isEmpty) {
-      CustomSnackbars.showInfo(message: AppTranslations.tablePickTime);
-      return;
-    }
-    if (!MiddlewareService.find.hasBooking) {
-      CustomSnackbars.showInfo(message: AppTranslations.tableNeedsBooking);
-      return;
-    }
-    final res = await ApiService.find.post<Map<String, dynamic>>(
-      path: '/dining-venues/${restaurant.uuid}/table-reservations',
-      data: {
-        'date': reserveDate.value.formatApiDate(),
-        'time': _toTime24h(timeSlot.value),
-        'guest_count': guests.value,
-        if (specialRequests.text.trim().isNotEmpty)
-          'special_request': specialRequests.text.trim(),
-      },
-      showErrorDialog: false,
-    );
-    if (isClosed) return;
-    if (res.statusCode == 201 && res.data != null) {
-      final booking = ServiceBooking.fromJson(res.data!);
-      final label = booking.label.isNotEmpty
-          ? booking.label
-          : '${guests.value}';
-      CustomSnackbars.showSuccess(
-        message: AppTranslations.tableReservedFor(label),
-      );
-      return;
-    }
-    switch (res.error?.errorCode) {
-      case ErrorCodes.noAvailability:
-        CustomSnackbars.showError(message: AppTranslations.tableNoAvailability);
-      case ErrorCodes.noActiveReservation:
-        CustomSnackbars.showError(message: AppTranslations.tableNeedsBooking);
-      case ErrorCodes.notFound:
-        CustomSnackbars.showError(
-          message: AppTranslations.tableVenueUnavailable,
-        );
-      case ErrorCodes.validationFailed:
-        CustomSnackbars.showError(
-          message: res.error?.message ?? AppTranslations.tableFailed,
-        );
-      default:
-        CustomSnackbars.showError(message: AppTranslations.tableFailed);
-    }
-  }
-
-  /// Converts a 12-hour slot label ("7:00 PM", "12:30 PM") to the `H:i` (24h)
-  /// the reservation endpoint expects.
-  String _toTime24h(String slot) {
-    final trimmed = slot.trim().toUpperCase();
-    final isPm = trimmed.endsWith('PM');
-    final isAm = trimmed.endsWith('AM');
-    final body = trimmed.replaceAll(RegExp(r'\s*[AP]M$'), '').trim();
-    final parts = body.split(':');
-    var hour = int.tryParse(parts[0]) ?? 0;
-    final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
-    if (isPm && hour != 12) hour += 12;
-    if (isAm && hour == 12) hour = 0;
-    return '${hour.toString().padLeft(2, '0')}:'
-        '${minute.toString().padLeft(2, '0')}';
-  }
 
   /// Half-hour slot labels between the two ends of an opening-hours string.
   ///

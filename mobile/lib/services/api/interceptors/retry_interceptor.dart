@@ -4,10 +4,10 @@ import 'package:dio/dio.dart';
 /// Retries failed requests with exponential backoff for transient failures.
 ///
 /// Retries:
-/// - Connection / receive timeouts
-/// - Connection errors (network-level)
-/// - HTTP 503 (Service Unavailable) — honors `Retry-After`, capped at
-///   [maxDelay]
+/// - Connection timeouts, for any method — nothing had been sent yet
+/// - Receive timeouts, connection errors and HTTP 503 (honors `Retry-After`,
+///   capped at [maxDelay]), but only for requests that are safe to send twice
+///   (see [_isReplaySafe])
 ///
 /// Never retries 4xx (including 429 — see [_isRetryable]), never retries
 /// cancelled requests.
@@ -53,10 +53,26 @@ class RetryInterceptor extends Interceptor {
     }
   }
 
+  /// Whether the server could receive this request twice without harm. A
+  /// timeout after the request left the phone says nothing about whether the
+  /// server acted on it, so a blind retry of a booking, a chat message or a
+  /// service request would create a duplicate. Reads and `PUT` are safe; a
+  /// write is safe only when it carries an `Idempotency-Key`, which makes the
+  /// server answer the repeat with the original result.
+  static bool _isReplaySafe(RequestOptions options) {
+    final method = options.method.toUpperCase();
+    if (method == 'GET' || method == 'HEAD' || method == 'PUT') return true;
+    return options.headers.keys.any(
+      (name) => name.toLowerCase() == 'idempotency-key',
+    );
+  }
+
   bool _isRetryable(DioException e) {
     if (e.type == DioExceptionType.cancel) return false;
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout ||
+    // Never connected, so nothing reached the server: always safe.
+    if (e.type == DioExceptionType.connectionTimeout) return true;
+    if (!_isReplaySafe(e.requestOptions)) return false;
+    if (e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.connectionError) {
       return true;
     }

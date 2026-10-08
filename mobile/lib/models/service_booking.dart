@@ -20,7 +20,10 @@ class ServiceBooking {
   final String uuid;
   final String bookableType;
   final BookableRef? bookable;
-  final String? scheduledAt;
+
+  /// A true UTC instant (since Phase 8). Show it through
+  /// `HotelTime.fromInstant`; bookings made before Phase 8 read 3 hours late.
+  final DateTime? scheduledAt;
 
   /// One of `pending` / `confirmed` / `cancelled` / `completed`.
   final String status;
@@ -43,7 +46,9 @@ class ServiceBooking {
     bookable: json['bookable'] is Map<String, dynamic>
         ? BookableRef.fromJson(json['bookable'] as Map<String, dynamic>)
         : null,
-    scheduledAt: json['scheduled_at'] as String?,
+    scheduledAt: json['scheduled_at'] is String
+        ? DateTime.tryParse(json['scheduled_at'] as String)
+        : null,
     status: json['status'] as String? ?? 'pending',
     notes: json['notes'] as String?,
     guestCount: (json['guest_count'] as num?)?.toInt(),

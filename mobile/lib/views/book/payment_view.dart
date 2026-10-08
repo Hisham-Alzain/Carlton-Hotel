@@ -6,6 +6,7 @@ import 'package:carlton/components/booking_summary_header.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/components/custom_card_form.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
+import 'package:carlton/customWidgets/custom_promo_box.dart';
 import 'package:carlton/components/custom_pay_at_hotel_panel.dart';
 import 'package:carlton/customWidgets/custom_scaffold.dart';
 import 'package:carlton/components/custom_selectable_card.dart';
@@ -57,10 +58,11 @@ class PaymentView extends StatelessWidget {
                   summary: controller.priceSummary,
                 ),
               ),
-              // CustomPromoBox(
-              //   promoCodeController: controller.promoCtrl,
-              //   onApply: controller.applyPromo,
-              // ),
+              CustomPromoBox(
+                promoCodeController: controller.promoCtrl,
+                onApply: controller.applyPromo,
+                errorText: controller.promoError.value,
+              ),
               Text(
                 AppTranslations.paymentMethod,
                 style: textStyle.labelLarge?.copyWith(
@@ -114,6 +116,7 @@ class PaymentView extends StatelessWidget {
       case PaymentMethod.card:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 10,
           children: [
             CustomCardForm(
               cardNumberController: controller.cardNumberCtrl,
@@ -167,7 +170,6 @@ class _ComingSoonNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.whisperGrey,

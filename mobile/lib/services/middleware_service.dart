@@ -4,12 +4,12 @@ import 'package:carlton/enums/enums.dart';
 import 'package:carlton/models/guest.dart';
 import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/get_storage_service.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 /// Single source of truth for the guest session — the bearer token plus the
 /// authenticated [Guest] identity and its entitlement flags. Permanent
-/// singleton (see main.dart). Replaces the old dual auth mechanism
-/// (SessionService's fake booleans + a mis-directed token check).
+/// singleton (see main.dart).
 class MiddlewareService extends GetxService {
   late bool isFirstTime;
 
@@ -21,11 +21,47 @@ class MiddlewareService extends GetxService {
 
   static MiddlewareService get find => Get.find();
 
+  late final AppLifecycleListener _lifecycle;
+  DateTime? _lastStatusProbe;
+
+  /// When `/me` last answered; see [checkToken]'s `reuseRecent`.
+  DateTime? _meFetchedAt;
+  static const _meReuseWindow = Duration(seconds: 10);
+
   @override
   void onInit() {
     super.onInit();
     isFirstTime = StorageService.getBool(StorageKeys.isFirstTime) ?? true;
     _hydrateGuestFromCache();
+    _lifecycle = AppLifecycleListener(onResume: _probeStatus);
+  }
+
+  @override
+  void onClose() {
+    _lifecycle.dispose();
+    super.onClose();
+  }
+
+  /// On return to the app, asks the cheap `GET /stays/status` whether the
+  /// guest's stay changed while away (the desk confirmed, checked them in or
+  /// out) and only then refetches `/auth/guest/me`, which every screen keyed
+  /// on the entitlements reacts to. At most once a minute.
+  Future<void> _probeStatus() async {
+    if (!isAuthenticated) return;
+    final now = DateTime.now();
+    final last = _lastStatusProbe;
+    if (last != null && now.difference(last) < const Duration(minutes: 1)) {
+      return;
+    }
+    _lastStatusProbe = now;
+    final res = await ApiService.find.get<Map<String, dynamic>>(
+      path: '/stays/status',
+      showErrorDialog: false,
+    );
+    if (!res.hasData || !isAuthenticated) return;
+    final booked = res.data!['has_booking'] == true;
+    final checkedIn = res.data!['is_checked_in'] == true;
+    if (booked != hasBooking || checkedIn != isCheckedIn) await checkToken();
   }
 
   // ── Session state (read across the app) ───────────────────────────────────
@@ -65,10 +101,20 @@ class MiddlewareService extends GetxService {
   /// after cache hydration. A network/server hiccup keeps the cached session —
   /// only a real 401 signs the guest out (handled by the error interceptor →
   /// [ApiService] `_handleUnauthorized`).
-  Future<void> checkToken() async {
-    final token = StorageService.getString(StorageKeys.token);
+  ///
+  /// [reuseRecent] skips the call when `/me` answered moments ago. Only for
+  /// navigation (splash or sign-in then Home), where the same session is read
+  /// twice in a row; anything that just changed the stay must refetch.
+  Future<void> checkToken({bool reuseRecent = false}) async {
+    final token = StorageService.token;
     if (token == null || token.isEmpty) {
       middlewareCase = MiddlewareCases.noToken;
+      return;
+    }
+    final last = _meFetchedAt;
+    if (reuseRecent &&
+        last != null &&
+        DateTime.now().difference(last) < _meReuseWindow) {
       return;
     }
     final response = await ApiService.find.get<Map<String, dynamic>>(
@@ -76,6 +122,7 @@ class MiddlewareService extends GetxService {
       showErrorDialog: false,
     );
     if (response.hasData) {
+      _meFetchedAt = DateTime.now();
       _setGuest(Guest.fromJson(response.data!));
       middlewareCase = MiddlewareCases.validToken;
     } else if (response.statusCode == 401) {
@@ -92,7 +139,7 @@ class MiddlewareService extends GetxService {
     required String token,
     required Guest guest,
   }) async {
-    await StorageService.setString(StorageKeys.token, token);
+    await StorageService.setToken(token);
     _setGuest(guest);
     middlewareCase = MiddlewareCases.validToken;
   }
@@ -107,7 +154,7 @@ class MiddlewareService extends GetxService {
   /// device still held a working credential. Skipped for the 401 path, where
   /// the token is already dead and the call would only 401 again.
   Future<void> signOut({bool revokeRemotely = true}) async {
-    if (revokeRemotely && StorageService.getString(StorageKeys.token) != null) {
+    if (revokeRemotely && StorageService.token != null) {
       // Best-effort and awaited before the local wipe, since the request needs
       // the token it is revoking. A failure here must not strand the guest in a
       // signed-in UI, so errors are swallowed and the local clear runs anyway.
@@ -122,10 +169,11 @@ class MiddlewareService extends GetxService {
       );
     }
 
-    await StorageService.remove(StorageKeys.token);
+    await StorageService.clearToken();
     await StorageService.remove(StorageKeys.guest);
     await StorageService.remove(StorageKeys.fcmToken);
     guest.value = null;
+    _meFetchedAt = null;
     hasPendingBooking.value = false;
     middlewareCase = MiddlewareCases.noToken;
 

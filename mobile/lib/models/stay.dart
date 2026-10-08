@@ -14,6 +14,27 @@ import 'package:carlton/models/localized.dart';
 DateTime? _date(dynamic v) =>
     v is String && v.isNotEmpty ? DateTime.tryParse(v) : null;
 
+/// `digital_key` on the stay payloads: issued by the desk once it approves the
+/// check-in. Display-only, not lock-grade — never persisted or logged.
+class DigitalKey {
+  final String code; // XXXX-XXXX-XXXX
+  final DateTime? issuedAt;
+  final DateTime? expiresAt;
+
+  const DigitalKey({required this.code, this.issuedAt, this.expiresAt});
+
+  static DigitalKey? fromJson(dynamic json) {
+    if (json is! Map) return null;
+    final code = json['code'] as String? ?? '';
+    if (code.isEmpty) return null;
+    return DigitalKey(
+      code: code,
+      issuedAt: _date(json['issued_at']),
+      expiresAt: _date(json['expires_at']),
+    );
+  }
+}
+
 /// `GET /api/stays/active` — a single object, or `null` when not checked in.
 ///
 /// `room_name` / `room_number` / `folio_total_usd` are whenLoaded-conditional:
@@ -83,6 +104,15 @@ class UpcomingStay {
   final DateTime? checkOut;
   final int nights;
   final bool isCancellable;
+  final DigitalKey? digitalKey;
+
+  /// `online_check_in.arrival_time` ("HH:mm", hotel time) once submitted.
+  final String? arrivalTime;
+
+  /// Keys of the `pre_arrival_checklist.items` the server marks done
+  /// (`documents_uploaded`, `arrival_time_set`, `preferences_set`, …), so a
+  /// restart or a second phone does not ask for them again.
+  final Set<String> checklistDone;
 
   const UpcomingStay({
     required this.uuid,
@@ -95,7 +125,20 @@ class UpcomingStay {
     this.checkOut,
     this.nights = 0,
     this.isCancellable = false,
+    this.digitalKey,
+    this.arrivalTime,
+    this.checklistDone = const {},
   });
+
+  static Set<String> _doneKeys(dynamic checklist) {
+    final items = checklist is Map ? checklist['items'] : null;
+    if (items is! List) return const {};
+    return {
+      for (final i in items)
+        if (i is Map && i['done'] == true && i['key'] is String)
+          i['key'] as String,
+    };
+  }
 
   factory UpcomingStay.fromJson(Map<String, dynamic> json) => UpcomingStay(
     uuid: json['uuid'] as String? ?? '',
@@ -108,6 +151,11 @@ class UpcomingStay {
     checkOut: _date(json['check_out']),
     nights: (json['nights'] as num?)?.toInt() ?? 0,
     isCancellable: json['is_cancellable'] as bool? ?? false,
+    digitalKey: DigitalKey.fromJson(json['digital_key']),
+    arrivalTime: json['online_check_in'] is Map
+        ? json['online_check_in']['arrival_time'] as String?
+        : null,
+    checklistDone: _doneKeys(json['pre_arrival_checklist']),
   );
 
   /// Parses the plain `GET /stays/upcoming` array (already unwrapped).
@@ -165,6 +213,8 @@ class PastStay {
     this.hasReceipt = false,
     this.roomTypeUuid,
   });
+
+  bool get isCancelled => status == 'cancelled';
 
   /// Client-side label — the backend has no `complete` status.
   String get statusLabel => switch (status) {

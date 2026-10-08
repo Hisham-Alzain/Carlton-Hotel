@@ -1,3 +1,4 @@
+import 'package:carlton/components/booking_price_breakdown.dart';
 import 'package:carlton/theme/theme.dart';
 import 'package:carlton/theme/app_shadows.dart';
 import 'package:carlton/l10n/app_translations.dart';
@@ -80,7 +81,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
           Padding(
             padding: const EdgeInsets.all(10),
             child: Align(
-              alignment: Alignment.bottomLeft,
+              alignment: AlignmentDirectional.bottomStart,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -120,7 +121,7 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                   child: Align(
-                    alignment: Alignment.centerRight,
+                    alignment: AlignmentDirectional.centerEnd,
                     child: _toggle(textStyle),
                   ),
                 ),
@@ -132,24 +133,8 @@ class _BookingSummaryHeaderState extends State<BookingSummaryHeader> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          AppTranslations.total,
-                          style: textStyle.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.inkBlack,
-                          ),
-                        ),
-                        Text(
-                          AppTranslations.includesTaxesAndFees,
-                          style: textStyle.dmLabelSmall?.copyWith(
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
+                    child: BookingTotalLabel(
+                      caption: AppTranslations.includesTaxesAndFees,
                     ),
                   ),
                   Column(

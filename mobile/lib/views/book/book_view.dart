@@ -1,8 +1,7 @@
-import 'package:carlton/theme/theme.dart';
+import 'package:carlton/components/stay_summary_bar.dart';
 import 'package:carlton/components/booking_step_header.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/controllers/booking/booking_flow_controller.dart';
-import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/components/custom_counter_field.dart';
 import 'package:carlton/components/custom_date_box.dart';
 import 'package:carlton/customWidgets/custom_date_range_calendar.dart';
@@ -116,29 +115,9 @@ class BookView extends StatelessWidget {
           onChanged: controller.setChildren,
         ),
 
-        PillContainer(
-          padding: const EdgeInsets.all(10),
-          backgroundColor: AppColors.cream,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text(
-                  controller.dateSummary,
-                  style: textStyle.dmLabelMedium?.copyWith(
-                    color: AppColors.inkBlack,
-                  ),
-                ),
-              ),
-
-              Text(
-                controller.guestSummary,
-                style: textStyle.labelMedium?.copyWith(
-                  color: AppColors.walnutGold,
-                ),
-              ),
-            ],
-          ),
+        StaySummaryBar(
+          dateSummary: controller.dateSummary,
+          guestSummary: controller.guestSummary,
         ),
 
         CustomFilledButton(

@@ -5,6 +5,7 @@ import 'package:carlton/controllers/check_in/check_in_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/l10n/app_translations.dart';
+import 'package:carlton/models/check_in/check_in_enums.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -240,6 +241,17 @@ class RoomKeyTab extends GetView<CheckInController> {
                       status: controller.service.key.value,
                       onPressed: controller.service.activateDigitalKey,
                     ),
+                    if (controller.service.key.value ==
+                            DigitalKeyStatus.activated &&
+                        controller.service.digitalKey.value != null)
+                      Text(
+                        controller.service.digitalKey.value!.code,
+                        textAlign: TextAlign.center,
+                        style: textStyle.dmHeadlineMedium?.copyWith(
+                          letterSpacing: 2,
+                          color: AppColors.inkBlack,
+                        ),
+                      ),
                     Text(
                       AppTranslations.digitalKeyHint,
                       textAlign: TextAlign.center,

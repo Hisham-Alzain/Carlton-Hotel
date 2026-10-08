@@ -35,8 +35,6 @@ class ExperienceController extends GetxController {
         hours: '',
         imagePath: '',
         category: '',
-        rating: 0,
-        reviews: 0,
       );
       loading.value = false;
       // After this frame: onInit runs mid-navigation, so popping here would race

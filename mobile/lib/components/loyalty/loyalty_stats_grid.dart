@@ -8,13 +8,12 @@ import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// The four-up lifetime summary under the balance card: points earned,
-/// redeemed, stays counted, and the net movement.
+/// The lifetime summary under the balance card: points earned and redeemed.
 ///
-/// A 2x2 of dividers rather than four separate cards: these are one reading of
-/// a single account, and splitting them into cards would say they are four
-/// unrelated facts. The rules between them are gold rather than grey, so the
-/// grid reads as part of the card above it rather than a settings panel.
+/// One panel with a rule between the two, rather than two separate cards:
+/// these are one reading of a single account. The rule is gold rather than
+/// grey, so the grid reads as part of the card above it rather than a settings
+/// panel.
 class LoyaltyStatsGrid extends StatelessWidget {
   final LoyaltyAccount account;
 
@@ -44,35 +43,13 @@ class LoyaltyStatsGrid extends StatelessWidget {
           _StatRow(
             start: _Stat(
               label: AppTranslations.loyaltyEarned,
-              value: account.earnedTotal.formatPoints(),
+              value: account.lifetimeEarnedPoints.formatPoints(),
               valueColor: AppColors.forestGreen,
             ),
             end: _Stat(
               label: AppTranslations.loyaltyRedeemed,
-              value: account.redeemedTotal.formatPoints(),
+              value: account.lifetimeRedeemedPoints.formatPoints(),
               valueColor: AppColors.brickRed,
-            ),
-          ),
-          const Divider(
-            height: 1,
-            thickness: 1,
-            color: AppColors.antiqueGold20,
-          ),
-          _StatRow(
-            start: _Stat(
-              label: AppTranslations.loyaltyStaysCounted,
-              value: '${account.staysCount}',
-              // bronzeGold, not antiqueGold — the lighter gold is a fill and a
-              // hairline colour, and falls below readable contrast as text on
-              // white.
-              valueColor: AppColors.bronzeGold,
-            ),
-            end: _Stat(
-              label: AppTranslations.loyaltyNetChange,
-              value: account.netChange.formatSignedPoints(),
-              valueColor: account.netChange < 0
-                  ? AppColors.brickRed
-                  : AppColors.forestGreen,
             ),
           ),
         ],

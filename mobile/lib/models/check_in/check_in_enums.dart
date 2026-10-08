@@ -25,6 +25,11 @@ enum CheckInOutcome {
   /// (CheckInService.notOpenReason).
   notOpenYet,
 
+  /// The server refused with `reservation_state`: the booking is not confirmed
+  /// yet, or today is not within its stay. Nothing was shown; the caller says
+  /// check-in opens on the arrival day once the hotel confirms.
+  notOpenOnServer,
+
   /// The request was made and refused. ApiService has already reported it.
   failed,
 }

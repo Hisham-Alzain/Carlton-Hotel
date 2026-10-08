@@ -97,21 +97,19 @@ class RestaurantItem {
     required this.imagePath,
     this.uuid = '',
     this.category = '',
-    this.rating = 4.9,
-    this.reviews = 142,
+    this.rating = 0,
+    this.reviews = 0,
   });
 
   /// Empty venue used for the single frame a detail screen may render before a
-  /// routing error pops it. Deliberately blank rather than a plausible-looking
-  /// demo venue, so a guest never briefly sees details for somewhere real.
+  /// routing error pops it. Deliberately blank, so a guest never briefly sees
+  /// details for somewhere real.
   static const RestaurantItem blank = RestaurantItem(
     name: '',
     cuisine: '',
     hours: '',
     location: '',
     imagePath: '',
-    rating: 0,
-    reviews: 0,
   );
 
   factory RestaurantItem.fromDiningVenue(DiningVenue diningVenue) =>
@@ -153,14 +151,13 @@ class ExperienceItem {
     required this.imagePath,
     required this.category,
     this.uuid = '',
-    this.rating = 4.9,
-    this.reviews = 142,
+    this.rating = 0,
+    this.reviews = 0,
     this.badge,
   });
 
   /// [Experience] carries no review system yet (no `HasReviews` on the
-  /// backend model), so rating/reviews come back honestly zeroed rather than
-  /// inheriting the demo defaults above.
+  /// backend model), so rating/reviews stay zero.
   factory ExperienceItem.fromExperience(Experience experience) =>
       ExperienceItem(
         uuid: experience.uuid,
@@ -169,8 +166,6 @@ class ExperienceItem {
         hours: experience.durationLabel.value,
         imagePath: experience.image ?? '',
         category: experience.category,
-        rating: 0,
-        reviews: 0,
         badge: experience.category.isEmpty ? null : experience.category,
       );
 }

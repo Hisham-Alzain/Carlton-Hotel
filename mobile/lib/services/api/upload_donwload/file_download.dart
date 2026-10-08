@@ -18,6 +18,23 @@ class FileDownloader {
 
   FileDownloader({required this.dio, required this.dialogs});
 
+  /// Raw bytes, no timeout (files can be large), no logging of the body, and
+  /// no retry — re-downloading on a flaky line is the caller's call.
+  static Options get _binaryOptions => Options(
+    responseType: ResponseType.bytes,
+    receiveTimeout: Duration.zero,
+    sendTimeout: Duration.zero,
+    headers: {'Accept': '*/*'},
+    extra: {'disableLogger': true, RetryInterceptor.skipRetryExtraKey: true},
+  );
+
+  void _showProgress(RxDouble progress, CancelToken? cancelToken) =>
+      dialogs.showProgress(
+        title: AppTranslations.downloading,
+        progress: progress,
+        cancelToken: cancelToken,
+      );
+
   /// Loads a file fully into memory and returns the [Response] containing
   /// the bytes in `response.data`. Use for small files where you need the
   /// bytes in memory (image previews, small JSON blobs).
@@ -27,28 +44,13 @@ class FileDownloader {
     bool showDialog = true,
   }) async {
     final progress = 0.0.obs;
-    if (showDialog) {
-      dialogs.showProgress(
-        title: AppTranslations.downloading,
-        progress: progress,
-        cancelToken: cancelToken,
-      );
-    }
+    if (showDialog) _showProgress(progress, cancelToken);
 
     try {
       final response = await dio.get(
         path,
         cancelToken: cancelToken,
-        options: Options(
-          responseType: ResponseType.bytes,
-          receiveTimeout: Duration.zero,
-          sendTimeout: Duration.zero,
-          headers: {'Accept': '*/*'},
-          extra: {
-            'disableLogger': true,
-            RetryInterceptor.skipRetryExtraKey: true,
-          },
-        ),
+        options: _binaryOptions,
         onReceiveProgress: (count, total) {
           if (total > -1) progress.value = count / total;
         },
@@ -71,13 +73,7 @@ class FileDownloader {
     final file = File(savePath);
     await file.create(recursive: true);
 
-    if (showDialog) {
-      dialogs.showProgress(
-        title: AppTranslations.downloading,
-        progress: progress,
-        cancelToken: cancelToken,
-      );
-    }
+    if (showDialog) _showProgress(progress, cancelToken);
 
     try {
       await dio.download(
@@ -87,16 +83,7 @@ class FileDownloader {
         onReceiveProgress: (received, total) {
           if (total > -1) progress.value = received / total;
         },
-        options: Options(
-          responseType: ResponseType.bytes,
-          receiveTimeout: Duration.zero,
-          sendTimeout: Duration.zero,
-          headers: {'Accept': '*/*'},
-          extra: {
-            'disableLogger': true,
-            RetryInterceptor.skipRetryExtraKey: true,
-          },
-        ),
+        options: _binaryOptions,
       );
       return file;
     } finally {

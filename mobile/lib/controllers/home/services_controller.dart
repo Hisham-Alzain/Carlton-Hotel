@@ -44,15 +44,15 @@ class ServicesController extends GetxController
   }
 
   // Active-stay header (Services stay card) — populated from `GET /stays/active`
-  // once the guest is checked in; blank until then (no more demo Room 812).
+  // once the guest is checked in; blank until then.
   final RxString room = ''.obs;
   final RxString stayRoomName = ''.obs;
   final RxString checkedInTime = ''.obs;
   final RxInt nightsRemaining = 0.obs;
   final String stayImagePath = 'assets/images/stay_room.png';
 
-  // The eight hub tiles are decorative demo (icons/subtitles); each carries a
-  // stable [ServiceItem.code] matched against the fetched catalog.
+  // The eight hub tiles carry the app's own artwork (icons/subtitles); each
+  // has a stable [ServiceItem.code] matched against the fetched catalog.
   final List<ServiceItem> services = ServiceTiles.services;
 
   /// Live service catalog (`GET /public/service-catalog`, active only) and the
@@ -148,13 +148,16 @@ class ServicesController extends GetxController
         : s.roomName.value;
     stayRoomName.value = s.roomName.value;
     nightsRemaining.value = s.nightsRemaining;
+    // The server's switch state, so a DND set from another device or by the
+    // desk shows here instead of a switch that always starts off.
+    dndEnabled.value = s.dndEnabled;
     checkedInTime.value = s.checkedInAt != null
         ? _timeFormat.format(s.checkedInAt!)
         : (s.checkIn != null ? _dateFormat.format(s.checkIn!) : '');
   }
 
-  static DateFormat get _timeFormat => DateFormat('h:mm a');
-  static DateFormat get _dateFormat => DateFormat('MMM d');
+  static DateFormat get _timeFormat => DateFormat.jm();
+  static DateFormat get _dateFormat => DateFormat.MMMd();
 
   void switchTab(int index) => tabController.animateTo(index);
 

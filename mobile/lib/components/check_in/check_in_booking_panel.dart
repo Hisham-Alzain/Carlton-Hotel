@@ -51,9 +51,7 @@ class CheckInBookingPanel extends StatelessWidget {
   }
 }
 
-/// The year and clock times used to be appended here as literals, which worked
-/// only because the demo reservation stored a year-less "Aug 14". Real
-/// `/stays/upcoming` data carries the year and no times, so the row now shows
+/// `/stays/upcoming` data carries the year and no times, so the row shows
 /// exactly what the reservation has — an absent time is omitted rather than
 /// replaced by a plausible-looking default.
 String _dateAndTime(String date, String time) =>

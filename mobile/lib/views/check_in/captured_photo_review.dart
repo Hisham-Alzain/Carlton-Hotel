@@ -1,5 +1,5 @@
 import 'package:carlton/controllers/check_in/scan_id_controller.dart';
-import 'package:carlton/customWidgets/custom_containers.dart';
+import 'package:carlton/components/check_in/scan_status_header.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/theme/app_colors.dart';
@@ -19,19 +19,11 @@ class CapturedPhotoReview extends GetView<ScanIdController> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 20,
         children: [
-          const Center(
-            child: CustomIconChip.circle(
-              size: 50,
-              backgroundColor: AppColors.lagoonTeal,
-              child: Icon(Icons.check, color: Colors.white),
-            ),
-          ),
-          Text(
-            AppTranslations.scanSuccessful,
-            textAlign: TextAlign.center,
-            style: Get.textTheme.headlineSmall?.copyWith(
-              color: AppColors.primary,
-            ),
+          ScanStatusHeader(
+            icon: Icons.check,
+            iconColor: Colors.white,
+            chipColor: AppColors.lagoonTeal,
+            title: AppTranslations.scanSuccessful,
           ),
           Text(
             AppTranslations.capturedIdDetails,

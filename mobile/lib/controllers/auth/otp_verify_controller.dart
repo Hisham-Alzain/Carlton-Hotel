@@ -88,6 +88,9 @@ class OtpVerifyController extends GetxController {
   }
 
   Future<void> verify() async {
+    // One verify at a time: a code is single-use, so a second tap would be
+    // refused as invalid even though the first one signed the guest in.
+    if (isVerifying.value) return;
     if (!formKey.currentState!.validate()) return;
 
     final code = pinController.text;
@@ -114,9 +117,10 @@ class OtpVerifyController extends GetxController {
       showErrorDialog: false,
     );
     if (isClosed) return;
-    isVerifying.value = false;
 
     if (response.hasData) {
+      // Stays "verifying" through the session save and the /me refresh below
+      // and until the screen is left, so the button cannot fire again.
       final token = response.data!['token'] as String;
       final guest = Guest.fromJson(
         response.data!['guest'] as Map<String, dynamic>,
@@ -134,6 +138,7 @@ class OtpVerifyController extends GetxController {
       return;
     }
 
+    isVerifying.value = false;
     _reportError(response.error);
   }
 

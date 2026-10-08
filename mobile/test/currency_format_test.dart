@@ -119,9 +119,19 @@ void main() {
       ExchangeRates.override({'usd': 1.0, 'syp': 14000.0, 'try': 42.0});
       addTearDown(() => ExchangeRates.override(null));
 
-      expect(ExchangeRates.isLive, isTrue);
+      expect(ExchangeRates.isLiveFor('syp'), isTrue);
       expect(150.0.formatPrice(), isNot(startsWith('≈')));
       expect(ExchangeRates.rateFor('syp'), 14000.0);
+    });
+
+    test('a stale live rate is used but keeps the approximate marker', () {
+      select('syp');
+      ExchangeRates.override({'usd': 1.0, 'syp': 14000.0}, stale: {'syp'});
+      addTearDown(() => ExchangeRates.override(null));
+
+      expect(ExchangeRates.isLiveFor('syp'), isFalse);
+      expect(ExchangeRates.rateFor('syp'), 14000.0);
+      expect(150.0.formatPrice(), startsWith('≈'));
     });
 
     test('a null or unparseable API string formats as zero, not a crash', () {

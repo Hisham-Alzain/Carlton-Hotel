@@ -1,8 +1,7 @@
+import 'package:carlton/components/cards/image_header_card.dart';
 import 'package:carlton/theme/theme.dart';
 import 'package:carlton/components/cards/custom_rating_label.dart';
-import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_filled_button.dart';
-import 'package:carlton/customWidgets/custom_image.dart';
 import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -64,114 +63,69 @@ class CustomDiscoverCard extends StatelessWidget {
       color: AppColors.graphite,
     );
 
-    return InkWell(
+    return ImageHeaderCard(
+      image: imagePath,
+      width: 300,
       onTap: onTap,
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        color: AppColors.white,
-        shape: ContinuousRectangleBorder(
-          borderRadius: BorderRadiusGeometry.circular(14),
-        ),
-        margin: const EdgeInsets.all(10),
-        elevation: 1,
-        child: SizedBox(
-          width: 300,
-          child: Column(
-            spacing: 10,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  CustomImage(
-                    source: imagePath,
-                    width: double.infinity,
-                    height: 150,
-                    fit: BoxFit.cover,
-                  ),
-                  if (badge != null)
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: PillContainer(
-                        backgroundColor: AppColors.white88,
-                        radius: 20,
-                        child: Text(
-                          badge!,
-                          style: textStyle.dmLabelSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+      cornerRadius: 20,
+      corner: badge == null
+          ? null
+          : Text(
+              badge!,
+              style: textStyle.dmLabelSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
               ),
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  spacing: 10,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      spacing: 10,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: textStyle.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.inkBlack,
-                            ),
-                          ),
-                        ),
-                        CustomRatingLabel(rating: rating, reviews: reviews),
-                      ],
-                    ),
-                    if (meta.isNotEmpty)
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: meta
-                            .map(
-                              (m) => RowTextComponent(
-                                iconPath: m.$1,
-                                iconColor: AppColors.graphite,
-                                iconSize: 12,
-                                spacing: 4,
-                                text: m.$2,
-                                textStyle: metaStyle,
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    if (chips.isNotEmpty)
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: chips
-                            .map(
-                              (label) => PillContainer(
-                                backgroundColor: AppColors.pearlCream,
-                                radius: 4,
-                                child: Text(
-                                  label,
-                                  style: textStyle.dmLabelSmall?.copyWith(
-                                    color: AppColors.cocoaGold,
-                                  ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ..._footer(textStyle),
-                  ],
+            ),
+      children: [
+        Row(
+          spacing: 10,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: textStyle.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.inkBlack,
                 ),
               ),
-            ],
-          ),
+            ),
+            CustomRatingLabel(rating: rating, reviews: reviews),
+          ],
         ),
-      ),
+        if (meta.isNotEmpty)
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: meta
+                .map(
+                  (m) => RowTextComponent(
+                    iconPath: m.$1,
+                    iconColor: AppColors.graphite,
+                    iconSize: 12,
+                    spacing: 4,
+                    text: m.$2,
+                    textStyle: metaStyle,
+                  ),
+                )
+                .toList(),
+          ),
+        if (chips.isNotEmpty)
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: chips
+                .map(
+                  (label) => AmenityChip(
+                    label: label,
+                    backgroundColor: AppColors.pearlCream,
+                  ),
+                )
+                .toList(),
+          ),
+        ..._footer(textStyle),
+      ],
     );
   }
 

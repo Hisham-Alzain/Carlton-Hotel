@@ -20,39 +20,18 @@ const Map<String, String> esKeys = {
   // General
   "general.yes": "Sí",
   "general.no": "No",
-  "general.all": "Todo",
   "general.select": "Seleccionar",
   "general.search": "Buscar",
-  "general.selected": "Seleccionado",
-  "general.searchBy": "Buscar por",
-  "general.new": "Nuevo",
-  "general.existing": "Existente",
   "general.noItems": "Sin elementos",
-  "general.send": "Enviar",
-  "general.resend": "Reenviar",
-  "general.reset": "Restablecer",
-  "general.and": "y",
   "general.edit": "Editar",
-  "general.delete": "Eliminar",
-  "general.next": "Siguiente",
-  "general.change": "Cambiar",
-  "general.seeAll": "Ver todo",
-  "general.skip": "Omitir",
-  "general.more": "Más",
   "general.cancel": "Cancelar",
-  "general.for": "Para",
-  "general.remove": "Quitar",
   "general.submit": "Enviar",
   "general.confirm": "Confirmar",
-  "general.changeNumber": "Cambiar número",
-  "general.goBack": "Volver",
   "general.discoverAll": "Descubrir todo",
-  "general.bookingComingSoon": "Reservas próximamente",
 
   // Validation
   "validation.requiredField": "Campo obligatorio",
   "validation.invalidEmail": "Correo electrónico no válido",
-  "validation.shortPassword": "Contraseña demasiado corta",
   "validation.numberField": "El campo solo debe contener números",
   "validation.invalidNumber": "Número no válido",
   "validation.confirmPassword": "No coincide con la contraseña",
@@ -74,70 +53,16 @@ const Map<String, String> esKeys = {
   "api.serverError": "Algo salió mal por nuestra parte. Inténtalo de nuevo.",
   "api.serviceUnavailable":
       "Servicio no disponible temporalmente. Inténtalo más tarde.",
-  "api.requestId": "ID de solicitud",
   "api.downloading": "Descargando",
   "api.uploading": "Subiendo",
 
   // Auth
-  "auth.login": "Iniciar sesión",
   "auth.phoneNumber": "Número de teléfono",
-  "auth.enterPhone": "Introduce el número de teléfono",
-  "auth.loginSuccessful": "Sesión iniciada",
-  "auth.username": "Nombre de usuario",
-  "auth.enterUsername": "Introduce el nombre de usuario",
-  "auth.password": "Contraseña",
-  "auth.enterPassword": "Introduce la contraseña",
-  "auth.forgotPassword": "¿Olvidaste tu contraseña?",
-  "auth.logout": "Cerrar sesión",
-  "auth.continueAsGuest": "Continuar como invitado",
-  "auth.dontHaveAnAccount": "¿No tienes cuenta?",
-  "auth.signUp": "Regístrate",
-  "auth.logoutSuccessful": "Sesión cerrada",
   "auth.sessionExpired": "Sesión expirada",
   "auth.pleaseLoginAgain": "Vuelve a iniciar sesión",
-  "auth.logoutConfirmation": "¿Seguro que quieres cerrar sesión?",
-  "auth.cantAccessYourPhone": "¿No tienes acceso a tu teléfono?",
-  "auth.contactSupport": "Contactar con soporte",
-  "auth.verifyYourNumber": "Verifica tu número",
-  "auth.4-digitCode": "Enviamos un código de 4 dígitos a",
-  "auth.codeIn": "Código en",
-  "auth.seconds": "segundos",
-  "auth.verify": "Verificar",
-  "auth.resetPassword": "Restablecer contraseña",
-  "auth.createNewPassword": "Crea una nueva contraseña para tu cuenta",
-  "auth.oldPassword": "Contraseña anterior",
-  "auth.newPassword": "Nueva contraseña",
-  "auth.confirmNewPassword": "Confirma la nueva contraseña",
   "auth.confirmPassword": "Confirma la contraseña",
-  "auth.forgetPasswordTitle":
-      "Introduce tu número de teléfono para recibir un código de verificación y restablecer tu contraseña.",
-  "auth.passwordRequirements":
-      "Tu nueva contraseña debe ser distinta de las contraseñas usadas anteriormente.",
-  "auth.otpWillBeSentToTheFollowingNumber":
-      "El código se enviará al siguiente número",
-  "auth.joinCartXForTheBestDeals": "Únete a CartX para las mejores ofertas",
-  "auth.fullName": "Nombre completo",
-  "auth.enterFullName": "Introduce el nombre completo",
   "auth.email": "Correo electrónico",
-  "auth.enterEmail": "Introduce el correo electrónico (opcional)",
-  "auth.enterConfirmPassword": "Confirma la contraseña",
-  "auth.iAgreeto": "Acepto los",
-  "auth.termsAndConditions": "Términos y condiciones",
-  "auth.privacyPolicy": "Política de privacidad",
-  "auth.pleaseAgreeToTerms":
-      "Acepta los Términos y condiciones y la Política de privacidad",
-  "auth.alreadyHaveAnAccount": "¿Ya tienes cuenta?",
-  "auth.welcomeToCartX": "Bienvenido a CartX",
-  "auth.slogan": "El mercado de Siria, a domicilio.",
   "auth.support": "Soporte",
-  "auth.confirmation": "Confirmación",
-  "auth.phone": "Teléfono",
-  "auth.register": "Registrarse",
-  "auth.otpVerifiedSuccessfully": "Código verificado correctamente",
-  "auth.otpResentSuccessfully": "Código reenviado correctamente",
-  "auth.passwordResetSuccessfully": "Contraseña restablecida correctamente",
-  "auth.pleaseLoginToAddToCart": "Inicia sesión para añadir al carrito",
-  "auth.registrationSuccessful": "Registro completado",
   "auth.welcomeBackTitle": "Bienvenido de nuevo",
   "auth.welcomeBackSubtitle": "Has iniciado sesión en Carlton Hotel",
   "auth.signInTitle": "Bienvenido de nuevo",
@@ -155,7 +80,6 @@ const Map<String, String> esKeys = {
   "auth.sendCodeButtonLabel": "ENVIAR CÓDIGO",
   "auth.verifyIdentityTitle": "Verifica tu identidad",
   "auth.otpSentTo": "Enviamos un código de 6 dígitos a @destination",
-  "auth.codeMismatch": "Ese código no coincide",
   "validation.invalidOtp": "Introduce el código de 6 dígitos",
   "book.perNightSuffix": "/noche",
   "book.view.city": "Ciudad",
@@ -167,7 +91,6 @@ const Map<String, String> esKeys = {
   "auth.resendIn": "Reenviar en @time",
   "auth.resendCodeLink": "Reenviar código",
   "auth.verifyButtonLabel": "VERIFICAR",
-  "auth.demoNewCodeSent": "Demo: se envió un código nuevo",
   "auth.createProfileTitle": "Crea tu perfil",
   "auth.createProfileSubtitle": "Dinos tu nombre para personalizar tu estancia",
   "auth.firstNameLabel": "Nombre",
@@ -177,10 +100,7 @@ const Map<String, String> esKeys = {
   "auth.continueButtonLabel": "CONTINUAR",
   "auth.pleaseEnterPhoneNumber": "Introduce tu número de teléfono",
   "auth.pleaseEnterEmailAddress": "Introduce tu correo electrónico",
-  "auth.pleaseEnterFirstName": "Introduce tu nombre",
-  "auth.pleaseEnterLastName": "Introduce tus apellidos",
   "auth.phoneNumberHint": "Número de teléfono",
-  "auth.searchCountryHint": "Buscar país",
 
   // Navigation
   "nav.home": "Inicio",
@@ -193,14 +113,8 @@ const Map<String, String> esKeys = {
   "home.roomsSuites": "Habitaciones y suites",
   "home.diningRestaurants": "Restaurantes",
   "home.experiences": "Experiencias",
-  "home.specialOffers": "Ofertas especiales",
   "home.menuComingSoon": "Menú próximamente",
-  "home.exploreComingSoon": "Explorar próximamente",
   "home.sectionComingSoon": "@section — próximamente",
-  "home.sectionRooms": "Habitaciones",
-  "home.sectionDining": "Restaurantes",
-  "home.sectionExperiences": "Experiencias",
-  "home.sectionOffers": "Ofertas",
   "home.heroLocation": "Damasco · Siria",
   "home.heroVideoTitlePre": "Cada\n",
   "home.heroVideoTitleItalic": "momento",
@@ -216,42 +130,23 @@ const Map<String, String> esKeys = {
   "home.heroExperiencesTitlePost": "\ndiscreto",
   "home.heroExperiencesSubtitle":
       "Descubre experiencias auténticas, creadas solo para ti.",
-  "home.heroOffersTitlePre": "Escapadas ",
-  "home.heroOffersTitleItalic": "de temporada",
-  "home.heroOffersSubtitle":
-      "Paquetes seleccionados para una estancia inolvidable.",
-  "home.viewOffersLabel": "Ver ofertas",
   "home.bookNowLabel": "Reservar",
   "home.exploreLabel": "Explorar",
   "home.priceFromPrefix": "Desde ",
   "home.priceNightSuffix": "/noche",
 
   // Services
-  "services.title": "Servicios",
   "account.signInPromptTitle": "Inicia sesión para ver tu cuenta",
   "services.signInPromptTitle":
       "Inicia sesión para acceder al servicio de habitaciones",
-  "services.signInPromptSubtitle":
-      "Reserva y la lista completa de servicios se desbloquea al iniciar sesión.",
   "services.signInButtonLabel": "Iniciar sesión",
-  "services.createAccountButtonLabel": "Crear cuenta",
   "services.readyForNextStayTitle": "¿Listo para tu próxima estancia?",
-  "services.readyForNextStaySubtitle":
-      "Has iniciado sesión pero no tienes una reserva activa. Explora "
-      "nuestras habitaciones y reserva tu estancia para desbloquear los servicios en la habitación.",
   "services.exploreAndBookButtonLabel": "Explorar y reservar",
   "services.allServicesTab": "Todos los servicios",
-  "services.activeRequestsTab": "Solicitudes activas (@count)",
   "services.noActiveRequestsTitle": "Sin solicitudes activas",
   "services.noActiveRequestsSubtitle":
       "Tus solicitudes aparecerán aquí una vez enviadas",
   "services.browseServicesButtonLabel": "Ver servicios",
-  "services.itemSelected": "@item seleccionado",
-  "services.editingRequest": "Editando «@title»",
-  "services.editRequestLabel": "Editar solicitud",
-  "services.cancelRequestLabel": "Cancelar solicitud",
-  "services.cancelReasonHint": "Motivo (opcional)",
-  "services.requestCancelled": "Solicitud cancelada",
   "services.checkedInSincePrefix": "Registrado desde ",
   "services.nightsRemainingPrefix": "Noches restantes  ",
   "services.comingSoon": "Próximamente",
@@ -312,21 +207,6 @@ const Map<String, String> esKeys = {
       "De la gastronomía a los viajes, cuidaré cada detalle.",
   "concierge.comingSoon": "El Conserje IA llegará pronto",
 
-  // Stays
-  "stays.title": "Estancias",
-  "stays.comingSoonTitle": "Estancias próximamente",
-  "stays.comingSoonSubtitle":
-      "Tus estancias pasadas y futuras aparecerán aquí.",
-
-  // Book
-  "book.title": "Reservar",
-  "book.comingSoonSubtitle": "Reserva una habitación desde la app muy pronto.",
-
-  // Account
-  "account.title": "Cuenta",
-  "account.comingSoonTitle": "Cuenta próximamente",
-  "account.comingSoonSubtitle": "Gestiona tu perfil y tus preferencias aquí.",
-
   // Booking lookup
   "booking.findBookingTitle": "Encuentra tu reserva",
   "booking.findBookingSubtitle": "Introduce los datos de tu reserva",
@@ -339,49 +219,11 @@ const Map<String, String> esKeys = {
   "booking.haveReservationSubtitle": "Vincula tu reserva existente a tu perfil",
   "booking.noReservationTitle": "Aún sin reserva",
   "booking.noReservationSubtitle": "Continúa y reserva más tarde",
-  "booking.reservationPhoneDestination": "el teléfono vinculado a tu reserva",
 
   // Settings
   "settings.settings": "Ajustes",
   "settings.language": "Idioma",
   "settings.currency": "Moneda",
-
-  // File service
-  "fileService.errorCheckingFile": "Error al comprobar el archivo",
-  "fileService.errorPickingFile": "Error al seleccionar el archivo",
-  "fileService.errorPickingMultipleFiles":
-      "Error al seleccionar varios archivos",
-  "fileService.errorSavingFile": "Error al guardar el archivo",
-  "fileService.errorReadingFile": "Error al leer el archivo",
-  "fileService.errorWritingFile": "Error al escribir el archivo",
-  "fileService.errorGettingExternalStorage":
-      "Error al acceder al almacenamiento externo",
-  "fileService.errorCheckingDirectory": "Error al comprobar la carpeta",
-  "fileService.errorCreatingDirectory": "Error al crear la carpeta",
-  "fileService.errorListingFiles": "Error al listar los archivos",
-  "fileService.errorDeletingFile": "Error al eliminar el archivo",
-  "fileService.errorDeletingDirectory": "Error al eliminar la carpeta",
-  "fileService.errorGettingFileInfo":
-      "Error al obtener la información del archivo",
-  "fileService.fileNotFound": "Archivo no encontrado",
-  "fileService.directoryNotFound": "Carpeta no encontrada",
-  "fileService.permissionDenied": "Permiso de acceso al archivo denegado",
-  "fileService.selectFile": "Seleccionar archivo",
-  "fileService.selectFiles": "Seleccionar archivos",
-  "fileService.saveFile": "Guardar archivo",
-  "fileService.allFiles": "Todos los archivos",
-  "fileService.documents": "Documentos",
-  "fileService.images": "Imágenes",
-  "fileService.videos": "Vídeos",
-  "fileService.audio": "Audio",
-  "fileService.pdf": "Archivos PDF",
-  "fileService.word": "Documentos de Word",
-  "fileService.excel": "Hojas de cálculo de Excel",
-
-  // App update
-  "update.available": "Actualización disponible",
-  "update.later": "Más tarde",
-  "update.now": "Actualizar",
 
   // Check-in wizard
   "checkIn.title": "Check-in",
@@ -446,7 +288,9 @@ const Map<String, String> esKeys = {
   "checkIn.activatingDigitalKey": "Activando la llave digital…",
   "checkIn.activatedDigitalKey": "Llave digital activada",
   "checkIn.digitalKeyHint":
-      "Funciona con el teléfono bloqueado · mantén pulsado",
+      "Muestra este código en recepción. No abre la puerta.",
+  "checkIn.digitalKeyNotIssued":
+      "Tu llave se emite cuando el hotel aprueba tu check-in.",
   "checkIn.completeCheckIn": "Completar el check-in",
   "checkIn.awaitingConfirmation":
       "Tu reserva está pendiente de confirmación del hotel. Podrás hacer el check-in cuando se confirme.",
@@ -461,9 +305,22 @@ const Map<String, String> esKeys = {
   "checkIn.arrivalAfternoon": "Tarde",
   "checkIn.arrivalEvening": "Noche",
   "checkIn.arrivalLateNight": "Madrugada",
+  "checkIn.onlineNotConfirmed":
+      "El check-in en línea se abre cuando el hotel confirme tu reserva.",
+  "checkIn.onlineClosed":
+      "El check-in en línea ha cerrado. Por favor, regístrate en recepción.",
+  "checkIn.opensOnArrival":
+      "El check-in se abre el día de tu llegada, una vez que el hotel confirme tu reserva.",
+  "checkIn.roomNotReady":
+      "Tu habitación aún no está lista. Pasa por recepción, por favor.",
+  "profile.verifiedContactLocked":
+      "Por ahora, un número o correo verificado solo se puede cambiar en recepción.",
+  "transfer.needsConfirmed":
+      "Los traslados al aeropuerto se abren cuando el hotel confirme tu reserva.",
+  "transfer.unavailable":
+      "Ese vehículo ya no está disponible. Elige otro, por favor.",
   "checkIn.arrivalAfterTime": "Después de @time",
   "checkIn.confirmArrivalTime": "Confirmar hora de llegada",
-  "checkIn.save": "Guardar",
   "checkIn.startingCamera": "Iniciando la cámara…",
   "checkIn.cameraUnavailable": "Cámara no disponible",
   "checkIn.cameraNoDevice":
@@ -503,6 +360,7 @@ const Map<String, String> esKeys = {
   "general.retry": "Reintentar",
   "general.copy": "Copiar",
   "general.copied": "Código copiado",
+  "general.close": "Cerrar",
   "general.back": "Atrás",
   "general.guest": "Huésped",
   "general.date": "Fecha",
@@ -520,9 +378,6 @@ const Map<String, String> esKeys = {
   "general.apply": "Aplicar",
   "general.reserve": "Reservar",
   "general.reviews": "Opiniones",
-  "general.cancelled": "Cancelado",
-  "general.inProgress": "En curso",
-  "general.requested": "Solicitado",
   // Account
   "account.myProfile": "Mi perfil",
   "account.personalInformation": "Información personal",
@@ -532,21 +387,24 @@ const Map<String, String> esKeys = {
   "account.saveChanges": "Guardar cambios",
   "account.profileUpdated": "Tu perfil se ha actualizado",
   "account.security": "Seguridad",
-  "account.support": "Soporte",
   "account.helpAndSupport": "Ayuda y soporte",
   "account.legal": "Legal",
   "account.signOut": "Cerrar sesión",
-  "account.preferences": "Preferencias",
   // Preference catalogue
   "prefs.bedKing": "Cama king size",
   "prefs.bedQueen": "Cama queen size",
   "prefs.bedDouble": "Cama doble",
   "prefs.bedTwin": "Camas individuales",
   "prefs.bedSingle": "Cama individual",
-  "prefs.bedExtra": "Cama supletoria",
   "prefs.pillowSoft": "Almohada blanda",
+  "prefs.pillowMedium": "Almohada media",
   "prefs.pillowFirm": "Almohada firme",
   "prefs.pillowFeather": "Almohada de plumas",
+  "prefs.pillowHypoallergenic": "Almohada hipoalergénica",
+  "prefs.floorLabel": "Preferencia de piso",
+  "prefs.floorAny": "Sin preferencia",
+  "prefs.floorLow": "Piso bajo",
+  "prefs.floorHigh": "Piso alto",
   "prefs.mattressSoft": "Colchón blando",
   "prefs.mattressMedium": "Semirrígido",
   "prefs.mattressFirm": "Colchón firme",
@@ -615,14 +473,12 @@ const Map<String, String> esKeys = {
   "stays.bookAgain": "Reservar de nuevo",
   "stays.cancelReservation": "Cancelar la reserva",
   "stays.totalCharged": "Total cobrado",
-  "stays.checkInCaps": "ENTRADA",
-  "stays.checkOutCaps": "SALIDA",
   "stays.requestServiceCaps": "SOLICITAR SERVICIO",
   "stays.expressCheckoutCaps": "SALIDA EXPRÉS",
   "stays.completedCaps": "COMPLETADA",
+  "stays.cancelledCaps": "CANCELADA",
   "stays.receipt": "Recibo",
   "stays.downloadPdfReceipt": "Descargar recibo en PDF",
-  "stays.receiptSaved": "Recibo guardado en @path",
   "stays.noKeep": "No, conservar",
   "stays.yesCancel": "Sí, cancelar",
   "stays.checkoutComplete": "Salida completada",
@@ -631,14 +487,10 @@ const Map<String, String> esKeys = {
   "stays.resCode": "Reserva n.º @code",
   "stays.roomNumber": "Habitación @number",
   "stays.suiteNumber": "Suite @number",
-  "stays.receiptSubtitle": "@room · @dates",
   // Home dashboard
-  "home.expressCheckout": "Salida exprés",
   "home.yourStay": "tu estancia",
-  "home.checkoutRequested": "Salida solicitada",
   "home.checkoutConfirmBody": "¿Hacer el check-out de @target ahora?",
   "home.myBill": "Mi cuenta",
-  "home.request": "Solicitar",
   "home.checkout": "Salida",
   "home.estimatedTotal": "Total estimado",
   "home.activeRequests": "Solicitudes activas",
@@ -647,9 +499,7 @@ const Map<String, String> esKeys = {
   "home.askTheConcierge": "Pregunta al conserje",
   // Dining & reviews
   "dining.reserveATable": "Reservar mesa",
-  "dining.reserveATableTitle": "Reservar mesa",
   "dining.confirmReservation": "Confirmar la reserva",
-  "dining.reservationSummary": "@guests · @time",
   "reviews.writeAReview": "Escribir una opinión",
   "reviews.submitReview": "Enviar opinión",
   "reviews.noReviewsYet": "Aún no hay opiniones",
@@ -657,8 +507,6 @@ const Map<String, String> esKeys = {
   // Service catalogue tiles
   "services.sendRequest": "Enviar solicitud",
   "services.requestTargetRoom": "tu habitación",
-  "services.requestConfirmation":
-      "Esta solicitud es para @target. Nuestro equipo estará contigo en breve.",
   "services.tileRoomService": "Servicio de habitaciones",
   "services.tileLaundry": "Lavandería",
   "services.tileHousekeeping": "Limpieza",
@@ -675,11 +523,6 @@ const Map<String, String> esKeys = {
   "services.subPrivacyMode": "Modo privacidad",
   // Concierge chat
   "concierge.imageTooLarge": "La imagen no debe superar los 5 MB",
-  "concierge.agentRole": "Relaciones con huéspedes",
-  "concierge.quickBilling": "Consulta de facturación",
-  "concierge.quickRoomIssue": "Problema en la habitación",
-  "concierge.quickSpecialRequest": "Petición especial",
-  "concierge.quickFeedback": "Comentarios",
   // Notifications
   "notifications.channelName": "Novedades de la estancia",
   // API dialog
@@ -690,15 +533,12 @@ const Map<String, String> esKeys = {
   "book.nightsCountOne": "1 noche",
   "book.searchRooms": "Buscar habitaciones",
   "book.bankWire": "Transferencia bancaria",
-  "payment.walletUnavailable":
-      "@method aún no está disponible: elige Pagar en el hotel para confirmar.",
   "payment.walletTagline": "Un toque, seguro, instantáneo",
   "stays.upcoming": "Próximas",
   "stays.noActiveStaySubtitle":
       "Tu estancia actual aparecerá aquí durante el check-in.",
   "stays.noPastStaysSubtitle":
       "Las estancias completadas y los recibos aparecerán aquí.",
-  "reviews.beTheFirst": "Sé el primero en escribir una.",
   "dining.tabMenu": "Menú",
   "dining.tabInfo": "Info",
 
@@ -711,24 +551,33 @@ const Map<String, String> esKeys = {
   "services.statusCancelled": "Cancelado",
   "stays.statusCompleted": "Completada",
   "stays.statusCancelled": "Cancelada",
-  "dining.timePm": "p. m.",
-  "dining.timeAm": "a. m.",
-
-  "services.requestConfirmationEta":
-      "Esta solicitud es para @target. Nuestro equipo estará contigo en @eta.",
 
   "account.signOutTitle": "¿Cerrar sesión?",
   "account.signOutBody":
       "Tendrás que iniciar sesión de nuevo para acceder a tu cuenta y a tus estancias activas.",
-  "payment.cardComingSoon":
-      "Los pagos con tarjeta aún no están disponibles: elige Pagar en el hotel para confirmar tu reserva.",
-  "payment.walletComingSoon":
-      "Los pagos con tarjeta y monedero aún no están disponibles: elige Pagar en el hotel para confirmar tu reserva.",
+  "account.deleteAccount": "Eliminar cuenta",
+  "account.deleteTitle": "¿Eliminar tu cuenta?",
+  "account.deleteBody":
+      "Se borrarán tu nombre, datos de contacto, preferencias y mensajes de chat. Las reservas, facturas y recibos se conservan sin tu nombre. Si vuelves a iniciar sesión con el mismo teléfono o correo se creará una cuenta nueva y tus estancias anteriores no aparecerán en ella. Esta acción no se puede deshacer.",
+  "account.deleteConfirm": "Eliminar",
+  "account.deleteForfeitPoints": "También perderás @points puntos.",
+  "account.deleteForfeitVouchers": "También perderás @count cupones sin usar.",
+  "account.deleteForfeitBoth":
+      "También perderás @points puntos y @count cupones sin usar.",
+  "account.deleteForfeitUnknown":
+      "También perderás los puntos de fidelidad y los vales sin usar que tengas.",
+  "account.deleteBlockedTitle": "Aún no se puede eliminar",
+  "account.deleteBlockedBody":
+      "Por favor, contacta con recepción para resolverlo primero.",
+  "account.deleteBlockedBookings": "Reservas: @codes",
+  "account.deleteReasonReservation": "Tienes una reserva activa.",
+  "account.deleteReasonFolio": "Tu cuenta sigue abierta.",
+  "account.deleteReasonService": "Tienes una reserva de servicio próxima.",
+  "account.deleted": "Tu cuenta ha sido eliminada.",
   "payment.googlePaySubtitle": "Pago rápido y seguro",
   "payment.googlePaySavedMethod": "Usa tu método de pago guardado en Google",
   "payment.googlePayInstant": "Confirmación de pago instantánea",
   "home.checkoutStatementNote": "Te enviaremos por correo tu factura final.",
-  "home.checkoutConfirmNow": "¿Hacer el check-out ahora?",
   "stays.loadStayFailed": "No se pudo cargar tu estancia",
   "stays.loadReservationsFailed": "No se pudieron cargar tus reservas",
   "stays.loadPastFailed": "No se pudieron cargar las estancias anteriores",
@@ -737,14 +586,21 @@ const Map<String, String> esKeys = {
   "currency.usd": "Dólar estadounidense",
   "currency.syp": "Libra siria",
   "currency.try": "Lira turca",
-  "currency.approxNote":
-      "Convertido a un tipo de cambio orientativo. Los cargos se realizan en USD.",
   "book.perNight": "@price/noche",
   "stays.balanceDue": "Saldo pendiente · @amount",
 
   // Batch 3 - named-parameter strings missed by the literal pass
   "account.notifications": "Notificaciones",
   "account.savedPayments": "Pagos guardados",
+  "account.notificationsEmptyTitle": "Aún no hay notificaciones",
+  "account.notificationsEmptySubtitle":
+      "Las novedades sobre tu estancia y tus solicitudes aparecerán aquí.",
+  "account.savedPaymentsEmptyTitle": "No hay métodos de pago guardados",
+  "account.savedPaymentsEmptySubtitle":
+      "Las tarjetas que guardes para reservar más rápido aparecerán aquí.",
+  "account.securityEmptyTitle": "Tu cuenta está protegida",
+  "account.securityEmptySubtitle":
+      "Inicias sesión con un código de un solo uso enviado a tu teléfono o correo, así que no hay contraseña que gestionar.",
   "account.stayPreferences": "Preferencias de estancia",
   "services.unlockInRoom":
       "Reserva tu estancia para desbloquear los servicios en la habitación.",
@@ -757,11 +613,11 @@ const Map<String, String> esKeys = {
   "dining.cuisineLabel": "Cocina",
   "dining.ratingLabel": "Valoración",
   "dining.notesHint": "Alergias, requisitos dietéticos, ocasión...",
-  "dining.menuDownloadComingSoon":
-      "La descarga del menú completo llegará pronto",
+  "dining.menuNotAvailable":
+      "Aún no hay menú disponible para este restaurante.",
+  "dining.menuOpenFailed": "No se pudo abrir el menú. Inténtalo de nuevo.",
   "reviews.signInToReview": "Inicia sesión para dejar una opinión",
   "reviews.loadFailed": "No se pudieron cargar las opiniones",
-  "reviews.tryAgainShort": "Inténtalo de nuevo.",
   "reviews.thankYou": "Gracias por tu opinión",
   "reviews.shareHint": "Comparte tu experiencia...",
   "home.currentBill": "Cuenta actual",
@@ -780,6 +636,14 @@ const Map<String, String> esKeys = {
   "stays.receiptLoadFailed": "No se pudo cargar el recibo.",
   "stays.receiptDownloadFailed": "No se pudo descargar el recibo.",
   "stays.reservationCancelled": "Reserva cancelada",
+  "stays.rewardPoints": "Pagado @amount con @points puntos",
+  "stays.rewardVoucher": "Cupón @code · −@amount",
+  "stays.rewardUpgrade":
+      "Mejora de habitación solicitada — recepción la asignará",
+  "stays.cancelledPointsBack":
+      "Reserva cancelada. Se devolvieron @points puntos a tu saldo.",
+  "stays.cancelledVoucherBack":
+      "Reserva cancelada. El cupón @code vuelve a estar disponible.",
 
   // Airport Transfer flow - Figma frames \"Airport Transfer\" (3 steps)
   "transfer.title": "Traslado al aeropuerto",
@@ -831,25 +695,70 @@ const Map<String, String> esKeys = {
   // Loyalty / Carlton Rewards
   "loyalty.title": "Carlton Rewards",
   "loyalty.row": "Fidelidad y recompensas",
-  "loyalty.rowBody": "Puntos, niveles y ventajas de estancia",
+  "loyalty.rowBody": "Puntos, recompensas y cupones",
   "loyalty.programName": "Carlton Rewards",
   "loyalty.availablePoints": "Puntos disponibles",
   "loyalty.pointsUnit": "pts",
-  "loyalty.toNextTier": "@points pts para llegar a @tier",
-  "loyalty.topTier": "Has alcanzado el nivel más alto",
   "loyalty.earnTitle": "Gana puntos en cada estancia",
   "loyalty.earnBody": "Se abonan en tu cuenta tras la salida",
   "loyalty.earned": "Ganados",
   "loyalty.redeemed": "Canjeados",
-  "loyalty.staysCounted": "Estancias",
-  "loyalty.netChange": "Cambio neto",
   "loyalty.activity": "Actividad de puntos",
-  "loyalty.entryCount": "@count en total",
   "loyalty.noActivity": "Aún no hay actividad de puntos",
   "loyalty.noActivityBody":
       "Tus puntos aparecerán aquí tras tu primera estancia.",
+  "loyalty.rewardUnavailable": "Esta recompensa ya no está disponible.",
+  "loyalty.useRewards": "Usa tus recompensas",
+  "loyalty.useNone": "Ninguno",
+  "loyalty.usePoints": "Puntos",
+  "loyalty.useVoucher": "Cupón",
+  "loyalty.pointsToUse": "Puntos a usar",
+  "loyalty.voucherCodeHint": "Código del cupón",
+  "loyalty.availableLine": "Disponible: @points pts",
+  "loyalty.pointsDiscount": "Descuento por puntos",
+  "loyalty.voucherDiscount": "Descuento del cupón",
+  "loyalty.upgradeRequested":
+      "Mejora de habitación solicitada: recepción la asignará.",
+  "loyalty.netTotal": "Total tras recompensas",
+  "loyalty.earnEstimate": "Ganarás unos @points puntos",
+  "loyalty.belowMinimum": "El mínimo es de @points puntos.",
+  "loyalty.overCap": "Puedes usar hasta @points puntos en esta reserva.",
+  "loyalty.onlyHave": "Solo tienes @points puntos.",
+  "loyalty.voucherInvalid": "Este código de cupón no es válido.",
+  "loyalty.stillPricing":
+      "Un momento: todavía se están calculando tus recompensas.",
+  "loyalty.fixRewards":
+      "Revisa los puntos o el código del cupón, o elige Ninguno para reservar sin ellos.",
+  "loyalty.pointsOff": "El pago con puntos no está disponible ahora.",
+  "loyalty.pointsOrVoucher": "Usa puntos o un cupón, no ambos.",
+  "loyalty.notEnoughPoints":
+      "No tienes suficientes puntos para esta recompensa.",
+  "loyalty.needMorePoints": "Te faltan @points puntos",
+  "loyalty.copyCode": "Copiar código",
+  "loyalty.voucherCodeIs": "El código de tu cupón es @code.",
+  "loyalty.voucherReadyTitle": "Cupón listo",
+  "loyalty.redeemReward": "Canjear",
+  "loyalty.confirmRedeemBody": "¿Gastar @points puntos en @reward?",
+  "loyalty.confirmRedeemTitle": "¿Canjear recompensa?",
+  "loyalty.voucherExpires": "Caduca el @date",
+  "loyalty.voucherUnavailable": "No disponible",
+  "loyalty.voucherActive": "Activo",
+  "loyalty.voucherExpired": "Caducado",
+  "loyalty.voucherUsed": "Usado",
+  "loyalty.pointsCost": "@points pts",
+  "loyalty.valueOff": "@amount de descuento",
+  "loyalty.shortfall": "@points puntos ya se habían gastado",
+  "loyalty.noVouchersBody":
+      "Canjea una recompensa para obtener tu primer cupón.",
+  "loyalty.noVouchers": "Aún no tienes cupones",
+  "loyalty.noRewardsBody": "Vuelve pronto para ver nuevas recompensas.",
+  "loyalty.noRewards": "Aún no hay recompensas disponibles",
+  "loyalty.rewardsTitle": "Recompensas",
+  "loyalty.myVouchers": "Mis cupones",
+  "loyalty.loadFailed": "No pudimos cargar tus recompensas.",
+  "loyalty.expiring": "@points puntos caducan el @date",
+  "loyalty.worth": "Valen unos @amount",
   "loyalty.redeem": "Canjear puntos",
-  "loyalty.redeemSoon": "El canje de puntos llegará pronto",
 
   // Added for full-coverage localization.
   "book.bookingConfirmedBang": "¡Reserva confirmada!",
@@ -896,7 +805,6 @@ const Map<String, String> esKeys = {
   "dining.vegan": "Vegano",
   "discover.viewMenu": "Ver el menú",
   "discover.viewOffer": "Ver la oferta",
-  "folio.myBill": "Mi cuenta",
   "folio.loadFailed": "No se pudo cargar tu cuenta",
   "folio.empty": "Aún no hay cargos",
   "folio.emptySubtitle":
@@ -906,6 +814,27 @@ const Map<String, String> esKeys = {
   "folio.sourceRoomCharge": "Cargo de habitación",
   "folio.sourceService": "Servicio",
   "folio.sourceInRoomRequest": "Petición en la habitación",
+  "folio.checkoutAtDesk":
+      "El check-out de esta estancia solo puede hacerse en recepción.",
+  "folio.sourceDesk": "Cargo de recepción",
+  "folio.sourceCredit": "Crédito",
+  "folio.quantity": "@qty × @price",
+  "folio.payment": "Pago (@method)",
+  "folio.paid": "Pagado",
+  "folio.balanceDue": "Saldo pendiente",
+  "folio.hotelOwes": "A tu favor (se reembolsa en recepción)",
+  "folio.disputeHint": "Toca un cargo para disputarlo.",
+  "folio.disputeCharge": "Disputar este cargo",
+  "folio.disputeInfo":
+      "Recepción revisará este cargo. El importe no cambia durante la revisión; si el hotel está de acuerdo, se añade un crédito a tu cuenta.",
+  "folio.disputeReasonLabel": "Motivo",
+  "folio.disputeReasonHint": "Cuéntanos qué está mal en este cargo",
+  "folio.disputeReasonRequired": "Introduce un motivo.",
+  "folio.sendDispute": "Enviar disputa",
+  "folio.disputeSent": "Disputa enviada. Recepción la revisará.",
+  "folio.disputeAlreadyOpen": "Este cargo ya está en revisión.",
+  "folio.disputeUnderReview": "EN REVISIÓN",
+  "folio.disputesOpen": "@count cargo(s) en revisión por recepción.",
   "general.cardSecurityNote": "Cifrado SSL de 256 bits · conforme con PCI DSS",
   "general.acceptedPaymentMethods": "Métodos de pago aceptados en el hotel",
   "general.askMeAnything": "Pregúntame lo que quieras...",

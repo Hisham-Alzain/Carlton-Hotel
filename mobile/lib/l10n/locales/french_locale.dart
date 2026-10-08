@@ -20,39 +20,18 @@ const Map<String, String> frKeys = {
   // General
   "general.yes": "Oui",
   "general.no": "Non",
-  "general.all": "Tout",
   "general.select": "Sélectionner",
   "general.search": "Rechercher",
-  "general.selected": "Sélectionné",
-  "general.searchBy": "Rechercher par",
-  "general.new": "Nouveau",
-  "general.existing": "Existant",
   "general.noItems": "Aucun élément",
-  "general.send": "Envoyer",
-  "general.resend": "Renvoyer",
-  "general.reset": "Réinitialiser",
-  "general.and": "et",
   "general.edit": "Modifier",
-  "general.delete": "Supprimer",
-  "general.next": "Suivant",
-  "general.change": "Modifier",
-  "general.seeAll": "Voir tout",
-  "general.skip": "Ignorer",
-  "general.more": "Plus",
   "general.cancel": "Annuler",
-  "general.for": "Pour",
-  "general.remove": "Retirer",
   "general.submit": "Envoyer",
   "general.confirm": "Confirmer",
-  "general.changeNumber": "Changer de numéro",
-  "general.goBack": "Retour",
   "general.discoverAll": "Tout découvrir",
-  "general.bookingComingSoon": "Réservation bientôt disponible",
 
   // Validation
   "validation.requiredField": "Champ obligatoire",
   "validation.invalidEmail": "E-mail invalide",
-  "validation.shortPassword": "Mot de passe trop court",
   "validation.numberField": "Le champ ne doit contenir que des chiffres",
   "validation.invalidNumber": "Numéro invalide",
   "validation.confirmPassword": "Ne correspond pas au mot de passe",
@@ -75,70 +54,16 @@ const Map<String, String> frKeys = {
       "Une erreur est survenue de notre côté. Veuillez réessayer.",
   "api.serviceUnavailable":
       "Service temporairement indisponible. Veuillez réessayer plus tard.",
-  "api.requestId": "ID de requête",
   "api.downloading": "Téléchargement",
   "api.uploading": "Envoi",
 
   // Auth
-  "auth.login": "Connexion",
   "auth.phoneNumber": "Numéro de téléphone",
-  "auth.enterPhone": "Saisissez le numéro de téléphone",
-  "auth.loginSuccessful": "Connexion réussie",
-  "auth.username": "Nom d'utilisateur",
-  "auth.enterUsername": "Saisissez le nom d'utilisateur",
-  "auth.password": "Mot de passe",
-  "auth.enterPassword": "Saisissez le mot de passe",
-  "auth.forgotPassword": "Mot de passe oublié ?",
-  "auth.logout": "Déconnexion",
-  "auth.continueAsGuest": "Continuer en tant qu'invité",
-  "auth.dontHaveAnAccount": "Vous n'avez pas de compte ?",
-  "auth.signUp": "S'inscrire",
-  "auth.logoutSuccessful": "Déconnexion réussie",
   "auth.sessionExpired": "Session expirée",
   "auth.pleaseLoginAgain": "Veuillez vous reconnecter",
-  "auth.logoutConfirmation": "Voulez-vous vraiment vous déconnecter ?",
-  "auth.cantAccessYourPhone": "Vous n'avez pas accès à votre téléphone ?",
-  "auth.contactSupport": "Contacter le support",
-  "auth.verifyYourNumber": "Vérifiez votre numéro",
-  "auth.4-digitCode": "Nous avons envoyé un code à 4 chiffres au",
-  "auth.codeIn": "Code dans",
-  "auth.seconds": "secondes",
-  "auth.verify": "Vérifier",
-  "auth.resetPassword": "Réinitialiser le mot de passe",
-  "auth.createNewPassword": "Créez un nouveau mot de passe pour votre compte",
-  "auth.oldPassword": "Ancien mot de passe",
-  "auth.newPassword": "Nouveau mot de passe",
-  "auth.confirmNewPassword": "Confirmez le nouveau mot de passe",
   "auth.confirmPassword": "Confirmez le mot de passe",
-  "auth.forgetPasswordTitle":
-      "Saisissez votre numéro de téléphone pour recevoir un code de vérification et réinitialiser votre mot de passe.",
-  "auth.passwordRequirements":
-      "Votre nouveau mot de passe doit être différent des mots de passe déjà utilisés.",
-  "auth.otpWillBeSentToTheFollowingNumber":
-      "Le code sera envoyé au numéro suivant",
-  "auth.joinCartXForTheBestDeals": "Rejoignez CartX pour les meilleures offres",
-  "auth.fullName": "Nom complet",
-  "auth.enterFullName": "Saisissez le nom complet",
   "auth.email": "E-mail",
-  "auth.enterEmail": "Saisissez l'e-mail (facultatif)",
-  "auth.enterConfirmPassword": "Confirmez le mot de passe",
-  "auth.iAgreeto": "J'accepte les",
-  "auth.termsAndConditions": "Conditions générales",
-  "auth.privacyPolicy": "Politique de confidentialité",
-  "auth.pleaseAgreeToTerms":
-      "Veuillez accepter les Conditions générales et la Politique de confidentialité",
-  "auth.alreadyHaveAnAccount": "Vous avez déjà un compte ?",
-  "auth.welcomeToCartX": "Bienvenue sur CartX",
-  "auth.slogan": "Le marché syrien, livré.",
   "auth.support": "Support",
-  "auth.confirmation": "Confirmation",
-  "auth.phone": "Téléphone",
-  "auth.register": "S'inscrire",
-  "auth.otpVerifiedSuccessfully": "Code vérifié avec succès",
-  "auth.otpResentSuccessfully": "Code renvoyé avec succès",
-  "auth.passwordResetSuccessfully": "Mot de passe réinitialisé avec succès",
-  "auth.pleaseLoginToAddToCart": "Connectez-vous pour ajouter au panier",
-  "auth.registrationSuccessful": "Inscription réussie",
   "auth.welcomeBackTitle": "Bon retour",
   "auth.welcomeBackSubtitle": "Vous êtes connecté au Carlton Hotel",
   "auth.signInTitle": "Bon retour",
@@ -156,7 +81,6 @@ const Map<String, String> frKeys = {
   "auth.sendCodeButtonLabel": "ENVOYER LE CODE",
   "auth.verifyIdentityTitle": "Vérifiez votre identité",
   "auth.otpSentTo": "Nous avons envoyé un code à 6 chiffres à @destination",
-  "auth.codeMismatch": "Ce code ne correspond pas",
   "validation.invalidOtp": "Saisissez le code à 6 chiffres",
   "book.perNightSuffix": "/nuit",
   "book.view.city": "Ville",
@@ -168,7 +92,6 @@ const Map<String, String> frKeys = {
   "auth.resendIn": "Renvoyer dans @time",
   "auth.resendCodeLink": "Renvoyer le code",
   "auth.verifyButtonLabel": "VÉRIFIER",
-  "auth.demoNewCodeSent": "Démo : un nouveau code a été envoyé",
   "auth.createProfileTitle": "Créez votre profil",
   "auth.createProfileSubtitle":
       "Dites-nous votre nom pour personnaliser votre séjour",
@@ -179,10 +102,7 @@ const Map<String, String> frKeys = {
   "auth.continueButtonLabel": "CONTINUER",
   "auth.pleaseEnterPhoneNumber": "Veuillez saisir votre numéro de téléphone",
   "auth.pleaseEnterEmailAddress": "Veuillez saisir votre adresse e-mail",
-  "auth.pleaseEnterFirstName": "Veuillez saisir votre prénom",
-  "auth.pleaseEnterLastName": "Veuillez saisir votre nom",
   "auth.phoneNumberHint": "Numéro de téléphone",
-  "auth.searchCountryHint": "Rechercher un pays",
 
   // Navigation
   "nav.home": "Accueil",
@@ -195,14 +115,8 @@ const Map<String, String> frKeys = {
   "home.roomsSuites": "Chambres et suites",
   "home.diningRestaurants": "Restauration",
   "home.experiences": "Expériences",
-  "home.specialOffers": "Offres spéciales",
   "home.menuComingSoon": "Menu bientôt disponible",
-  "home.exploreComingSoon": "Exploration bientôt disponible",
   "home.sectionComingSoon": "@section — bientôt disponible",
-  "home.sectionRooms": "Chambres",
-  "home.sectionDining": "Restauration",
-  "home.sectionExperiences": "Expériences",
-  "home.sectionOffers": "Offres",
   "home.heroLocation": "Damas · Syrie",
   "home.heroVideoTitlePre": "Chaque\n",
   "home.heroVideoTitleItalic": "instant",
@@ -218,42 +132,23 @@ const Map<String, String> frKeys = {
   "home.heroExperiencesTitlePost": "\ndiscret",
   "home.heroExperiencesSubtitle":
       "Découvrez des expériences authentiques, conçues rien que pour vous.",
-  "home.heroOffersTitlePre": "Évasions ",
-  "home.heroOffersTitleItalic": "saisonnières",
-  "home.heroOffersSubtitle":
-      "Des forfaits sur mesure pour un séjour inoubliable.",
-  "home.viewOffersLabel": "Voir les offres",
   "home.bookNowLabel": "Réserver",
   "home.exploreLabel": "Explorer",
   "home.priceFromPrefix": "À partir de ",
   "home.priceNightSuffix": "/nuit",
 
   // Services
-  "services.title": "Services",
   "account.signInPromptTitle": "Connectez-vous pour voir votre compte",
   "services.signInPromptTitle":
       "Connectez-vous pour accéder aux services de chambre",
-  "services.signInPromptSubtitle":
-      "Réservez et la liste complète des services se débloque dès votre connexion.",
   "services.signInButtonLabel": "Se connecter",
-  "services.createAccountButtonLabel": "Créer un compte",
   "services.readyForNextStayTitle": "Prêt pour votre prochain séjour ?",
-  "services.readyForNextStaySubtitle":
-      "Vous êtes connecté mais n'avez pas de réservation active. Découvrez "
-      "nos chambres et réservez votre séjour pour débloquer les services en chambre.",
   "services.exploreAndBookButtonLabel": "Explorer et réserver",
   "services.allServicesTab": "Tous les services",
-  "services.activeRequestsTab": "Demandes en cours (@count)",
   "services.noActiveRequestsTitle": "Aucune demande en cours",
   "services.noActiveRequestsSubtitle":
       "Vos demandes en cours apparaîtront ici une fois envoyées",
   "services.browseServicesButtonLabel": "Parcourir les services",
-  "services.itemSelected": "@item sélectionné",
-  "services.editingRequest": "Modification de « @title »",
-  "services.editRequestLabel": "Modifier la demande",
-  "services.cancelRequestLabel": "Annuler la demande",
-  "services.cancelReasonHint": "Motif (facultatif)",
-  "services.requestCancelled": "Demande annulée",
   "services.checkedInSincePrefix": "Enregistré depuis ",
   "services.nightsRemainingPrefix": "Nuits restantes  ",
   "services.comingSoon": "Bientôt disponible",
@@ -315,21 +210,6 @@ const Map<String, String> frKeys = {
       "De la restauration aux voyages, je m'occupe des détails.",
   "concierge.comingSoon": "Le Concierge IA arrive prochainement",
 
-  // Stays
-  "stays.title": "Séjours",
-  "stays.comingSoonTitle": "Séjours bientôt disponibles",
-  "stays.comingSoonSubtitle": "Vos séjours passés et à venir apparaîtront ici.",
-
-  // Book
-  "book.title": "Réserver",
-  "book.comingSoonSubtitle":
-      "Réservez une chambre directement depuis l'application, bientôt.",
-
-  // Account
-  "account.title": "Compte",
-  "account.comingSoonTitle": "Compte bientôt disponible",
-  "account.comingSoonSubtitle": "Gérez votre profil et vos préférences ici.",
-
   // Booking lookup
   "booking.findBookingTitle": "Trouvez votre réservation",
   "booking.findBookingSubtitle": "Saisissez les détails de votre réservation",
@@ -344,52 +224,11 @@ const Map<String, String> frKeys = {
       "Associez votre réservation existante à votre profil",
   "booking.noReservationTitle": "Pas encore de réservation",
   "booking.noReservationSubtitle": "Continuez et réservez plus tard",
-  "booking.reservationPhoneDestination":
-      "le téléphone associé à votre réservation",
 
   // Settings
   "settings.settings": "Paramètres",
   "settings.language": "Langue",
   "settings.currency": "Devise",
-
-  // File service
-  "fileService.errorCheckingFile": "Erreur lors de la vérification du fichier",
-  "fileService.errorPickingFile": "Erreur lors de la sélection du fichier",
-  "fileService.errorPickingMultipleFiles":
-      "Erreur lors de la sélection des fichiers",
-  "fileService.errorSavingFile": "Erreur lors de l'enregistrement du fichier",
-  "fileService.errorReadingFile": "Erreur lors de la lecture du fichier",
-  "fileService.errorWritingFile": "Erreur lors de l'écriture du fichier",
-  "fileService.errorGettingExternalStorage":
-      "Erreur d'accès au stockage externe",
-  "fileService.errorCheckingDirectory":
-      "Erreur lors de la vérification du dossier",
-  "fileService.errorCreatingDirectory": "Erreur lors de la création du dossier",
-  "fileService.errorListingFiles": "Erreur lors du listage des fichiers",
-  "fileService.errorDeletingFile": "Erreur lors de la suppression du fichier",
-  "fileService.errorDeletingDirectory":
-      "Erreur lors de la suppression du dossier",
-  "fileService.errorGettingFileInfo":
-      "Erreur lors de la récupération des informations du fichier",
-  "fileService.fileNotFound": "Fichier introuvable",
-  "fileService.directoryNotFound": "Dossier introuvable",
-  "fileService.permissionDenied": "Accès au fichier refusé",
-  "fileService.selectFile": "Sélectionner un fichier",
-  "fileService.selectFiles": "Sélectionner des fichiers",
-  "fileService.saveFile": "Enregistrer le fichier",
-  "fileService.allFiles": "Tous les fichiers",
-  "fileService.documents": "Documents",
-  "fileService.images": "Images",
-  "fileService.videos": "Vidéos",
-  "fileService.audio": "Audio",
-  "fileService.pdf": "Fichiers PDF",
-  "fileService.word": "Documents Word",
-  "fileService.excel": "Feuilles de calcul Excel",
-
-  // App update
-  "update.available": "Mise à jour disponible",
-  "update.later": "Plus tard",
-  "update.now": "Mettre à jour",
 
   // Check-in wizard
   "checkIn.title": "Enregistrement",
@@ -455,7 +294,9 @@ const Map<String, String> frKeys = {
   "checkIn.activatingDigitalKey": "Activation de la clé numérique…",
   "checkIn.activatedDigitalKey": "Clé numérique activée",
   "checkIn.digitalKeyHint":
-      "Fonctionne téléphone verrouillé · appuyez et maintenez",
+      "Présentez ce code à la réception. Il n'ouvre pas la porte.",
+  "checkIn.digitalKeyNotIssued":
+      "Votre clé est émise dès que l'hôtel approuve votre enregistrement.",
   "checkIn.completeCheckIn": "Finaliser l'enregistrement",
   "checkIn.awaitingConfirmation":
       "Votre réservation attend la confirmation de l'hôtel. Vous pourrez faire l'enregistrement une fois confirmée.",
@@ -471,9 +312,22 @@ const Map<String, String> frKeys = {
   "checkIn.arrivalAfternoon": "Après-midi",
   "checkIn.arrivalEvening": "Soirée",
   "checkIn.arrivalLateNight": "Nuit",
+  "checkIn.onlineNotConfirmed":
+      "L'enregistrement en ligne s'ouvre dès que l'hôtel confirme votre réservation.",
+  "checkIn.onlineClosed":
+      "L'enregistrement en ligne est clos. Veuillez vous présenter à la réception.",
+  "checkIn.opensOnArrival":
+      "L'enregistrement ouvre le jour de votre arrivée, une fois votre réservation confirmée par l'hôtel.",
+  "checkIn.roomNotReady":
+      "Votre chambre n'est pas encore prête. Merci de passer à la réception.",
+  "profile.verifiedContactLocked":
+      "Pour l'instant, un numéro ou un e-mail vérifié ne peut être modifié qu'à la réception.",
+  "transfer.needsConfirmed":
+      "Les transferts aéroport s'ouvrent dès que l'hôtel confirme votre réservation.",
+  "transfer.unavailable":
+      "Ce véhicule n'est plus disponible. Veuillez en choisir un autre.",
   "checkIn.arrivalAfterTime": "Après @time",
   "checkIn.confirmArrivalTime": "Confirmer l'heure d'arrivée",
-  "checkIn.save": "Enregistrer",
   "checkIn.startingCamera": "Démarrage de la caméra…",
   "checkIn.cameraUnavailable": "Caméra indisponible",
   "checkIn.cameraNoDevice": "Aucune caméra trouvée sur cet appareil.",
@@ -513,6 +367,7 @@ const Map<String, String> frKeys = {
   "general.retry": "Réessayer",
   "general.copy": "Copier",
   "general.copied": "Code copié",
+  "general.close": "Fermer",
   "general.back": "Retour",
   "general.guest": "Client",
   "general.date": "Date",
@@ -530,9 +385,6 @@ const Map<String, String> frKeys = {
   "general.apply": "Appliquer",
   "general.reserve": "Réserver",
   "general.reviews": "Avis",
-  "general.cancelled": "Annulé",
-  "general.inProgress": "En cours",
-  "general.requested": "Demandé",
   // Account
   "account.myProfile": "Mon profil",
   "account.personalInformation": "Informations personnelles",
@@ -542,21 +394,24 @@ const Map<String, String> frKeys = {
   "account.saveChanges": "Enregistrer",
   "account.profileUpdated": "Votre profil a été mis à jour",
   "account.security": "Sécurité",
-  "account.support": "Assistance",
   "account.helpAndSupport": "Aide et assistance",
   "account.legal": "Mentions légales",
   "account.signOut": "Se déconnecter",
-  "account.preferences": "Préférences",
   // Preference catalogue
   "prefs.bedKing": "Lit king size",
   "prefs.bedQueen": "Lit queen size",
   "prefs.bedDouble": "Lit double",
   "prefs.bedTwin": "Lits jumeaux",
   "prefs.bedSingle": "Lit simple",
-  "prefs.bedExtra": "Lit d'appoint",
   "prefs.pillowSoft": "Oreiller moelleux",
+  "prefs.pillowMedium": "Oreiller medium",
   "prefs.pillowFirm": "Oreiller ferme",
   "prefs.pillowFeather": "Oreiller en plumes",
+  "prefs.pillowHypoallergenic": "Oreiller hypoallergénique",
+  "prefs.floorLabel": "Préférence d'étage",
+  "prefs.floorAny": "Aucune préférence",
+  "prefs.floorLow": "Étage bas",
+  "prefs.floorHigh": "Étage élevé",
   "prefs.mattressSoft": "Matelas moelleux",
   "prefs.mattressMedium": "Semi-ferme",
   "prefs.mattressFirm": "Matelas ferme",
@@ -624,14 +479,12 @@ const Map<String, String> frKeys = {
   "stays.bookAgain": "Réserver à nouveau",
   "stays.cancelReservation": "Annuler la réservation",
   "stays.totalCharged": "Total facturé",
-  "stays.checkInCaps": "ARRIVÉE",
-  "stays.checkOutCaps": "DÉPART",
   "stays.requestServiceCaps": "DEMANDER UN SERVICE",
   "stays.expressCheckoutCaps": "DÉPART EXPRESS",
   "stays.completedCaps": "TERMINÉ",
+  "stays.cancelledCaps": "ANNULÉ",
   "stays.receipt": "Reçu",
   "stays.downloadPdfReceipt": "Télécharger le reçu PDF",
-  "stays.receiptSaved": "Reçu enregistré dans @path",
   "stays.noKeep": "Non, conserver",
   "stays.yesCancel": "Oui, annuler",
   "stays.checkoutComplete": "Départ effectué",
@@ -639,14 +492,10 @@ const Map<String, String> frKeys = {
   "stays.resCode": "Rés. n° @code",
   "stays.roomNumber": "Chambre @number",
   "stays.suiteNumber": "Suite @number",
-  "stays.receiptSubtitle": "@room · @dates",
   // Home dashboard
-  "home.expressCheckout": "Départ express",
   "home.yourStay": "votre séjour",
-  "home.checkoutRequested": "Départ demandé",
   "home.checkoutConfirmBody": "Quitter @target maintenant ?",
   "home.myBill": "Ma note",
-  "home.request": "Demander",
   "home.checkout": "Départ",
   "home.estimatedTotal": "Total estimé",
   "home.activeRequests": "Demandes en cours",
@@ -655,9 +504,7 @@ const Map<String, String> frKeys = {
   "home.askTheConcierge": "Demander au concierge",
   // Dining & reviews
   "dining.reserveATable": "Réserver une table",
-  "dining.reserveATableTitle": "Réserver une table",
   "dining.confirmReservation": "Confirmer la réservation",
-  "dining.reservationSummary": "@guests · @time",
   "reviews.writeAReview": "Rédiger un avis",
   "reviews.submitReview": "Envoyer l'avis",
   "reviews.noReviewsYet": "Aucun avis pour le moment",
@@ -665,8 +512,6 @@ const Map<String, String> frKeys = {
   // Service catalogue tiles
   "services.sendRequest": "Envoyer la demande",
   "services.requestTargetRoom": "votre chambre",
-  "services.requestConfirmation":
-      "Cette demande concerne @target. Notre équipe arrive sous peu.",
   "services.tileRoomService": "Service en chambre",
   "services.tileLaundry": "Blanchisserie",
   "services.tileHousekeeping": "Ménage",
@@ -683,11 +528,6 @@ const Map<String, String> frKeys = {
   "services.subPrivacyMode": "Mode privé",
   // Concierge chat
   "concierge.imageTooLarge": "L'image ne doit pas dépasser 5 Mo",
-  "concierge.agentRole": "Relations clients",
-  "concierge.quickBilling": "Question de facturation",
-  "concierge.quickRoomIssue": "Problème de chambre",
-  "concierge.quickSpecialRequest": "Demande particulière",
-  "concierge.quickFeedback": "Commentaires",
   // Notifications
   "notifications.channelName": "Suivi du séjour",
   // API dialog
@@ -698,15 +538,12 @@ const Map<String, String> frKeys = {
   "book.nightsCountOne": "1 nuit",
   "book.searchRooms": "Rechercher des chambres",
   "book.bankWire": "Virement bancaire",
-  "payment.walletUnavailable":
-      "@method n'est pas encore disponible — choisissez Payer à l'hôtel pour confirmer.",
   "payment.walletTagline": "Un geste, sécurisé, instantané",
   "stays.upcoming": "À venir",
   "stays.noActiveStaySubtitle":
       "Votre séjour en cours apparaîtra ici lors de l'enregistrement.",
   "stays.noPastStaysSubtitle":
       "Les séjours terminés et les reçus apparaîtront ici.",
-  "reviews.beTheFirst": "Soyez le premier à en rédiger un.",
   "dining.tabMenu": "Menu",
   "dining.tabInfo": "Infos",
 
@@ -719,26 +556,37 @@ const Map<String, String> frKeys = {
   "services.statusCancelled": "Annulé",
   "stays.statusCompleted": "Terminé",
   "stays.statusCancelled": "Annulé",
-  "dining.timePm": "PM",
-  "dining.timeAm": "AM",
-
-  "services.requestConfirmationEta":
-      "Cette demande concerne @target. Notre équipe arrive d'ici @eta.",
 
   "account.signOutTitle": "Se déconnecter ?",
   "account.signOutBody":
       "Vous devrez vous reconnecter pour accéder à votre compte et à vos séjours en cours.",
-  "payment.cardComingSoon":
-      "Le paiement par carte n'est pas encore disponible — choisissez Payer à l'hôtel pour confirmer votre réservation.",
-  "payment.walletComingSoon":
-      "Les paiements par carte et portefeuille ne sont pas encore disponibles — choisissez Payer à l'hôtel pour confirmer votre réservation.",
+  "account.deleteAccount": "Supprimer le compte",
+  "account.deleteTitle": "Supprimer votre compte ?",
+  "account.deleteBody":
+      "Votre nom, vos coordonnées, vos préférences et vos messages seront effacés. Les réservations, factures et reçus sont conservés sans votre nom. Si vous vous reconnectez avec le même téléphone ou e-mail, un nouveau compte sera créé et vos séjours passés n'y apparaîtront pas. Cette action est irréversible.",
+  "account.deleteConfirm": "Supprimer",
+  "account.deleteForfeitPoints": "Vous perdrez aussi @points points.",
+  "account.deleteForfeitVouchers":
+      "Vous perdrez aussi @count bons non utilisés.",
+  "account.deleteForfeitBoth":
+      "Vous perdrez aussi @points points et @count bons non utilisés.",
+  "account.deleteForfeitUnknown":
+      "Vos points de fidélité et vos bons non utilisés seront également perdus.",
+  "account.deleteBlockedTitle": "Suppression impossible pour le moment",
+  "account.deleteBlockedBody":
+      "Veuillez contacter la réception pour régler cela d'abord.",
+  "account.deleteBlockedBookings": "Réservations : @codes",
+  "account.deleteReasonReservation": "Vous avez une réservation active.",
+  "account.deleteReasonFolio": "Votre facture est encore ouverte.",
+  "account.deleteReasonService":
+      "Vous avez une réservation de service à venir.",
+  "account.deleted": "Votre compte a été supprimé.",
   "payment.googlePaySubtitle": "Paiement rapide et sécurisé",
   "payment.googlePaySavedMethod":
       "Utilise votre moyen de paiement Google enregistré",
   "payment.googlePayInstant": "Confirmation de paiement immédiate",
   "home.checkoutStatementNote":
       "Nous vous enverrons votre relevé final par e-mail.",
-  "home.checkoutConfirmNow": "Souhaitez-vous partir maintenant ?",
   "stays.loadStayFailed": "Impossible de charger votre séjour",
   "stays.loadReservationsFailed": "Impossible de charger vos réservations",
   "stays.loadPastFailed": "Impossible de charger les séjours passés",
@@ -747,14 +595,21 @@ const Map<String, String> frKeys = {
   "currency.usd": "Dollar américain",
   "currency.syp": "Livre syrienne",
   "currency.try": "Livre turque",
-  "currency.approxNote":
-      "Converti à un taux indicatif. Les paiements sont effectués en USD.",
   "book.perNight": "@price/nuit",
   "stays.balanceDue": "Solde dû · @amount",
 
   // Batch 3 - named-parameter strings missed by the literal pass
   "account.notifications": "Notifications",
   "account.savedPayments": "Moyens de paiement enregistrés",
+  "account.notificationsEmptyTitle": "Aucune notification pour le moment",
+  "account.notificationsEmptySubtitle":
+      "Les nouvelles de votre séjour et de vos demandes apparaîtront ici.",
+  "account.savedPaymentsEmptyTitle": "Aucun moyen de paiement enregistré",
+  "account.savedPaymentsEmptySubtitle":
+      "Les cartes enregistrées pour réserver plus vite apparaîtront ici.",
+  "account.securityEmptyTitle": "Votre compte est protégé",
+  "account.securityEmptySubtitle":
+      "Vous vous connectez avec un code à usage unique envoyé sur votre téléphone ou votre e-mail : aucun mot de passe à gérer.",
   "account.stayPreferences": "Préférences de séjour",
   "services.unlockInRoom":
       "Réservez votre séjour pour débloquer les services en chambre.",
@@ -768,11 +623,11 @@ const Map<String, String> frKeys = {
   "dining.cuisineLabel": "Cuisine",
   "dining.ratingLabel": "Note",
   "dining.notesHint": "Allergies, régime alimentaire, occasion...",
-  "dining.menuDownloadComingSoon":
-      "Téléchargement du menu complet bientôt disponible",
+  "dining.menuNotAvailable":
+      "Aucun menu n'est encore disponible pour ce restaurant.",
+  "dining.menuOpenFailed": "Impossible d'ouvrir le menu. Veuillez réessayer.",
   "reviews.signInToReview": "Connectez-vous pour laisser un avis",
   "reviews.loadFailed": "Impossible de charger les avis",
-  "reviews.tryAgainShort": "Veuillez réessayer.",
   "reviews.thankYou": "Merci pour votre avis",
   "reviews.shareHint": "Partagez votre expérience...",
   "home.currentBill": "Note en cours",
@@ -792,6 +647,13 @@ const Map<String, String> frKeys = {
   "stays.receiptLoadFailed": "Impossible de charger le reçu.",
   "stays.receiptDownloadFailed": "Impossible de télécharger le reçu.",
   "stays.reservationCancelled": "Réservation annulée",
+  "stays.rewardPoints": "Payé @amount avec @points points",
+  "stays.rewardVoucher": "Bon @code · −@amount",
+  "stays.rewardUpgrade": "Surclassement demandé — la réception l’attribuera",
+  "stays.cancelledPointsBack":
+      "Réservation annulée. @points points ont été recrédités.",
+  "stays.cancelledVoucherBack":
+      "Réservation annulée. Le bon @code est de nouveau utilisable.",
 
   // Airport Transfer flow - Figma frames \"Airport Transfer\" (3 steps)
   "transfer.title": "Transfert aéroport",
@@ -844,25 +706,73 @@ const Map<String, String> frKeys = {
   // Loyalty / Carlton Rewards
   "loyalty.title": "Carlton Rewards",
   "loyalty.row": "Fidélité et récompenses",
-  "loyalty.rowBody": "Points, niveaux et avantages de séjour",
+  "loyalty.rowBody": "Points, récompenses et bons",
   "loyalty.programName": "Carlton Rewards",
   "loyalty.availablePoints": "Points disponibles",
   "loyalty.pointsUnit": "pts",
-  "loyalty.toNextTier": "@points pts pour atteindre @tier",
-  "loyalty.topTier": "Vous avez atteint le niveau le plus élevé",
   "loyalty.earnTitle": "Gagnez des points à chaque séjour",
   "loyalty.earnBody": "Crédités sur votre compte après le départ",
   "loyalty.earned": "Gagnés",
   "loyalty.redeemed": "Utilisés",
-  "loyalty.staysCounted": "Séjours",
-  "loyalty.netChange": "Variation nette",
   "loyalty.activity": "Activité des points",
-  "loyalty.entryCount": "@count au total",
   "loyalty.noActivity": "Aucune activité pour le moment",
   "loyalty.noActivityBody":
       "Vos points apparaîtront ici après votre premier séjour.",
+  "loyalty.rewardUnavailable": "Cette récompense n'est plus disponible.",
+  "loyalty.useRewards": "Utiliser vos récompenses",
+  "loyalty.useNone": "Aucune",
+  "loyalty.usePoints": "Points",
+  "loyalty.useVoucher": "Bon",
+  "loyalty.pointsToUse": "Points à utiliser",
+  "loyalty.voucherCodeHint": "Code du bon",
+  "loyalty.availableLine": "Disponible : @points pts",
+  "loyalty.pointsDiscount": "Remise points",
+  "loyalty.voucherDiscount": "Remise bon",
+  "loyalty.upgradeRequested":
+      "Surclassement demandé — la réception l'attribuera.",
+  "loyalty.netTotal": "Total après récompenses",
+  "loyalty.earnEstimate": "Vous gagnerez environ @points points",
+  "loyalty.belowMinimum": "Le minimum est de @points points.",
+  "loyalty.overCap":
+      "Vous pouvez utiliser jusqu'à @points points sur cette réservation.",
+  "loyalty.onlyHave": "Vous n'avez que @points points.",
+  "loyalty.voucherInvalid": "Ce code de bon n'est pas valide.",
+  "loyalty.stillPricing":
+      "Un instant — vos récompenses sont en cours de calcul.",
+  "loyalty.fixRewards":
+      "Vérifiez les points ou le code du bon, ou choisissez Aucun pour réserver sans.",
+  "loyalty.pointsOff":
+      "Le paiement en points n'est pas disponible pour le moment.",
+  "loyalty.pointsOrVoucher": "Utilisez des points ou un bon, pas les deux.",
+  "loyalty.notEnoughPoints":
+      "Vous n'avez pas assez de points pour cette récompense.",
+  "loyalty.needMorePoints": "Il vous manque @points points",
+  "loyalty.copyCode": "Copier le code",
+  "loyalty.voucherCodeIs": "Le code de votre bon est @code.",
+  "loyalty.voucherReadyTitle": "Bon prêt",
+  "loyalty.redeemReward": "Échanger",
+  "loyalty.confirmRedeemBody": "Dépenser @points points pour @reward ?",
+  "loyalty.confirmRedeemTitle": "Échanger la récompense ?",
+  "loyalty.voucherExpires": "Expire le @date",
+  "loyalty.voucherUnavailable": "Indisponible",
+  "loyalty.voucherActive": "Actif",
+  "loyalty.voucherExpired": "Expiré",
+  "loyalty.voucherUsed": "Utilisé",
+  "loyalty.pointsCost": "@points pts",
+  "loyalty.valueOff": "@amount de réduction",
+  "loyalty.shortfall": "@points points avaient déjà été dépensés",
+  "loyalty.noVouchersBody":
+      "Échangez une récompense pour obtenir votre premier bon.",
+  "loyalty.noVouchers": "Aucun bon pour le moment",
+  "loyalty.noRewardsBody":
+      "Revenez bientôt pour découvrir de nouvelles récompenses.",
+  "loyalty.noRewards": "Aucune récompense disponible pour le moment",
+  "loyalty.rewardsTitle": "Récompenses",
+  "loyalty.myVouchers": "Mes bons",
+  "loyalty.loadFailed": "Impossible de charger vos récompenses.",
+  "loyalty.expiring": "@points points expirent le @date",
+  "loyalty.worth": "Environ @amount",
   "loyalty.redeem": "Utiliser mes points",
-  "loyalty.redeemSoon": "L'utilisation des points arrive bientôt",
 
   // Added for full-coverage localization.
   "book.bookingConfirmedBang": "Réservation confirmée !",
@@ -906,10 +816,9 @@ const Map<String, String> frKeys = {
   "dining.detailsComingSoon": "Détails à venir.",
   "dining.downloadFullMenu": "Télécharger le menu complet",
   "dining.specialRequestsOptional": "Demandes spéciales (facultatif)",
-  "dining.vegan": "Vegan",
+  "dining.vegan": "Végan",
   "discover.viewMenu": "Voir le menu",
   "discover.viewOffer": "Voir l'offre",
-  "folio.myBill": "Ma note",
   "folio.loadFailed": "Impossible de charger votre note",
   "folio.empty": "Aucun frais pour le moment",
   "folio.emptySubtitle":
@@ -919,6 +828,27 @@ const Map<String, String> frKeys = {
   "folio.sourceRoomCharge": "Frais de chambre",
   "folio.sourceService": "Service",
   "folio.sourceInRoomRequest": "Demande en chambre",
+  "folio.checkoutAtDesk":
+      "Le départ de ce séjour se fait uniquement à la réception.",
+  "folio.sourceDesk": "Frais de la réception",
+  "folio.sourceCredit": "Avoir",
+  "folio.quantity": "@qty × @price",
+  "folio.payment": "Paiement (@method)",
+  "folio.paid": "Payé",
+  "folio.balanceDue": "Solde dû",
+  "folio.hotelOwes": "À vous rembourser (à la réception)",
+  "folio.disputeHint": "Touchez un frais pour le contester.",
+  "folio.disputeCharge": "Contester ce frais",
+  "folio.disputeInfo":
+      "La réception examinera ce frais. Le montant ne change pas pendant l'examen ; si l'hôtel est d'accord, un avoir est ajouté à votre note.",
+  "folio.disputeReasonLabel": "Motif",
+  "folio.disputeReasonHint": "Dites-nous ce qui ne va pas avec ce frais",
+  "folio.disputeReasonRequired": "Veuillez indiquer un motif.",
+  "folio.sendDispute": "Envoyer la contestation",
+  "folio.disputeSent": "Contestation envoyée. La réception va l’examiner.",
+  "folio.disputeAlreadyOpen": "Ce frais est déjà en cours d’examen.",
+  "folio.disputeUnderReview": "EN COURS D’EXAMEN",
+  "folio.disputesOpen": "@count frais en cours d’examen par la réception.",
   "general.cardSecurityNote": "Chiffrement SSL 256 bits · conforme PCI DSS",
   "general.acceptedPaymentMethods": "Moyens de paiement acceptés à l'hôtel",
   "general.askMeAnything": "Posez-moi vos questions...",

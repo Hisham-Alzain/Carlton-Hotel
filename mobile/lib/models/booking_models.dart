@@ -1,11 +1,16 @@
-// Domain models for the My Stays + booking flow. Demo-oriented (string labels
-// pre-formatted to match Figma copy); a real API layer would swap these for
-// typed dates/amounts. Nothing here talks to a backend yet.
+// View models for the My Stays + booking flow: string labels pre-formatted to
+// match Figma copy. Controllers map the API DTOs (`models/stay.dart`,
+// `models/room_type.dart`, …) into these at the controller boundary.
 
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_country_code_picker.dart';
 import 'package:carlton/models/amenity.dart';
 import 'package:carlton/models/room_type.dart';
+import 'package:flutter/material.dart' show IconData, Icons;
+
+part 'payment_models.dart';
+
+part 'room_option.dart';
 
 enum StayStatus { active, upcoming, past }
 
@@ -67,7 +72,7 @@ class Stay {
 
   /// The reservation `uuid` (Phase 4) — drives cancel
   /// (`DELETE /reservations/{uuid}`) and receipt (`GET /stays/{uuid}/receipt`).
-  /// Empty for demo-shaped stays; stamped during controller-boundary mapping.
+  /// Stamped during controller-boundary mapping.
   final String uuid;
 
   /// Whether `DELETE /reservations/{uuid}` will succeed (upcoming stays only).
@@ -76,6 +81,10 @@ class Stay {
   /// Whether a folio/receipt exists for this stay (past stays only). Gates the
   /// receipt fetch — a cancelled stay has none.
   final bool hasReceipt;
+
+  /// A past stay that was cancelled rather than checked out (`status:
+  /// cancelled` on `GET /stays/past`), so its card does not say Completed.
+  final bool isCancelled;
 
   final String roomName;
   final StayStatus status;
@@ -96,6 +105,10 @@ class Stay {
   final String? pricePerNight; // "$240/night"
   final int? nextCheckInDays; // 52
 
+  /// "Paid $20 with 2,000 points" — what rewards the booking used, from the
+  /// reservation's `loyalty` block. Null when it used none.
+  final String? rewardsNote;
+
   // Active
   final String? checkedInSince; // "3:00 PM"
   final int? nightsRemaining;
@@ -107,6 +120,7 @@ class Stay {
     this.uuid = '',
     this.isCancellable = false,
     this.hasReceipt = false,
+    this.isCancelled = false,
     this.subtitle,
     this.imagePath,
     this.dateRangeLabel,
@@ -117,225 +131,8 @@ class Stay {
     this.resCode,
     this.pricePerNight,
     this.nextCheckInDays,
+    this.rewardsNote,
     this.checkedInSince,
     this.nightsRemaining,
-  });
-}
-
-/// Icon + label pair for room highlights and amenities.
-class IconLabel {
-  final String iconPath;
-  final String label;
-
-  const IconLabel(this.iconPath, this.label);
-}
-
-class RoomOption {
-  /// The real `room_type_uuid` when the booking began from an API-backed room
-  /// (Home/Discover → room details); empty for pure-demo rooms (Book-tab
-  /// choose-room list). Quote + `POST /reservations` require it.
-  final String uuid;
-  final String id;
-  final String name;
-  final List<String> images;
-  final String area; // "85 m² space"
-  final String view; // "City View"
-  final String bed; // "King Bed"
-  final double rating;
-  final int reviewCount;
-  final int pricePerNight;
-  final List<String> amenityChips; // short chips on the result card
-  final List<IconLabel> highlights;
-  final List<IconLabel> amenities;
-  final String description;
-
-  const RoomOption({
-    required this.id,
-    required this.name,
-    required this.images,
-    required this.area,
-    required this.view,
-    required this.bed,
-    required this.rating,
-    required this.reviewCount,
-    required this.pricePerNight,
-    required this.amenityChips,
-    required this.highlights,
-    required this.amenities,
-    required this.description,
-    this.uuid = '',
-  });
-
-  /// Stamps a real `room_type_uuid` onto an otherwise-demo option (used when a
-  /// booking starts from an API-backed room).
-  RoomOption copyWith({String? uuid}) => RoomOption(
-    uuid: uuid ?? this.uuid,
-    id: id,
-    name: name,
-    images: images,
-    area: area,
-    view: view,
-    bed: bed,
-    rating: rating,
-    reviewCount: reviewCount,
-    pricePerNight: pricePerNight,
-    amenityChips: amenityChips,
-    highlights: highlights,
-    amenities: amenities,
-    description: description,
-  );
-
-  /// Maps the API room-type detail (`GET /public/room-types/{uuid}`) to the
-  /// booking option the details screen renders. Amenity icons arrive as names
-  /// (e.g. "jacuzzi"); map to the matching bundled asset, falling back to a
-  /// generic glyph for names we didn't extract.
-  factory RoomOption.fromRoomType(RoomType r) {
-    IconLabel toIconLabel(Amenity a) =>
-        IconLabel(_amenityAsset(a.icon), a.name.value);
-    return RoomOption(
-      uuid: r.uuid,
-      id: r.uuid,
-      name: r.name.value,
-      images: r.images.map((i) => i.url).toList(),
-      area: r.sizeSqm != null ? AppTranslations.roomSize('${r.sizeSqm}') : '',
-      view: r.viewType != null ? AppTranslations.roomView(r.viewType!) : '',
-      bed: r.bedTypes.isNotEmpty
-          ? AppTranslations.roomBed(r.bedTypes.first)
-          : '',
-      rating: r.rating ?? 0,
-      reviewCount: r.ratingCount,
-      pricePerNight: double.tryParse(r.basePriceUsd)?.round() ?? 0,
-      amenityChips: r.highlights.map((a) => a.name.value).toList(),
-      highlights: r.highlights.map(toIconLabel).toList(),
-      amenities: r.amenities.map(toIconLabel).toList(),
-      description: r.description.value,
-    );
-  }
-
-  /// Maps the server's amenity `icon` key to a bundled SVG. Only files that
-  /// exist in assets/icons/ may appear here — a missing asset throws
-  /// "Unable to load asset" on every rebuild of the room screen.
-  static String _amenityAsset(String icon) {
-    const assets = {
-      'jacuzzi': 'jacuzzi',
-      'coffee': 'coffee',
-      'butler': 'butler',
-      'view': 'view',
-      'balcony': 'view',
-      'safe': 'lock',
-      'desk': 'space',
-      'wifi': 'wifi',
-    };
-    return 'assets/icons/${assets[icon] ?? 'view'}.svg';
-  }
-}
-
-/// One selectable extra on the booking wizard's Add-Ons step.
-///
-/// These are the real bookables the hotel sells alongside a room — spa
-/// treatments (`GET /public/spa-services`), poolside cabanas
-/// (`GET /public/pool-cabanas`) and airport transfers
-/// (`GET /public/transfers`). [id] is the server `uuid` and [bookableType] the
-/// morph alias `POST /service-bookings` expects, so a selection made here can
-/// be submitted verbatim once the reservation exists.
-class AddOn {
-  /// The bookable's server uuid, sent as `bookable_uuid`.
-  final String id;
-
-  /// `spa_service` | `pool_cabana` | `transfer` — the `bookable_type` the
-  /// booking endpoint validates against its `BookableType` enum.
-  final String bookableType;
-  final String iconPath;
-  final String title;
-
-  /// Duration, capacity, or whatever the endpoint gave us for this kind. Empty
-  /// when it gave us nothing — the row hides the line rather than inventing
-  /// one.
-  final String subtitle;
-
-  /// USD decimal string straight off the wire (`"120.00"`). Kept as text so it
-  /// is rendered through `MoneyFormat.usdString` in the guest's currency
-  /// instead of being rounded to an int here.
-  final String priceUsd;
-
-  const AddOn({
-    required this.id,
-    required this.bookableType,
-    required this.iconPath,
-    required this.title,
-    required this.subtitle,
-    required this.priceUsd,
-  });
-
-  /// The numeric value, for totals. Unparseable reads as 0 rather than throwing
-  /// mid-build.
-  double get price => double.tryParse(priceUsd) ?? 0;
-}
-
-enum PaymentMethod {
-  card,
-  applePay,
-  googlePay,
-  payAtHotel;
-
-  /// Resolved per read rather than held as `const` enum fields — `.tr` is a
-  /// runtime lookup, so a const field would freeze the launch locale.
-  /// The wallet brand names stay untranslated on purpose: Apple and Google
-  /// ship them as proper nouns in every locale.
-  String get label => switch (this) {
-    PaymentMethod.card => AppTranslations.creditCard,
-    PaymentMethod.applePay => 'Apple Pay',
-    PaymentMethod.googlePay => 'Google Pay',
-    PaymentMethod.payAtHotel => AppTranslations.payAtHotel,
-  };
-
-  String get subtitle => switch (this) {
-    PaymentMethod.card => AppTranslations.acceptedCardsFull,
-    PaymentMethod.applePay => AppTranslations.applePayTagline,
-    PaymentMethod.googlePay => AppTranslations.googlePayTagline,
-    PaymentMethod.payAtHotel => AppTranslations.payAtHotelTagline,
-  };
-}
-
-extension PaymentMethodIcon on PaymentMethod {
-  /// Brand glyph for the wallet methods; null for card / pay-at-hotel.
-  String? get iconPath => switch (this) {
-    PaymentMethod.applePay => 'assets/icons/pay_apple.svg',
-    PaymentMethod.googlePay => 'assets/icons/pay_google.svg',
-    PaymentMethod.card || PaymentMethod.payAtHotel => null,
-  };
-}
-
-/// Mutable draft of the guest form (Step 4).
-class GuestDetails {
-  String firstName;
-  String lastName;
-  String email;
-  String dialCode;
-  String phone;
-  String specialRequests;
-
-  GuestDetails({
-    this.firstName = '',
-    this.lastName = '',
-    this.email = '',
-    this.dialCode = kDefaultDialCode,
-    this.phone = '',
-    this.specialRequests = '',
-  });
-}
-
-/// Mutable draft of the card form (Step 5).
-class CardDetails {
-  String number;
-  String expiry;
-  String cvv;
-  String nameOnCard;
-
-  CardDetails({
-    this.number = '',
-    this.expiry = '',
-    this.cvv = '',
-    this.nameOnCard = '',
   });
 }

@@ -94,12 +94,10 @@ class CustomTextField extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 10,
       children: [
         if (captionLabel != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Text(captionLabel!.toUpperCase(), style: labelStyle),
-          ),
+          Text(captionLabel!.toUpperCase(), style: labelStyle),
         SizedBox(
           height: height,
           width: width,

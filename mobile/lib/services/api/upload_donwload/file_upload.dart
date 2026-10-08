@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
-import '../../../constants/error_codes.dart';
 import '../../../models/api/api_exception.dart';
 import '../../../models/api/api_response.dart';
 import '../interceptors/retry_interceptor.dart';
@@ -103,17 +102,7 @@ class FileUploader {
         if (showDialog) dialogs.dismiss();
       }
     } on DioException catch (e) {
-      final apiErr = e.error is ApiException
-          ? e.error as ApiException
-          : ApiException.client(
-              errorCode: ErrorCodes.unknown,
-              message: ApiException.defaultMessage(
-                ErrorCodes.unknown,
-                e.response?.statusCode ?? 0,
-              ),
-              statusCode: e.response?.statusCode ?? 0,
-            );
-
+      final apiErr = ApiException.fromDio(e);
       if (showDialog) dialogs.showError(apiErr);
       return ApiResponse<T>.failure(apiErr);
     }

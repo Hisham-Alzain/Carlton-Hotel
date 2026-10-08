@@ -7,7 +7,8 @@ import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Past-stay card for the My Stays "Past" tab: room + dates + COMPLETED chip,
+/// Past-stay card for the My Stays "Past" tab: room + dates + COMPLETED (or
+/// CANCELLED) chip,
 /// total charged, and the View Receipt / Book Again button row. Kept as a
 /// feature component so `StaysView` stays declarative.
 class CustomPastStayCard extends StatelessWidget {
@@ -65,12 +66,18 @@ class CustomPastStayCard extends StatelessWidget {
                   ),
                 ),
                 PillContainer(
-                  backgroundColor: AppColors.successGreen07,
+                  backgroundColor: stay.isCancelled
+                      ? AppColors.brickRed07
+                      : AppColors.successGreen07,
                   child: Text(
-                    AppTranslations.completedCaps,
+                    stay.isCancelled
+                        ? AppTranslations.cancelledCaps
+                        : AppTranslations.completedCaps,
                     style: textStyle.dmLabelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.forestGreen,
+                      color: stay.isCancelled
+                          ? AppColors.brickRed
+                          : AppColors.forestGreen,
                     ),
                   ),
                 ),

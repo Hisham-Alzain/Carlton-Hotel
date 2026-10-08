@@ -3,6 +3,7 @@ import 'package:carlton/theme/app_shadows.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
 import 'package:carlton/customWidgets/custom_outlined_button.dart';
+import 'package:carlton/customWidgets/custom_texts.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -10,17 +11,19 @@ import 'package:get/get.dart';
 
 /// Upcoming-stay card for the My Stays "Upcoming" tab: photo header with an
 /// "Upcoming" pill and nightly-price badge, room + room number, CHECK-IN /
-/// CHECK-OUT chips, a copyable reservation pill with share, and the outlined
+/// CHECK-OUT chips, a copyable reservation pill, and the outlined
 /// Cancel Reservation button.
 class CustomUpcomingStayCard extends StatelessWidget {
   final Stay stay;
   final VoidCallback onCancel;
-  final VoidCallback? onShare;
+
+  /// Copies the booking code (the icon beside it).
+  final VoidCallback onCopyCode;
 
   const CustomUpcomingStayCard({
     required this.stay,
     required this.onCancel,
-    this.onShare,
+    required this.onCopyCode,
     super.key,
   });
 
@@ -111,6 +114,17 @@ class CustomUpcomingStayCard extends StatelessWidget {
                     color: AppColors.taupeBrown,
                   ),
                 ),
+                if (stay.rewardsNote != null)
+                  RowTextComponent(
+                    icon: Icons.card_giftcard_outlined,
+                    iconSize: 16,
+                    spacing: 6,
+                    iconColor: AppColors.primary,
+                    text: stay.rewardsNote!,
+                    textStyle: textStyle.dmLabelMedium?.copyWith(
+                      color: AppColors.primary,
+                    ),
+                  ),
                 Row(
                   spacing: 10,
                   children: [
@@ -143,7 +157,7 @@ class CustomUpcomingStayCard extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        onPressed: () {},
+                        onPressed: onCopyCode,
                         icon: Icon(Icons.copy, color: AppColors.taupeBrown),
                       ),
                     ],

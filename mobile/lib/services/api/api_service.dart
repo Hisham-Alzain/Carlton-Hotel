@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:carlton/constants/error_codes.dart';
 import 'package:carlton/constants/storage_keys.dart';
 import 'package:carlton/models/api/api_response.dart';
 import 'package:carlton/routes/routes.dart';
@@ -78,14 +77,13 @@ class ApiService extends GetxService {
 
   // ── App-state hooks (self-wired) ───────────────────────────────────────
   //
-  // These read SecureStorageService/SettingsService/MiddlewareService lazily
-  // (only when a request actually runs), so it's safe for ApiService to
-  // depend on them here even though it's constructed before
-  // SecureStorageService.init() resolves in main.dart — by the time any of
-  // these fire, startup has finished.
+  // These read StorageService/SettingsService/MiddlewareService lazily (only
+  // when a request actually runs), so it's safe for ApiService to depend on
+  // them here even though it's constructed before they are all registered in
+  // main.dart — by the time any of these fire, startup has finished.
 
-  /// Current auth token from secure storage, or null/empty when none.
-  String? _token() => StorageService.getString(StorageKeys.token);
+  /// Current auth token (held in secure storage), or null/empty when none.
+  String? _token() => StorageService.token;
 
   /// Current locale code (e.g. 'ar', 'en') from [SettingsService].
   String _locale() => Get.find<SettingsService>().locale.value.languageCode;
@@ -102,7 +100,7 @@ class ApiService extends GetxService {
       // calling logout with it would 401 again and recurse through here.
       MiddlewareService.find.signOut(revokeRemotely: false);
     } else {
-      StorageService.remove(StorageKeys.token);
+      StorageService.clearToken();
       StorageService.remove(StorageKeys.guest);
     }
     if (Get.currentRoute == Routes.signIn) return;
@@ -150,33 +148,76 @@ class ApiService extends GetxService {
     CancelToken? cancelToken,
   }) {
     return _request<T>(
-      () => dio.get(
-        path,
-        queryParameters: queryParameters,
-        cancelToken: cancelToken,
-      ),
+      () => _sharedGet(path, queryParameters, cancelToken),
       showLoading: showLoading,
       showErrorDialog: showErrorDialog,
     );
   }
 
+  /// GETs on the wire, keyed by token, path and query. One session change
+  /// makes Home, Stays, Services and check-in each ask for the same stay at
+  /// once; they now share one request instead of sending three. Every write
+  /// clears this, so a read that began before a write is never handed to a
+  /// caller that needs the state after it.
+  final Map<String, Future<Response<dynamic>>> _inflightGets = {};
+
+  Future<Response<dynamic>> _sharedGet(
+    String path,
+    Map<String, dynamic>? query,
+    CancelToken? cancelToken,
+  ) {
+    final params = [
+      for (final e in (query ?? const {}).entries) '${e.key}=${e.value}',
+    ]..sort();
+    final key = '${StorageService.token}|$path?${params.join('&')}';
+    var shared = _inflightGets[key];
+    if (shared == null) {
+      // No cancel token on the shared request: one caller cancelling must not
+      // cancel it for the others. Each caller's token still ends its own wait.
+      final request = dio.get(path, queryParameters: query);
+      _inflightGets[key] = shared = request;
+      request.whenComplete(() {
+        if (identical(_inflightGets[key], request)) _inflightGets.remove(key);
+      }).ignore();
+    }
+    if (cancelToken == null) return shared;
+    return Future.any([
+      shared,
+      cancelToken.whenCancel.then<Response<dynamic>>((e) => throw e),
+    ]);
+  }
+
+  /// Runs a write and then drops every shared GET (see [_inflightGets]).
+  Future<ApiResponse<T>> _write<T>(Future<ApiResponse<T>> request) =>
+      request.whenComplete(_inflightGets.clear);
+
+  /// [idempotencyKey] is sent as the `Idempotency-Key` header: one UUID per
+  /// user intent, reused when the same call is repeated. The server answers a
+  /// repeat with the original result instead of writing twice, and the retry
+  /// interceptor only re-sends a lost POST that carries one.
   Future<ApiResponse<T>> post<T>({
     required String path,
     dynamic data,
     Map<String, dynamic>? queryParameters,
+    String? idempotencyKey,
     bool showLoading = false,
     bool showErrorDialog = true,
     CancelToken? cancelToken,
   }) {
-    return _request<T>(
-      () => dio.post(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        cancelToken: cancelToken,
+    return _write(
+      _request<T>(
+        () => dio.post(
+          path,
+          data: data,
+          queryParameters: queryParameters,
+          options: idempotencyKey == null
+              ? null
+              : Options(headers: {'Idempotency-Key': idempotencyKey}),
+          cancelToken: cancelToken,
+        ),
+        showLoading: showLoading,
+        showErrorDialog: showErrorDialog,
       ),
-      showLoading: showLoading,
-      showErrorDialog: showErrorDialog,
     );
   }
 
@@ -188,15 +229,17 @@ class ApiService extends GetxService {
     bool showErrorDialog = true,
     CancelToken? cancelToken,
   }) {
-    return _request<T>(
-      () => dio.put(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        cancelToken: cancelToken,
+    return _write(
+      _request<T>(
+        () => dio.put(
+          path,
+          data: data,
+          queryParameters: queryParameters,
+          cancelToken: cancelToken,
+        ),
+        showLoading: showLoading,
+        showErrorDialog: showErrorDialog,
       ),
-      showLoading: showLoading,
-      showErrorDialog: showErrorDialog,
     );
   }
 
@@ -208,28 +251,33 @@ class ApiService extends GetxService {
     bool showErrorDialog = true,
     CancelToken? cancelToken,
   }) {
-    return _request<T>(
-      () => dio.patch(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        cancelToken: cancelToken,
+    return _write(
+      _request<T>(
+        () => dio.patch(
+          path,
+          data: data,
+          queryParameters: queryParameters,
+          cancelToken: cancelToken,
+        ),
+        showLoading: showLoading,
+        showErrorDialog: showErrorDialog,
       ),
-      showLoading: showLoading,
-      showErrorDialog: showErrorDialog,
     );
   }
 
   Future<ApiResponse<T>> delete<T>({
     required String path,
+    dynamic data,
     bool showLoading = false,
     bool showErrorDialog = true,
     CancelToken? cancelToken,
   }) {
-    return _request<T>(
-      () => dio.delete(path, cancelToken: cancelToken),
-      showLoading: showLoading,
-      showErrorDialog: showErrorDialog,
+    return _write(
+      _request<T>(
+        () => dio.delete(path, data: data, cancelToken: cancelToken),
+        showLoading: showLoading,
+        showErrorDialog: showErrorDialog,
+      ),
     );
   }
 
@@ -245,13 +293,15 @@ class ApiService extends GetxService {
     CancelToken? cancelToken,
     bool showDialog = true,
   }) {
-    return _uploader.postWithFiles<T>(
-      path: path,
-      fields: fields,
-      files: files,
-      byteFiles: byteFiles,
-      cancelToken: cancelToken,
-      showDialog: showDialog,
+    return _write(
+      _uploader.postWithFiles<T>(
+        path: path,
+        fields: fields,
+        files: files,
+        byteFiles: byteFiles,
+        cancelToken: cancelToken,
+        showDialog: showDialog,
+      ),
     );
   }
 
@@ -316,20 +366,7 @@ class ApiService extends GetxService {
         if (showLoading) dialogs.dismiss();
       }
     } on DioException catch (e) {
-      final apiErr = e.error is ApiException
-          ? e.error as ApiException
-          // Defensive fallback — ErrorInterceptor should always attach an
-          // ApiException, but never let a raw DioException escape to a
-          // caller that (by contract) isn't catching anything.
-          : ApiException.client(
-              errorCode: ErrorCodes.unknown,
-              message: ApiException.defaultMessage(
-                ErrorCodes.unknown,
-                e.response?.statusCode ?? 0,
-              ),
-              statusCode: e.response?.statusCode ?? 0,
-            );
-
+      final apiErr = ApiException.fromDio(e);
       if (showErrorDialog) dialogs.showError(apiErr);
       return ApiResponse<T>.failure(apiErr);
     }

@@ -13,8 +13,8 @@ import 'package:get/get.dart';
 class RestaurantInfoTab extends StatelessWidget {
   final RestaurantItem restaurant;
 
-  /// Venue description from the detail endpoint; empty until it lands (or for a
-  /// demo venue with no uuid), which is why the copy falls back below.
+  /// Venue description from the detail endpoint; empty until it lands, which
+  /// is why the copy falls back below.
   final String about;
   final List<String> gallery;
 

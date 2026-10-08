@@ -1,3 +1,6 @@
+import 'package:carlton/models/loyalty.dart';
+import 'package:carlton/models/stay.dart';
+
 /// A booking (`POST /reservations`, `GET /reservations[/{uuid}]`). Replaces the
 /// old 2-field pending-link stub (that role now belongs to
 /// `models/pending_booking_link.dart`). The Stays flow (Phase 4) consumes this.
@@ -13,6 +16,9 @@ class Reservation {
   final String totalUsd; // decimal string, e.g. "270.00"
   final DateTime? holdExpiresAt;
 
+  /// Points or a voucher used on this booking; null when neither was.
+  final ReservationLoyalty? loyalty;
+
   const Reservation({
     required this.uuid,
     required this.bookingCode,
@@ -24,6 +30,7 @@ class Reservation {
     this.paymentMethod = '',
     this.totalUsd = '0',
     this.holdExpiresAt,
+    this.loyalty,
   });
 
   /// The guest is in-house. (Home's own state comes from the `/me`
@@ -38,6 +45,11 @@ class Reservation {
   /// `DELETE /reservations/{uuid}` succeeds only before check-in — from
   /// `pending_verification`, `pending`, or `confirmed`. `checked_in`+ returns
   /// `reservation_state` (422), so the cancel affordance is hidden past that.
+  /// Still waiting on the hotel (`pending` / `pending_verification`). An app
+  /// booking comes back `pending` until staff confirm it in the dashboard.
+  bool get isAwaitingHotel =>
+      UpcomingStay.awaitingHotelStatuses.contains(status);
+
   bool get isCancellable =>
       status == 'pending_verification' ||
       status == 'pending' ||
@@ -57,6 +69,7 @@ class Reservation {
     paymentMethod: json['payment_method'] as String? ?? '',
     totalUsd: json['total_usd']?.toString() ?? '0',
     holdExpiresAt: _date(json['hold_expires_at']),
+    loyalty: ReservationLoyalty.fromJson(json['loyalty']),
   );
 
   /// Parses a `GET /reservations` page (envelope already unwrapped to items).

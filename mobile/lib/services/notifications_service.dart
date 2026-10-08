@@ -3,8 +3,12 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'package:carlton/constants/storage_keys.dart';
+import 'package:carlton/controllers/account/loyalty_controller.dart';
+import 'package:carlton/controllers/main/main_controller.dart';
+import 'package:carlton/routes/routes.dart';
 import 'package:carlton/services/api/api_service.dart';
 import 'package:carlton/services/get_storage_service.dart';
+import 'package:carlton/services/middleware_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -23,6 +27,11 @@ Map<String, dynamic> deviceTokenPayload(
   String token, {
   required String platform,
 }) => {'token': token, 'platform': platform};
+
+/// The one Android channel for guest pushes. Push has never been switched on
+/// (Firebase init is off in main.dart), so no device holds the old CartX
+/// `cartx_orders` channel yet.
+const String _channelId = 'carlton_stay';
 
 class NotificationService extends GetxService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
@@ -69,7 +78,7 @@ class NotificationService extends GetxService {
     }
 
     _messaging.onTokenRefresh.listen((newToken) async {
-      final authToken = StorageService.getString(StorageKeys.token);
+      final authToken = StorageService.token;
       if (authToken == null) return;
 
       await StorageService.setString(StorageKeys.fcmToken, newToken);
@@ -126,11 +135,10 @@ class NotificationService extends GetxService {
 
     // Android updates an existing channel's NAME when it is re-created, so
     // recreating it each launch is what keeps the label in the guest's
-    // current language. The id stays `cartx_orders` on purpose: changing it
-    // orphans the channel (and its user-set preferences) on every device
-    // that already installed the app.
+    // current language. Never change the id once push ships: a new id
+    // orphans the channel (and its user-set preferences) on every device.
     final channel = AndroidNotificationChannel(
-      'cartx_orders',
+      _channelId,
       AppTranslations.notificationChannelName,
       importance: Importance.high,
     );
@@ -143,7 +151,7 @@ class NotificationService extends GetxService {
   }
 
   Future<void> _registerToken() async {
-    final authToken = StorageService.getString(StorageKeys.token);
+    final authToken = StorageService.token;
     if (authToken == null) return;
 
     // Add this — prevents the crash on iOS before APNs is ready
@@ -177,7 +185,7 @@ class NotificationService extends GetxService {
   }
 
   Future<void> _sendTokenToServer(String token) async {
-    final authToken = StorageService.getString(StorageKeys.token);
+    final authToken = StorageService.token;
 
     if (authToken == null) return; // <-- critical
 
@@ -192,9 +200,8 @@ class NotificationService extends GetxService {
   }
 
   Future<void> removeToken() async {
-    // Server-side push-token cleanup on logout has no documented endpoint in
-    // the guide's Notifications module (the old DELETE /user/device-token was a
-    // CartX leftover) — confirm with backend if push cleanup becomes required.
+    // Server-side cleanup rides on `POST /auth/guest/logout {device_token}`
+    // (MiddlewareService.signOut); this only drops the token on the device.
     try {
       await _messaging.deleteToken();
     } catch (_) {}
@@ -210,7 +217,7 @@ class NotificationService extends GetxService {
       body: notification.body,
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
-          'cartx_orders',
+          _channelId,
           AppTranslations.notificationChannelName,
           icon: '@drawable/ic_notification',
           importance: Importance.high,
@@ -227,19 +234,40 @@ class NotificationService extends GetxService {
   }
 
   void _handleDataNavigation(Map<String, dynamic> data) {
-    // Get.toNamed(Routes.splashScreen);
-    // final type = data['type'];
-    // final orderId = data['order_id'];
-
-    // switch (type) {
-    //   case 'order_status':
-    //   case 'delivery_otp':
-    //     Get.toNamed('/orders/$orderId');
-    //     break;
-
-    //   case 'driver_assignment':
-    //     Get.toNamed('/assignments/$orderId');
-    //     break;
-    // }
+    switch (pushTargetFor(data)) {
+      case PushTarget.loyalty:
+        if (Get.isRegistered<LoyaltyController>()) {
+          Get.find<LoyaltyController>().reloadAll();
+        } else {
+          Get.toNamed(Routes.loyalty);
+        }
+      case PushTarget.stay:
+        // Room ready and check-in approved share this shape: the stay changed,
+        // so refetch the session (Home and Stays react to it) and show Stays.
+        MiddlewareService.find.checkToken();
+        if (Get.isRegistered<MainController>()) {
+          Get.find<MainController>().changeTab(1);
+        }
+      case PushTarget.home:
+        if (Get.isRegistered<MainController>()) {
+          Get.find<MainController>().changeTab(0);
+        }
+    }
   }
+}
+
+/// Where a tapped push leads. The server sends no `type` key, so the kind is
+/// read from the `data` keys that are present.
+enum PushTarget { loyalty, stay, home }
+
+/// Pure, so the routing rule can be tested without Firebase:
+/// - points expiring: `{points, expires_at}` → Loyalty
+/// - room ready / check-in approved: `{reservation_uuid}` → the stay
+/// - welcome (`{}`) or anything unknown → Home
+PushTarget pushTargetFor(Map<String, dynamic> data) {
+  if (data.containsKey('points') && data.containsKey('expires_at')) {
+    return PushTarget.loyalty;
+  }
+  if (data.containsKey('reservation_uuid')) return PushTarget.stay;
+  return PushTarget.home;
 }

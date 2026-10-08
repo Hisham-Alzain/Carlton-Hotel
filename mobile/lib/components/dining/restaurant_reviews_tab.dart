@@ -10,9 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// The 4th restaurant-detail tab: overall-rating header + a "Write a Review" CTA
-/// pinned above the paginated reviews list. The header rating stays on the
-/// venue's demo defaults because the venue-detail endpoint is unwired (a Phase 2
-/// deferral).
+/// pinned above the paginated reviews list. The header rating is the venue's
+/// `rating` / `rating_count` from the API.
 ///
 /// The list state arrives already resolved — the caller owns the `Obx` over
 /// `ReviewController`, so this tab renders one frame's worth of values.

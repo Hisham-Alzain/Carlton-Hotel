@@ -1,3 +1,5 @@
+import 'package:carlton/constants/error_codes.dart';
+import 'package:carlton/constants/hotel_time.dart';
 import 'package:carlton/components/check_in/arrival_time_sheet.dart';
 import 'package:carlton/customWidgets/custom_snackbar.dart';
 import 'package:carlton/extensions/date_extension.dart';
@@ -146,6 +148,8 @@ class AirportTransferController extends GetxController {
 
     final res = await ApiService.find.get<List<dynamic>>(
       path: '/public/transfers',
+      // Paged server-side (15 by default); one sheet shows them all.
+      queryParameters: {'per_page': 100},
       showErrorDialog: false,
     );
     if (isClosed) return;
@@ -231,7 +235,7 @@ class AirportTransferController extends GetxController {
       arrivalTime.value.hour,
       arrivalTime.value.minute,
     );
-    if (!arrival.isAfter(DateTime.now())) {
+    if (!arrival.isAfter(HotelTime.now())) {
       CustomSnackbars.showError(message: AppTranslations.transferTimeInPast);
       goTo(0);
       return;
@@ -254,12 +258,32 @@ class AirportTransferController extends GetxController {
         'scheduled_at': arrival.toApiDateTime(),
         'notes': notes,
       },
+      showErrorDialog: false,
     );
     if (isClosed) return;
     submitting.value = false;
-    // Failures are already reported by ApiService's error dialog; the sheet
-    // stays open on step 3 so nothing the guest entered is lost.
-    if (!res.ok) return;
+    // On failure the sheet stays open on step 3 so nothing entered is lost.
+    if (!res.ok) {
+      switch (res.error?.errorCode) {
+        // Tier gate: transfers open once the hotel confirms the booking.
+        case ErrorCodes.noActiveReservation:
+          CustomSnackbars.showInfo(
+            message: AppTranslations.transferNeedsConfirmed,
+          );
+        // The car was withdrawn meanwhile: reload the list.
+        case ErrorCodes.notFound:
+          CustomSnackbars.showInfo(
+            message: AppTranslations.transferUnavailable,
+          );
+          transfers.clear();
+          selected.value = null;
+          goTo(1);
+          loadTransfers();
+        default:
+          if (res.error != null) ApiService.find.dialogs.showError(res.error!);
+      }
+      return;
+    }
 
     // The guest may have closed the sheet while the request was in flight;
     // popping then would close the page underneath instead.

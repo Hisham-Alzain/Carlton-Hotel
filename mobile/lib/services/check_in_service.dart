@@ -1,3 +1,5 @@
+import 'package:carlton/customWidgets/custom_snackbar.dart';
+import 'package:carlton/constants/error_codes.dart';
 import 'package:carlton/constants/preference_options.dart';
 import 'package:carlton/enums/enums.dart';
 import 'package:carlton/l10n/app_translations.dart';
@@ -19,10 +21,6 @@ import 'package:get/get.dart';
 ///
 /// Device-local: nothing persists across a restart, which returns to the 1/4
 /// state and refetches the reservation from `GET /stays/upcoming`.
-/// How long the digital-key activation animation runs before the key
-/// reports itself active.
-const _digitalKeyActivationDuration = Duration(seconds: 2);
-
 class CheckInService extends GetxService {
   static CheckInService get find => Get.find<CheckInService>();
 
@@ -46,6 +44,11 @@ class CheckInService extends GetxService {
     PreferenceOptions.defaultStayPreferences,
   );
   final Rx<DigitalKeyStatus> key = DigitalKeyStatus.idle.obs;
+
+  /// The key the desk issued (`digital_key` on `GET /stays/upcoming`), shown
+  /// once the guest taps the key button. Memory only: the code is
+  /// display-only and must never be cached or logged.
+  final Rxn<DigitalKey> digitalKey = Rxn<DigitalKey>();
 
   /// Null until the guest picks one. Stored as the slot rather than its label
   /// so the text re-renders in the active locale — see [ArrivalSlot].
@@ -71,6 +74,7 @@ class CheckInService extends GetxService {
     documentImagePath.value = '';
     preferences.value = PreferenceOptions.defaultStayPreferences;
     key.value = DigitalKeyStatus.idle;
+    digitalKey.value = null;
     arrivalSlot.value = null;
   }
 
@@ -109,6 +113,46 @@ class CheckInService extends GetxService {
     completed.add(PreArrivalStep.arrivalTime);
   }
 
+  /// Records the ETA and sends it to the hotel
+  /// (`POST /stays/{reservation}/online-check-in`, `arrival_time` as `HH:mm`
+  /// hotel time), so reception sees it and the server's checklist step
+  /// completes. Applied at once; put back if the server refuses, so an ETA the
+  /// desk never received does not look saved. With no loaded booking there is
+  /// nothing to send it to and it stays on the device.
+  Future<void> submitArrivalTime(ArrivalSlot slot) async {
+    final previous = arrivalSlot.value;
+    final hadStep = completed.contains(PreArrivalStep.arrivalTime);
+    markArrivalTime(slot);
+
+    final stay = _stay;
+    if (stay == null ||
+        !Get.isRegistered<ApiService>() ||
+        !Get.isRegistered<MiddlewareService>() ||
+        !MiddlewareService.find.isAuthenticated) {
+      return;
+    }
+    final hour = slot.hour.toString().padLeft(2, '0');
+    final res = await ApiService.find.post<Map<String, dynamic>>(
+      path: '/stays/${stay.uuid}/online-check-in',
+      data: {'arrival_time': '$hour:00'},
+      showErrorDialog: false,
+    );
+    if (isClosed || res.ok) return;
+
+    arrivalSlot.value = previous;
+    if (!hadStep) completed.remove(PreArrivalStep.arrivalTime);
+    switch (res.error?.errorCode) {
+      case ErrorCodes.reservationState:
+        CustomSnackbars.showInfo(
+          message: AppTranslations.onlineCheckInNotConfirmed,
+        );
+      case ErrorCodes.onlineCheckInClosed:
+        CustomSnackbars.showError(message: AppTranslations.onlineCheckInClosed);
+      default:
+        if (res.error != null) ApiService.find.dialogs.showError(res.error!);
+    }
+  }
+
   void markSpecialRequests() => completed.add(PreArrivalStep.specialRequests);
 
   void savePreferences(StayPreferences next) {
@@ -116,15 +160,21 @@ class CheckInService extends GetxService {
     markSpecialRequests();
   }
 
-  /// Simulates provisioning. The delay is the only thing a real integration
-  /// would replace.
+  /// Re-reads the booking for the key the desk issued. The desk issues it when
+  /// it approves the check-in, so before that the button goes back to idle and
+  /// says so instead of pretending a key exists.
   Future<void> activateDigitalKey() async {
     if (key.value != DigitalKeyStatus.idle) return;
     key.value = DigitalKeyStatus.activating;
-    await Future<void>.delayed(_digitalKeyActivationDuration);
+    await loadReservation();
     // The guest can leave the tab mid-activation.
     if (isClosed) return;
-    key.value = DigitalKeyStatus.activated;
+    if (digitalKey.value != null) {
+      key.value = DigitalKeyStatus.activated;
+      return;
+    }
+    key.value = DigitalKeyStatus.idle;
+    CustomSnackbars.showInfo(message: AppTranslations.digitalKeyNotIssued);
   }
 
   /// The steps that actually gate check-in.
@@ -158,8 +208,9 @@ class CheckInService extends GetxService {
   /// Why check-in cannot be completed yet, or null when it can (or when the
   /// stay is unknown — the server then decides). Only the rule that always
   /// holds on `POST /stays/check-in` is checked here: a booking still awaiting
-  /// the hotel cannot be checked in. The arrival-day rule is left to the
-  /// server, which can lift it (backend `BOOKING_EARLY_CHECK_IN`).
+  /// the hotel cannot be checked in. The arrival-day rule is enforced by the
+  /// server (`POST /stays/check-in` only finds stays whose check-in is today
+  /// or earlier) and answered as `reservation_state`.
   String? get notOpenReason {
     final stay = _stay;
     if (stay == null) return null;
@@ -191,12 +242,36 @@ class CheckInService extends GetxService {
     final stay = UpcomingStay.primary(UpcomingStay.listFromJson(response.data));
     if (stay == null) return;
     _stay = stay;
+    digitalKey.value = stay.digitalKey;
+    _seedFromServer(stay);
     reservation.value = ReservationSummary.fromUpcomingStay(
       stay,
       // Locale resolution belongs here, not in the model — see the factory.
       suiteName: stay.roomName.value,
       guest: MiddlewareService.find.guest.value,
     );
+  }
+
+  /// Marks the steps the server already recorded for this booking as done, so
+  /// an app restart or a second phone does not send the guest back through
+  /// them. Only adds: a step done on this device is never undone here.
+  void _seedFromServer(UpcomingStay stay) {
+    final done = stay.checklistDone;
+    if (done.contains('documents_uploaded')) {
+      identity.value = IdentityStatus.verified;
+      completed.add(PreArrivalStep.identity);
+    }
+    if (done.contains('preferences_set')) {
+      completed.add(PreArrivalStep.specialRequests);
+    }
+    // The server takes any HH:mm; only a time matching one of the app's slots
+    // can be shown, so anything else leaves the step for the guest to pick.
+    final hour = int.tryParse((stay.arrivalTime ?? '').split(':').first);
+    final slot = ArrivalSlot.tryFromHour(hour);
+    if (slot != null) {
+      arrivalSlot.value ??= slot;
+      completed.add(PreArrivalStep.arrivalTime);
+    }
   }
 
   /// Checks the guest in for real (`POST /stays/check-in`), which flips their
@@ -217,8 +292,24 @@ class CheckInService extends GetxService {
 
     final response = await ApiService.find.post<Map<String, dynamic>>(
       path: '/stays/check-in',
+      showErrorDialog: false,
     );
-    if (!response.ok) return CheckInOutcome.failed;
+    if (!response.ok) {
+      final error = response.error;
+      switch (error?.errorCode) {
+        case ErrorCodes.reservationState:
+          return CheckInOutcome.notOpenOnServer;
+        // No clean room of the booked type is free right now: the booking is
+        // fine, the room is not ready — "no rooms for your dates" would scare.
+        case ErrorCodes.noAvailability || ErrorCodes.roomOutOfOrder:
+          CustomSnackbars.showInfo(
+            message: AppTranslations.checkInRoomNotReady,
+          );
+        default:
+          if (error != null) ApiService.find.dialogs.showError(error);
+      }
+      return CheckInOutcome.failed;
+    }
 
     // has_booking / is_checked_in gate the in-stay sections Home is about to
     // render, so refresh them from /me before Home re-resolves — otherwise it

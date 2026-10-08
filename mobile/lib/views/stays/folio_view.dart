@@ -12,11 +12,14 @@ import 'package:carlton/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+part 'folio_widgets.dart';
+
 /// My Bill: the guest's running folio from `GET /folio`.
 ///
-/// Read-only on purpose. Approving the bill *is* express checkout, which also
-/// flips the reservation to checked_out, so that action stays behind the
-/// confirmation dialog on Home rather than becoming a button on a statement.
+/// Approving the bill *is* express checkout, which also flips the reservation
+/// to checked_out, so that action stays behind the confirmation dialog on Home
+/// rather than becoming a button on a statement. The one action here is
+/// disputing a line (tap it).
 class FolioView extends GetView<FolioController> {
   const FolioView({super.key});
 
@@ -59,29 +62,27 @@ class FolioView extends GetView<FolioController> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(20),
             children: [
-              if (controller.isApproved) const _ApprovedBanner(),
-              PillContainer(
-                radius: 14,
-                backgroundColor: AppColors.white,
-                padding: const EdgeInsets.all(20),
-                border: Border.all(color: AppColors.linenGrey),
-                child: Column(
-                  spacing: 10,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final item in folio.items) _ItemRow(item: item),
-                    const Divider(height: 1, color: AppColors.black06),
-                    CustomPriceSummaryRow(
-                      title: AppTranslations.subtotal,
-                      value: MoneyFormat.usdString(folio.subtotalUsd),
-                    ),
-                    CustomPriceSummaryRow(
-                      title: AppTranslations.total,
-                      value: MoneyFormat.usdString(folio.totalUsd),
-                      isTotal: true,
-                    ),
-                  ],
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 20,
+                children: [
+                  if (controller.isApproved) const _ApprovedBanner(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 10,
+                    children: [
+                      if (folio.openDisputesCount > 0)
+                        _DisputesBanner(count: folio.openDisputesCount),
+                      Text(
+                        AppTranslations.disputeHint,
+                        style: Get.textTheme.dmLabelSmall?.copyWith(
+                          color: AppColors.taupeBrown,
+                        ),
+                      ),
+                      _statement(folio),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -89,98 +90,53 @@ class FolioView extends GetView<FolioController> {
       }),
     );
   }
-}
 
-/// Shown once the guest has approved the bill for express checkout, so the
-/// statement does not read as still open.
-class _ApprovedBanner extends StatelessWidget {
-  const _ApprovedBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: PillContainer(
-        radius: 12,
-        backgroundColor: AppColors.cream,
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          spacing: 10,
-          children: [
-            const Icon(
-              Icons.verified_outlined,
-              size: 18,
-              color: AppColors.forestGreen,
-            ),
-            Expanded(
-              child: Text(
-                AppTranslations.folioApproved,
-                style: Get.textTheme.dmLabelMedium?.copyWith(
-                  color: AppColors.inkBlack,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// One folio line. [FolioItem.sourceType] is rendered because it is the only
-/// thing separating an identically-named room charge from a service booking.
-class _ItemRow extends StatelessWidget {
-  final FolioItem item;
-
-  const _ItemRow({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme textStyle = Get.textTheme;
-
-    return Row(
+  Widget _statement(Folio folio) => PillContainer(
+    radius: 14,
+    backgroundColor: AppColors.white,
+    padding: const EdgeInsets.all(20),
+    border: Border.all(color: AppColors.linenGrey),
+    child: Column(
       spacing: 10,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Column(
-            spacing: 5,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                item.description,
-                style: textStyle.titleSmall?.copyWith(
-                  color: AppColors.inkBlack,
-                ),
-              ),
-              if (_sourceLabel.isNotEmpty)
-                Text(
-                  _sourceLabel,
-                  style: textStyle.dmLabelSmall?.copyWith(
-                    color: AppColors.taupeBrown,
-                  ),
-                ),
-            ],
+        for (final item in folio.items)
+          _ItemRow(
+            key: ValueKey(item.uuid),
+            item: item,
+            onDispute: () => controller.openDispute(item),
           ),
+        const Divider(height: 1, color: AppColors.black06),
+        CustomPriceSummaryRow(
+          title: AppTranslations.subtotal,
+          value: MoneyFormat.usdString(folio.subtotalUsd),
         ),
-        Text(
-          MoneyFormat.usdString(item.amountUsd),
-          style: textStyle.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: AppColors.inkBlack,
+        CustomPriceSummaryRow(
+          title: AppTranslations.total,
+          value: MoneyFormat.usdString(folio.totalUsd),
+          isTotal: true,
+        ),
+        for (final payment in folio.payments)
+          CustomPriceSummaryRow(
+            key: ValueKey(payment.uuid),
+            title: AppTranslations.folioPayment(payment.method),
+            value: '− ${MoneyFormat.usdString(payment.amountUsd)}',
           ),
+        if (folio.payments.isNotEmpty)
+          CustomPriceSummaryRow(
+            title: AppTranslations.folioPaid,
+            value: MoneyFormat.usdString(folio.paidUsd),
+          ),
+        // Signed: below zero the hotel owes the guest, refunded at
+        // the desk.
+        CustomPriceSummaryRow(
+          title: folio.balanceDue < 0
+              ? AppTranslations.folioHotelOwes
+              : AppTranslations.folioBalanceDue,
+          value: MoneyFormat.usd(folio.balanceDue.abs()),
+          isTotal: true,
         ),
       ],
-    );
-  }
-
-  /// The wire sends a snake_case enum; anything unrecognised stays unlabelled
-  /// rather than printing the raw token.
-  String get _sourceLabel => switch (item.sourceType) {
-    'reservation' => AppTranslations.folioSourceRoom,
-    'service_booking' => AppTranslations.folioSourceService,
-    'service_request' => AppTranslations.folioSourceInRoom,
-    _ => '',
-  };
+    ),
+  );
 }

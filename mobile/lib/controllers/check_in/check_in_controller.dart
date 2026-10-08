@@ -104,6 +104,11 @@ class CheckInController extends GetxController {
       case CheckInOutcome.notOpenYet:
         CustomSnackbars.showInfo(message: service.notOpenReason ?? '');
         return;
+      case CheckInOutcome.notOpenOnServer:
+        CustomSnackbars.showInfo(
+          message: AppTranslations.checkInOpensOnArrival,
+        );
+        return;
       case CheckInOutcome.failed:
         return;
       case CheckInOutcome.success:

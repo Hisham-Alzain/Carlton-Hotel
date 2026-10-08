@@ -34,13 +34,12 @@ class CustomChoiceCard extends StatelessWidget {
           border: Border.all(color: AppColors.cream20, width: 1.5),
         ),
         child: Row(
+          spacing: 16,
           children: [
             Container(
               width: 45,
               height: 45,
               alignment: Alignment.center,
-
-              margin: const EdgeInsetsDirectional.only(end: 16),
               decoration: BoxDecoration(
                 color: AppColors.antiqueGold56,
                 borderRadius: BorderRadius.circular(10),

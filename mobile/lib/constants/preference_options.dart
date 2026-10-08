@@ -41,13 +41,6 @@ abstract class PreferenceOptions {
       label: AppTranslations.bedSingle,
       iconAsset: 'assets/icons/singlebed.svg',
     ),
-    // Same story as queen/king: extrabed.svg duplicated singlebed.svg byte for
-    // byte.
-    PreferenceOption(
-      id: 'extra',
-      label: AppTranslations.bedExtra,
-      iconAsset: 'assets/icons/singlebed.svg',
-    ),
   ];
 
   /// Resolved per read rather than `const`: the labels are `.tr` lookups,
@@ -59,6 +52,11 @@ abstract class PreferenceOptions {
       iconAsset: 'assets/icons/softpillow.svg',
     ),
     PreferenceOption(
+      id: 'medium',
+      label: AppTranslations.pillowMedium,
+      iconAsset: 'assets/icons/softpillow.svg',
+    ),
+    PreferenceOption(
       id: 'firm',
       label: AppTranslations.pillowFirm,
       iconAsset: 'assets/icons/firmpillow.svg',
@@ -66,6 +64,11 @@ abstract class PreferenceOptions {
     PreferenceOption(
       id: 'feather',
       label: AppTranslations.pillowFeather,
+      iconAsset: 'assets/icons/featherpillow.svg',
+    ),
+    PreferenceOption(
+      id: 'hypoallergenic',
+      label: AppTranslations.pillowHypoallergenic,
       iconAsset: 'assets/icons/featherpillow.svg',
     ),
   ];
@@ -116,6 +119,25 @@ abstract class PreferenceOptions {
     PreferenceOption(id: 'fr', label: 'Français', icon: Icons.language),
     PreferenceOption(id: 'tr', label: 'Türkçe', icon: Icons.language),
     PreferenceOption(id: 'es', label: 'Español', icon: Icons.language),
+  ];
+
+  /// The server's `floor_preference` values (`low | high | any`).
+  static List<PreferenceOption> get floorOptions => <PreferenceOption>[
+    PreferenceOption(
+      id: 'any',
+      label: AppTranslations.floorAny,
+      icon: Icons.unfold_more_rounded,
+    ),
+    PreferenceOption(
+      id: 'low',
+      label: AppTranslations.floorLow,
+      icon: Icons.vertical_align_bottom_rounded,
+    ),
+    PreferenceOption(
+      id: 'high',
+      label: AppTranslations.floorHigh,
+      icon: Icons.vertical_align_top_rounded,
+    ),
   ];
 
   /// Derived from [SettingsService.currencies] rather than hand-listed — the

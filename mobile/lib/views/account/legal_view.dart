@@ -1,4 +1,4 @@
-import 'package:carlton/theme/theme.dart';
+import 'package:carlton/components/expandable_text_tile.dart';
 import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/controllers/account/legal_controller.dart';
 import 'package:carlton/customWidgets/custom_containers.dart';
@@ -36,11 +36,13 @@ class LegalView extends GetView<LegalController> {
         return ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            for (final page in controller.pages)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _PageCard(page: page),
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 10,
+              children: [
+                for (final page in controller.pages) _PageCard(page: page),
+              ],
+            ),
           ],
         );
       }),
@@ -56,52 +58,19 @@ class _PageCard extends GetView<LegalController> {
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textStyle = Get.textTheme;
-
-    return Obx(() {
-      final expanded = controller.isExpanded(page.slug);
-      return PillContainer(
-        radius: 14,
-        backgroundColor: AppColors.white,
-        padding: const EdgeInsets.all(20),
-        border: Border.all(color: AppColors.linenGrey),
-        child: InkWell(
-          onTap: () => controller.toggle(page.slug),
-          child: Column(
-            spacing: 10,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                spacing: 10,
-                children: [
-                  Expanded(
-                    child: Text(
-                      page.title.value,
-                      style: textStyle.titleSmall?.copyWith(
-                        color: AppColors.inkBlack,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    expanded
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.mediumGrey,
-                  ),
-                ],
-              ),
-              if (expanded)
-                Text(
-                  page.content.value,
-                  style: textStyle.dmBodySmall?.copyWith(
-                    color: AppColors.taupeBrown,
-                  ),
-                ),
-            ],
-          ),
+    return PillContainer(
+      radius: 14,
+      backgroundColor: AppColors.white,
+      padding: const EdgeInsets.all(20),
+      border: Border.all(color: AppColors.linenGrey),
+      child: Obx(
+        () => ExpandableTextTile(
+          title: page.title.value,
+          body: page.content.value,
+          expanded: controller.isExpanded(page.slug),
+          onToggle: () => controller.toggle(page.slug),
         ),
-      );
-    });
+      ),
+    );
   }
 }

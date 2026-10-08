@@ -17,7 +17,7 @@ flutter test test/some_test.dart       # run a single test file
 flutter build apk / ios / windows      # platform builds
 ```
 
-`test/` holds ~95 targeted tests — model `fromJson` parsing, pricing math, and a couple of widget flows. Coverage is deliberately narrow: **no test pumps a full screen**, so view-level changes (rebuild scoping, loading/empty states, navigation) are verified by `flutter analyze` and by running the app, not by the suite. Don't assume a UI change is covered.
+`test/` holds targeted tests (83 as of 2026-10-07) — model `fromJson` parsing, pricing math, l10n key parity across the 5 locales, push routing, and a couple of widget flows. Coverage is deliberately narrow: **no test pumps a full screen**, so view-level changes (rebuild scoping, loading/empty states, navigation) are verified by `flutter analyze` and by running the app, not by the suite. Don't assume a UI change is covered.
 
 ## Architecture
 
@@ -34,11 +34,9 @@ Flutter app using **GetX** for state management, DI, and routing. Every screen f
   **Collections:** declare as `final xs = <T>[].obs`. `RxList`/`RxSet` notify from `add`/`insert`/`remove`/`removeWhere`/`clear`, so in-place mutation is fine — but prefer `assignAll(...)` over `clear()` + `addAll(...)`, which notifies twice and renders one empty frame.
 - `bindings/binding.dart` — single file, one `Bindings` class per route, registered via `Get.lazyPut`. `MainBinding` uses `fenix: true` for tab controllers so they survive being recreated. Add new controllers here, not inline in views.
 
-Routes are centralized in two files:
-- `routes/routes.dart` — `Routes` (route name constants) + `Pages.getPages` (route → view + binding wiring). Add both a `Routes.xxx` constant and a `GetPage` entry here for any new screen.
-- `middleware/middleware.dart` — a `GetMiddleware` that reads `MiddlewareService` for redirect logic; currently a no-op scaffold (both branches empty).
+Routes are centralized in `routes/routes.dart` — `Routes` (route name constants) + `Pages.getPages` (route → view + binding wiring). Add both a `Routes.xxx` constant and a `GetPage` entry here for any new screen. There is no route middleware; redirects are decided by `MiddlewareService` (splash, `HomeController.goHome`). A screen with nothing to load (Notifications, Saved Payments, Security) is a plain `StatelessWidget` with no binding.
 
-`main.dart` bootstraps services in a fixed order before `runApp`: `StorageService.init()` → `SettingsService` → `ApiService` → `MiddlewareService` → `PermissionService`, all `Get.put(..., permanent: true)`. Add new global singletons here in dependency order.
+`main.dart` bootstraps services in a fixed order before `runApp`: `StorageService.init()` (loads the token from secure storage) → `SettingsService` → `ApiService` → `MiddlewareService` → `PermissionService` → `BookingFlowController` → `CheckInService`, all `Get.put(..., permanent: true)`. Add new global singletons here in dependency order. Firebase init and `NotificationService` are commented out until the Firebase config files exist (see "Backend" below).
 
 ### Networking (`services/api/`)
 
@@ -52,6 +50,8 @@ Routes are centralized in two files:
 
 Call sites use `ApiService.find.get/post/put/delete<T>(...)`, which return the **unwrapped `data` field** of the response envelope as `ApiResponse<T>`. **These methods never throw** — guard on `statusCode`/`.ok` and read `data!` inside the guard; there is no try/catch anywhere in the app.
 
+**Identical GETs in flight are shared.** `ApiService.get` keys each request by token + path + query; a second caller asking for the same thing while the first is on the wire awaits the same response instead of sending another (one session change makes Home, Stays, Services and check-in all load the same stay). Every write (post/put/patch/delete/upload) clears the shared set, so a read that started before a write is never handed to a caller that needs the state after it. A caller's `cancelToken` ends only its own wait — the shared request keeps going for the others.
+
 **UI feedback from the API layer: dialogs only, and only when asked for.** `ApiDialogHandler` never raises a snackbar — every failure it reports needs acknowledgement, and a toast is too easy to miss. It shows nothing unless the call site opted in: `showErrorDialog` (default true) on the HTTP methods, `showDialog` (default true) on `FileUploader`/`FileDownloader`. Pass false to stay silent, then optionally report yourself with `dialogs.showError(res.error!)` after running your own logic (revert an optimistic update, set an inline error). Loading dialogs are opt-in via `showLoading: true` — don't use one for a tap that should feel instant, such as opening a room from a list; use a re-entrancy guard plus an inline state instead (`BookingFlowController.openingRoom`).
 
 Controllers may still use `CustomSnackbars` for their own non-API feedback ("Code copied", "Request submitted"). That rule is about the API layer only.
@@ -62,21 +62,28 @@ File uploads/downloads are delegated to `FileUploader`/`FileDownloader` (`servic
 
 **`showErrorDialog: false` hides the failure from the user *and* from your controller.** A request that fails silently leaves the target list empty, which is indistinguishable from a successful empty response. Any controller that suppresses the dialog and renders a list needs its own error flag, or the view cannot tell "nothing here" from "couldn't load" — see `HomeController.contentError`, set from `!roomsRes.ok || !diningRes.ok`.
 
-### Demo/mock state — important caveat
+### Backend (Laravel, `../backend`)
 
-**No backend is wired up yet.** Several pieces of "real" architecture (API client, error handling) coexist with hardcoded demo flows:
-- `constants/demo_data.dart` — every hardcoded value (rooms, restaurants, services, OTP code `123456`, network delays) lives here so a real API integration is a single-file hunt. Nothing in this file should survive integration.
-- `SessionService` (`services/session_service.dart`) — persists fake "signed in"/"has reservation" booleans via `StorageService`, explicitly marked demo-only. A real backend would store an actual auth token instead.
-- `MiddlewareService` (`services/middleware_service.dart`) — in parallel, implements real token-based auth checking (`/user/check-token`, `StorageKeys.token`). These two auth mechanisms are not yet unified — be aware of which one a given screen actually reads before changing auth-adjacent logic.
-- Controllers marked `/// Demo-only` in their doc comment (e.g. `SignInController`) simulate network delay via `DemoData.networkDelay` and route forward optimistically rather than calling `ApiService`.
+The app runs on the real guest API. `docs/MOBILE_FRONTEND_HANDOFF.md` (repo root) lists the contract and the remaining gaps; `backend/docs/API_GUIDE_MOBILE.md` is authoritative for response shapes.
+- **Base URL is `$API_HOST/api` — there is no `/v1`.** Pass the host with `--dart-define=API_HOST=…`.
+- **Session:** `MiddlewareService` is the single source of truth. `checkToken()` calls `GET /auth/guest/me` (guest + `has_booking` / `is_checked_in`); on app resume it probes the cheaper `GET /stays/status` and refetches `/me` only when the flags changed. `checkToken(reuseRecent: true)` skips `/me` if it answered in the last 10 s — used only when opening Home right after splash or sign-in; anything that just changed the stay (check-in, cancel, checkout, pull-to-refresh) must call it without the flag. Read `has_booking` / `is_checked_in`, never the deprecated `has_active_reservation`. Any 401 on a request that carried a token signs the guest out.
+- **Token:** kept in `flutter_secure_storage` by `StorageService` (`setToken` / `clearToken`, synchronous `StorageService.token`), never in GetStorage. Android backup is off.
+- `SessionService` is only a scratch store for the "find my booking" flow (booking code + phone, reused on OTP resend). It holds no auth state.
+- **Idempotency:** `POST /loyalty/rewards/{uuid}/redeem` and `POST /reservations` with `loyalty_points` / `voucher_code` send an `Idempotency-Key` header (one UUID per user intent, reused on retries; see `ApiService.post(idempotencyKey:)`). `RetryInterceptor` replays only GET/HEAD/PUT or requests carrying that header; any other POST is retried only when the connection never opened.
+- **Hotel time:** the hotel runs on Asia/Damascus (UTC+3, no DST). Times the guest picks are hotel time (`constants/hotel_time.dart`); send instants with `toApiDateTime()` (UTC), show server instants with `HotelTime.fromInstant`.
+- **Tiers:** an app booking starts `pending` (the app reads the returned `status` rather than assuming one); documents, table and service bookings open only once staff confirm it, and in-stay routes (folio, service requests, DND) only after check-in. Both refusals are `403 no_active_reservation`.
+- **Push:** `NotificationService` is written (device-token registration, tap routing via `pushTargetFor` on the `data` keys — the server sends no `type`), but Firebase is not initialised because `google-services.json` / `GoogleService-Info.plist` / `firebase_options.dart` are not in the repo yet.
+- Loyalty, account deletion, preferences, exchange rates, folio disputes and chat paging are wired; there is no demo data left in `lib/`.
 
 ### Localization
 
-Two-file split under `l10n/`:
-- `local.dart` — the raw `en`/`ar` key→string maps (implements GetX `Translations`).
-- `app_translations.dart` — a typed façade exposing each key as a static getter (e.g. `AppTranslations.signInTitle` → `'auth.signInTitle'.tr`). **Always add strings through both files** and reference them via `AppTranslations.xxx` in views/controllers, never raw `.tr` key strings.
-
-Note: many keys in `local.dart` (e.g. `auth.joinCartXForTheBestDeals`, `fileService.*`) are leftover from a prior "CartX" marketplace template this project was bootstrapped from — not all existing keys are relevant to the Carlton Hotel domain; don't treat their presence as a pattern to imitate for hotel-specific features.
+Five locales: English, Arabic, French, Turkish, Spanish.
+- `l10n/locales/<language>_locale.dart` — one key→string map per locale; `local.dart` wires them into GetX `Translations`.
+- `app_translations.dart` — a typed façade exposing each key as a static getter (e.g. `AppTranslations.signInTitle` → `'auth.signInTitle'.tr`). **Add every string to all five locale files plus a getter**, and reference it via `AppTranslations.xxx`, never a raw `.tr` key. Placeholders use `@name` with `trParams`.
+- `test/l10n_parity_test.dart` fails when the five files differ in keys or placeholders.
+- **Dates shown to the guest use locale skeletons** — `DateFormat.MMMd()`, `yMMMd()`, `jm()` — never a fixed pattern like `'MMM d'` or `'h:mm a'`, which keeps English order and the 12-hour clock in every language. Dates sent to the API are the opposite: `DateFormat('yyyy-MM-dd', 'en')`, pinned so the digits never follow the UI language.
+- **Arabic is RTL:** use `EdgeInsetsDirectional`, `AlignmentDirectional` and `PositionedDirectional` (start/end) for anything that has a reading direction. Plain left/right is fine only for symmetric or purely decorative values.
+- The guest's language is sent to the server as `preferred_locale` (all five values), which localizes pushes. Signing in never changes the app language.
 
 ### Other conventions
 
@@ -95,21 +102,22 @@ Note: many keys in `local.dart` (e.g. `auth.joinCartXForTheBestDeals`, `fileServ
   A section that returns `SizedBox.shrink()` while loading reads as "nothing here" and then pops in — give it a placeholder instead.
 - **Parse at the model boundary.** `fromJson` converts `created_at` to a `DateTime?` via a local `_date` helper (`models/review.dart`, `models/receipt.dart`); views never hold a raw ISO string or re-parse on rebuild. Format through the shared extensions in `extensions/date_extension.dart` (`formatDate`, `formatDatePicker`, `formatDateMonth`, `formatApiDate`) — add a new one there rather than inlining a `DateFormat`.
 - **Validation messages live in the validator.** Add a `validateX` to `CustomValidation` that returns its own `AppTranslations.…` string; never pass error copy in as a parameter. New messages go through both l10n files.
-- `models/api/api_response.dart`, `api_exception.dart`, `paginated_meta.dart` — response envelope types shared by all API calls.
+- `models/api/api_response.dart`, `api_exception.dart` — response envelope types shared by all API calls.
 - `mixins/paginated_controller_mixin.dart` — mix into a controller for infinite-scroll list screens; implement `fetchPage()` and it manages `items`/`loading`/`loadingMore`/`hasMore`/scroll-triggered loading.
 - `constants/storage_keys.dart` — single source of truth for `GetStorage` key names; add new persisted keys here rather than inlining strings.
 - `theme/app_colors.dart` + `theme/theme.dart` — central color/typography source; fonts are Plus Jakarta Sans (UI) and The Seasons (display/serif accents).
-- Supports `en`/`ar` locales including RTL; test new screens in Arabic when touching layout.
+- Supports five locales including Arabic RTL; test new screens in Arabic when touching layout.
+- Errors: switch on `res.error?.errorCode` (`constants/error_codes.dart`) with a `default:` that calls `ApiService.find.dialogs.showError(res.error!)`.
 
 ### Assets
 
-**Never pass a literal `assets/…` path to `CustomImage`.** Use `Image.asset` / `SvgPicture.asset` directly. `CustomImage`'s asset branch exists only because `DemoData` still stands in for the API: model-driven sources (`room.images`, `restaurant.imagePath`, `item.photo`, …) are asset paths today and storage URLs after integration, and that branch dies with `DemoData`.
+**Never pass a literal `assets/…` path to `CustomImage`.** Use `Image.asset` / `SvgPicture.asset` directly. `CustomImage` is for model-driven sources (`room.images`, `item.photo`, …), which are storage URLs from the API; its asset branch only covers the few bundled fallbacks.
 
 Bundled Figma exports are up to 4× resolution (2 MB+), and `Image.asset` decodes at native pixel size. **Anything full-bleed needs a `cacheWidth`** — screen width × `MediaQuery.devicePixelRatioOf(context)`. Identical on screen, a fraction of the RAM. Small fixed-size images can skip it.
 
-**Before deleting an "unused" asset, check for interpolated paths.** A grep by filename misses them. Today there is exactly one such site: `_amenityAsset` in `models/booking_models.dart`, which builds `'assets/icons/$icon.svg'` from a whitelist (`jacuzzi`, `desk`, `tv`, `coffee`, `butler`, `view`). Those files appear nowhere as literals; deleting them breaks amenity icons at runtime with no compile error and no failing test.
+**Before deleting an "unused" asset, check for interpolated paths.** A grep by filename misses them. Today there is exactly one such site: `_amenityAsset` in `models/room_option.dart`, which maps the server's amenity `icon` key to `'assets/icons/$file.svg'` (`jacuzzi`, `coffee`, `butler`, `view`, `balcony`→`view`, `safe`→`lock`, `desk`→`space`, `wifi`; anything else → `view`). A key with no SVG can instead get a Material icon in `_amenityMaterialIcons` (`tv` → `Icons.tv_outlined`). Those SVG files appear nowhere as literals; deleting them breaks amenity icons at runtime with no compile error and no failing test.
 
-Note `pubspec.yaml` declares whole directories (`assets/icons/`, `assets/images/`, …), so anything dropped in a folder ships — including non-assets like `assets/videos/README.txt`. Two paths are referenced but absent (`assets/images/demo_passport.png`, `assets/videos/carlton_promo.mp4`); the hero video falls back to a network URL, so this degrades rather than crashes.
+Note `pubspec.yaml` declares whole directories (`assets/icons/`, `assets/images/`, …), so anything dropped in a folder ships — including non-assets like `assets/videos/README.txt`. The hero video is the bundled `assets/videos/carlton_promo.mp4`; if it fails to load, the hero keeps its poster image.
 
 ### Traps worth knowing
 

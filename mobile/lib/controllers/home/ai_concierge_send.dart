@@ -74,10 +74,11 @@ extension ConciergeSend on AiConciergeController {
     final data = res.data;
     if (data is Map<String, dynamic>) {
       messages.add(ChatMessage.fromJson(data));
+      // The first message opens the conversation; its payload names it, so
+      // the next fetch (refresh, older pages) needs no conversation list.
+      conversationUuid ??= data['conversation_uuid'] as String?;
     }
-    // The first message opens the conversation, but the created message does
-    // not carry its uuid: re-read the conversation list so the next fetch
-    // (refresh, older pages) has a real thread to ask for.
+    // A server that leaves `conversation_uuid` out: find it the old way.
     if (conversationUuid == null) await _loadThread();
     messageController.clear();
     pendingAttachment.value = null;

@@ -783,6 +783,10 @@ const Map<String, String> frKeys = {
   "book.phoneNumberRequired": "Numéro de téléphone*",
   "book.promoInvalid": "Ce code promo est invalide ou expiré.",
   "book.roomSoldOut": "Cette chambre est complète pour vos dates.",
+  "book.roomTooSmall":
+      "Cette chambre accueille jusqu'à @count personnes. Réduisez le nombre de voyageurs ou choisissez une autre chambre.",
+  "auth.bookingLinkNotFound":
+      "Aucune réservation ne correspond à ce code et à ce numéro.",
   "book.datesSoldOut":
       "Ces dates viennent d'être complètes — veuillez en choisir d'autres.",
   "book.bookingFailed": "Nous n'avons pas pu finaliser votre réservation.",
@@ -808,6 +812,7 @@ const Map<String, String> frKeys = {
   "book.addOnsAfterConfirmation":
       "Les extras (@items) pourront être réservés depuis l'onglet Services une fois votre séjour confirmé par l'hôtel.",
   "cards.soldOut": "Complet",
+  "cards.upToGuests": "Jusqu'à @count pers.",
   "cards.lastRoom": "Dernière chambre",
   "cards.roomsLeft": "@count chambres restantes",
   "cards.yourName": "VOTRE NOM",

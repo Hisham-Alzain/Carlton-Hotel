@@ -886,6 +886,9 @@ class AppTranslations {
   static String get phoneNumberRequired => 'book.phoneNumberRequired'.tr;
   static String get promoInvalid => 'book.promoInvalid'.tr;
   static String get roomSoldOut => 'book.roomSoldOut'.tr;
+  static String roomTooSmall(int count) =>
+      'book.roomTooSmall'.trParams({'count': '$count'});
+  static String get bookingLinkNotFound => 'auth.bookingLinkNotFound'.tr;
   static String get datesSoldOut => 'book.datesSoldOut'.tr;
   static String get bookingFailed => 'book.bookingFailed'.tr;
   static String get dietaryNotesHint => 'book.dietaryNotesHint'.tr;
@@ -904,6 +907,8 @@ class AppTranslations {
   static String addOnsAfterConfirmation(String items) =>
       'book.addOnsAfterConfirmation'.trParams({'items': items});
   static String get soldOut => 'cards.soldOut'.tr;
+  static String upToGuests(int count) =>
+      'cards.upToGuests'.trParams({'count': '$count'});
   static String get lastRoom => 'cards.lastRoom'.tr;
   static String roomsLeft(String count) =>
       'cards.roomsLeft'.trParams({'count': count});

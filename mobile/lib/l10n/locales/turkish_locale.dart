@@ -764,6 +764,10 @@ const Map<String, String> trKeys = {
   "book.phoneNumberRequired": "Telefon numarası*",
   "book.promoInvalid": "Bu promosyon kodu geçersiz veya süresi dolmuş.",
   "book.roomSoldOut": "Bu oda seçtiğiniz tarihlerde dolu.",
+  "book.roomTooSmall":
+      "Bu oda en fazla @count misafir alır. Misafir sayısını azaltın veya başka bir oda seçin.",
+  "auth.bookingLinkNotFound":
+      "Bu kod ve telefon numarasıyla bir rezervasyon bulunamadı.",
   "book.datesSoldOut":
       "Bu tarihler az önce doldu — lütfen başka tarihler seçin.",
   "book.bookingFailed": "Rezervasyonunuzu tamamlayamadık.",
@@ -789,6 +793,7 @@ const Map<String, String> trKeys = {
   "book.addOnsAfterConfirmation":
       "Ek hizmetler (@items), otel konaklamanızı onayladıktan sonra Hizmetler sekmesinden rezerve edilebilir.",
   "cards.soldOut": "Tükendi",
+  "cards.upToGuests": "En fazla @count misafir",
   "cards.lastRoom": "Son oda",
   "cards.roomsLeft": "@count oda kaldı",
   "cards.yourName": "ADINIZ",

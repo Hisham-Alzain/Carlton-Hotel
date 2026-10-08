@@ -735,6 +735,9 @@ const Map<String, String> arKeys = {
   "book.phoneNumberRequired": "*رقم الهاتف",
   "book.promoInvalid": "رمز العرض غير صالح أو منتهي الصلاحية.",
   "book.roomSoldOut": "هذه الغرفة محجوزة بالكامل في التواريخ المختارة.",
+  "book.roomTooSmall":
+      "تتسع هذه الغرفة لـ @count ضيوف كحد أقصى. اختر عددًا أقل من الضيوف أو غرفة أخرى.",
+  "auth.bookingLinkNotFound": "لم نعثر على حجز بهذا الرمز ورقم الهاتف.",
   "book.datesSoldOut": "نفدت هذه التواريخ للتو — يرجى اختيار تواريخ أخرى.",
   "book.bookingFailed": "لم نتمكن من إتمام حجزك.",
   "book.dietaryNotesHint":
@@ -758,6 +761,7 @@ const Map<String, String> arKeys = {
   "book.addOnsAfterConfirmation":
       "يمكنك حجز الإضافات (@items) من تبويب الخدمات بعد أن يؤكد الفندق إقامتك.",
   "cards.soldOut": "نفدت الغرف",
+  "cards.upToGuests": "حتى @count ضيوف",
   "cards.lastRoom": "الغرفة الأخيرة",
   "cards.roomsLeft": "بقيت @count غرف",
   "cards.yourName": "اسمك",

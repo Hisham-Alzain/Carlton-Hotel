@@ -286,6 +286,10 @@ class CheckInService extends GetxService {
   /// The outcome is deliberately three-valued: [CheckInOutcome.incomplete]
   /// never reaches the network, so the caller — not ApiService — owes the guest
   /// an explanation.
+  /// The server's own words for the last [CheckInOutcome.notOpenOnServer]
+  /// ("Check-in opens on your arrival day, …"), localized by Accept-Language.
+  String? notOpenMessage;
+
   Future<CheckInOutcome> completeCheckIn() async {
     if (notOpenReason != null) return CheckInOutcome.notOpenYet;
     if (!isReadyToCheckIn) return CheckInOutcome.incomplete;
@@ -298,6 +302,8 @@ class CheckInService extends GetxService {
       final error = response.error;
       switch (error?.errorCode) {
         case ErrorCodes.reservationState:
+          final message = error?.message ?? '';
+          notOpenMessage = message.isEmpty ? null : message;
           return CheckInOutcome.notOpenOnServer;
         // No clean room of the booked type is free right now: the booking is
         // fine, the room is not ready — "no rooms for your dates" would scare.

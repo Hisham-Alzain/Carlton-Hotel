@@ -26,12 +26,17 @@ class CustomRoomResultCard extends StatelessWidget {
   /// room that is free.
   final int? roomsAvailable;
 
+  /// False when the room takes fewer guests than the guest chose: the button
+  /// greys out like a sold-out room, and [RoomOption.maxOccupancy] says why.
+  final bool fitsParty;
+
   const CustomRoomResultCard({
     required this.room,
     required this.nights,
     required this.onSelect,
     this.onTap,
     this.roomsAvailable,
+    this.fitsParty = true,
     super.key,
   });
 
@@ -98,6 +103,13 @@ class CustomRoomResultCard extends StatelessWidget {
             _meta('assets/icons/space.svg', room.area),
             _meta('assets/icons/view.svg', room.view),
             _meta('assets/icons/king_bed.svg', room.bed),
+            if (room.maxOccupancy != null)
+              _meta(
+                null,
+                AppTranslations.upToGuests(room.maxOccupancy!),
+                icon: Icons.people_outline,
+                color: fitsParty ? AppColors.graphite : AppColors.brickRed,
+              ),
           ],
         ),
         Wrap(
@@ -143,7 +155,7 @@ class CustomRoomResultCard extends StatelessWidget {
             CustomFilledButton(
               // Greyed rather than hidden: a sold-out room still tells the
               // guest the hotel has it, which is why the card stays.
-              backgroundColor: _soldOut
+              backgroundColor: _soldOut || !fitsParty
                   ? AppColors.mediumGrey
                   : AppColors.lagoonTeal,
               onPressed: onSelect,
@@ -157,15 +169,22 @@ class CustomRoomResultCard extends StatelessWidget {
     );
   }
 
-  Widget _meta(String iconPath, String text) {
+  Widget _meta(
+    String? iconPath,
+    String text, {
+    IconData? icon,
+    Color color = AppColors.graphite,
+  }) {
     final TextTheme textStyle = Get.textTheme;
     return RowTextComponent(
       iconPath: iconPath,
-      iconColor: AppColors.graphite,
+      icon: icon,
+      iconSize: icon == null ? null : 14,
+      iconColor: color,
       text: text,
       textStyle: textStyle.labelSmall?.copyWith(
         fontWeight: FontWeight.w300,
-        color: AppColors.graphite,
+        color: color,
       ),
       spacing: 10,
     );

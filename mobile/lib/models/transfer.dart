@@ -1,14 +1,11 @@
 import 'package:carlton/models/localized.dart';
 
-/// A bookable airport/city transfer from `GET /transfers`.
+/// A bookable airport/city transfer from `GET /public/transfers`.
 ///
-/// The design (Figma frame "Airport Transfer", step 2 of 3) shows each vehicle
-/// with a description line and a passenger capacity. `TransferResource` carries
-/// neither — it returns `uuid`, `name`, `price_usd`, `is_active` and nothing
-/// else — so [description] and [maxPassengers] are parsed defensively and are
-/// null/absent until the API grows those fields. The card hides the line rather
-/// than inventing one; do NOT hardcode the mock's "Mercedes C-Class or similar"
-/// against a name the endpoint actually returned.
+/// Each vehicle has a description line and a passenger capacity (Figma
+/// "Airport Transfer", step 2 of 3). The API sends both, but either may be
+/// `null` ("not stated"); the card then hides that line rather than inventing
+/// one — do NOT hardcode the mock's "Mercedes C-Class or similar".
 class Transfer {
   final String uuid;
 
@@ -19,12 +16,12 @@ class Transfer {
   /// `MoneyFormat.usdString` so the guest's selected currency applies.
   final String priceUsd;
 
-  /// Vehicle blurb ("BMW 5-Series or similar"). Null until the API supplies it.
+  /// Vehicle blurb ("BMW 5-Series or similar"), or null when not stated.
   final Localized? description;
 
-  /// Seats. Null until the API supplies it — the capacity line is then hidden
-  /// rather than guessed, since booking a car too small is worse than an
-  /// unlabelled one.
+  /// Seats, or null when not stated — the capacity line is then hidden rather
+  /// than guessed, since booking a car too small is worse than an unlabelled
+  /// one.
   final int? maxPassengers;
 
   const Transfer({

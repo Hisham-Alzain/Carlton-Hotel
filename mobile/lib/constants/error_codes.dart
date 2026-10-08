@@ -28,7 +28,8 @@ class ErrorCodes {
   static const String otpExpired = 'otp_expired';
   static const String otpInvalid = 'otp_invalid';
   static const String otpLocked = 'otp_locked';
-  static const String bookingLinkUnavailable = 'booking_link_unavailable';
+  static const String bookingLinkFailed = 'booking_link_failed';
+  static const String occupancyExceeded = 'occupancy_exceeded';
   static const String verifiedContactImmutable = 'verified_contact_immutable';
   static const String noActiveReservation = 'no_active_reservation';
   static const String noAvailability = 'no_availability';

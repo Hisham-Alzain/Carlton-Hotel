@@ -2,6 +2,7 @@ import 'package:carlton/controllers/booking/booking_flow_controller.dart';
 import 'package:carlton/models/booking_models.dart';
 import 'package:carlton/models/quote.dart';
 import 'package:carlton/models/reservation.dart';
+import 'package:carlton/models/room_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Phase 3 — guards the booking data layer + controller display logic after the
@@ -121,6 +122,45 @@ void main() {
       // reset-state dates are today → today+1 (1 night); no quote yet.
       expect(c.quote.value, isNull);
       expect(c.totalDisplay, r'$200');
+    });
+  });
+
+  group('party size vs room capacity (occupancy_exceeded)', () {
+    RoomOption room({int? max}) => RoomOption(
+      id: 'x',
+      name: 'Suite',
+      images: const [],
+      area: '',
+      view: '',
+      bed: '',
+      rating: 5,
+      reviewCount: 0,
+      pricePerNight: 200,
+      amenityChips: const [],
+      highlights: const [],
+      amenities: const [],
+      description: '',
+      maxOccupancy: max,
+    );
+
+    test('max_occupancy is read from the room type', () {
+      final rt = RoomType.fromJson(<String, dynamic>{
+        'uuid': 'r1',
+        'max_occupancy': 3,
+      });
+      expect(rt.maxOccupancy, 3);
+      expect(RoomType.fromJson(<String, dynamic>{}).maxOccupancy, isNull);
+    });
+
+    test('a room fits only a party within its capacity', () {
+      final c = BookingFlowController();
+      c.setAdults(2);
+      c.setChildren(1);
+      expect(c.partySize, 3);
+      expect(c.fitsParty(room(max: 3)), isTrue);
+      expect(c.fitsParty(room(max: 2)), isFalse);
+      // Unknown capacity is left to the server's check.
+      expect(c.fitsParty(room()), isTrue);
     });
   });
 }

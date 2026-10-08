@@ -57,8 +57,13 @@ void main() {
         'base_price_usd': '200.00',
         'amenities': [amenity('tv', 'Smart TV'), amenity('jacuzzi', 'Jacuzzi')],
         'highlights': [amenity('tv', 'Smart TV')],
+        'max_occupancy': 3,
       }),
     );
+
+    // Carried onto the booking option, where the room card and selection
+    // check it against the guest count.
+    expect(room.maxOccupancy, 3);
 
     final tv = room.amenities.first;
     expect(tv.label, 'Smart TV');

@@ -1,4 +1,7 @@
+import 'package:carlton/constants/error_codes.dart';
 import 'package:carlton/customWidgets/custom_country_code_picker.dart';
+import 'package:carlton/customWidgets/custom_snackbar.dart';
+import 'package:carlton/l10n/app_translations.dart';
 import 'package:carlton/models/otp_verify_args.dart';
 import 'package:carlton/models/pending_booking_link.dart';
 import 'package:carlton/routes/routes.dart';
@@ -24,7 +27,7 @@ class FindBookingController extends GetxController {
   final RxBool isSubmitting = false.obs;
 
   Future<void> submit() async {
-    if (!formKey.currentState!.validate()) return;
+    if (isSubmitting.value || !formKey.currentState!.validate()) return;
 
     final bookingCode = codeController.text.trim();
     final phoneNumber = phone.controller.text.trim();
@@ -33,11 +36,22 @@ class FindBookingController extends GetxController {
     final response = await ApiService.find.post<Map<String, dynamic>>(
       path: '/auth/guest/link-booking-code',
       data: {'booking_code': bookingCode, 'phone': phoneNumber},
+      showErrorDialog: false,
     );
     if (isClosed) return;
     isSubmitting.value = false;
 
-    if (!response.hasData) return;
+    if (!response.hasData) {
+      final error = response.error;
+      // Every miss (unknown code, wrong phone, no contact on file) is the same
+      // `booking_link_failed`, by design: say "not found", never which part.
+      if (error?.errorCode == ErrorCodes.bookingLinkFailed) {
+        CustomSnackbars.showError(message: AppTranslations.bookingLinkNotFound);
+      } else if (error != null) {
+        ApiService.find.dialogs.showError(error);
+      }
+      return;
+    }
 
     // Stash so the OTP screen can re-trigger link-booking-code on resend.
     await SessionService.setPendingBookingLink(

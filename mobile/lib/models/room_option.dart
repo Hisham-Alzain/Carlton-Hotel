@@ -29,6 +29,10 @@ class RoomOption {
   final List<IconLabel> amenities;
   final String description;
 
+  /// Most guests the room takes, or null when unknown (then not enforced
+  /// here; the server still checks it).
+  final int? maxOccupancy;
+
   const RoomOption({
     required this.id,
     required this.name,
@@ -44,6 +48,7 @@ class RoomOption {
     required this.amenities,
     required this.description,
     this.uuid = '',
+    this.maxOccupancy,
   });
 
   /// Copy with a different `room_type_uuid`.
@@ -62,6 +67,7 @@ class RoomOption {
     highlights: highlights,
     amenities: amenities,
     description: description,
+    maxOccupancy: maxOccupancy,
   );
 
   /// Maps the API room-type detail (`GET /public/room-types/{uuid}`) to the
@@ -91,6 +97,7 @@ class RoomOption {
       highlights: r.highlights.map(toIconLabel).toList(),
       amenities: r.amenities.map(toIconLabel).toList(),
       description: r.description.value,
+      maxOccupancy: r.maxOccupancy,
     );
   }
 

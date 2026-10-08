@@ -747,6 +747,10 @@ const Map<String, String> enKeys = {
   "book.phoneNumberRequired": "Phone Number*",
   "book.promoInvalid": "That promo code is invalid or expired.",
   "book.roomSoldOut": "That room is sold out for your dates.",
+  "book.roomTooSmall":
+      "This room fits up to @count guests. Choose fewer guests or another room.",
+  "auth.bookingLinkNotFound":
+      "We couldn't find a booking with that code and phone number.",
   "book.datesSoldOut":
       "Those dates just sold out — please try different dates.",
   "book.bookingFailed": "We couldn't complete your booking.",
@@ -772,6 +776,7 @@ const Map<String, String> enKeys = {
   "book.addOnsAfterConfirmation":
       "Add-ons (@items) can be booked from the Services tab once the hotel confirms your stay.",
   "cards.soldOut": "Sold Out",
+  "cards.upToGuests": "Up to @count guests",
   "cards.lastRoom": "Last room",
   "cards.roomsLeft": "@count rooms left",
   "cards.yourName": "YOUR NAME",

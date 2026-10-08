@@ -769,6 +769,10 @@ const Map<String, String> esKeys = {
   "book.phoneNumberRequired": "Número de teléfono*",
   "book.promoInvalid": "Ese código promocional no es válido o ha caducado.",
   "book.roomSoldOut": "Esa habitación está agotada para tus fechas.",
+  "book.roomTooSmall":
+      "Esta habitación admite hasta @count huéspedes. Elige menos huéspedes u otra habitación.",
+  "auth.bookingLinkNotFound":
+      "No encontramos ninguna reserva con ese código y número de teléfono.",
   "book.datesSoldOut":
       "Esas fechas se acaban de agotar: prueba con otras fechas.",
   "book.bookingFailed": "No pudimos completar tu reserva.",
@@ -794,6 +798,7 @@ const Map<String, String> esKeys = {
   "book.addOnsAfterConfirmation":
       "Los extras (@items) se pueden reservar desde la pestaña Servicios cuando el hotel confirme tu estancia.",
   "cards.soldOut": "Agotado",
+  "cards.upToGuests": "Hasta @count huéspedes",
   "cards.lastRoom": "Última habitación",
   "cards.roomsLeft": "Quedan @count habitaciones",
   "cards.yourName": "TU NOMBRE",

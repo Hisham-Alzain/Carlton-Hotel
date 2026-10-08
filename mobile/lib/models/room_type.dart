@@ -22,6 +22,11 @@ class RoomType {
   final List<Amenity> amenities;
   final int? cancellationHours;
 
+  /// Most guests (adults + children) the room type takes. `POST
+  /// /reservations` refuses a bigger party with `occupancy_exceeded`; null
+  /// when the server did not say.
+  final int? maxOccupancy;
+
   const RoomType({
     required this.uuid,
     required this.name,
@@ -37,6 +42,7 @@ class RoomType {
     this.highlights = const [],
     this.amenities = const [],
     this.cancellationHours,
+    this.maxOccupancy,
   });
 
   factory RoomType.fromJson(Map<String, dynamic> json) {
@@ -59,6 +65,7 @@ class RoomType {
       highlights: Amenity.listFromJson(json['highlights']),
       amenities: Amenity.listFromJson(json['amenities']),
       cancellationHours: asInt(json['cancellation_hours']),
+      maxOccupancy: asInt(json['max_occupancy']),
     );
   }
 }

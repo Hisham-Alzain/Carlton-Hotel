@@ -84,6 +84,17 @@ class BookingFlowController extends GetxController
   /// False only when the check came back with none left.
   bool isBookable(RoomOption room) => (roomsAvailable[room.uuid] ?? 1) > 0;
 
+  /// Guests the booking is for; sent as `adults` / `children`.
+  int get partySize => adults.value + children.value;
+
+  /// False when the room type is known to take fewer guests than chosen. The
+  /// server checks this only on `POST /reservations`, so it is caught here
+  /// before the guest fills in the rest of the booking.
+  bool fitsParty(RoomOption room) {
+    final max = room.maxOccupancy;
+    return max == null || partySize <= max;
+  }
+
   /// The Add-Ons step's catalogue, fetched from the three public bookable
   /// endpoints. Rx because it lands after the step can already be on screen.
   final RxList<AddOn> addOns = <AddOn>[].obs;

@@ -62,6 +62,7 @@ class ChooseRoomView extends StatelessWidget {
                       room: room,
                       nights: controller.nights,
                       roomsAvailable: controller.availableFor(room),
+                      fitsParty: controller.fitsParty(room),
                       onSelect: () => controller.selectRoom(room),
                       onTap: () => controller.openRoomDetails(room),
                     );

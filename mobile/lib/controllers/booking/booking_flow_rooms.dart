@@ -19,6 +19,12 @@ extension BookingRoomActions on BookingFlowController {
         CustomSnackbars.showInfo(message: AppTranslations.roomSoldOut);
         return;
       }
+      if (!fitsParty(preselected)) {
+        CustomSnackbars.showInfo(
+          message: AppTranslations.roomTooSmall(preselected.maxOccupancy!),
+        );
+        return;
+      }
       Get.toNamed(Routes.addOns);
       return;
     }
@@ -148,6 +154,12 @@ extension BookingRoomActions on BookingFlowController {
     // the guest would have entered their details and card first.
     if (!isBookable(room)) {
       CustomSnackbars.showInfo(message: AppTranslations.roomSoldOut);
+      return;
+    }
+    if (!fitsParty(room)) {
+      CustomSnackbars.showInfo(
+        message: AppTranslations.roomTooSmall(room.maxOccupancy!),
+      );
       return;
     }
     selectedRoom.value = room;

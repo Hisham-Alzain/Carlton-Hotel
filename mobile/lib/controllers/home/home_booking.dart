@@ -62,8 +62,11 @@ extension HomeBookingLoader on HomeController {
         path: '/folio',
         showErrorDialog: false,
       );
+      // Only the open ones: the list is a fixed 15 per page, so filtering
+      // page 1 on the phone could drop active requests behind closed ones.
       final reqF = ApiService.find.get<List<dynamic>>(
         path: '/service-requests',
+        queryParameters: {'status[in]': 'new,in_progress'},
         showErrorDialog: false,
       );
       final folioRes = await folioF;
@@ -79,8 +82,8 @@ extension HomeBookingLoader on HomeController {
         billTotal.value = HomeController._usd(folio.totalUsd);
       }
       if (reqRes.hasData) {
-        // The endpoint returns every request the guest ever made, latest
-        // first; Home's "active" card keeps only the ones still open.
+        // The server already filtered; the check stays so a server without
+        // the filter (which ignores unknown params) still shows only open ones.
         activeRequests.assignAll(
           ServiceRequest.listFromJson(reqRes.data!).where(
             (r) => r.statusCode == 'new' || r.statusCode == 'in_progress',

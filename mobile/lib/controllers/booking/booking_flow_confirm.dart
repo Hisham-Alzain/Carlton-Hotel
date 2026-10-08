@@ -39,6 +39,10 @@ extension BookingConfirmActions on BookingFlowController {
       'check_in': _fmtDate(rangeStart.value!),
       'check_out': _fmtDate(rangeEnd.value!),
       'payment_method': apiMethod,
+      // Part of the replay fingerprint below: the server compares party size
+      // when it matches a retried booking to the first one.
+      'adults': adults.value,
+      'children': children.value,
       if (promoApplied.value && promoCtrl.text.trim().isNotEmpty)
         'promo_code': promoCtrl.text.trim(),
       ..._loyaltyFields,
@@ -130,6 +134,12 @@ extension BookingConfirmActions on BookingFlowController {
     final message = switch (res.error?.errorCode) {
       ErrorCodes.noAvailability => AppTranslations.datesSoldOut,
       ErrorCodes.invalidPromo => AppTranslations.promoInvalid,
+      // More guests than the room type takes (checked only at booking).
+      ErrorCodes.occupancyExceeded => AppTranslations.roomTooSmall(
+        (res.error!.context['max_occupancy'] as num?)?.toInt() ??
+            selectedRoom.value?.maxOccupancy ??
+            partySize - 1,
+      ),
       _ =>
         _loyaltyMessage(res.error) ??
             res.error?.message ??

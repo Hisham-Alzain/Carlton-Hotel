@@ -350,6 +350,44 @@ final class LoyaltyLedger
         });
     }
 
+    /**
+     * Forfeit a deleted account's whole balance (Phase 10 gap, LOY-23): one
+     * `expire` entry per active batch, written through expire(), so the key is
+     * the same `expire:batch:{id}` and the daily sweep later writes nothing.
+     * Active batches already past expires_at but not yet swept are included,
+     * because the account is closing; depleted, expired and reversed batches
+     * are never touched. FIFO order `expires_at, id` (Q14) keeps the entries
+     * and the locks deterministic. Reads no program setting. Same caller
+     * contract as the class: open transaction, guest row already locked.
+     *
+     * @return array{points: int, batches: int} points forfeited and batches expired
+     */
+    public function forfeit(int $guestId): array
+    {
+        return DB::transaction(function () use ($guestId): array {
+            $batches = LoyaltyEarnBatch::query()
+                ->where('guest_id', $guestId)
+                ->where('status', LoyaltyBatchStatus::ACTIVE->value)
+                ->orderBy('expires_at')
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+
+            $points = 0;
+            $count = 0;
+            foreach ($batches as $batch) {
+                $entry = $this->expire($batch);
+
+                if ($entry !== null) {
+                    $points += abs((int) $entry->points);
+                    $count++;
+                }
+            }
+
+            return ['points' => $points, 'batches' => $count];
+        });
+    }
+
     /** The guest's active batches that have not yet expired, judged against the clock and never the sweep. */
     private function spendable(int $guestId): Builder
     {

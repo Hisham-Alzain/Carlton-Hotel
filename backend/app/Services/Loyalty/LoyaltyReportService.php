@@ -2,12 +2,14 @@
 
 namespace App\Services\Loyalty;
 
+use App\Enums\GuestAccountStatus;
 use App\Enums\LoyaltyBatchStatus;
 use App\Enums\LoyaltyEntryType;
 use App\Models\LoyaltyEarnBatch;
 use App\Support\HotelClock;
 use App\Support\LoyaltyMath;
 use App\Support\LoyaltyProgram;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -96,10 +98,20 @@ class LoyaltyReportService
         return $sums;
     }
 
-    /** Spendable points right now: active batches that have not yet reached their expiry. */
+    /**
+     * Spendable points right now: active batches that have not yet reached
+     * their expiry, on accounts that are not deleted.
+     *
+     * The deleted-account filter is defensive (LOY-23): deletion forfeits the
+     * balance (10-16), so this only keeps residue from accounts deleted before
+     * the forfeit existed out of outstanding points and liability. It compiles
+     * into the same single statement, so the report still runs exactly three
+     * queries.
+     */
     private function outstandingPoints(): int
     {
         return (int) LoyaltyEarnBatch::query()
+            ->whereDoesntHave('guest', fn (Builder $guest) => $guest->where('account_status', GuestAccountStatus::DELETED->value))
             ->where('status', LoyaltyBatchStatus::ACTIVE->value)
             ->where('expires_at', '>', now())
             ->sum('points_remaining');

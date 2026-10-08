@@ -36,6 +36,9 @@ class StoreReservationRequest extends BaseRequest
             'check_out'      => ['required', 'date', 'after:check_in'],
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
             'promo_code'     => ['nullable', 'string'],
+            // Optional party size; null means the default (1 adult, 0 children). 20 = the max_occupancy ceiling.
+            'adults'         => ['nullable', 'integer', 'min:1', 'max:20'],
+            'children'       => ['nullable', 'integer', 'min:0', 'max:20'],
             'loyalty_points' => ['nullable', 'integer', 'min:1', 'max:100000000'],
             'voucher_code'   => ['nullable', 'string', 'max:16'],
             'idempotency_key' => ['nullable', 'string', 'max:64', 'required_with:loyalty_points,voucher_code'],

@@ -52,6 +52,8 @@ class StoreAdminReservationRequest extends BaseRequest
             'check_out'      => ['required', 'date', 'after:check_in'],
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
             'promo_code'     => ['nullable', 'string'],
+            'adults'         => ['nullable', 'integer', 'min:1', 'max:20'],
+            'children'       => ['nullable', 'integer', 'min:0', 'max:20'],
 
             // Defaults to confirmed — staff have the guest in front of them, so
             // there is nothing left to verify. `pending` is allowed for a phone

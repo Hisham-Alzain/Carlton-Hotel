@@ -23,7 +23,7 @@ class ServiceRequestController extends BaseController
     public function index(Request $request): JsonResponse
     {
         return $this->paginatedSuccess(
-            $this->service->myRequests($request->user('guests'))['data'],
+            $this->service->myRequests($request->user('guests'), $this->indexParams($request))['data'],
             ServiceRequestResource::class,
             $request
         );

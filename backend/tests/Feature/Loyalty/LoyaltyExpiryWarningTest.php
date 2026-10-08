@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Loyalty;
 
+use App\Actions\Loyalty\NotifyExpiringLoyaltyPointsAction;
 use App\Contracts\FirebaseServiceInterface;
 use App\Enums\NotificationType;
 use App\Models\DeviceToken;
@@ -259,5 +260,48 @@ class LoyaltyExpiryWarningTest extends TestCase
         $this->assertSame('0 9 * * *', $events[0]->expression);
         $this->assertSame(config('hotel.timezone'), (string) $events[0]->timezone);
         $this->assertTrue($events[0]->withoutOverlapping);
+    }
+
+    // ------------------------------------------------------------------ LOY-23: deleted accounts
+
+    public function test_a_deleted_account_is_never_warned_and_an_active_guest_still_is(): void
+    {
+        // Residue (G-10): a deleted account that still holds a live batch can only
+        // come from data written before the deletion forfeit shipped.
+        $deleted = Guest::factory()->deleted()->create();
+        DeviceToken::factory()->create(['guest_id' => $deleted->id, 'token' => 'tok-deleted']);
+        $deletedBatch = $this->grantPoints($deleted, 100, now()->addDays(5));
+
+        $active = $this->guestWithDevice(null, 'tok-active');
+        $activeBatch = $this->grantPoints($active, 60, now()->addDays(5));
+
+        $this->artisan('loyalty:notify-expiring')
+            ->expectsOutputToContain('Warned 1 guest(s)')
+            ->assertSuccessful();
+
+        $this->assertSame([$active->id], $this->warnings()->pluck('guest_id')->all());
+        $this->assertSame(0, GuestNotification::query()->where('guest_id', $deleted->id)->count());
+        $this->assertCount(1, $this->firebase->pushes);
+        $this->assertSame(['tok-active'], $this->firebase->pushes[0]['tokens']);
+        $this->assertNull($deletedBatch->refresh()->expiry_warned_at);
+        $this->assertNotNull($activeBatch->refresh()->expiry_warned_at);
+    }
+
+    public function test_a_run_whose_only_batch_is_on_a_deleted_account_notifies_nobody(): void
+    {
+        $deleted = Guest::factory()->deleted()->create();
+        DeviceToken::factory()->create(['guest_id' => $deleted->id, 'token' => 'tok-deleted']);
+        $batch = $this->grantPoints($deleted, 100, now()->addDays(5));
+
+        $result = app(NotifyExpiringLoyaltyPointsAction::class)->handle();
+
+        $this->assertSame(['guests_notified' => 0, 'failures' => 0], $result['data']);
+        $this->assertCount(0, $this->warnings());
+        $this->assertSame([], $this->firebase->pushes);
+        $this->assertNull($batch->refresh()->expiry_warned_at);
+
+        $this->artisan('loyalty:notify-expiring')
+            ->expectsOutputToContain('Warned 0 guest(s)')
+            ->assertSuccessful();
     }
 }

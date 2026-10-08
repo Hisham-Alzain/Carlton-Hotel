@@ -31,6 +31,8 @@ class ReservationResource extends BaseResource
                 'until'   => $this->dnd_until?->toIso8601String(),
             ],
             'nights'         => $this->nights(),
+            'adults'         => $this->adults,
+            'children'       => $this->children,
             'source'         => $this->source,
             'payment_method' => $this->payment_method,
             'total_usd'      => $this->total_usd,

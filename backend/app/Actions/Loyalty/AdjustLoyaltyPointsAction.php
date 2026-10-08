@@ -4,6 +4,7 @@ namespace App\Actions\Loyalty;
 
 use App\Enums\LoyaltyBatchSource;
 use App\Enums\LoyaltyEntryType;
+use App\Exceptions\GuestAccountDeletedException;
 use App\Exceptions\LoyaltyAdjustmentInvalidException;
 use App\Models\Guest;
 use App\Models\LoyaltyLedgerEntry;
@@ -29,6 +30,10 @@ use Illuminate\Support\Facades\DB;
  * drive a batch or the balance below zero (LoyaltyInsufficientPointsException).
  * The magnitude guard runs first and is a domain error so non-HTTP callers get
  * it too.
+ *
+ * A deleted account (9.1) is refused with `guest_account_deleted` (LOY-23)
+ * under the guest lock, before the replay lookup, so neither a fresh write nor
+ * a replay reaches the ledger.
  */
 class AdjustLoyaltyPointsAction
 {
@@ -38,6 +43,7 @@ class AdjustLoyaltyPointsAction
      * @return array{data: LoyaltyLedgerEntry, code: int}
      *
      * @throws LoyaltyAdjustmentInvalidException
+     * @throws GuestAccountDeletedException
      */
     public function handle(Guest $guest, int $points, string $reason, User $actor, string $key): array
     {
@@ -52,6 +58,10 @@ class AdjustLoyaltyPointsAction
 
         return DB::transaction(function () use ($guest, $points, $reason, $actor, $key) {
             $locked = Guest::whereKey($guest->id)->lockForUpdate()->firstOrFail();
+            if ($locked->isDeleted()) {
+                throw new GuestAccountDeletedException(__('custom.errors.guest_account_deleted'));
+            }
+
             $ledgerKey = 'adjust:'.$locked->id.':'.$key;
 
             [$entry, $replayed] = IdempotentWrite::run(

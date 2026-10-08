@@ -20,6 +20,57 @@ nine commits (`2fd294f` → `5d254a7`).
 
 ---
 
+## 2026-10-07 — Phase 10 (gap) — Loyalty forfeit on account deletion
+
+**No breaking changes.** No route, field, error code or notification type changes.
+
+- `DELETE /api/auth/guest/me` now also forfeits the loyalty balance and closes unused vouchers. This cannot be undone. The response is unchanged.
+- Signing in again with the same phone or email gives a new account with zero points; the old balance is not carried over.
+- Flutter: before the delete confirmation, warn the guest using `available_points` (`GET /api/loyalty/account`) and the active voucher count (`GET /api/loyalty/vouchers?status=active`).
+- A deleted account receives no `loyalty_points_expiring` push.
+- Voucher status `void` now appears for vouchers closed by an account deletion.
+
+---
+
+## 2026-10-07 — Quick 261007-it6 — Mobile app requests
+
+**The contract change is additive; the Flutter and React teams were notified.** Every new field and query parameter is optional, no field was renamed or removed, and HTTP statuses are unchanged. One error code is corrected to what the docs always promised (see Changed).
+
+**Added**
+
+- `adults` (integer 1-20, default 1) and `children` (integer 0-20, default 0) on `POST /api/reservations` and on staff `POST /api/cms/reservations`. Stored on the reservation and returned as `adults` / `children` on `POST /reservations`, `GET /reservations`, `GET /reservations/{uuid}` and the staff reservation payloads. Bookings made earlier read `1` / `0`. Party size is part of the idempotent-replay comparison. `GET /public/availability`, `GET /public/quote` and `POST /reservations/guest` do not take party size.
+- `GET /api/reservations` honours `per_page` (default 15, max 100).
+- Transfers (`GET /public/transfers`, and `POST|PUT /cms/transfers` for staff) gain `description` (`{en, ar}` map or `null`) and `max_passengers` (integer or `null`).
+- Every chat message payload carries `conversation_uuid` (guest and staff history, `POST /api/conversations`, staff send).
+- `GET /api/service-requests` accepts a `status` filter (`?status=new` or `?status[in]=new,in_progress`).
+- Guide index now lists `POST /api/stays/check-in` and the ten public content routes (`/public/experiences`, `/public/experiences/{uuid}`, `/public/faqs`, `/public/testimonials`, `/public/gallery-categories`, `/public/gallery`, `/public/journal`, `/public/journal/{slug}`, `/public/settings`, `/public/dining-venues/{uuid}/menu/download`), 81 routes in all. These routes already existed; only the documentation is new.
+
+**Changed (one route, same HTTP status)**
+
+- `POST /api/auth/guest/link-booking-code`: every failed lookup (unknown code, wrong last name or phone, booking with no contact on file) now answers `404` with `error_code: booking_link_failed` and an identical body. It was `not_found` before; the docs always said `booking_link_failed`. The route is now throttled to 10 requests per minute per IP (`429 too_many_requests`), like `request-otp`.
+
+**New error codes**
+
+- `occupancy_exceeded` (422): `adults + children` is over the room type's `max_occupancy`; `context` is `{ max_occupancy, requested }`. Nothing is written.
+- `reservation_state` (422) on `POST /stays/check-in` is now documented: self check-in is arrival day only.
+
+**Removed:** nothing a client could receive. The unused `booking_link_unavailable` class was never emitted.
+
+**Docs fixes**
+
+- `identity_required` was listed as an error code but the server never sent it; a request with neither phone nor email answers `422 validation_failed` with the message under `errors.identity`.
+- The `link-booking-code` success body is `{ identifier_masked, channel }`, not `{ message, masked_contact }`.
+
+**Flutter actions**
+
+- a) Send `adults` / `children` on `POST /reservations` and handle `occupancy_exceeded`.
+- b) Page `GET /reservations` with `per_page` if you need more than 15 at once.
+- c) Show `description` and `max_passengers` on transfers; treat `null` as "not stated".
+- d) Use `conversation_uuid` from the `POST /conversations` response to open the history without listing first.
+- e) Branch the link-booking-code miss on `booking_link_failed`, read `identifier_masked` / `channel` on success, and show the server message on a `reservation_state` answer from `POST /stays/check-in`.
+
+---
+
 ## 2026-10-05 — Phase 10 — Loyalty Points Program
 
 **No breaking changes.** Every route, field, error code and notification type below is new or optional; existing app builds keep working untouched. Full contract: `API_GUIDE_MOBILE.md` → *Module: Loyalty*.

@@ -34,6 +34,13 @@ class Reservation extends Model
         'status', 'hold_expires_at', 'payment_method',
         'total_usd', 'promo_code_id', 'last_name', 'phone', 'notes',
         'arrival_time', 'online_check_in_submitted_at', 'check_out_mode',
+        'adults', 'children',
+    ];
+
+    /** Mirrors the column defaults so a freshly created model serialises the minimum party, not null. */
+    protected $attributes = [
+        'adults'   => 1,
+        'children' => 0,
     ];
 
     /** The key and its hash never serialise (D-11); guests read it through StayPayload. */
@@ -51,6 +58,8 @@ class Reservation extends Model
         'dnd_until'       => 'datetime',
         'hold_expires_at' => 'datetime',
         'total_usd'       => 'decimal:2',
+        'adults'          => 'integer',
+        'children'        => 'integer',
         'online_check_in_submitted_at' => 'datetime',
         'digital_key_code'             => 'encrypted',
         'digital_key_issued_at'        => 'datetime',

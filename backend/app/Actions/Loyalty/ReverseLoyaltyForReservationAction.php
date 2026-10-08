@@ -32,12 +32,19 @@ use Illuminate\Support\Facades\DB;
  * Idempotent: only an `applied` application is reversed (and flipped to
  * `reversed`), and the ledger keys `refund:{id}` / `clawback:{id}` are unique,
  * so a second call writes nothing, not even a second shortfall log.
+ *
+ * Phase 10 gap (LOY-23): for an account deleted after this booking (9.1),
+ * whatever the reversal gives back (refunded points, a restored voucher) is
+ * forfeited again in the same transaction, so a deleted account never regains
+ * a balance. The check reads the guest this action already locked, so a guest
+ * that is not deleted costs no extra query.
  */
 class ReverseLoyaltyForReservationAction
 {
     public function __construct(
         private readonly LoyaltyLedger $ledger,
         private readonly ReverseLoyaltyForFolioAction $reverseFolio,
+        private readonly ForfeitLoyaltyBalanceAction $forfeit,
     ) {}
 
     /**
@@ -68,6 +75,10 @@ class ReverseLoyaltyForReservationAction
             if ($folio !== null) {
                 $result['clawback_entries'] = $this->reverseFolio->handle($folio)['data'];
                 $this->logShortfall($guest, $lockedReservation, $result['clawback_entries']);
+            }
+
+            if ($guest->isDeleted()) {
+                $this->forfeit->handle($guest);
             }
 
             return ['data' => $result, 'code' => 200];

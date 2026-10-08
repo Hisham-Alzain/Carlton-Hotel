@@ -26,7 +26,12 @@ use Illuminate\Support\Facades\DB;
  *
  * Q9: earning off (no settings row, earn_rate null or 0) or a reservation with
  * no guest writes nothing; a cancelled reservation writes only an
- * `loyalty.earn_skipped_cancelled` activity entry on the folio.
+ * `loyalty.earn_skipped_cancelled` activity entry on the folio. A reservation
+ * whose guest deleted their account (9.1) earns nothing and writes only
+ * `loyalty.earn_skipped_deleted` with the skipped point count (LOY-23). That
+ * guest read takes no lock (M-6): 9.1 refuses a deletion while the folio is
+ * open, so either the deletion sees the folio open and is refused, or it runs
+ * after this settlement committed and forfeits the new batch.
  *
  * Q10/Q11, buckets: `stay` is the reservation lines; `service` is the
  * service_booking, service_request and manual lines (by sign). A credit reduces
@@ -83,11 +88,24 @@ class EarnLoyaltyPointsAction
             return $this->none();
         }
 
+        $bucketPoints = array_map(
+            fn (string $spend): int => LoyaltyMath::pointsForSpend($spend, $program->earnRate()),
+            $this->spendByBucket($lockedFolio),
+        );
+
+        if ($reservation->guest?->isDeleted()) {
+            activity()
+                ->performedOn($lockedFolio)
+                ->causedByAnonymous()
+                ->withProperties(['skipped_points' => (int) array_sum($bucketPoints)])
+                ->log('loyalty.earn_skipped_deleted');
+
+            return $this->none();
+        }
+
         $entries = [];
 
-        foreach ($this->spendByBucket($lockedFolio) as $bucket => $spend) {
-            $points = LoyaltyMath::pointsForSpend($spend, $program->earnRate());
-
+        foreach ($bucketPoints as $bucket => $points) {
             if ($points === 0) {
                 continue;
             }

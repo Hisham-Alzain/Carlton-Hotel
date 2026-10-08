@@ -137,7 +137,9 @@ Route::prefix('auth')->group(function () {
     Route::prefix('guest')->group(function () {
         Route::post('/request-otp',      [GuestAuthController::class, 'requestOtp'])->middleware('throttle:10,1');
         Route::post('/verify-otp',       [GuestAuthController::class, 'verifyOtp']);
-        Route::post('/link-booking-code',[GuestAuthController::class, 'linkBookingCode']);
+        // Unauthenticated: checks a booking code + second factor and says whether they
+        // matched. Throttled per IP like request-otp; per-contact OTP limits still apply after a match.
+        Route::post('/link-booking-code',[GuestAuthController::class, 'linkBookingCode'])->middleware('throttle:10,1');
         Route::middleware('auth:guests')->group(function () {
             Route::post('/logout', [GuestAuthController::class, 'logout']);
             Route::get('/me',      [GuestAuthController::class, 'me']);

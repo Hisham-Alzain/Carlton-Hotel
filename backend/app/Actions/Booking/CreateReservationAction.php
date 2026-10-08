@@ -8,6 +8,7 @@ use App\Contracts\ChannelAdapterInterface;
 use App\Enums\ReservationStatus;
 use App\Exceptions\IdempotencyConflictException;
 use App\Exceptions\NoAvailabilityException;
+use App\Exceptions\OccupancyExceededException;
 use App\Models\Guest;
 use App\Models\LoyaltyReservationApplication;
 use App\Models\PromoCode;
@@ -58,6 +59,19 @@ class CreateReservationAction
                 }
             }
 
+            // The one place the party-size defaults live. Checked against the locked
+            // room_type row and before availability: an over-full party is a 422,
+            // not a 409.
+            $adults   = (int) ($data['adults'] ?? 1);
+            $children = (int) ($data['children'] ?? 0);
+
+            if ($adults + $children > (int) $roomType->max_occupancy) {
+                throw new OccupancyExceededException(
+                    __('custom.errors.occupancy_exceeded', ['max' => (int) $roomType->max_occupancy]),
+                    ['max_occupancy' => (int) $roomType->max_occupancy, 'requested' => $adults + $children],
+                );
+            }
+
             // A specific room is reserved now, not at check-in, so the guest can
             // be told "Room 801" the moment the booking is made. Picking the
             // room *is* the availability check — if none is free, none is free.
@@ -98,6 +112,8 @@ class CreateReservationAction
                 'payment_method'  => $data['payment_method'],
                 'total_usd'       => $redemption['net_total_usd'] ?? $pricing['total_usd'],
                 'promo_code_id'   => $pricing['promo_code_id'],
+                'adults'          => $adults,
+                'children'        => $children,
             ]);
 
             // Snapshot the pre-promo subtotal per room; promo discount lives at reservation level
@@ -167,6 +183,8 @@ class CreateReservationAction
             && $reservation->check_out->toDateString() === Carbon::parse($data['check_out'])->toDateString()
             && $reservation->payment_method->value === ($payment instanceof BackedEnum ? $payment->value : $payment)
             && (int) $reservation->promo_code_id === (int) ($promoCode ? PromoCode::where('code', $promoCode)->value('id') : 0)
+            && (int) $reservation->adults === (int) ($data['adults'] ?? 1)
+            && (int) $reservation->children === (int) ($data['children'] ?? 0)
             && $application->points_redeemed === (int) ($data['loyalty_points'] ?? 0)
             && $application->voucher?->code === $this->normaliseVoucherCode($data['voucher_code'] ?? null);
     }

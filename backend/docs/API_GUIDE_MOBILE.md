@@ -93,7 +93,7 @@ Both gates reject with `error_code: no_active_reservation` (403) when unmet — 
 
 ## Endpoint index
 
-Every endpoint the app can reach — 70 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
+Every endpoint the app can reach — 81 in total. Tier column: **P** public (no token), **G** any guest token, **A** pre-arrival (token + booking), **S** in-stay (token + `checked_in`). Anything not on this list is dashboard-only and will 401/403 for a guest token.
 
 | Tier | Method | Path | Section |
 |---|---|---|---|
@@ -125,6 +125,16 @@ Every endpoint the app can reach — 70 in total. Tier column: **P** public (no 
 | P | GET | `/public/pages/{slug}` | [Content](#module-content-tier-1-public) |
 | P | GET | `/public/promotions` | [Content](#module-content-tier-1-public) |
 | P | GET | `/public/promotions/{uuid}` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/experiences` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/experiences/{uuid}` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/faqs` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/testimonials` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/gallery-categories` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/gallery` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/journal` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/journal/{slug}` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/settings` | [Content](#module-content-tier-1-public) |
+| P | GET | `/public/dining-venues/{uuid}/menu/download` | [Content](#module-content-tier-1-public) |
 | P | GET | `/public/service-catalog` | [Service Catalog](#module-service-catalog) |
 | P | GET | `/public/spa-services` | [Content](#module-content-tier-1-public) |
 | P | GET | `/public/pool-cabanas` | [Content](#module-content-tier-1-public) |
@@ -145,6 +155,7 @@ Every endpoint the app can reach — 70 in total. Tier column: **P** public (no 
 | G | GET | `/stays/past` | [Stays](#module-stays) |
 | G | GET | `/stays/{uuid}/receipt` | [Stays](#module-stays) |
 | G | GET | `/stays/{uuid}/receipt/pdf` | [Stays](#module-stays) |
+| G | POST | `/stays/check-in` | [Stays](#module-stays) |
 | G | POST | `/stays/{uuid}/online-check-in` | [Stays](#module-stays) |
 | S | PATCH | `/stays/active/dnd` | [Stays](#module-stays) |
 | A | POST | `/service-bookings` | [In-Stay & Pre-Arrival](#module-in-stay--pre-arrival-services) |
@@ -236,9 +247,8 @@ No code in the response — delivered via the chosen channel. `expires_in` is se
 
 | Code | HTTP | UI action |
 |---|---|---|
-| `identity_required` | 422 | "Please enter your phone or email." |
 | `too_many_requests` | 429 | "Please wait before requesting another code." Disable resend for 60 s. |
-| `validation_failed` | 422 | Show field errors. |
+| `validation_failed` | 422 | Show field errors. Sending neither phone nor email lands here too, with the message under `errors.identity` (`errors.phone` / `errors.email` for a channel mismatch). |
 
 **State to track:** Remember `channel` and the identifier (E.164 phone or email) — both required for the next call.
 
@@ -314,23 +324,24 @@ No code in the response — delivered via the chosen channel. `expires_in` is se
 | `last_name` | string | one of last_name/phone | |
 | `phone` | string | one of last_name/phone | |
 
-**Response `data` on success:**
+**Response on success:** the envelope `message` is the localized "OTP sent" text; `data` is:
 ```json
 {
-  "message": "OTP sent to reservation contact",
-  "masked_contact": "**@ex***.com"
+  "identifier_masked": "+963*********",
+  "channel": "sms"
 }
 ```
-Show `masked_contact` so the guest knows where to look.
+`channel` is `sms` or `email`. Show `identifier_masked` so the guest knows where to look.
 
 **Failure `error_code`s:**
 
 | Code | HTTP | UI action |
 |---|---|---|
-| `booking_link_failed` | 404 | Generic "Reservation not found." Do NOT reveal whether the code alone was valid. |
-| `validation_failed` | 422 | Missing second factor, invalid code format. |
+| `booking_link_failed` | 404 | Generic "Reservation not found." Returned for every miss (unknown code, wrong last name/phone, booking with no contact on file) with an identical body (`context: null`), so it never reveals which part was wrong. |
+| `validation_failed` | 422 | Missing second factor (`errors.booking_code`), malformed code format. |
+| `too_many_requests` | 429 | 10 requests per minute per IP, plus the per-contact OTP limits after a match. Back off. |
 
-**State notes:** Navigate to OTP entry. Submit with `purpose=booking_link`.
+**State notes:** Navigate to OTP entry. Submit with `purpose=booking_link`. If `verify-otp` is called with a `booking_code` that does not match, it still signs the guest in but links nothing - call `GET /api/reservations` afterwards to confirm the booking is there.
 
 ---
 
@@ -444,6 +455,8 @@ Send only the fields you are changing — omitted fields are left alone.
 
 **Response** (HTTP 200): `{ "success": true, "message": "Your account has been deleted.", "data": null, "request_id": "..." }`. All of the guest's tokens on every device are revoked, so a second call (or any later call with the same token) is `401`.
 
+**Loyalty:** deleting the account forfeits every loyalty point and closes every unused voucher (status `void`, or `expired` if it was already past its expiry). This cannot be undone. Before the confirm step the app should read `GET /api/loyalty/account` (`available_points`) and `GET /api/loyalty/vouchers?status=active`, and when either is non-empty show a warning with the point total and voucher count. The response is unchanged.
+
 **Blocked** — 422 `guest_account_deletion_blocked`, message (en): "Your account can't be deleted while you have an active stay, an open bill or an upcoming booking. Please contact the front desk."
 ```json
 {
@@ -468,7 +481,7 @@ Send only the fields you are changing — omitted fields are left alone.
 **What happens**
 - **Erased:** name, first/last name, phone, email, verification timestamps, preferences; all sign-in tokens, device push tokens, in-app notifications, staff notes and OTP codes; chat conversations are closed and the guest's own messages' text and attachments removed; ID documents except those of completed (checked-out) stays; the phone copy on reservations.
 - **Kept (legal/accounting):** reservations (booking code, last name), folios, payments, refunds, disputes, service bookings/requests, tickets, event inquiries, reviews (shown without a name), ID registration documents of checked-out stays.
-- **Re-registration:** signing in again with the same phone/email creates a **new** account (new `uuid`). Old stays are not visible to it and cannot be re-linked.
+- **Re-registration:** signing in again with the same phone/email creates a **new** account (new `uuid`). Old stays are not visible to it and cannot be re-linked. The new account starts with zero points; the old balance is not carried over.
 
 **App guidance:** show a confirmation dialog explaining what is deleted vs kept, then call. On 200, clear the token and local data and go to sign-in. On 422 `guest_account_deletion_blocked`, show the front-desk message and the `booking_codes`.
 
@@ -517,6 +530,14 @@ All read-only, no token required. Same content the website shows — pulled by t
 | Pool cabanas | `GET /public/pool-cabanas` | — |
 | Transfers | `GET /public/transfers` | — |
 | Restaurant tables | `GET /public/dining-venues/{uuid}/tables` | — |
+| Testimonials | `GET /public/testimonials` | — |
+| FAQs | `GET /public/faqs` | — |
+| Experiences | `GET /public/experiences` | `GET /public/experiences/{uuid}` |
+| Gallery chips | `GET /public/gallery-categories` | — |
+| Gallery photographs | `GET /public/gallery` | — |
+| Journal | `GET /public/journal` | `GET /public/journal/{slug}` |
+| Site settings | `GET /public/settings` | — (flat object) |
+| Dining menu file | — | `GET /public/dining-venues/{uuid}/menu/download` (see [Restaurant details](#restaurant-details)) |
 
 List endpoints are paginated (`data.items` + `data.meta`, 15/page) unless noted. Every type except `Page` carries an `images: [{uuid, url, file_name, sort_order}]` array. Names, descriptions, etc. are all `{en, ar}` objects — pick the key matching your locale. `EventSpace.amenities` is a **translatable string** (`{en, ar}`), unlike the room-type amenity objects below — don't share parsing logic between them.
 
@@ -587,6 +608,25 @@ Menu item shape: `{ uuid, type, name, description, price_usd, is_vegan, photo }`
 - `POST /api/reviews/{type}/{uuid}` — tier-2. Body `{ "rating": 1-5, "comment"?: string }`. Submitting again **edits** your existing review rather than adding a second one (201 the first time, 200 after).
 
 Review shape: `{ uuid, rating, comment, is_verified_stay, created_at, author: { first_name, last_name } }`. `is_verified_stay` is derived server-side from your reservation history — you cannot set it.
+
+### Public content routes (added to the index 2026-10-07)
+
+These routes already existed (they serve the website); the app guide now lists them. Common rules: no token, `is_active = false` records are hidden (404 on a detail route), lists are paginated `data.items` + `data.meta` at 15/page (`?per_page=` up to 100) unless noted. Translatable fields are whole locale maps `{en, ar, ...}`; an unset map can arrive as an empty array `[]`, so read defensively. Images: `image` (first image URL or `null`) and `images` (`[{uuid, url, file_name, sort_order}]`).
+
+| Route | Purpose | Item fields |
+|---|---|---|
+| `GET /public/testimonials` | Curated marketing quotes (not guest reviews). No detail route. | `uuid`, `author_name` (plain string), `author_title` (map), `quote` (map), `rating` (1-5 or `null`), `is_active`, `sort_order`, `avatar`, `images` |
+| `GET /public/faqs` | One accordion. No detail route. | `uuid`, `category` (free-form string or `null`), `question` (map), `answer` (map, may contain HTML), `is_active`, `sort_order` |
+| `GET /public/experiences` | Concierge experiences list. | `uuid`, `slug`, `title` (map), `description` (map), `category` (free-form string), `group_size` (map), `duration_minutes` (int or `null`), `duration_label` (map), `price_usd` (decimal string or `null`), `is_active`, `sort_order`, `image`, `images` |
+| `GET /public/experiences/{uuid}` | One experience, same fields. Binds by **uuid** (the `slug` is only for pretty URLs). Inactive or unknown: `404 not_found`. | as above |
+| `GET /public/gallery-categories` | The chip row for the gallery screen. | `uuid`, `slug`, `name` (map), `is_active`, `sort_order` |
+| `GET /public/gallery` | The photographs, ordered by chip then item `sort_order`; only items whose chip is also published. Filter by chip client-side (fetch with `?per_page=100`). | `uuid`, `caption` (map), `is_active`, `sort_order`, `category_slug`, `category` (chip object), `image` (`null` until uploaded), `images` |
+| `GET /public/journal` | Articles, newest `published_on` first. `published_on` is a display date, not a schedule. | `uuid`, `slug`, `title`, `excerpt`, `body` (maps; body may contain HTML), `category` (map, may be empty), `published_on` (`YYYY-MM-DD`), `is_active`, `sort_order`, `cover_image`, `images` |
+| `GET /public/journal/{slug}` | One article, bound by **slug** (not uuid). Inactive or unknown: `404 not_found`. | as above |
+| `GET /public/settings` | Global site copy. **Not paginated**: `data` is a flat `{group: {key: value}}` map (no `items`/`meta`). `value` is free-form JSON, usually a locale map; a missing group or key means "not configured". | `{ "contact": { "phone": {"en": "..."} }, ... }` |
+| `GET /public/dining-venues/{uuid}/menu/download` | Link to the venue's menu file. `200 {url, file_name, mime_type, size, updated_at}`; `204` with an empty body and no envelope when there is no file; `404` for an unknown or inactive venue. Details under Restaurant details above. | `url`, `file_name`, `mime_type`, `size`, `updated_at` |
+
+`GET /public/transfers` items are `{uuid, name (map), description (map or null), max_passengers (int or null), price_usd, is_active}`. `description` and `max_passengers` are optional on the hotel side, so treat `null` as "not stated"; show `max_passengers` as a capacity hint but do not enforce it client-side.
 
 ### GET /api/public/exchange-rates
 
@@ -753,6 +793,8 @@ Review shape: `{ uuid, rating, comment, is_verified_stay, created_at, author: { 
 | `check_out` | date | ✅ | After `check_in` |
 | `payment_method` | string | ✅ | `cash` or `on_arrival` |
 | `promo_code` | string | optional | |
+| `adults` | integer | optional | Party size, `1`-`20`, default `1`. `adults + children` must not exceed the room type's `max_occupancy` |
+| `children` | integer | optional | `0`-`20`, default `0` |
 | `loyalty_points` | integer | optional | Phase 10. Pay part of the booking with points: `1`–`100000000`. Needs the `Idempotency-Key` header and cannot be combined with `voucher_code`. See [Module: Loyalty](#module-loyalty) |
 | `voucher_code` | string | optional | Phase 10. A voucher the guest owns (`LOY-…`), case and spaces ignored; max 16 characters. Needs the `Idempotency-Key` header and cannot be combined with `loyalty_points` |
 
@@ -764,15 +806,18 @@ Review shape: `{ uuid, rating, comment, is_verified_stay, created_at, author: { 
   "uuid": "...", "booking_code": "CARL-XXXXXXXX", "status": "pending",
   "check_in": "2026-07-20", "check_out": "2026-07-22", "nights": 2,
   "source": "direct", "payment_method": "cash", "total_usd": "270.00", "hold_expires_at": null,
+  "adults": 1, "children": 0,
   "loyalty": null
 }
 ```
 
+`GET /public/availability` and `GET /public/quote` ignore party size, and `POST /reservations/guest` takes no party fields (always `1` / `0`). Bookings made before 2026-10-07 read `1` / `0` because the value was never collected.
+
 `total_usd` is **net** of any promo and loyalty discount. `loyalty` (Phase 10, additive) is `null` for a booking that used no points or voucher, otherwise `{ "points_redeemed": 5000, "points_discount_usd": "50.00", "voucher": null, "voucher_discount_usd": "0.00", "upgrade_requested": false, "status": "applied" }` — `voucher` is `{ "code", "type" }` or `null`; `status` becomes `reversed` after the booking is cancelled. The same block is on `GET /reservations` and `GET /reservations/{uuid}`.
 
-**Replay:** retrying with the same `Idempotency-Key` and the same inputs answers **`200`** with the same reservation and spends nothing twice (even if the last room has meanwhile been taken or the voucher is already marked used). The same key with any different input answers `409 idempotency_conflict`.
+**Replay:** retrying with the same `Idempotency-Key` and the same inputs answers **`200`** with the same reservation and spends nothing twice (even if the last room has meanwhile been taken or the voucher is already marked used). The same key with any different input (party size included) answers `409 idempotency_conflict`.
 
-**Failure `error_code`s:** `no_availability` (409 — nothing is spent), `invalid_promo` (422), `unauthorized` (401), `validation_failed` (422), and the loyalty codes `loyalty_insufficient_points`, `loyalty_below_minimum`, `loyalty_over_cap`, `loyalty_voucher_invalid`, `loyalty_discount_conflict`, `loyalty_program_inactive` (all 422, see [Module: Loyalty](#module-loyalty)). A refusal writes nothing: no reservation, no spent points, no used voucher.
+**Failure `error_code`s:** `no_availability` (409 — nothing is spent), `occupancy_exceeded` (422 — `adults + children` is over the room type's `max_occupancy`; `context` is `{ "max_occupancy": 2, "requested": 3 }`; nothing is written), `invalid_promo` (422), `unauthorized` (401), `validation_failed` (422), and the loyalty codes `loyalty_insufficient_points`, `loyalty_below_minimum`, `loyalty_over_cap`, `loyalty_voucher_invalid`, `loyalty_discount_conflict`, `loyalty_program_inactive` (all 422, see [Module: Loyalty](#module-loyalty)). A refusal writes nothing: no reservation, no spent points, no used voucher.
 
 ---
 
@@ -780,7 +825,9 @@ Review shape: `{ uuid, rating, comment, is_verified_stay, created_at, author: { 
 
 **Purpose:** List the logged-in guest's own reservations.
 
-**Response:** paginated (`data.items` + `data.meta`), newest first, items are the Reservation shape above.
+**Query:** `per_page` is honoured (default 15; above 100 is clamped to 100, below 1 falls back to 15; never an error).
+
+**Response:** paginated (`data.items` + `data.meta`), newest first, items are the Reservation shape above (including `adults` and `children`).
 
 ### GET /api/reservations/{uuid}
 
@@ -927,7 +974,7 @@ Send **either** `service_item_uuid` (preferred) **or** `type`. When an item is s
 
 **Billing:** an item with a non-null `price_usd` is charged to your folio when it is generated. Items with `price_usd: null` are complimentary. Cancelled requests are never charged.
 
-**`GET`** returns your own requests only, paginated, newest first.
+**`GET`** returns your own requests only, paginated, newest first. Optional `status` filter: `?status=new` or `?status[in]=new,in_progress`; values are `new`, `in_progress`, `completed`, `cancelled`. An unknown value answers `422 validation_failed` (`errors.status` or `errors["status.in"]`) rather than an empty list; any other query parameter is ignored.
 
 **Failure `error_code`s:** `no_active_reservation` (403, booked but not checked in yet — or not booked at all), `validation_failed` (422 — neither field sent, or an unknown/inactive item uuid).
 
@@ -1016,6 +1063,26 @@ Both flags are `false` with `reservation: null` for a guest who has only ever br
 **Failure `error_code`s:** `unauthenticated` (401).
 
 **Phase 4 (D-12):** when `reservation` is present it also carries `online_check_in`, `digital_key` and `pre_arrival_checklist` — see the block below `GET /api/stays/active`. This response, like the other two stay reads, is sent with `Cache-Control: no-store, private` because it can carry the digital key.
+
+### POST /api/stays/check-in
+
+**Purpose:** Self check-in on the arrival day: the guest taps "Check in" and the app moves from the browse home to the in-stay home.
+
+**Who can call:** Tier-2 (any guest token). No request body.
+
+**Behavior:** checks the guest into their earliest `confirmed` reservation whose `check_in` is on or before the hotel-local today and whose `check_out` is after it. It is **arrival day only**: it does not open before the arrival day, and a `pending` booking (the hotel has not confirmed it yet) does not qualify. Hotel-local time follows `HOTEL_TIMEZONE` (default `Asia/Damascus`), not the phone's clock. Already checked in is idempotent: it answers `200` with the current active stay.
+
+**Response `data`** (HTTP 200): the same shape as `GET /api/stays/active`, with `room_number` assigned.
+
+**Failure `error_code`s:**
+
+| Code | HTTP | Notes |
+|---|---|---|
+| `reservation_state` | 422 | Too early (before the arrival day), a booking still `pending`, no booking at all, or a stay whose `check_out` has passed. `message` is "Check-in opens on your arrival day, once the hotel has confirmed your booking." (localized), `context: null`. Show the server message; do not invent date logic in the app. |
+| `no_availability` | 409 | No room could be assigned for the booked room type. |
+| `room_already_assigned` | 409 | The reserved room is taken by another stay. |
+| `room_out_of_order` | 422 | The reserved room is in maintenance. `context: { room_uuid, housekeeping_status }`. |
+| `unauthenticated` | 401 | |
 
 ### POST /api/stays/{uuid}/online-check-in
 
@@ -1350,7 +1417,7 @@ An unconfigured program still answers `200`: `program` is `{ "earning": false, "
 
 **Purpose:** The guest's own vouchers, newest first, paginated. Query: `status` (`eq`/`in`), `type` (`eq`/`in`), `points_spent` (`gte`/`lte`, integer), `sort` ∈ `created_at|expires_at`. Item shape = the redeem response above; after use, `status` is `used`, `used_at` is set and `reservation` is `{ "uuid", "booking_code" }`.
 
-**Voucher lifecycle:** `active` → `used` when applied to a booking → **back to `active`** when that booking is cancelled (the original expiry is kept; if it has passed, the voucher gets a short grace period). `active` → `expired` after `expires_at` (swept nightly). `void` is a reserved status that nothing produces today; treat any status you don't know as not usable.
+**Voucher lifecycle:** `active` → `used` when applied to a booking → **back to `active`** when that booking is cancelled (the original expiry is kept; if it has passed, the voucher gets a short grace period). `active` → `expired` after `expires_at` (swept nightly). `void` means the voucher was closed because the account was deleted; treat any status you don't know as not usable.
 
 **What a voucher is worth on a booking:** `discount_voucher` takes `value_usd` off (never more than the booking total); `free_night` takes off one night at the booking's daily rate (capped at the total); `room_upgrade` takes **0.00** off — the reservation shows `loyalty.upgrade_requested: true` and **staff perform the upgrade** at the desk. A booking can use **one voucher, or points, never both**.
 
@@ -1452,7 +1519,7 @@ One ongoing support conversation with staff per guest — no thread management n
 - `GET /api/conversations/{uuid}/messages` — paginated history, oldest first.
 - `POST /api/conversations` — send a message; body `{ "body"?: string, "attachment"?: file }` (at least one required, image only, max 5MB). Auto-opens a conversation on your first message and reuses it while open.
 
-**Message shape:** `{ "uuid", "sender_type": "guest" | "staff", "body", "attachment_url", "created_at" }`.
+**Message shape:** `{ "uuid", "conversation_uuid", "sender_type": "guest" | "staff", "body", "attachment_url", "created_at" }`. `conversation_uuid` is on every message, including the one `POST /api/conversations` returns, so the app can open `GET /api/conversations/{uuid}/messages` right after the first send without listing conversations first.
 
 Live delivery mirrors to Firestore (`chats` collection, one doc per message keyed by `uuid`, filter by `conversation_uuid`) — subscribe there for real-time updates instead of polling; MySQL via the endpoints above remains the source of truth for history/pagination.
 

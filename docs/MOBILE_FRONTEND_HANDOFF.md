@@ -47,10 +47,10 @@ Rules:
 
 ### 1.3 Pagination
 
-- `page`, `per_page`: default 15, clamped at 100 and never an error. Read the page size you got from `meta.per_page`.
+- `page`, `per_page`: default 15, clamped at 100 and never an error. Read the page size you got from `meta.per_page`. `GET /reservations` honours `per_page` (default 15, max 100). Guest lists that keep a fixed page size and ignore `per_page`: `GET /service-requests` (15), `GET /conversations` (15), `GET /conversations/{conversation}/messages` (30), `GET /stays/past` (15). The public bookables lists (`/public/spa-services`, `/public/pool-cabanas`, `/public/transfers`) read `per_page` without the 100 cap.
 - Unpaginated: `GET /public/service-catalog`, `GET /public/dining-venues/{diningVenue}/menu-categories`, `GET /public/settings`, `GET /public/exchange-rates`, `GET /stays/upcoming` (array), `GET /stays/active` (object or `null`).
 - The app's `PaginatedControllerMixin` exists, but service requests and chat read **page 1 only** (tree notes). Wire paging there.
-- Filters use `?field=v`, `?field[eq|in|gte|lte]=v`. Unknown params are ignored.
+- Filters use `?field=v`, `?field[eq|in|gte|lte]=v`. Unknown params are ignored. The one exception is the new `status` filter on `GET /service-requests`: an unknown **value** answers `422 validation_failed` (a typo must not read as an empty list), while unknown params are still ignored.
 
 ### 1.4 Localization
 
@@ -106,6 +106,7 @@ stateDiagram-v2
 | Route | Limit | UI |
 |---|---|---|
 | `POST /auth/guest/request-otp` | 10/min per IP (+ OTP limits per contact) | disable resend for 60 s on `429 too_many_requests` |
+| `POST /auth/guest/link-booking-code` | 10/min per IP (+ OTP limits per contact after a match) | `429 too_many_requests`: back off, do not auto-retry |
 | `POST /auth/guest/verify-otp` | 5 wrong codes → `429 otp_locked` | back to step 1 |
 | `POST /reservations/guest` | OTP limit 1/min, 5/hour per contact | `429 too_many_requests` |
 | `DELETE /auth/guest/me` | 5/min per guest | do not auto-retry |
@@ -144,9 +145,9 @@ The app was wired (integration plan phases 0–7) against the July guide. Since 
 | 3 | Preferences | saved locally only (`pref_*` in GetStorage). Bed ids include `extra`, pillow lacks `medium`/`hypoallergenic`, no floor. Mattress, smoking, early/late toggles have no server field. | `PATCH /auth/guest/preferences` `{bed_type, pillow_type, floor_preference, other}` | wire it, drop `extra`, add `medium`, `hypoallergenic` and floor. Keep the extra toggles local or put them in `other`. |
 | 4 | `preferred_locale` | sent for `en`/`ar` only | `en\|ar\|fr\|tr\|es` | send all five (§1.4) |
 | 5 | Exchange rates | hand-maintained `ExchangeRates` table, `isLive: false`, comment "there is no /exchange-rates endpoint" | `GET /public/exchange-rates` | wire it, keep the built-in table as a fallback for `rate: null` or failures, then flip `isLive` |
-| 6 | Error codes | `ErrorCodes` defines codes the backend never emits: `business_rule_violation`, `out_of_stock`, `insufficient_balance`, `route_not_found`, `check_in_not_open` | real codes missing in the app: `idempotency_conflict`, `hold_expired`, `guest_account_deletion_blocked`, `online_check_in_closed`, `booking_link_failed`, `folio_item_dispute_open`, `method_not_allowed`, all 7 guest `loyalty_*` codes | add the missing ones, delete the dead ones |
+| 6 | Error codes | `ErrorCodes` defines codes the backend never emits: `business_rule_violation`, `out_of_stock`, `insufficient_balance`, `route_not_found`, `check_in_not_open` | real codes missing in the app: `idempotency_conflict`, `hold_expired`, `guest_account_deletion_blocked`, `online_check_in_closed`, `booking_link_failed` (now actually emitted by `link-booking-code`; it used to answer `not_found`), `occupancy_exceeded`, `folio_item_dispute_open`, `method_not_allowed`, all 7 guest `loyalty_*` codes | add the missing ones, delete the dead ones |
 | 7 | 401 code | `unauthorized` | `unauthorized` (the guide's `unauthenticated` is a typo) | no change |
-| 8 | Self check-in window | the app relies on the dead `check_in_not_open` code | `POST /stays/check-in` answers `422 reservation_state` unless a `confirmed` stay has `check_in ≤ hotel-today < check_out` | map `reservation_state` on this call to "check-in is not open yet" |
+| 8 | Self check-in window | the app relies on the dead `check_in_not_open` code | `POST /stays/check-in` is **arrival day only** (documented in the guide). It answers `422 reservation_state` unless a `confirmed` stay has `check_in ≤ hotel-today < check_out` | map `reservation_state` on this call to the server message ("Check-in opens on your arrival day, once the hotel has confirmed your booking.") |
 | 9 | Online check-in | never called | `POST /stays/{reservation}/online-check-in {arrival_time}` | decide: keep the self-check-in wizard, add arrival-time submission, or both (§3.4) |
 | 10 | POST retries | retried with no idempotency | §1.5 | add the header, stop blind POST retries |
 | 11 | Token storage | plain GetStorage | secure storage | switch to `flutter_secure_storage` and migrate the stored token once |
@@ -164,7 +165,12 @@ The app was wired (integration plan phases 0–7) against the July guide. Since 
 | 23 | Room-ready push | fired on pre-arrival room assignment | fires only on staff check-in and in-stay room moves | do not show "room ready" before check-in |
 | 24 | Link booking code | the tree notes `verify-otp` with `booking_link` failing when no phone/email is sent | `verify-otp` requires `phone` or `email` (`422 validation_failed`, `errors.identity`). `booking_code` is optional there. | always send the contact (§3.1) |
 | 25 | `mobile/CLAUDE.md` | says "No backend is wired up yet", `constants/demo_data.dart`, `SessionService` fake booleans, `/user/check-token` | none of that exists. The app calls `GET /auth/guest/me` and phases 0–7 are wired. | rewrite it so agents stop following it |
-| 26 | Public content not in the guide index | – | 10 public routes exist but are missing from the guide's 70-row index (§3.10) | treat them as supported (they are in `route:list`) |
+| 26 | Public content and self check-in in the guide index | – | the 10 public routes and `POST /stays/check-in` are now in the guide's index (81 rows) with short contract entries (§3.10) | treat them as supported |
+| 27 | Party size | not sent (the booking flow drops it) | `POST /reservations` takes `adults` (≥1, default 1) and `children` (≥0, default 0) and returns them; `422 occupancy_exceeded {max_occupancy, requested}` when the total is over the room type's capacity | send the counts, handle the code |
+| 28 | `per_page` on reservations | page 1 only | `GET /reservations?per_page=` (default 15, max 100) | page through it or ask for a bigger page |
+| 29 | Transfers | name and price only | each transfer also has `description` (map or `null`) and `max_passengers` (integer or `null`) | show them, treat `null` as "not stated" |
+| 30 | Chat `conversation_uuid` | the app lists conversations to find the id | every message, including the `POST /conversations` response, carries `conversation_uuid` | open the history straight from the send response |
+| 31 | Service-request filter | none | `GET /service-requests?status=new` or `?status[in]=new,in_progress` (`new\|in_progress\|completed\|cancelled`) | add status tabs. An unknown value is `422 validation_failed`. |
 
 ---
 
@@ -178,7 +184,7 @@ Notation: tier **P/G/A/S** (§1.6). Error rows list `code (HTTP) {context}` and 
 |---|---|---|---|
 | `POST /auth/guest/request-otp` | P, 10/min | `{channel: sms\|whatsapp\|email, phone\|email, purpose: login\|register}` | `{identifier, channel, expires_in}` (no code) |
 | `POST /auth/guest/verify-otp` | P | `{phone\|email, code (6), purpose: login\|register\|booking_link, booking_code?}` | `{token, guest{uuid, phone, phone_country, phone_verified, email, email_verified, first_name, last_name, preferred_locale}}` |
-| `POST /auth/guest/link-booking-code` | P | `{booking_code (CARL-XXXXXXXX), last_name\|phone}` | `{message, masked_contact}`. The OTP goes to the reservation's contact. |
+| `POST /auth/guest/link-booking-code` | P, 10/min per IP | `{booking_code (CARL-XXXXXXXX), last_name\|phone}` | `{identifier_masked, channel}` (`channel` is `sms` or `email`). The OTP goes to the reservation's contact. |
 | `GET /auth/guest/me` | G | – | guest + `preferences`, `has_booking`, `is_checked_in`, `has_active_reservation` (deprecated), `active_reservation{uuid, booking_code, status, check_in, check_out}\|null` |
 | `PUT /auth/guest/profile` | G | any of `{first_name, last_name, phone, email, preferred_locale}` | full guest (same shape as `me`) |
 | `PATCH /auth/guest/preferences` | G | any of `{bed_type, pillow_type, floor_preference, other}` (PATCH semantics) | `{bed_type, pillow_type, floor_preference, other, updated_at}` |
@@ -189,14 +195,15 @@ Preferences enums: `bed_type` `king|queen|double|twin|single` (**`extra` is refu
 
 | Code | Context | UI |
 |---|---|---|
-| `identity_required` (422) | – | request-otp: "Enter your phone or email" |
 | `otp_expired` (422) | – | "Code expired", clear input, offer resend |
 | `otp_invalid` (422) | – | "Incorrect code", allow retry |
 | `otp_locked` (429) | – | "Too many attempts", back to step 1 |
-| `booking_link_failed` (404) | – | generic "Reservation not found". Never reveal whether the code alone matched. |
+| `booking_link_failed` (404) | – | generic "Reservation not found". Returned for every miss: unknown code, wrong last name or phone, or a booking with no contact on file, always with an identical body. Never reveal whether the code alone matched. |
 | `verified_contact_immutable` (409) | – | profile: a verified phone/email cannot be replaced here. Route through request-otp/verify-otp. |
 | `guest_account_deletion_blocked` (422) | `{reasons[], booking_codes[≤10]}` | show the front-desk message and the codes (below) |
 | `unauthorized` (401) on logout | – | already signed out, wipe locally anyway |
+
+Sending neither phone nor email to `request-otp` / `verify-otp` has no error code of its own. It answers `422 validation_failed` with the message under `errors.identity` (`errors.phone` / `errors.email` for a channel mismatch). A missing second factor on `link-booking-code` is `422 validation_failed` under `errors.booking_code`. Gotcha: `verify-otp` with `purpose: booking_link` and a `booking_code` that does not match still signs the guest in but links nothing, so call `GET /reservations` afterwards to confirm the booking arrived.
 
 **Sign-in flows**
 
@@ -209,7 +216,7 @@ sequenceDiagram
         App->>API: POST /auth/guest/verify-otp {phone|email, code, purpose} + Accept-Language
     else Path B/C: existing booking (website, desk, OTA)
         App->>API: POST /auth/guest/link-booking-code {booking_code, phone}
-        API-->>App: {masked_contact}
+        API-->>App: {identifier_masked, channel}
         App->>API: POST /auth/guest/verify-otp {phone|email, code, purpose:"booking_link", booking_code}
     end
     API-->>App: {token, guest}
@@ -217,7 +224,7 @@ sequenceDiagram
     App->>API: GET /auth/guest/me (has_booking, is_checked_in)
     App->>API: POST /device-tokens {token, platform}
 ```
-`verify-otp` must carry the contact the OTP was sent to. `masked_contact` is masked, so for Path B ask for the **phone** as the second factor and reuse it. If the guest linked with `last_name` only, ask them for the full phone or email on the OTP screen. (Verify on a device: the tree flags this flow as failing in the current build.)
+`verify-otp` must carry the contact the OTP was sent to. `identifier_masked` is masked, so for Path B ask for the **phone** as the second factor and reuse it. If the guest linked with `last_name` only, ask them for the full phone or email on the OTP screen. (Verify on a device: the tree flags this flow as failing in the current build.)
 
 **Account deletion (tree: `mob` false)**
 
@@ -267,8 +274,8 @@ Exchange rates:
 | Endpoint | Tier | Body / params | Response / notes |
 |---|---|---|---|
 | `GET /public/quote` | P | `room_type_uuid, check_in, check_out, promo_code?` | `{daily_rate_usd, nights, subtotal_usd, discount_usd, total_usd, promo_code_id, rules_applied}`. **JSON numbers here**, not strings. No taxes. |
-| `POST /reservations` | G | `{room_type_uuid, check_in, check_out, payment_method: cash\|on_arrival, promo_code?, loyalty_points? \| voucher_code?}` + `Idempotency-Key` when a loyalty field is sent | 201 reservation `{uuid, booking_code, status:"pending", check_in, check_out, nights, source, payment_method, total_usd (net), hold_expires_at, loyalty}`. 200 on replay. |
-| `GET /reservations` | G | page | own reservations, newest first, same shape + nested `guest{…, preferences}` |
+| `POST /reservations` | G | `{room_type_uuid, check_in, check_out, payment_method: cash\|on_arrival, adults? (≥1, default 1), children? (≥0, default 0), promo_code?, loyalty_points? \| voucher_code?}` + `Idempotency-Key` when a loyalty field is sent | 201 reservation `{uuid, booking_code, status:"pending", check_in, check_out, nights, source, payment_method, total_usd (net), hold_expires_at, adults, children, loyalty}`. 200 on replay. |
+| `GET /reservations` | G | `page, per_page (≤100)` | own reservations, newest first, same shape + nested `guest{…, preferences}` |
 | `GET /reservations/{reservation}` | G | – | one reservation. Someone else's → 404. |
 | `DELETE /reservations/{reservation}` | G | – | 204. Allowed from `pending_verification\|pending\|confirmed`. Reverses loyalty (§6). |
 | `POST /reservations/guest` | P | `{room_type_uuid, check_in, check_out, first_name, last_name, phone\|email, payment_method?, promo_code?}` | `{reservation_uuid, identifier_masked, channel}`. Soft-holds a room for 5 min and sends an OTP. |
@@ -276,11 +283,13 @@ Exchange rates:
 
 - The app books only with `on_arrival`, and blocks card, Apple Pay and Google Pay client-side. That is correct: there is no gateway (§5).
 - The tree notes "app books without checking" availability. The booking flow does call `GET /public/availability` per room type, but `POST /reservations` is the only real check: handle `409 no_availability` on it.
-- Website and desk bookings never apply loyalty. `POST /reservations/guest` takes no loyalty fields.
+- Website and desk bookings never apply loyalty. `POST /reservations/guest` takes no loyalty fields (and no party fields: always `1` adult, `0` children).
+- `GET /public/availability` and `GET /public/quote` ignore party size. Capacity is enforced only by `POST /reservations`. Bookings made before 2026-10-07 read `adults 1`, `children 0`.
 
 | Code | Context | UI |
 |---|---|---|
 | `no_availability` (409) | – | "No longer available". Nothing was spent. Re-pick dates. |
+| `occupancy_exceeded` (422) | `{max_occupancy, requested}` | too many guests for this room: lower the count or pick another room type. Nothing was written. |
 | `invalid_promo` (422) | – | clear the promo field |
 | `reservation_state` (422) | – | cancel: too late (checked in) or already cancelled. Refresh. |
 | `hold_expired` (422) | – | guest/verify: 5 minutes passed, restart step 1 |
@@ -321,7 +330,7 @@ Status lifecycle: `pending_verification → pending → confirmed → checked_in
 | `GET /stays/{reservation}/receipt/pdf` | G | raw PDF (`Content-Disposition: attachment`). Labels follow `Accept-Language`. |
 | `PATCH /stays/active/dnd` | S | `{enabled, until?}` → `{enabled, until}`. Enabling without `until` lasts until the end of the hotel day. |
 | `POST /stays/{reservation}/online-check-in` | G | `{arrival_time: "HH:mm"}` (strict `H:i`, hotel-local) → the upcoming-item shape, 200 on every submit |
-| `POST /stays/check-in` | G | **self check-in**, no body. Checks the guest into the earliest `confirmed` stay with `check_in ≤ hotel-today < check_out`, through the same action the desk uses. Returns the active stay. Idempotent: a guest who is already in-house gets the active stay back. **Not in the guide** (the app's wizard uses it). |
+| `POST /stays/check-in` | G | **self check-in**, no body. Checks the guest into the earliest `confirmed` stay with `check_in ≤ hotel-today < check_out`, through the same action the desk uses. Returns the active stay. **Arrival day only**: before the arrival day, for a `pending` booking, with no booking, or after check-out it answers `422 reservation_state`. Idempotent: a guest who is already in-house gets the active stay back. Documented in the guide (the app's wizard uses it). |
 | `POST /pre-arrival/documents` | A | multipart `documents[i][type]` (free string ≤255: `passport`, `id_card`, `visa`) + `documents[i][file]` (jpg/jpeg/png/pdf ≤10 MB) → 201 `[{uuid, type}]`. No URL is returned. (Re)opens a pending check-in approval. |
 
 - Phase 4 blocks on stay payloads:
@@ -339,7 +348,7 @@ Status lifecycle: `pending_verification → pending → confirmed → checked_in
 | `reservation_state` (422) on online-check-in | `{status, allowed:["confirmed"]}` | the booking is not confirmed yet |
 | `online_check_in_closed` (422) | `{check_in, today}` | the arrival day has passed, so go to the desk |
 | `forbidden` (403) on online-check-in | – | not this guest's reservation |
-| `reservation_state` (422) on `POST /stays/check-in` | – | "Check-in opens on your arrival day once the hotel confirms your booking" |
+| `reservation_state` (422) on `POST /stays/check-in` | – | show the server `message`: "Check-in opens on your arrival day, once the hotel has confirmed your booking." |
 
 **Pre-arrival → in-stay**
 
@@ -424,8 +433,8 @@ Payment is `cash` or `on_arrival` at the desk. The app takes no payment (§5).
 |---|---|---|---|
 | `GET /public/service-catalog` | P | – | array of categories `{uuid, code, kind, name, description, icon, link_target, default_item_uuid, department, sort_order, is_active, items[{uuid, name, description, expected_minutes, price_usd}]}` |
 | `POST /service-requests` | S | `{service_item_uuid}` (preferred) **or** legacy `{type}`, plus `priority? (low\|normal\|high)`, `notes? ≤1000` | 201 `{uuid, type, department, status, priority, notes, created_at, category_code, service_item}` |
-| `GET /service-requests` | S | page | own requests, newest first. **Page through it** (the app reads page 1 only). |
-| `GET /public/spa-services`, `GET /public/pool-cabanas`, `GET /public/transfers` | P | – | bookables |
+| `GET /service-requests` | S | `page, status[eq\|in]` | own requests, newest first. **Page through it** (the app reads page 1 only). `?status=new` or `?status[in]=new,in_progress`; an unknown value is `422 validation_failed` (`errors.status` / `errors["status.in"]`). |
+| `GET /public/spa-services`, `GET /public/pool-cabanas`, `GET /public/transfers` | P | – | bookables. A transfer is `{uuid, name (map), description (map\|null), max_passengers (int\|null), price_usd, is_active}`. |
 | `POST /service-bookings` | A | `{bookable_type: spa_service\|restaurant_table\|pool_cabana\|transfer, bookable_uuid, scheduled_at (future), notes?}` | 201 `{uuid, bookable_type, bookable{uuid,label}, scheduled_at, status, notes}` |
 | `POST /transport-requests` | S | `{notes?}` | service request `type:"transport"`. **Legacy**: prefer the `transport` chip. |
 
@@ -450,7 +459,7 @@ Switch on `kind`:
 - `GET /conversations` returns your conversations (in practice one).
 - `GET /conversations/{conversation}/messages` is paginated, **oldest first**.
 - `POST /conversations` sends a message: json `{body}` or multipart `{body?, attachment?}` (image ≤5 MB, at least one of the two). It opens a conversation on the first message and reuses it while open.
-- Message shape: `{uuid, sender_type: guest|staff, body, attachment_url, created_at}`.
+- Message shape: `{uuid, conversation_uuid, sender_type: guest|staff, body, attachment_url, created_at}`. `POST /conversations` returns it too, so open `GET /conversations/{conversation}/messages` straight from the send response without listing first.
 - Live updates come from Firestore `chats` (optional, §1.8). The app polls REST and reads page 1 only. Staff answers arrive as `sender_type: staff`. Support-ticket replies are internal notes and never reach the guest (TICKET-08 deferred).
 - The AI concierge tab stays a stub (P11 not built).
 
@@ -479,14 +488,14 @@ All public, read-only, paginated (15) unless noted. `is_active=false` records 40
 | `GET /public/facilities`, `GET /public/facilities/{facility}` | yes | |
 | `GET /public/promotions`, `GET /public/promotions/{promotion}` | yes | `title, description, banner, secondary_description`. The app reads the first page only. |
 | `GET /public/pages/{slug}` | yes | legal / help pages (the app uses it) |
-| `GET /public/experiences`, `GET /public/experiences/{experience}` | **no** | used by Home and Discover |
-| `GET /public/faqs` | **no** | used by Support |
-| `GET /public/settings` | **no** | grouped site settings, unpaginated (concierge phone, `site.is_coming_soon`) |
-| `GET /public/gallery`, `GET /public/gallery-categories` | **no** | gallery items / categories |
-| `GET /public/journal`, `GET /public/journal/{slug}` | **no** | journal posts by slug |
-| `GET /public/testimonials` | **no** | testimonials |
+| `GET /public/experiences`, `GET /public/experiences/{experience}` | yes | used by Home and Discover |
+| `GET /public/faqs` | yes | used by Support |
+| `GET /public/settings` | yes | grouped site settings, unpaginated (concierge phone, `site.is_coming_soon`) |
+| `GET /public/gallery`, `GET /public/gallery-categories` | yes | gallery items / categories |
+| `GET /public/journal`, `GET /public/journal/{slug}` | yes | journal posts by slug |
+| `GET /public/testimonials` | yes | testimonials |
 
-The routes marked **no**, plus `GET /public/dining-venues/{diningVenue}/menu/download` (documented in a section but missing from the index), are the **10 public guest-facing routes missing from the guide's endpoint index**, despite the index saying "anything not on this list is dashboard-only". They are anonymous routes in `route:list` and safe to use. The guide does not document their field lists: read the resource or a seeded response before you model them. `POST /auth/login` is also anonymous and also unlisted, but it is the **staff** login and is not for the app. `POST /stays/check-in` is the one undocumented **guest** route (§3.4).
+These routes, plus `GET /public/dining-venues/{diningVenue}/menu/download`, are the 10 public guest-facing routes that used to be missing from the guide's endpoint index. They are now in the index (81 rows) with short contract entries in the guide's Content module (item fields, pagination, 404 rules). `GET /public/settings` is a flat `{group: {key: value}}` map, not `{items, meta}`. `POST /auth/login` is anonymous and not in the guide, but it is the **staff** login and is not for the app. `POST /stays/check-in` is documented too (§3.4).
 
 ---
 
@@ -505,7 +514,7 @@ The routes marked **no**, plus `GET /public/dining-venues/{diningVenue}/menu/dow
 | public rooms, amenities | false | `GET /public/rooms`, `GET /public/amenities` (if a screen needs them) | room occupancy |
 | availability check | false (stale: the app calls it) | `GET /public/availability`. Also handle `no_availability` on booking. | – |
 | exchange rates | false | `GET /public/exchange-rates` | live FX, SYP/TRY payment |
-| guest booking flow (Reservations) | partial | `POST /reservations` (+ loyalty, §6) | add-ons in one call, guest details, party size |
+| guest booking flow (Reservations) | partial | `POST /reservations` (+ loyalty, §6), with `adults` / `children` | add-ons in one call, guest details |
 | quote, promo code | true | – | taxes |
 | cancel my reservation | true | refetch loyalty afterwards | – |
 | my reservations list | false | `GET /reservations` (needed to show the `loyalty` block per booking) | – (the app uses `/stays/*` today) |
@@ -763,9 +772,10 @@ Loyalty strings already exist in all 5 locales (`AppTranslations.loyaltyRow*`, `
 12. **Mixed money types.** `GET /folio`, reservations, loyalty and exchange rates use strings. `GET /public/quote` and the receipt's `balance_due_usd` use numbers. Parse defensively.
 13. **Hotel time.** "Today" is the hotel-local day (`HOTEL_TIMEZONE`, default `Asia/Damascus`) for booking dates, table reservations, online check-in, self check-in, DND default and voucher expiry. Server instants are UTC ISO. Table bookings made before Phase 8 keep the old 3-hour-late `scheduled_at`.
 14. **204 without an envelope** on menu download, and a raw PDF on the receipt PDF route. Do not JSON-decode either.
-15. **Undocumented routes.** `POST /stays/check-in` (used by the app) and the 10 public content routes in §3.10 are live but missing from the guide index. Ask backend to add them, and do not treat them as unstable.
+15. **Documented routes.** `POST /stays/check-in` (used by the app) and the 10 public content routes in §3.10 are now in the guide index with contract entries. Treat them as stable.
 16. **Account deletion and loyalty (pending).** LOY-23 (plans 10-16/10-17) is not shipped. Warn the guest before deleting that points and unspent vouchers will be forfeited once it ships. No app contract change is expected.
 17. **Phase 10 is 15/17.** Every guest loyalty route and field in §6 is built and tested. Only the deletion forfeit is outstanding.
 18. **Loyalty is not seeded.** Configure the program and rewards from a dashboard account with `loyalty.manage` (and points via `loyalty.adjust`) before testing §6 end to end. Earned points appear only after a folio is settled at the desk.
 19. **Concurrency guarantees are MySQL-only** (same-key redeem/booking races, room locks). SQLite tests prove the intent only. Still handle the "loser" answers: `200` replay, `409 idempotency_conflict`, `409 no_availability`.
 20. **`has_active_reservation` is deprecated.** Read `has_booking` and `is_checked_in`.
+21. **Party size.** `POST /reservations` can answer `422 occupancy_exceeded {max_occupancy, requested}`. The check runs only on booking, not on availability or quote, so surface it on the confirm step.

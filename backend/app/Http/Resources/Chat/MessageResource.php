@@ -10,11 +10,12 @@ class MessageResource extends BaseResource
     public function toArray(Request $request): array
     {
         return [
-            'uuid'            => $this->uuid,
-            'sender_type'     => $this->resource->senderLabel(),
-            'body'            => $this->body,
-            'attachment_url'  => $this->attachment_url,
-            'created_at'      => $this->created_at?->toIso8601String(),
+            'uuid'              => $this->uuid,
+            'conversation_uuid' => $this->whenLoaded('conversation', fn () => $this->conversation->uuid),
+            'sender_type'       => $this->resource->senderLabel(),
+            'body'              => $this->body,
+            'attachment_url'    => $this->attachment_url,
+            'created_at'        => $this->created_at?->toIso8601String(),
         ];
     }
 }

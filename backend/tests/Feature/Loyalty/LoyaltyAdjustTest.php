@@ -2,9 +2,12 @@
 
 namespace Tests\Feature\Loyalty;
 
+use App\Actions\Guest\DeleteGuestAccountAction;
+use App\Actions\Loyalty\AdjustLoyaltyPointsAction;
 use App\Enums\LoyaltyBatchSource;
 use App\Enums\LoyaltyBatchStatus;
 use App\Enums\LoyaltyEntryType;
+use App\Exceptions\GuestAccountDeletedException;
 use App\Models\Guest;
 use App\Models\LoyaltyEarnBatch;
 use App\Models\LoyaltyLedgerEntry;
@@ -351,5 +354,111 @@ class LoyaltyAdjustTest extends TestCase
         $this->assertContains('guests', $tables);
         $this->assertContains('batches', $tables);
         $this->assertLessThan(array_search('batches', $tables, true), array_search('guests', $tables, true), implode("\n", $locked));
+    }
+
+    // ------------------------------------------------------------------ LOY-23: deleted accounts
+
+    private function adjustedActivityCount(): int
+    {
+        return Activity::where('description', 'loyalty.points_adjusted')->count();
+    }
+
+    public function test_an_award_on_a_deleted_account_is_refused_and_writes_nothing(): void
+    {
+        $guest = Guest::factory()->deleted()->create();
+        $batches = LoyaltyEarnBatch::count();
+        $entries = LoyaltyLedgerEntry::count();
+
+        $this->adjust($guest, ['points' => 500, 'reason' => 'Goodwill after deletion'], 'K-DA')
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error_code', 'guest_account_deleted')
+            ->assertJsonPath('message', __('custom.errors.guest_account_deleted', [], 'en'));
+
+        $this->assertSame($batches, LoyaltyEarnBatch::count());
+        $this->assertSame($entries, LoyaltyLedgerEntry::count());
+        $this->assertSame(0, $this->adjustedActivityCount());
+    }
+
+    public function test_a_deduction_on_a_deleted_account_with_residue_is_refused(): void
+    {
+        // Residue (G-10): points left on an account deleted before the forfeit shipped.
+        $guest = Guest::factory()->deleted()->create();
+        $residue = $this->grantPoints($guest, 300, now()->addDays(30));
+        $entries = LoyaltyLedgerEntry::count();
+
+        $this->adjust($guest, ['points' => -100, 'reason' => 'Deduct after deletion'], 'K-DD')
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'guest_account_deleted')
+            ->assertJsonPath('message', __('custom.errors.guest_account_deleted', [], 'en'));
+
+        $fresh = $residue->fresh();
+        $this->assertSame(300, $fresh->points_remaining);
+        $this->assertSame(LoyaltyBatchStatus::ACTIVE, $fresh->status);
+        $this->assertSame(0, $fresh->allocations()->count());
+        $this->assertSame($entries, LoyaltyLedgerEntry::count());
+        $this->assertSame(0, $this->adjustedActivityCount());
+    }
+
+    public function test_the_deleted_account_refusal_is_localized(): void
+    {
+        $guest = Guest::factory()->deleted()->create();
+        $this->app['auth']->forgetGuards();
+
+        $arabic = __('custom.errors.guest_account_deleted', [], 'ar');
+        $this->assertNotSame('custom.errors.guest_account_deleted', $arabic);
+        $this->assertNotSame(__('custom.errors.guest_account_deleted', [], 'en'), $arabic);
+
+        $this->withToken($this->staffToken('loyalty.view', 'loyalty.adjust'))
+            ->postJson(
+                "/api/cms/loyalty/guests/{$guest->uuid}/adjustments",
+                ['points' => 50, 'reason' => 'Locale check'],
+                ['Accept-Language' => 'ar', 'Idempotency-Key' => 'K-DL'],
+            )
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'guest_account_deleted')
+            ->assertJsonPath('message', $arabic);
+
+        $this->assertSame(0, $this->adjustCount());
+    }
+
+    public function test_a_replay_after_the_deleted_account_was_erased_is_refused(): void
+    {
+        $guest = Guest::factory()->create();
+        $token = $this->staffToken('loyalty.view', 'loyalty.adjust');
+        $body = ['points' => 200, 'reason' => 'Before the deletion'];
+
+        $this->adjust($guest, $body, 'K-9', $token)->assertStatus(201);
+
+        $deletion = app(DeleteGuestAccountAction::class)->handle($guest);
+        $this->assertSame(200, $deletion['code']);
+        $this->assertTrue($guest->fresh()->isDeleted());
+
+        $entries = LoyaltyLedgerEntry::count();
+        $activities = $this->adjustedActivityCount();
+
+        $this->adjust($guest->fresh(), $body, 'K-9', $token)
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'guest_account_deleted');
+
+        $this->assertSame($entries, LoyaltyLedgerEntry::count());
+        $this->assertSame($activities, $this->adjustedActivityCount());
+    }
+
+    public function test_a_direct_call_on_a_deleted_account_throws_the_domain_error(): void
+    {
+        $guest = Guest::factory()->deleted()->create();
+        $actor = User::factory()->create();
+
+        try {
+            app(AdjustLoyaltyPointsAction::class)->handle($guest, 100, 'Direct call', $actor, 'K-DX');
+            $this->fail('Expected GuestAccountDeletedException');
+        } catch (GuestAccountDeletedException $e) {
+            $this->assertSame('guest_account_deleted', $e->errorCode());
+            $this->assertSame(422, $e->statusCode());
+        }
+
+        $this->assertSame(0, LoyaltyEarnBatch::count());
+        $this->assertSame(0, $this->adjustCount());
     }
 }

@@ -59,12 +59,21 @@ class ServiceCatalogSeeder extends Seeder
     private function transfers(): void
     {
         $transfers = [
-            ['en' => 'Airport Transfer (Sedan)', 'ar' => 'نقل المطار (سيدان)', 'price' => 35],
-            ['en' => 'Airport Transfer (SUV)', 'ar' => 'نقل المطار (SUV)', 'price' => 55],
-            ['en' => 'City Tour Shuttle', 'ar' => 'جولة المدينة', 'price' => 25],
+            ['en' => 'Airport Transfer (Sedan)', 'ar' => 'نقل المطار (سيدان)', 'price' => 35, 'seats' => 3,
+                'desc_en' => 'Private sedan between the airport and the hotel.', 'desc_ar' => 'سيارة سيدان خاصة بين المطار والفندق.'],
+            ['en' => 'Airport Transfer (SUV)', 'ar' => 'نقل المطار (SUV)', 'price' => 55, 'seats' => 6,
+                'desc_en' => 'Spacious SUV with room for family luggage.', 'desc_ar' => 'سيارة SUV واسعة تتسع لأمتعة العائلة.'],
+            ['en' => 'City Tour Shuttle', 'ar' => 'جولة المدينة', 'price' => 25, 'seats' => 12,
+                'desc_en' => 'Shared shuttle covering the main city sights.', 'desc_ar' => 'حافلة مشتركة تغطي أبرز معالم المدينة.'],
         ];
         foreach ($transfers as $t) {
-            Transfer::create(['name' => ['en' => $t['en'], 'ar' => $t['ar']], 'price_usd' => $t['price'], 'is_active' => true]);
+            Transfer::create([
+                'name' => ['en' => $t['en'], 'ar' => $t['ar']],
+                'description' => ['en' => $t['desc_en'], 'ar' => $t['desc_ar']],
+                'price_usd' => $t['price'],
+                'max_passengers' => $t['seats'],
+                'is_active' => true,
+            ]);
         }
     }
 

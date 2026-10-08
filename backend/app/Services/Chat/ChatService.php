@@ -7,6 +7,7 @@ use App\Exceptions\NotFoundException;
 use App\Models\Conversation;
 use App\Models\Guest;
 use App\Models\User;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ChatService
 {
@@ -33,7 +34,7 @@ class ChatService
     {
         $this->assertOwnedByGuest($guest, $conversation);
 
-        return ['data' => $conversation->messages()->orderBy('created_at')->paginate(30), 'code' => 200];
+        return ['data' => $this->historyPage($conversation), 'code' => 200];
     }
 
     public function adminIndex(): array
@@ -43,7 +44,20 @@ class ChatService
 
     public function adminHistory(Conversation $conversation): array
     {
-        return ['data' => $conversation->messages()->orderBy('created_at')->paginate(30), 'code' => 200];
+        return ['data' => $this->historyPage($conversation), 'code' => 200];
+    }
+
+    /**
+     * Pages hold messages of one already-loaded conversation, so the inverse
+     * relation is set in memory: MessageResource can read conversation_uuid
+     * without a lazy load per message.
+     */
+    private function historyPage(Conversation $conversation): LengthAwarePaginator
+    {
+        $page = $conversation->messages()->orderBy('created_at')->paginate(30);
+        $page->getCollection()->each(fn ($message) => $message->setRelation('conversation', $conversation));
+
+        return $page;
     }
 
     private function assertOwnedByGuest(Guest $guest, Conversation $conversation): void

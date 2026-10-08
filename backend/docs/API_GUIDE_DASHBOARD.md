@@ -594,7 +594,7 @@ Route binding is by **`uuid`** everywhere under `/cms/*`, never by slug or numer
 
 `/cms/media` sits under the same gates but is **not** a content type, so it is absent from the table above: it is the media library (`GET` / `POST` / `PATCH` / `DELETE`, no `show`, nothing translatable but `alt_text`). See **The media library** below.
 
-P7 service catalog, identical gates, full `apiResource` each (`PUT` **or** `PATCH`, full payload required on update, `en`/`ar` only): `/cms/spa-services`, `/cms/pool-cabanas`, `/cms/transfers`, `/cms/restaurant-tables`, `/cms/service-categories`, `/cms/service-items`. Only `/cms/menu-items` in that group takes media.
+P7 service catalog, identical gates, full `apiResource` each (`PUT` **or** `PATCH`, full payload required on update, `en`/`ar` only): `/cms/spa-services`, `/cms/pool-cabanas`, `/cms/transfers` (also optional `description.en/ar` and `max_passengers`), `/cms/restaurant-tables`, `/cms/service-categories`, `/cms/service-items`. Only `/cms/menu-items` in that group takes media.
 
 Response shapes are identical to the public read shapes — the same Resource class serves both admin and public routes, so only the row *selection* differs. `store` returns HTTP 201, `destroy` returns HTTP 204 with `data: null`.
 
@@ -667,7 +667,7 @@ On the CMS content modules `is_active` and `sort_order` are validated as bare `[
 
 **Room type** — `name` `{loc}` req (max 255), `description` `{loc}` req, `amenities` (optional array of `{ uuid (must exist), is_highlight (bool), sort_order (int ≥0) }`), `view_type` (nullable: `city|garden|pool|courtyard|mountain|interior`), `bed_types` (nullable array of `king|queen|double|twin|single|extra`), `base_occupancy` + `max_occupancy` (required on create, int 1–20, `max_occupancy >= base_occupancy`), `size_sqm` (nullable numeric ≥1), `base_price_usd` (required numeric ≥0), `cancellation_hours` (int 0–8760), `is_active`, `sort_order`.
 `amenities` is a pivot **sync**: send the array to replace the whole set, omit the key to leave it untouched, send `[]`/`null` to detach all; a `uuid` that does not resolve is skipped silently, and a row's `sort_order` defaults to its array index. Read side returns `amenities` as amenity objects plus `highlights` (the `is_highlight` subset) — **not** an array of strings.
-*Known gap:* `UpdateRoomTypeRequest` drops `gte:base_occupancy`, so a `PUT` will accept `max_occupancy` below `base_occupancy`. Validate client-side.
+`PUT /cms/room-types/{uuid}` enforces `max_occupancy >= base_occupancy` against the effective values (the sent value, or the stored one when a field is omitted); a violation is `422` on `max_occupancy`. Since 2026-10-07 `max_occupancy` also caps `adults + children` on every booking (`occupancy_exceeded`, see `POST /cms/reservations`).
 
 **Room** — `room_type_uuid` (**not** `room_type_id` — required on create, must exist), `number` (required on create, max 10, unique), `floor` (nullable int 0–200), `status` (`available|dirty|maintenance`, accepted on create only), `is_active`. No `sort_order`. `PUT /cms/rooms/{uuid}` ignores a `status` key — no error, no change; change status with `PATCH /cms/rooms/{uuid}/status` (see below). The nested `room_type` in the response omits `images`/`banner`/`amenities`/`highlights` — those relations are not eager-loaded through the nesting.
 
@@ -906,13 +906,14 @@ Empty values mean no filter; unknown query parameters are ignored. Example: `?st
   "uuid": "...", "booking_code": "CARL-XXXXXXXX", "status": "confirmed",
   "check_in": "2026-07-20", "check_out": "2026-07-22", "nights": 2,
   "source": "direct", "payment_method": "cash", "total_usd": "270.00", "hold_expires_at": null,
+  "adults": 2, "children": 1,
   "checked_in_at": null, "checked_out_at": null, "check_out_mode": null,
   "rooms": [ { "room_type": { "...room type..." }, "room_uuid": "...", "room_number": "801", "price_usd": "270.00" } ],
   "guest": { "uuid": "...", "name": "...", "phone": "...", "email": "..." },
   "promo_code": null, "notes": "VIP, late arrival"
 }
 ```
-`notes` is returned to staff only; guest routes never include it. `check_out_mode` (Phase 6, D-20) is also staff-only: `none`, `staff_force` or `guest_express`, recording how the check-out folio gate was passed; `null` for a stay not yet checked out and for stays checked out before this column existed.
+`adults` / `children` (party size) are on the reservation detail and on every list row. Bookings made before 2026-10-07 read `1` / `0`, because the value was never collected. `notes` is returned to staff only; guest routes never include it. `check_out_mode` (Phase 6, D-20) is also staff-only: `none`, `staff_force` or `guest_express`, recording how the check-out folio gate was passed; `null` for a stay not yet checked out and for stays checked out before this column existed.
 
 The nested `guest` object (here and on `GET /cms/reservations` rows) also carries the guest's `preferences` — `{ bed_type, pillow_type, floor_preference, other, updated_at }` (Phase 4, D-09), the same object `PATCH /guests/{uuid}/preferences` returns. The reservation payload never carries the digital key or any key column.
 
@@ -948,6 +949,8 @@ New arrival — name plus **at least one** of `phone` / `email`:
 | `first_name`, `last_name` | required without `guest_uuid` | |
 | `phone`, `email` | at least one without `guest_uuid` | Phone is normalised to E.164. An existing guest matching the phone (then email) is reused rather than duplicated. |
 | `room_type_uuid`, `check_in`, `check_out`, `payment_method` | yes | `check_in` cannot be in the past; `check_out` must be after it. |
+| `adults` | no | Party size, integer 1–20, default 1. `adults + children` must not exceed the room type's `max_occupancy`. |
+| `children` | no | Integer 0–20, default 0. |
 | `promo_code` | no | Applied and its usage counter incremented, same as the guest flow. |
 | `status` | no | `confirmed` (default) or `pending` — use `pending` for a phone booking still awaiting a deposit. |
 | `source` | no | `walk_in` (default) or `direct`. |
@@ -958,7 +961,7 @@ A guest created through this endpoint has **no verified contact** — they never
 
 **Response:** HTTP 201, the reservation in the shape shown under `GET /cms/reservations/{uuid}`.
 
-**Failure `error_code`s:** `no_availability` (409, no free room of that type for the dates), `validation_failed` (422 — including `identity` when neither `guest_uuid` nor a phone/email was sent), `not_found` (404, unknown `guest_uuid`).
+**Failure `error_code`s:** `no_availability` (409, no free room of that type for the dates), `occupancy_exceeded` (422, `context {max_occupancy, requested}`: `adults + children` is over the room type's `max_occupancy`; nothing is written), `validation_failed` (422 — including `identity` when neither `guest_uuid` nor a phone/email was sent), `not_found` (404, unknown `guest_uuid`).
 
 ### POST /cms/reservations/{uuid}/confirm — `reservations.create`
 
@@ -1287,7 +1290,7 @@ Standard `apiResource` CRUD (index/store/show/update/destroy) for the **8** book
 | Spa services | `/cms/spa-services` | `name.en/ar` (required), `duration_minutes` (required int ≥1), `price_usd` (required ≥0), `is_active` |
 | Restaurant tables | `/cms/restaurant-tables` | `dining_venue_uuid` (optional, must exist), `table_number` (required, max 50), `capacity` (required int ≥1), `is_active` — **not translatable, no `name`** |
 | Pool cabanas | `/cms/pool-cabanas` | `name.en/ar` (required), `capacity` (required int ≥1), `price_usd` (required ≥0), `is_active` |
-| Transfers | `/cms/transfers` | `name.en/ar` (required), `price_usd` (required ≥0), `is_active` — no capacity/duration |
+| Transfers | `/cms/transfers` | `name.en/ar` (required), `description.en/ar` (optional, max 2000 each), `price_usd` (required ≥0), `max_passengers` (optional integer 1–100), `is_active`. Responses carry `description` (locale map or `null`) and `max_passengers` (integer or `null`). The CMS transfer form should add the two fields. |
 | Service categories | `/cms/service-categories` | `code` (required, max 50, unique), `name.en/ar` (required), `description.en/ar` (optional), `kind` (required — `ServiceCategoryKind`), `department` (required when `kind` is `catalog` or `direct` — `Department`), `link_target` (required when `kind` is `link`, max 30), `icon` (optional, max 50), `is_active`, `sort_order` |
 | Service items | `/cms/service-items` | `service_category_uuid` (required, must exist), `name.en/ar` (required), `description.en/ar` (optional), `expected_minutes` (optional int 1–10080), `price_usd` (optional ≥0), `is_default`, `is_active`, `sort_order` |
 | Menu categories | `/cms/menu-categories` | `dining_venue_uuid` (**required**, must exist), `slug` (**required**, max 64 — auto-derived from `name.en` when omitted), `name.en/ar` (required), `sort_order` (optional int ≥0), `is_active` |
@@ -1494,6 +1497,8 @@ Guest↔staff messaging. `tickets.view` reads, `tickets.respond` replies (both s
 - `GET /api/cms/conversations` — all conversations, most recent first (`tickets.view`).
 - `GET /api/cms/conversations/{uuid}/messages` — paginated history, oldest first (`tickets.view`).
 - `POST /api/cms/conversations/{uuid}/messages` — reply; body `{ "body"?: string, "attachment"?: file }` (`tickets.respond`). Claims the conversation (sets `assigned_user_id` to the replying staff member) on the first staff reply if unassigned.
+
+Every message payload (staff history and staff send, as on the guest side) carries `conversation_uuid` next to `uuid`, `sender_type`, `body`, `attachment_url` and `created_at`, so a message can be routed without the list around it.
 
 Mirrors to Firestore the same way as the guest side (see `API_GUIDE_MOBILE.md`) — subscribe for live updates.
 
@@ -2478,7 +2483,7 @@ A reward is what a guest spends points on; redeeming it creates a voucher. Same 
 | `free_night` | One night at the booking's daily rate, capped at the total. |
 | `room_upgrade` | **0.00 off** — the voucher is consumed and the reservation shows `loyalty.upgrade_requested: true`. **Staff perform the upgrade** by assigning a better room (`assign-room` / the available-rooms flow); the system does not move the guest by itself. |
 
-Voucher lifecycle: `active` → `used` (applied to a booking) → back to `active` if that booking is cancelled (the original `expires_at` is kept; if it has already passed, the voucher gets a grace period of `config('loyalty.restored_voucher_grace_days')` = 30 hotel-local days). `active` → `expired` by the nightly sweep; `void` exists as a status but no endpoint produces it today. A voucher expires at the **end of its last hotel-local day**.
+Voucher lifecycle: `active` → `used` (applied to a booking) → back to `active` if that booking is cancelled (the original `expires_at` is kept; if it has already passed, the voucher gets a grace period of `config('loyalty.restored_voucher_grace_days')` = 30 hotel-local days). `active` → `expired` by the nightly sweep; `active` → `void` when the guest deletes their account (a voucher already past its expiry becomes `expired` instead). A voucher expires at the **end of its last hotel-local day**.
 
 ### GET /api/cms/loyalty/guests/{guest_uuid} — `loyalty.view`
 
@@ -2502,6 +2507,7 @@ A guest's balance, same shape as the guest's own `GET /loyalty/account` plus the
 
 - `available_points` counts only active batches with `expires_at` in the future. `expiring_soon_points` / `next_expiry_at` look `expiring_soon_window_days` (= `expiry_warning_days`) ahead.
 - **Lifetime definitions:** `lifetime_earned_points` = earned + positive adjustments − clawbacks; `lifetime_redeemed_points` = redeemed − refunded; both floored at 0. Expiry and negative adjustments count toward neither.
+- **Deleted guest:** still `200` (the account row is kept for accounting, as on `GET /guests/{guest_uuid}`), with `guest.name: null` (identity scrubbed), `available_points: 0` and the ledger showing the forfeit `expire` rows. Read `account_status` from `GET /guests/{guest_uuid}`; the loyalty view has no status field.
 
 ### GET /api/cms/loyalty/guests/{guest_uuid}/ledger — `loyalty.view`
 
@@ -2558,6 +2564,7 @@ Award or deduct points by hand. **Headers:** `Idempotency-Key` (required, max 64
 - **Replay:** the same key with the same `points`, `reason` and **the same staff member** answers `200` with the same ledger row and writes nothing. The same key with a different body — **or from a different staff member** — answers `409 idempotency_conflict`. The key is scoped per guest, so reusing a key for another guest is a separate write.
 - **Missing or blank key:** `422 validation_failed` with `errors.idempotency_key` — the shared shape the folio payment and event deposit routes use. There is **no** top-level `idempotency_key_required` error code.
 - **Over-deduction:** `422 loyalty_insufficient_points`, `context: { "available_points": 5000, "requested_points": 999999 }`, nothing written.
+- **Deleted guest:** `422 guest_account_deleted` ("This guest account has been deleted."), nothing written. It is checked before the replay lookup, so resending an old key after the deletion is also `422`.
 - Every fresh adjustment is also written to the activity log (`loyalty.points_adjusted`, on the guest); a replay logs nothing.
 - `403` for a token without `loyalty.adjust` — including a `loyalty.view` + `loyalty.manage` holder.
 
@@ -2583,12 +2590,13 @@ Metric definitions (all integers except `liability_usd`):
 
 - **`issued_points`** — earn credits **plus positive manual adjustments** in the period. **Refunds are never counted as issued** — a cancelled booking's returned points appear only in `refunded_points`.
 - **`redeemed_points`** — points spent (catalogue redemptions and booking redemptions). Not netted against refunds.
-- **`expired_points`** — points removed by the expiry sweep.
+- **`expired_points`** — points removed by the expiry sweep, plus points forfeited when a guest deleted their account.
 - **`refunded_points`** — points returned to guests by cancellations.
 - **`clawed_back_points`** — earned points actually taken back by cancellations. Points the guest had already spent cannot be taken back; that remainder is the `shortfall_points` on the clawback ledger row and is not counted here.
 - **`adjusted_out_points`** — negative manual adjustments, as a positive number.
-- **`outstanding_points`** and **`liability_usd`** — **point in time, not windowed**: they describe *now* (active batches with a future expiry), whatever `date_to` is. A report for last month does not give last month's closing balance.
+- **`outstanding_points`** and **`liability_usd`** — **point in time, not windowed**: they describe *now* (active batches with a future expiry), whatever `date_to` is. A report for last month does not give last month's closing balance. Both exclude deleted accounts.
 - **`liability_usd`** — `outstanding_points × redeem_value_usd`, half-up to cents, 2-decimal string. It is **`null` while `redeem_value_usd` is unset or zero** (nothing to value the points at); with a value set and no outstanding points it is `"0.00"`.
+- **Leftover points on deleted accounts:** accounts deleted before this release may still hold points until `loyalty:forfeit-deleted` has run. Those points were counted in `issued_points` when they were issued but are left out of `outstanding_points` and `liability_usd`, so `outstanding_points` will not equal issued − redeemed − expired over the life of the program. After the command runs they appear in `expired_points` on the day it ran.
 
 ### The reservation `loyalty` block
 
@@ -2609,7 +2617,9 @@ Every reservation payload produced by the reservation service — the dashboard'
 
 ### Scheduled jobs and the expiry push
 
-Two commands run daily in the hotel timezone and need `php artisan schedule:run` running every minute: `loyalty:expire-points` at 01:00 (writes `expire` rows, flips expired vouchers; safe to re-run) and `loyalty:notify-expiring` at 09:00 (one push per guest per run covering every batch inside the warning window, each batch warned once; a failed push is retried the next run and makes the command exit non-zero). The push uses the notification type `loyalty_points_expiring`, is localized from the guest's `preferred_locale`, and carries `data: { "points": 1200, "expires_at": "…" }` (`expires_at` is the earliest expiry among the warned batches; the body text shows it as a hotel-local date).
+Two commands run daily in the hotel timezone and need `php artisan schedule:run` running every minute: `loyalty:expire-points` at 01:00 (writes `expire` rows, flips expired vouchers; safe to re-run) and `loyalty:notify-expiring` at 09:00 (one push per guest per run covering every batch inside the warning window, each batch warned once; a failed push is retried the next run and makes the command exit non-zero). The push uses the notification type `loyalty_points_expiring`, is localized from the guest's `preferred_locale`, and carries `data: { "points": 1200, "expires_at": "…" }` (`expires_at` is the earliest expiry among the warned batches; the body text shows it as a hotel-local date). A deleted account never gets this push.
+
+`loyalty:forfeit-deleted` is not scheduled. Run it once after deploying this release to forfeit points and close vouchers still held by accounts deleted before it; it prints the totals and is safe to re-run.
 
 ### Error codes (this module)
 
@@ -2625,6 +2635,7 @@ All loyalty codes are `422` except `idempotency_conflict`.
 | `loyalty_reward_unavailable` | none | The reward is inactive (a deleted or unknown reward is `404`) |
 | `loyalty_adjustment_invalid` | `{ max_adjust_points }` | Zero or over-limit manual adjustment |
 | `loyalty_discount_conflict` | none | Points and a voucher on the same booking |
+| `guest_account_deleted` | none | Adjustment on a guest whose account was deleted |
 | `idempotency_conflict` | `{ idempotency_key }` | `409` — key reused with a different request (or by a different staff member on an adjustment) |
 | `reservation_state` | — | `422`, cancelling a reservation that is no longer cancellable |
 | `no_availability` | — | `409`, the booking lost the last room; no points are spent |
@@ -2633,11 +2644,13 @@ Error details are always under `context`. A missing `Idempotency-Key` is `valida
 
 ### Not provided
 
-Tiers, a pending balance, backfill of folios settled before launch, a folio-refund endpoint (the clawback logic exists and is unit-tested but only reservation cancellation triggers it today), points on staff-created or public OTP bookings, and exports. **Known limitation:** deleting a guest account (`DELETE /auth/guest/me`) does not yet forfeit the guest's loyalty balance — scheduled as a follow-up.
+Tiers, a pending balance, backfill of folios settled before launch, a folio-refund endpoint (the clawback logic exists and is unit-tested but only reservation cancellation triggers it today), points on staff-created or public OTP bookings, and exports.
+
+**Account deletion (LOY-23):** when a guest deletes their account (`DELETE /auth/guest/me`) the whole balance is forfeited in the same transaction, one `expire` ledger row per batch (visible in the staff ledger), and unused vouchers close (`void`, or `expired` when already past their expiry). A deleted guest gets no expiry warning; adjustments answer `422 guest_account_deleted`; the report's outstanding points and liability leave the account out; a folio settled later for that guest earns nothing. If staff later cancel an old booking of that guest, points or a voucher the cancellation gives back are forfeited again.
 
 ### Dashboard handoff (Phase 10)
 
-Gate the Loyalty navigation item on `loyalty.view` or `loyalty.manage`; show the settings form on `loyalty.manage`, the guest balance/ledger/report screens on `loyalty.view`, the "adjust points" button on `loyalty.adjust` **and** `loyalty.view`, and the rewards trash on `cms.restore` / `cms.purge`. Until staff save the settings once, earning and points-at-booking are off — show that state from `program` rather than assuming defaults.
+Gate the Loyalty navigation item on `loyalty.view` or `loyalty.manage`; show the settings form on `loyalty.manage`, the guest balance/ledger/report screens on `loyalty.view`, the "adjust points" button on `loyalty.adjust` **and** `loyalty.view`, and the rewards trash on `cms.restore` / `cms.purge`. Until staff save the settings once, earning and points-at-booking are off — show that state from `program` rather than assuming defaults. Hide or disable "adjust points" for a guest whose `account_status` is `deleted` (from `GET /guests/{guest_uuid}`).
 
 ---
 
@@ -2695,7 +2708,7 @@ Gate the Loyalty navigation item on `loyalty.view` or `loyalty.manage`; show the
 | `night_audit_item_resolved` | 422 | Check/blocker already terminal; `context: { item, status }` |
 | `night_audit_not_ready` | 422 | Close with pending checks or open blockers; `context: { checks_pending, blockers_open }` |
 | `exchange_rate_large_change` | 422 | New exchange rate differs from the current one by more than 50% either way and `confirm_large_change` is not `true`; `context: { currency, current_rate, proposed_rate, change_percent }` |
-| `guest_account_deleted` | 422 | Note or preferences write, or a front-desk booking (`POST /cms/reservations` with `guest_uuid`), on a guest whose account was deleted |
+| `guest_account_deleted` | 422 | Note or preferences write, or a front-desk booking (`POST /cms/reservations` with `guest_uuid`), on a guest whose account was deleted, or a loyalty adjustment (`POST /cms/loyalty/guests/{guest_uuid}/adjustments`) |
 | `guest_account_deletion_blocked` | 422 | Guest-app only (`DELETE /auth/guest/me` blocked); not returned by dashboard routes |
 | `loyalty_program_inactive` | 422 | A loyalty capability was used while its setting is unset; `context: { capability }` (`earning` \| `points_discount`) |
 | `loyalty_insufficient_points` | 422 | Not enough unexpired points (manual deduction, redeem or booking); `context: { available_points, requested_points }` |

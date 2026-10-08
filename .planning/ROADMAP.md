@@ -405,7 +405,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8. Events & Dining | 10/10 | Complete | 2026-10-03 (3886416) |
 | 9. Night Audit & Reports | 10/10 | Complete | 2026-10-04 |
 | 9.1. Guest Account & App Support (INSERTED) | 9/9 | Complete | 2026-10-04 (uncommitted) |
-| 10. Loyalty Points Program | 15/15 | In Progress|  |
+| 10. Loyalty Points Program | 17/17 | Executed (human checks pending) |  |
 
 ### Phase 10: Loyalty Points Program
 
@@ -422,7 +422,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
   6. Contract gate: happy / 401 / 403 / 422 per route, 5 locales, docs/Postman/tree updated, Flutter/React teams notified of the contract strings and error codes.
 
 **Research**: Done (`10-RESEARCH.md`); rulings in `10-DISCUSSION-LOG.md`.
-**Plans:** 15/17 plans executed (2 gap-closure plans for LOY-23)
+**Plans:** 17/17 plans executed (2 gap-closure plans for LOY-23; MySQL/FCM human checks pending)
 
 Plans:
 **Wave 1**
@@ -487,8 +487,8 @@ Plans:
 
 **Wave 16** *(blocked on Wave 15 completion)*
 
-- [ ] 10-16-PLAN.md — Gap: forfeit loyalty balance and close vouchers on account deletion, re-forfeit on later reversal (LOY-23, LOY-09, LOY-17)
+- [x] 10-16-PLAN.md — Gap: forfeit loyalty balance and close vouchers on account deletion, re-forfeit on later reversal (LOY-23, LOY-09, LOY-17)
 
 **Wave 17** *(blocked on Wave 16 completion)*
 
-- [ ] 10-17-PLAN.md — Gap: deleted-guest guards for expiry warning, staff adjust and report; guides and changelog; phase gate (LOY-23, LOY-05, LOY-10, LOY-19)
+- [x] 10-17-PLAN.md — Gap: deleted-guest guards for expiry warning, staff adjust and report; guides and changelog; phase gate (LOY-23, LOY-05, LOY-10, LOY-19)
